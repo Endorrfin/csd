@@ -9,6 +9,7 @@ import { ContentModule } from './modules/content/content.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { PartnersModule } from './modules/partners/partners.module';
 import { CooperationModule } from './modules/cooperation/cooperation.module';
+import { NeedsModule } from './modules/needs/needs.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CooperationModule } from './modules/cooperation/cooperation.module';
       BlogModule,
       PartnersModule,
       CooperationModule,
+      NeedsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
