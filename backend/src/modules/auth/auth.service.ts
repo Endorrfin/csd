@@ -18,7 +18,8 @@ export class AuthService {
 
   // Called from LocalStrategy to validate email and password
   async validateUser(email: string, password: string): Promise<User> {
-    const user = await this.usersService.findByEmail(email);
+    // const user = await this.usersService.findByEmail(email);
+    const user = await this.usersService.findByEmailWithPassword(email);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
