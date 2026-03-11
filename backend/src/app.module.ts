@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { ContentModule } from './modules/content/content.module';
 import { BlogModule } from './modules/blog/blog.module';
 import { PartnersModule } from './modules/partners/partners.module';
+import { CooperationModule } from './modules/cooperation/cooperation.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { PartnersModule } from './modules/partners/partners.module';
       ContentModule,
       BlogModule,
       PartnersModule,
+      CooperationModule,
   ],
   controllers: [AppController],
   providers: [AppService],
