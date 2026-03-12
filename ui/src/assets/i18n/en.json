@@ -1,0 +1,20 @@
+{
+  "NAV": {
+    "HOME": "Home",
+    "ABOUT": "About",
+    "BLOG": "Blog",
+    "PARTNERS": "Partners",
+    "COOPERATION": "Cooperation",
+    "WASH": "WASH",
+    "CONTACT": "Contacts",
+    "LOGIN": "Login"
+  },
+  "HOME": {
+    "TITLE": "«Charitable Fund «Centre for Support and Development»»",
+    "SUBTITLE": "WASH · Repair & Recovery · Shelters"
+  },
+  "FOOTER": {
+    "TITLE": "«Charitable Fund «Centre for Support and Development»»",
+    "RIGHTS": "All rights reserved"
+  }
+}
