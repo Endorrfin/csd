@@ -42,6 +42,9 @@ export class Post {
   @Column({ nullable: true })
   coverImage: string;
 
+  @Column({ nullable: true })
+  videoUrl: string;
+
   @Column({ default: true })
   isPublished: boolean;
 

@@ -45,6 +45,10 @@ export class UpdatePostDto {
   @IsOptional()
   coverImage?: string;
 
+  @IsString()
+  @IsOptional()
+  videoUrl?: string;
+
   @IsBoolean()
   @IsOptional()
   isPublished?: boolean;

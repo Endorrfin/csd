@@ -1,6 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../core/services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-header',
@@ -9,7 +11,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   template: `
     <header class="header">
       <div class="header__container">
-        <a routerLink="/" class="header__logo">CSD Fund</a>
+        <a routerLink="/" class="header__logo">
+          <img src="/assets/images/logo/csd_logo_text-white_right.png" alt="CSD Fund" class="header__logo-img" />
+        </a>
 
         <nav class="header__nav">
           <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
@@ -22,13 +26,19 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
           <a routerLink="/wash-form" routerLinkActive="active">{{ 'NAV.WASH' | translate }}</a>
           <a routerLink="/contact" routerLinkActive="active">{{ 'NAV.CONTACT' | translate }}</a>
         </nav>
-
+        
         <div class="header__actions">
           <button (click)="switchLang()" class="header__lang">
             {{ currentLang === 'ua' ? 'EN' : 'UA' }}
           </button>
-          <a routerLink="/login" class="header__login">{{ 'NAV.LOGIN' | translate }}</a>
+          @if (auth.isLoggedIn()) {
+            <span class="header__email">{{ auth.userEmail() }}</span>
+            <button (click)="logout()" class="header__login">{{ currentLang === 'ua' ? 'Вийти' : 'Logout' }}</button>
+          } @else {
+            <a routerLink="/login" class="header__login">{{ 'NAV.LOGIN' | translate }}</a>
+          }
         </div>
+        
       </div>
     </header>
   `,
@@ -46,11 +56,20 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
       height: 64px;
       gap: 2rem;
     }
+    .header__email {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.75rem;
+    }
     .header__logo {
       font-size: 1.25rem;
       font-weight: 700;
       color: white;
       text-decoration: none;
+    }
+    .header__logo-img {
+      height: 38px;
+      width: auto;
+      display: block;
     }
     .header__nav {
       display: flex;
@@ -86,17 +105,27 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
     }
     .header__login {
       color: white;
+      border: none;
+      background: none;
       text-decoration: none;
       font-size: 0.875rem;
     }
   `],
 })
+
 export class HeaderComponent {
   private readonly translate = inject(TranslateService);
+  private readonly router = inject(Router);
+  readonly auth = inject(AuthService);
   currentLang = 'ua';
 
   switchLang() {
     this.currentLang = this.currentLang === 'ua' ? 'en' : 'ua';
     this.translate.use(this.currentLang);
+  }
+
+  logout() {
+    this.auth.logout();
+    this.router.navigate(['/']);
   }
 }

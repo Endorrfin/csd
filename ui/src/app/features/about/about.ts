@@ -8,7 +8,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   imports: [TranslateModule],
   template: `
     <h1>{{ title }}</h1>
-    <div [innerHTML]="content"></div>
+    <div [innerHTML]="content">
+      <p>Ми – Благодійна організація «Благодійний фонд «Центр підтримки та розвитку».</p>
+      <p>Можливо ви про нас не чули, проте наша команда роками працювала на сході України, надаючи підтримку найвразливішим верствам населення.</p>
+    </div>
   `,
 })
 export class AboutComponent implements OnInit {
