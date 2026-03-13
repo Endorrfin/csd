@@ -18,43 +18,43 @@ import { UserRole } from '../users/entities/user.entity';
 
 @Controller('needs-forms')
 export class NeedsFormsController {
-  constructor(private readonly needsFormsService: NeedsService) {}
+  constructor(private readonly needsService: NeedsService) {}
 
-  // Публичный — подать заявку (без авторизации)
+  /** Public — submit a WASH needs form (no auth required) */
   @Post('wash')
-  createWash(@Body() dto: CreateWashFormDto) {
-    return this.needsFormsService.create(dto);
+  create(@Body() dto: CreateWashFormDto) {
+    return this.needsService.create(dto);
   }
 
-  // Менеджер/админ — список всех заявок
+  /** Manager/Admin — list all forms */
   @Get('wash')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
-  findAllWash() {
-    return this.needsFormsService.findAll();
+  findAll() {
+    return this.needsService.findAll();
   }
 
-  // Менеджер/админ — одна заявка
+  /** Manager/Admin — get single form */
   @Get('wash/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
-  findWashById(@Param('id') id: string) {
-    return this.needsFormsService.findById(id);
+  findById(@Param('id') id: string) {
+    return this.needsService.findById(id);
   }
 
-  // Менеджер/админ — обновить статус
+  /** Manager/Admin — update status/notes */
   @Patch('wash/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
-  updateWash(@Param('id') id: string, @Body() dto: UpdateWashFormDto) {
-    return this.needsFormsService.update(id, dto);
+  update(@Param('id') id: string, @Body() dto: UpdateWashFormDto) {
+    return this.needsService.update(id, dto);
   }
 
-  // Админ — удалить
+  /** Admin — delete form */
   @Delete('wash/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  removeWash(@Param('id') id: string) {
-    return this.needsFormsService.remove(id);
+  remove(@Param('id') id: string) {
+    return this.needsService.remove(id);
   }
 }

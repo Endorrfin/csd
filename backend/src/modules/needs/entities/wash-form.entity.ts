@@ -4,20 +4,9 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
 } from 'typeorm';
-
-// Тип WASH потребности
-export enum WashNeedType {
-  BOREHOLE = 'borehole_drilling',
-  WATER_TOWER = 'water_tower',
-  PIPES_VALVES = 'pipes_valves_fittings',
-  PUMPS = 'pumps_equipment',
-  PURIFICATION = 'purification_system',
-  WATER_TANKS = 'water_tanks',
-  BOTTLED_WATER = 'bottled_water_hygiene',
-  SOLAR_POWER = 'solar_power_plant',
-  WASH_ROOMS = 'wash_rooms_rehabilitation',
-}
+import { WashFormItem } from './wash-form-item.entity';
 
 export enum FormStatus {
   NEW = 'new',
@@ -33,71 +22,63 @@ export class WashForm {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  // Информация о заявителе
-  @Column()
-  applicantName: string;
+  // ── Загальна інформація (з Excel-анкети) ──
 
-  @Column()
-  applicantPhone: string;
-
-  @Column({ nullable: true })
-  applicantEmail: string;
-
-  @Column()
-  organizationName: string;
-
-  @Column({ nullable: true })
-  organizationRole: string;
-
-  // Местоположение
+  /** Область */
   @Column()
   region: string;
 
+  /** Назва організації (громада, водоканал, медичний заклад, школа тощо) */
   @Column()
-  district: string;
+  organizationName: string;
 
+  /** ПІБ керівника */
   @Column()
-  settlement: string;
+  headName: string;
 
-  @Column({ nullable: true })
-  address: string;
+  /** Телефон керівника */
+  @Column()
+  headPhone: string;
 
-  // Координаты для будущей карты
-  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
-  latitude: number;
+  /** Email для зв'язку (обов'язковий) */
+  @Column()
+  email: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
-  longitude: number;
+  // ── Інформація про об'єкт ──
 
-  // Тип потребности
-  @Column({ type: 'enum', enum: WashNeedType })
-  needType: WashNeedType;
+  /** Назва об'єкту (або вулиці з уточненням: вода, каналізація, КНС, ВНС тощо) */
+  @Column()
+  objectName: string;
 
-  // Детали потребности
-  @Column({ type: 'text' })
-  description: string;
+  /** Кількість людей, які залежать від об'єкту */
+  @Column({ type: 'int' })
+  dependentPopulation: number;
 
-  // Количество людей, которые получат помощь
-  @Column({ type: 'int', nullable: true })
-  beneficiariesCount: number;
-
-  // Тип учреждения (школа, больница, община)
-  @Column({ nullable: true })
-  facilityType: string;
-
-  // Текущее состояние инфраструктуры
+  /** Соціальні установи, залежні від об'єкту (лікарня, школа, садочок тощо) */
   @Column({ type: 'text', nullable: true })
-  currentCondition: string;
+  socialFacilities: string;
 
-  // Приоритет
-  @Column({ default: 'medium' })
-  priority: string;
+  /** Орієнтовний термін монтажу наданих матеріалів */
+  @Column({ nullable: true })
+  installationDeadline: string;
 
-  // Статус обработки
+  /** Короткий опис причин заміни */
+  @Column({ type: 'text' })
+  replacementReason: string;
+
+  // ── Позиції заявки (обладнання та матеріали) ──
+
+  @OneToMany(() => WashFormItem, (item) => item.washForm, {
+    cascade: true,
+    eager: true,
+  })
+  items: WashFormItem[];
+
+  // ── Службові поля ──
+
   @Column({ type: 'enum', enum: FormStatus, default: FormStatus.NEW })
   status: FormStatus;
 
-  // Комментарий менеджера
   @Column({ type: 'text', nullable: true })
   managerNotes: string;
 

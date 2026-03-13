@@ -1,6 +1,8 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { DataSource } from 'typeorm';
+import { runSeeds } from './database/run-seeds';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -22,5 +24,9 @@ async function bootstrap() {
       }),
   );
   await app.listen(process.env.PORT ?? 3000);
+
+  // add: seed to the directory on first launch
+  const dataSource = app.get(DataSource);
+  await runSeeds(dataSource);
 }
 bootstrap();
