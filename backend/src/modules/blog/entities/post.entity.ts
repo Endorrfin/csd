@@ -42,6 +42,10 @@ export class Post {
   @Column({ nullable: true })
   coverImage: string;
 
+  // Array of image URLs (up to 5)
+  @Column({ type: 'jsonb', default: [] })
+  images: string[];
+
   @Column({ nullable: true })
   videoUrl: string;
 

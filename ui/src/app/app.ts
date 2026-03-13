@@ -15,9 +15,16 @@ import { FooterComponent } from './layout/footer/footer';
     <app-footer />
   `,
   styles: [`
+    :host {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
     .main {
-      min-height: calc(100vh - 44px - 72px);
+      flex: 1;
+      overflow-y: auto;
       max-width: 1200px;
+      width: 100%;
       margin: 0 auto;
       padding: 2rem 1rem;
     }
