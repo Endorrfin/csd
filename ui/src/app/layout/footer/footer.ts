@@ -19,6 +19,7 @@ import { TranslateModule } from '@ngx-translate/core';
       padding: 1.5rem 1rem;
       text-align: center;
       font-size: 0.875rem;
+      flex-shrink: 0;
     }
     .footer__container {
       max-width: 1200px;

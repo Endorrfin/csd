@@ -47,6 +47,7 @@ import { Router } from '@angular/router';
       background: #1a365d;
       color: white;
       padding: 0 1rem;
+      flex-shrink: 0;
     }
     .header__container {
       max-width: 1200px;

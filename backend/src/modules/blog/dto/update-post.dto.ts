@@ -2,6 +2,8 @@ import {
   IsString,
   IsBoolean,
   IsOptional,
+  IsArray,
+  ArrayMaxSize,
   MinLength,
   Matches,
 } from 'class-validator';
@@ -48,6 +50,12 @@ export class UpdatePostDto {
   @IsString()
   @IsOptional()
   videoUrl?: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @ArrayMaxSize(5)
+  @IsOptional()
+  images?: string[];
 
   @IsBoolean()
   @IsOptional()
