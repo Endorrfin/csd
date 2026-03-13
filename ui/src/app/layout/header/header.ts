@@ -23,7 +23,7 @@ import { Router } from '@angular/router';
           <a routerLink="/blog" routerLinkActive="active">{{ 'NAV.BLOG' | translate }}</a>
           <a routerLink="/partners" routerLinkActive="active">{{ 'NAV.PARTNERS' | translate }}</a>
           <a routerLink="/cooperation" routerLinkActive="active">{{ 'NAV.COOPERATION' | translate }}</a>
-          <a routerLink="/wash-form" routerLinkActive="active">{{ 'NAV.WASH' | translate }}</a>
+          <a routerLink="/needs" routerLinkActive="active">{{ 'NAV.NEEDS' | translate }}</a>
           <a routerLink="/contact" routerLinkActive="active">{{ 'NAV.CONTACT' | translate }}</a>
         </nav>
         

@@ -1,78 +1,80 @@
+import { Type } from 'class-transformer';
 import {
   IsString,
-  IsOptional,
-  IsEnum,
   IsEmail,
-  IsNumber,
   IsInt,
+  IsOptional,
+  IsArray,
+  IsUUID,
+  IsNumber,
   Min,
   MinLength,
+  ValidateNested,
+  ArrayMinSize,
 } from 'class-validator';
-import { WashNeedType } from '../entities/wash-form.entity';
+
+export class CreateWashFormItemDto {
+  @IsUUID()
+  equipmentItemId: string;
+
+  @IsNumber()
+  @Min(0.01)
+  quantity: number;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
+}
 
 export class CreateWashFormDto {
+  // ── Загальна інформація ──
+
   @IsString()
   @MinLength(2)
-  applicantName: string;
-
-  @IsString()
-  @MinLength(6)
-  applicantPhone: string;
-
-  @IsEmail()
-  @IsOptional()
-  applicantEmail?: string;
+  region: string;
 
   @IsString()
   @MinLength(2)
   organizationName: string;
 
   @IsString()
-  @IsOptional()
-  organizationRole?: string;
+  @MinLength(2)
+  headName: string;
 
   @IsString()
-  region: string;
+  @MinLength(6)
+  headPhone: string;
+
+  @IsEmail()
+  email: string;
+
+  // ── Інформація про об'єкт ──
 
   @IsString()
-  district: string;
-
-  @IsString()
-  settlement: string;
-
-  @IsString()
-  @IsOptional()
-  address?: string;
-
-  @IsNumber()
-  @IsOptional()
-  latitude?: number;
-
-  @IsNumber()
-  @IsOptional()
-  longitude?: number;
-
-  @IsEnum(WashNeedType)
-  needType: WashNeedType;
-
-  @IsString()
-  @MinLength(10)
-  description: string;
+  @MinLength(2)
+  objectName: string;
 
   @IsInt()
   @Min(1)
-  @IsOptional()
-  beneficiariesCount?: number;
+  dependentPopulation: number;
 
   @IsString()
   @IsOptional()
-  facilityType?: string;
+  socialFacilities?: string;
 
   @IsString()
   @IsOptional()
-  currentCondition?: string;
+  installationDeadline?: string;
 
   @IsString()
-  @IsOptional()
-  priority?: string;
+  @MinLength(10)
+  replacementReason: string;
+
+  // ── Позиції заявки ──
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CreateWashFormItemDto)
+  items: CreateWashFormItemDto[];
 }

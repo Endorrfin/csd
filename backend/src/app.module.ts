@@ -10,6 +10,8 @@ import { BlogModule } from './modules/blog/blog.module';
 import { PartnersModule } from './modules/partners/partners.module';
 import { CooperationModule } from './modules/cooperation/cooperation.module';
 import { NeedsModule } from './modules/needs/needs.module';
+import { EquipmentCatalogModule } from './modules/equipment-catalog/equipment-catalog.module';
+
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { NeedsModule } from './modules/needs/needs.module';
       BlogModule,
       PartnersModule,
       CooperationModule,
+      EquipmentCatalogModule,
       NeedsModule,
   ],
   controllers: [AppController],

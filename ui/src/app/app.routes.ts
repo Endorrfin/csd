@@ -30,12 +30,13 @@ export const routes: Routes = [
         (m) => m.CooperationComponent,
       ),
   },
+  // ── Needs section with child routes ──
   {
-    path: 'wash-form',
+    path: 'needs',
     loadComponent: () =>
-      import('./features/wash-form/wash-form').then(
-        (m) => m.WashFormComponent,
-      ),
+      import('./features/needs/needs').then((m) => m.NeedsComponent),
+    loadChildren: () =>
+      import('./features/needs/needs.routes').then((m) => m.needsRoutes),
   },
   {
     path: 'contact',
@@ -48,5 +49,11 @@ export const routes: Routes = [
     path: 'login',
     loadComponent: () =>
       import('./features/login/login').then((m) => m.LoginComponent),
+  },
+  // Redirect old wash-form URL to new location
+  {
+    path: 'wash-form',
+    redirectTo: 'needs/wash-form',
+    pathMatch: 'full',
   },
 ];
