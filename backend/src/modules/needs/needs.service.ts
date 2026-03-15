@@ -15,20 +15,21 @@ export class NeedsService {
     private readonly washFormItemRepo: Repository<WashFormItem>,
   ) {}
 
-  /** Public — create a new WASH needs form with items */
+  /** Public — create a new WASH needs form with optional items */
   async create(dto: CreateWashFormDto): Promise<WashForm> {
     const { items, ...formData } = dto;
 
     const form = this.washFormRepo.create({
       ...formData,
-      items: items.map((item) =>
-        this.washFormItemRepo.create({
-          equipmentItemId: item.equipmentItemId,
-          quantity: item.quantity,
-          // notes: item.notes ?? null,
-          notes: item.notes,
-        }),
-      ),
+      items: items?.length
+        ? items.map((item) =>
+          this.washFormItemRepo.create({
+            equipmentItemId: item.equipmentItemId,
+            quantity: item.quantity,
+            notes: item.notes,
+          }),
+        )
+        : [],
     });
 
     return this.washFormRepo.save(form);

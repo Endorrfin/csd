@@ -7,7 +7,10 @@ import {
   IsArray,
   IsUUID,
   IsNumber,
+  IsBoolean,
+  IsIn,
   Min,
+  Max,
   MinLength,
   ValidateNested,
   ArrayMinSize,
@@ -20,6 +23,58 @@ export class CreateWashFormItemDto {
   @IsNumber()
   @Min(0.01)
   quantity: number;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
+}
+
+// ── WASH Activities DTOs ──
+
+export class BoreholeDrillingDto {
+  @IsIn(['sand', 'artesian'])
+  boreholeType: 'sand' | 'artesian';
+
+  @IsNumber()
+  @Min(1)
+  @Max(50)
+  expectedFlowRate: number;
+
+  @IsNumber()
+  @Min(125)
+  @Max(160)
+  desiredDiameter: number;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
+}
+
+export class WaterTowerDto {
+  @IsIn(['vbr_15', 'vbr_25', 'vbr_50', 'vbr_over_50'])
+  towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
+
+  @IsInt()
+  @Min(1)
+  quantity: number;
+
+  @IsString()
+  @IsOptional()
+  notes?: string;
+}
+
+export class PurificationSystemDto {
+  @IsBoolean()
+  hasRoom: boolean;
+
+  @IsBoolean()
+  hasTemperatureControl: boolean;
+
+  @IsBoolean()
+  hasWaterInletDrainage: boolean;
+
+  @IsBoolean()
+  hasPowerSupply: boolean;
 
   @IsString()
   @IsOptional()
@@ -70,11 +125,28 @@ export class CreateWashFormDto {
   @MinLength(10)
   replacementReason: string;
 
-  // ── Позиції заявки ──
+  // ── WASH Activities (опціональні) ──
 
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => BoreholeDrillingDto)
+  boreholeDrilling?: BoreholeDrillingDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => WaterTowerDto)
+  waterTower?: WaterTowerDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => PurificationSystemDto)
+  purificationSystem?: PurificationSystemDto;
+
+  // ── Позиції заявки (опціонально) ──
+
+  @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => CreateWashFormItemDto)
-  items: CreateWashFormItemDto[];
+  items?: CreateWashFormItemDto[];
 }
