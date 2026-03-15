@@ -43,11 +43,37 @@ export interface CreateWashFormPayload {
   socialFacilities?: string;
   installationDeadline?: string;
   replacementReason: string;
-  items: Array<{
+  boreholeDrilling?: BoreholeDrillingPayload;
+  waterTower?: WaterTowerPayload;
+  purificationSystem?: PurificationSystemPayload;
+  items?: Array<{
     equipmentItemId: string;
     quantity: number;
     notes?: string;
   }>;
+}
+
+// ── WASH Activities ──
+
+export interface BoreholeDrillingPayload {
+  boreholeType: 'sand' | 'artesian';
+  expectedFlowRate: number;
+  desiredDiameter: number;
+  notes?: string;
+}
+
+export interface WaterTowerPayload {
+  towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
+  quantity: number;
+  notes?: string;
+}
+
+export interface PurificationSystemPayload {
+  hasRoom: boolean;
+  hasTemperatureControl: boolean;
+  hasWaterInletDrainage: boolean;
+  hasPowerSupply: boolean;
+  notes?: string;
 }
 
 /** Unit label helper */

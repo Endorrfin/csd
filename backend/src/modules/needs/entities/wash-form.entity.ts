@@ -66,6 +66,35 @@ export class WashForm {
   @Column({ type: 'text' })
   replacementReason: string;
 
+  // ── WASH Activities (опціональні, JSONB) ──
+
+  /** Розділ III: Буріння свердловин */
+  @Column({ type: 'jsonb', nullable: true })
+  boreholeDrilling: {
+    boreholeType: 'sand' | 'artesian';
+    expectedFlowRate: number;
+    desiredDiameter: number;
+    notes?: string;
+  } | null;
+
+  /** Розділ IV: Водонапірні башти */
+  @Column({ type: 'jsonb', nullable: true })
+  waterTower: {
+    towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
+    quantity: number;
+    notes?: string;
+  } | null;
+
+  /** Розділ V: Системи очищення води */
+  @Column({ type: 'jsonb', nullable: true })
+  purificationSystem: {
+    hasRoom: boolean;
+    hasTemperatureControl: boolean;
+    hasWaterInletDrainage: boolean;
+    hasPowerSupply: boolean;
+    notes?: string;
+  } | null;
+
   // ── Позиції заявки (обладнання та матеріали) ──
 
   @OneToMany(() => WashFormItem, (item) => item.washForm, {
