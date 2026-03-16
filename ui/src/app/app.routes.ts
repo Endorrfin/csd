@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { managerGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -38,6 +39,15 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/needs/needs.routes').then((m) => m.needsRoutes),
   },
+  // ── Admin panel (manager/admin only) ──
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./features/admin/admin').then((m) => m.AdminComponent),
+    loadChildren: () =>
+      import('./features/admin/admin.routes').then((m) => m.adminRoutes),
+    canActivate: [managerGuard],
+  },
   {
     path: 'contact',
     loadComponent: () =>
@@ -50,7 +60,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/login/login').then((m) => m.LoginComponent),
   },
-  // Redirect old wash-form URL to new location
+  // Redirect old wash-form URL
   {
     path: 'wash-form',
     redirectTo: 'needs/wash-form',
