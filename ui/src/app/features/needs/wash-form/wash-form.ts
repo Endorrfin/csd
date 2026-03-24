@@ -125,9 +125,6 @@ import {
             <div class="section-header-optional">
               <div>
                 <h2 class="section-title">{{ isUa ? 'III. Буріння свердловин' : 'III. Borehole Drilling' }}</h2>
-                <p class="section-hint">{{ isUa ? 
-                  'Буріння свердловини на воду — це процес створення вузької та глибокої вертикальної або похилої виробки (свердловини) у ґрунті за допомогою спеціального бурового обладнання для отримання доступу до підземних водоносних горизонтів.' : 
-                  'Drilling a water borehole is the process of creating a narrow and deep vertical or inclined working (borehole / well) in the ground using special drilling equipment to gain access to underground aquifers.' }}</p>
                 <p class="section-hint">{{ isUa ? 'Заповніть, якщо потрібне буріння. Інакше натисніть Пропустити.' : 'Fill if drilling is needed. Otherwise click Skip.' }}</p>
               </div>
               <span class="badge-optional">{{ isUa ? 'опціонально' : 'optional' }}</span>
@@ -163,10 +160,6 @@ import {
             <div class="section-header-optional">
               <div>
                 <h2 class="section-title">{{ isUa ? 'IV. Водонапірні башти' : 'IV. Water Towers' }}</h2>
-                <p class="section-hint">{{ isUa ? 
-                  'Водонапірна башта Рожновського — це гідротехнічна споруда, що представляє собою сталевий бак для води, встановлений на висоті для створення напору та накопичення запасу води в системі водопостачання.' : 
-                  'The Rozhnovsky water tower is a hydraulic structure that is a steel water tank installed at a height to create pressure and accumulate water in the water supply system.' }}
-                </p>
                 <p class="section-hint">{{ isUa ? 'ВБР класифікуються за обʼємом бака (15, 25, 50 м3) та висотою опори (8, 12, 15, 18 м).' : 'VBRs classified by tank volume and support height.' }}</p>
               </div>
               <span class="badge-optional">{{ isUa ? 'опціонально' : 'optional' }}</span>
@@ -264,13 +257,20 @@ import {
                         </select>
                       </div>
                       <div class="form-field">
-                        <label>{{ isUa ? 'Позиція' : 'Item' }}</label>
-                        <select formControlName="equipmentItemId">
+                        <label>{{ isUa ? 'Пошук / Позиція' : 'Search / Item' }}</label>
+                        <input class="search-input"
+                               [placeholder]="isUa ? 'Почніть вводити назву...' : 'Start typing name...'"
+                               [value]="getSearchText(idx)"
+                               (input)="onSearchInput(idx, $event)" />
+                        <select formControlName="equipmentItemId" (change)="onItemSelected(idx)">
                           <option value="">{{ isUa ? '-- Позиція --' : '-- Item --' }}</option>
                           @for (eq of getFilteredItems(idx); track eq.id) {
                             <option [value]="eq.id">{{ isUa ? eq.nameUa : eq.nameEn }}</option>
                           }
                         </select>
+                        @if (isDuplicate(idx)) {
+                          <span class="warning-text">{{ isUa ? 'Ця позиція вже додана вище' : 'This item is already added above' }}</span>
+                        }
                       </div>
                       <div class="form-field form-field-sm">
                         <label>{{ isUa ? 'К-сть' : 'Qty' }}
@@ -450,6 +450,9 @@ import {
     .btn-remove:hover { background:#fff5f5; border-color:#e53e3e; }
     .equipment-row-fields { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
     .form-field-sm { max-width:140px; }
+    .search-input { margin-bottom:.35rem; background:#fffbeb !important; border-color:#fbbf24 !important; font-size:.8rem !important; }
+    .search-input::placeholder { color:#92400e; opacity:.6; }
+    .warning-text { font-size:.7rem; color:#d97706; font-weight:500; }
     .btn { padding:.6rem 1.5rem; border:none; border-radius:6px; font-size:.9rem; font-weight:500; cursor:pointer; transition:all .15s; }
     .btn-primary { background:#2b6cb0; color:#fff; }
     .btn-primary:hover { background:#2c5282; }
@@ -505,6 +508,8 @@ export class WashFormComponent implements OnInit {
   catalogLoading = signal(true);
   categories = signal<EquipmentCategory[]>([]);
   private itemsMap = new Map<string, EquipmentItem>();
+  /** Per-row search text (not part of form, UI-only) */
+  private searchTexts = new Map<number, string>();
 
   steps = [
     { key: 'general', labelUa: 'Інфо', labelEn: 'Info', optional: false },
@@ -528,8 +533,7 @@ export class WashFormComponent implements OnInit {
     installationDeadline: [''],
     replacementReason: ['', [Validators.required, Validators.minLength(10)]],
     boreholeDrilling: this.fb.group({ boreholeType: [''], expectedFlowRate: [null], desiredDiameter: [null], notes: [''] }),
-    // waterTower: this.fb.group({ towerType: [''], quantity: [null], notes: [''] }),
-    waterTower: this.fb.group({ towerType: [''], quantity: [1], notes: [''] }),
+    waterTower: this.fb.group({ towerType: [''], quantity: [null], notes: [''] }),
     purificationSystem: this.fb.group({ hasRoom: [false], hasTemperatureControl: [false], hasWaterInletDrainage: [false], hasPowerSupply: [false], notes: [''] }),
     items: this.fb.array([this.createItemGroup()]),
   });
@@ -560,13 +564,53 @@ export class WashFormComponent implements OnInit {
     return this.fb.group({ categoryId: [''], equipmentItemId: [''], quantity: [null], notes: [''] });
   }
   addItem(): void { this.itemsArray.push(this.createItemGroup()); }
-  removeItem(i: number): void { this.itemsArray.removeAt(i); }
-  onCategoryChange(i: number): void { (this.itemsArray.at(i) as FormGroup).patchValue({ equipmentItemId: '' }); }
+  removeItem(i: number): void { this.itemsArray.removeAt(i); this.searchTexts.delete(i); }
+  onCategoryChange(i: number): void {
+    (this.itemsArray.at(i) as FormGroup).patchValue({ equipmentItemId: '' });
+    this.searchTexts.set(i, '');
+  }
+
+  /** Called when user selects an item from dropdown — clear search */
+  onItemSelected(i: number): void { this.searchTexts.set(i, ''); }
+
+  /** Get current search text for a row */
+  getSearchText(i: number): string { return this.searchTexts.get(i) ?? ''; }
+
+  /** Handle search input */
+  onSearchInput(i: number, event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.searchTexts.set(i, val);
+    // Clear selected item when typing
+    (this.itemsArray.at(i) as FormGroup).patchValue({ equipmentItemId: '' });
+  }
 
   getFilteredItems(i: number): EquipmentItem[] {
     const catId = this.itemsArray.at(i).get('categoryId')?.value;
-    if (!catId) return this.categories().flatMap((c) => c.items);
-    return this.categories().find((c) => c.id === catId)?.items ?? [];
+    let items: EquipmentItem[];
+    if (!catId) {
+      items = this.categories().flatMap((c) => c.items);
+    } else {
+      items = this.categories().find((c) => c.id === catId)?.items ?? [];
+    }
+    // Apply text search filter
+    const search = (this.searchTexts.get(i) ?? '').toLowerCase().trim();
+    if (search) {
+      items = items.filter((item) =>
+        item.nameUa.toLowerCase().includes(search) ||
+        item.nameEn.toLowerCase().includes(search),
+      );
+    }
+    return items;
+  }
+
+  /** Check if item at index is a duplicate of an earlier row */
+  isDuplicate(i: number): boolean {
+    const itemId = this.itemsArray.at(i).get('equipmentItemId')?.value;
+    if (!itemId) return false;
+    for (let j = 0; j < i; j++) {
+      if (this.itemsArray.at(j).get('equipmentItemId')?.value === itemId) return true;
+    }
+    return false;
   }
   getSelectedItemUnit(i: number): string {
     const id = this.itemsArray.at(i).get('equipmentItemId')?.value;
@@ -577,8 +621,7 @@ export class WashFormComponent implements OnInit {
   getItemUnitById(id: string): string { const i = this.itemsMap.get(id); return i ? getUnitLabel(i.unit, this.isUa) : ''; }
 
   isBoreholeFilled(): boolean { const v = this.form.value.boreholeDrilling; return !!(v?.boreholeType && v?.expectedFlowRate && v?.desiredDiameter); }
-  // isWaterTowerFilled(): boolean { const v = this.form.value.waterTower; return !!(v?.towerType && v?.quantity); }
-  isWaterTowerFilled(): boolean { const v = this.form.value.waterTower; return !!v?.towerType; }
+  isWaterTowerFilled(): boolean { const v = this.form.value.waterTower; return !!(v?.towerType && v?.quantity); }
   isPurificationFilled(): boolean { const v = this.form.value.purificationSystem; return !!(v?.hasRoom || v?.hasTemperatureControl || v?.hasWaterInletDrainage || v?.hasPowerSupply); }
   hasEquipmentItems(): boolean { return this.getFilledItemsCount() > 0; }
   hasAnySectionFilled(): boolean { return this.isBoreholeFilled() || this.isWaterTowerFilled() || this.isPurificationFilled() || this.hasEquipmentItems(); }
@@ -643,10 +686,10 @@ export class WashFormComponent implements OnInit {
   }
 
   resetForm(): void {
-    // this.form.reset({ boreholeDrilling: { boreholeType: '', notes: '' }, waterTower: { towerType: '', notes: '' }, purificationSystem: { hasRoom: false, hasTemperatureControl: false, hasWaterInletDrainage: false, hasPowerSupply: false, notes: '' } });
-    this.form.reset({ boreholeDrilling: { boreholeType: '', notes: '' }, waterTower: { towerType: '', quantity: 1, notes: '' }, purificationSystem: { hasRoom: false, hasTemperatureControl: false, hasWaterInletDrainage: false, hasPowerSupply: false, notes: '' } });
+    this.form.reset({ boreholeDrilling: { boreholeType: '', notes: '' }, waterTower: { towerType: '', notes: '' }, purificationSystem: { hasRoom: false, hasTemperatureControl: false, hasWaterInletDrainage: false, hasPowerSupply: false, notes: '' } });
     this.itemsArray.clear();
     this.itemsArray.push(this.createItemGroup());
+    this.searchTexts.clear();
     this.currentStep.set(0);
     this.submitted.set(false);
     this.submitError.set(false);

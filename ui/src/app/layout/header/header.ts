@@ -25,8 +25,13 @@ import { Router } from '@angular/router';
           <a routerLink="/cooperation" routerLinkActive="active">{{ 'NAV.COOPERATION' | translate }}</a>
           <a routerLink="/needs" routerLinkActive="active">{{ 'NAV.NEEDS' | translate }}</a>
           <a routerLink="/contact" routerLinkActive="active">{{ 'NAV.CONTACT' | translate }}</a>
+          @if (auth.isManager) {
+            <a routerLink="/admin" routerLinkActive="active" class="nav-admin">
+              {{ currentLang === 'ua' ? 'Адмін' : 'Admin' }}
+            </a>
+          }
         </nav>
-        
+
         <div class="header__actions">
           <button (click)="switchLang()" class="header__lang">
             {{ currentLang === 'ua' ? 'EN' : 'UA' }}
@@ -38,7 +43,7 @@ import { Router } from '@angular/router';
             <a routerLink="/login" class="header__login">{{ 'NAV.LOGIN' | translate }}</a>
           }
         </div>
-        
+
       </div>
     </header>
   `,
@@ -89,6 +94,15 @@ import { Router } from '@angular/router';
     .header__nav a.active {
       color: white;
       background: rgba(255, 255, 255, 0.1);
+    }
+    /* ── Admin link highlight ── */
+    .nav-admin {
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-weight: 500;
+    }
+    .nav-admin:hover,
+    .nav-admin.active {
+      border-color: rgba(255, 255, 255, 0.6);
     }
     .header__actions {
       display: flex;
