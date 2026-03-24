@@ -220,10 +220,11 @@ export class WashFormsListComponent implements OnInit {
   }
 
   exportCsv(): void {
-    const params: string[] = [];
+    const lang = this.isUa ? 'ua' : 'en';
+    const params: string[] = [`lang=${lang}`];
     if (this.statusFilter) params.push(`status=${this.statusFilter}`);
     if (this.regionFilter) params.push(`region=${this.regionFilter}`);
-    const qs = params.length ? `?${params.join('&')}` : '';
+    const qs = `?${params.join('&')}`;
     const token = localStorage.getItem('token');
 
     // Direct download via fetch with auth header

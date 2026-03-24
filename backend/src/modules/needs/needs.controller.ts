@@ -2,9 +2,6 @@ import {
   Controller, Get, Post, Patch, Delete,
   Param, Body, Query, Res, UseGuards,
 } from '@nestjs/common';
-// import { Response } from 'express';
-// import type { Response } from 'express';
-import * as express from 'express';
 import { NeedsService } from './needs.service';
 import { CreateWashFormDto } from './dto/create-wash-form.dto';
 import { UpdateWashFormDto } from './dto/update-wash-form.dto';
@@ -49,13 +46,13 @@ export class NeedsFormsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
   async exportCsv(
-    // @Res() res: Response,
-    // @Res() res: any,
-    @Res() res: express.Response,
+    @Res() res: any,
     @Query('status') status?: FormStatus,
     @Query('region') region?: string,
+    @Query('lang') lang?: string,
   ) {
-    const csv = await this.needsService.exportCsv({ status, region });
+    const isUa = lang === 'ua';
+    const csv = await this.needsService.exportCsv({ status, region, isUa });
     const filename = `wash-forms-${new Date().toISOString().slice(0, 10)}.csv`;
 
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
