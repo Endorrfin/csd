@@ -28,6 +28,34 @@ export class WashForm {
   @Column()
   region: string;
 
+  // ── LOCATION FIELDS ──
+  @Column({ default: '' })
+  regionEn: string;
+
+  @Column({ default: '' })
+  district: string;
+
+  @Column({ default: '' })
+  districtEn: string;
+
+  @Column({ default: '' })
+  community: string;
+
+  @Column({ default: '' })
+  communityEn: string;
+
+  @Column({ default: '' })
+  communityCode: string;
+
+  @Column({ nullable: true })
+  settlement: string;
+
+  @Column({ nullable: true })
+  settlementEn: string;
+
+  @Column({ nullable: true })
+  settlementCode: string;
+
   /** Назва організації (громада, водоканал, медичний заклад, школа тощо) */
   @Column()
   organizationName: string;

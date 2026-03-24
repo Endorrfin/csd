@@ -136,6 +136,37 @@ export class CreateWashFormDto {
   @MinLength(2)
   region: string;
 
+  // ── LOCATION FIELDS ──
+  @IsString()
+  regionEn: string;
+
+  @IsString()
+  district: string;
+
+  @IsString()
+  districtEn: string;
+
+  @IsString()
+  community: string;
+
+  @IsString()
+  communityEn: string;
+
+  @IsString()
+  communityCode: string;
+
+  @IsOptional()
+  @IsString()
+  settlement?: string;
+
+  @IsOptional()
+  @IsString()
+  settlementEn?: string;
+
+  @IsOptional()
+  @IsString()
+  settlementCode?: string;
+
   @IsString()
   @MinLength(2)
   organizationName: string;
@@ -152,7 +183,6 @@ export class CreateWashFormDto {
   email: string;
 
   // ── Інформація про об'єкт ──
-
   @IsString()
   @MinLength(2)
   objectName: string;

@@ -53,8 +53,31 @@ import { TranslateService } from '@ngx-translate/core';
         <!-- General info -->
         <div class="section-card">
           <h3>{{ isUa ? 'I. Загальна інформація' : 'I. General Information' }}</h3>
-          <div class="info-grid">
-            <div class="info-item"><span class="info-label">{{ isUa ? 'Область' : 'Region' }}</span><span>{{ form()!.region }}</span></div>
+          <div class="info-grid">            
+            
+            <div class="info-item">
+              <span class="info-label">{{ isUa ? 'Область' : 'Region' }}</span>
+              <span>{{ isUa ? form()!.region : form()!.regionEn }}</span>
+            </div>
+            @if (form()!.district) {
+              <div class="info-item">
+                <span class="info-label">{{ isUa ? 'Район' : 'District' }}</span>
+                <span>{{ isUa ? form()!.district : form()!.districtEn }}</span>
+              </div>
+            }
+            @if (form()!.community) {
+              <div class="info-item">
+                <span class="info-label">{{ isUa ? 'Громада' : 'Community' }}</span>
+                <span>{{ isUa ? form()!.community : form()!.communityEn }}</span>
+              </div>
+            }
+            @if (form()!.settlement) {
+              <div class="info-item">
+                <span class="info-label">{{ isUa ? 'Населений пункт' : 'Settlement' }}</span>
+                <span>{{ isUa ? form()!.settlement : form()!.settlementEn }}</span>
+              </div>
+            }
+            
             <div class="info-item"><span class="info-label">{{ isUa ? 'Організація' : 'Organization' }}</span><span>{{ form()!.organizationName }}</span></div>
             <div class="info-item"><span class="info-label">{{ isUa ? 'ПІБ керівника' : 'Head' }}</span><span>{{ form()!.headName }}</span></div>
             <div class="info-item"><span class="info-label">{{ isUa ? 'Телефон' : 'Phone' }}</span><span>{{ form()!.headPhone }}</span></div>

@@ -7,6 +7,8 @@ import {
   FormArray,
   Validators,
 } from '@angular/forms';
+import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
+import { LocationValue } from '../../../shared/interfaces/location.interfaces';
 import { ApiService } from '../../../core/services/api.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -19,7 +21,7 @@ import {
 @Component({
   selector: 'app-wash-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, LocationSelectorComponent],
   template: `
     <!-- Stepper -->
     <div class="stepper">
@@ -57,12 +59,19 @@ import {
         @if (currentStep() === 0) {
           <div class="form-section">
             <h2 class="section-title">{{ isUa ? 'I. Загальна інформація' : 'I. General Information' }}</h2>
-            <div class="form-grid">
-              <div class="form-field">
-                <label>{{ isUa ? 'Область' : 'Region' }} <span class="req">*</span></label>
-                <input formControlName="region" [placeholder]="isUa ? 'напр. Харківська' : 'e.g. Kharkivska'" />
-                @if (showError('region')) { <span class="error">{{ isUa ? 'Обовʼязкове поле' : 'Required' }}</span> }
-              </div>
+            <div class="form-grid">              
+              
+              <div class="location-block">
+                <app-location-selector
+                  formControlName="location"
+                  [isUa]="isUa"
+                  [required]="true">
+                </app-location-selector>
+                @if (showError('location')) {
+                  <span class="error">{{ isUa ? 'Оберіть хоча б область' : 'Select at least a region' }}</span>
+                }
+              </div>    
+              
               <div class="form-field">
                 <label>{{ isUa ? 'Назва організації' : 'Organization name' }} <span class="req">*</span></label>
                 <input formControlName="organizationName" [placeholder]="isUa ? 'Громада, водоканал...' : 'Community, water utility...'" />
@@ -382,7 +391,26 @@ import {
             <div class="review-block">
               <h3>{{ isUa ? 'I. Загальна інформація' : 'I. General Information' }}</h3>
               <div class="review-grid">
-                <div class="review-item"><span class="review-label">{{ isUa ? 'Область' : 'Region' }}</span><span class="review-value">{{ form.value.region }}</span></div>
+                
+                @if (form.value.location?.districtUa) {
+                  <div class="review-item">
+                    <span class="review-label">{{ isUa ? 'Район' : 'District' }}</span>
+                    <span class="review-value">{{ isUa ? form.value.location?.districtUa : form.value.location?.districtEn }}</span>
+                  </div>
+                }
+                @if (form.value.location?.communityUa) {
+                  <div class="review-item">
+                    <span class="review-label">{{ isUa ? 'Громада' : 'Community' }}</span>
+                    <span class="review-value">{{ isUa ? form.value.location?.communityUa : form.value.location?.communityEn }}</span>
+                  </div>
+                }
+                @if (form.value.location?.settlementUa) {
+                  <div class="review-item">
+                    <span class="review-label">{{ isUa ? 'Населений пункт' : 'Settlement' }}</span>
+                    <span class="review-value">{{ isUa ? form.value.location?.settlementUa : form.value.location?.settlementEn }}</span>
+                  </div> 
+                }
+                
                 <div class="review-item"><span class="review-label">{{ isUa ? 'Організація' : 'Organization' }}</span><span class="review-value">{{ form.value.organizationName }}</span></div>
                 <div class="review-item"><span class="review-label">{{ isUa ? 'ПІБ керівника' : 'Head' }}</span><span class="review-value">{{ form.value.headName }}</span></div>
                 <div class="review-item"><span class="review-label">{{ isUa ? 'Телефон' : 'Phone' }}</span><span class="review-value">{{ form.value.headPhone }}</span></div>
@@ -526,6 +554,7 @@ import {
     .section-title { font-size:1.15rem; font-weight:600; color:#1a365d; margin:0 0 .25rem; }
     .section-hint { color:#64748b; font-size:.85rem; margin:0 0 1.25rem; }
     .section-header-optional { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem; }
+    .location-block { margin-bottom: 1.25rem; }
     .badge-optional { font-size:.65rem; background:#fef3c7; color:#92400e; padding:.2rem .5rem; border-radius:4px; text-transform:uppercase; font-weight:600; letter-spacing:.03em; white-space:nowrap; margin-top:.25rem; }
     .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
     .full-width { grid-column:1/-1; }
@@ -622,7 +651,7 @@ export class WashFormComponent implements OnInit {
   ];
 
   form: FormGroup = this.fb.group({
-    region: ['', [Validators.required, Validators.minLength(2)]],
+    location: [null, [Validators.required]],
     organizationName: ['', [Validators.required, Validators.minLength(2)]],
     headName: ['', [Validators.required, Validators.minLength(2)]],
     headPhone: ['', [Validators.required, Validators.minLength(6)]],
@@ -641,7 +670,7 @@ export class WashFormComponent implements OnInit {
   get itemsArray(): FormArray { return this.form.get('items') as FormArray; }
 
   private stepFields: string[][] = [
-    ['region', 'organizationName', 'headName', 'headPhone', 'email'],
+    ['location', 'organizationName', 'headName', 'headPhone', 'email'],
     ['objectName', 'dependentPopulation', 'replacementReason'],
     [], [], [], [], [],
   ];
@@ -765,14 +794,29 @@ export class WashFormComponent implements OnInit {
     this.submitting.set(true);
     this.submitError.set(false);
     const v = this.form.value;
+    const loc: LocationValue | null = v.location;
     const payload: CreateWashFormPayload = {
-      region: v.region, organizationName: v.organizationName, headName: v.headName,
-      headPhone: v.headPhone, email: v.email, objectName: v.objectName,
+      region: loc?.regionUa ?? '',
+      regionEn: loc?.regionEn ?? '',
+      district: loc?.districtUa ?? '',
+      districtEn: loc?.districtEn ?? '',
+      community: loc?.communityUa ?? '',
+      communityEn: loc?.communityEn ?? '',
+      communityCode: loc?.communityCode ?? '',
+      settlement: loc?.settlementUa || undefined,
+      settlementEn: loc?.settlementEn || undefined,
+      settlementCode: loc?.settlementCode || undefined,
+      organizationName: v.organizationName,
+      headName: v.headName,
+      headPhone: v.headPhone,
+      email: v.email,
+      objectName: v.objectName,
       dependentPopulation: v.dependentPopulation,
       socialFacilities: v.socialFacilities || undefined,
       installationDeadline: v.installationDeadline || undefined,
       replacementReason: v.replacementReason,
     };
+
     if (this.isBoreholeFilled()) {
       const bh = v.boreholeDrilling;
       payload.boreholeDrilling = {
