@@ -71,9 +71,14 @@ export class WashForm {
   /** Розділ III: Буріння свердловин */
   @Column({ type: 'jsonb', nullable: true })
   boreholeDrilling: {
-    boreholeType: 'sand' | 'artesian';
+    workType: 'new_drilling' | 'repair_cleaning' | 'new_near_existing';
+    hasAquiferInfo?: boolean;
+    existingDepth?: number;
+    existingDebit?: number;
+    hasDesignInfo?: boolean;
+    hasPassport?: boolean;
+    oldLocation?: string;
     expectedFlowRate: number;
-    desiredDiameter: number;
     notes?: string;
   } | null;
 
@@ -81,7 +86,13 @@ export class WashForm {
   @Column({ type: 'jsonb', nullable: true })
   waterTower: {
     towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
-    quantity: number;
+    towerHeight: '8' | '12' | '15' | '18' | '20' | '25' | 'over_25';
+    customHeight?: number;
+    hasFoundation: boolean;
+    isFoundationSuitable: boolean;
+    needsFoundationReconstruction: boolean;
+    canSelfReconstruct: boolean;
+    canProvideCrane: boolean;
     notes?: string;
   } | null;
 
@@ -92,6 +103,8 @@ export class WashForm {
     hasTemperatureControl: boolean;
     hasWaterInletDrainage: boolean;
     hasPowerSupply: boolean;
+    canMaintainSystem: boolean;
+    willingToProvideWater: boolean;
     notes?: string;
   } | null;
 

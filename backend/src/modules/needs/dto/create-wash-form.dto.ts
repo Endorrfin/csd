@@ -32,18 +32,41 @@ export class CreateWashFormItemDto {
 // ── WASH Activities DTOs ──
 
 export class BoreholeDrillingDto {
-  @IsIn(['sand', 'artesian'])
-  boreholeType: 'sand' | 'artesian';
+  @IsIn(['new_drilling', 'repair_cleaning', 'new_near_existing'])
+  workType: 'new_drilling' | 'repair_cleaning' | 'new_near_existing';
+
+  @IsBoolean()
+  @IsOptional()
+  hasAquiferInfo?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  @Max(280)
+  existingDepth?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(1)
+  @Max(30)
+  existingDebit?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  hasDesignInfo?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  hasPassport?: boolean;
+
+  @IsString()
+  @IsOptional()
+  oldLocation?: string;
 
   @IsNumber()
   @Min(1)
   @Max(50)
   expectedFlowRate: number;
-
-  @IsNumber()
-  @Min(125)
-  @Max(160)
-  desiredDiameter: number;
 
   @IsString()
   @IsOptional()
@@ -54,9 +77,28 @@ export class WaterTowerDto {
   @IsIn(['vbr_15', 'vbr_25', 'vbr_50', 'vbr_over_50'])
   towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
 
-  @IsInt()
-  @Min(1)
-  quantity: number;
+  @IsIn(['8', '12', '15', '18', '20', '25', 'over_25'])
+  towerHeight: '8' | '12' | '15' | '18' | '20' | '25' | 'over_25';
+
+  @IsNumber()
+  @IsOptional()
+  @Min(26)
+  customHeight?: number;
+
+  @IsBoolean()
+  hasFoundation: boolean;
+
+  @IsBoolean()
+  isFoundationSuitable: boolean;
+
+  @IsBoolean()
+  needsFoundationReconstruction: boolean;
+
+  @IsBoolean()
+  canSelfReconstruct: boolean;
+
+  @IsBoolean()
+  canProvideCrane: boolean;
 
   @IsString()
   @IsOptional()
@@ -75,6 +117,12 @@ export class PurificationSystemDto {
 
   @IsBoolean()
   hasPowerSupply: boolean;
+
+  @IsBoolean()
+  canMaintainSystem: boolean;
+
+  @IsBoolean()
+  willingToProvideWater: boolean;
 
   @IsString()
   @IsOptional()

@@ -130,21 +130,55 @@ import {
               <span class="badge-optional">{{ isUa ? 'опціонально' : 'optional' }}</span>
             </div>
             <div class="form-grid">
-              <div class="form-field">
-                <label>{{ isUa ? 'Тип свердловини' : 'Borehole type' }}</label>
-                <select formControlName="boreholeType">
+              <div class="form-field full-width">
+                <label>{{ isUa ? 'Виберіть необхідний варіант' : 'Select the required option' }}</label>
+                <select formControlName="workType">
                   <option value="">{{ isUa ? '-- Оберіть --' : '-- Select --' }}</option>
-                  <option value="sand">{{ isUa ? 'Піщана (15-30 м)' : 'Sand (15-30 m)' }}</option>
-                  <option value="artesian">{{ isUa ? 'Артезіанська (30-200+ м)' : 'Artesian (30-200+ m)' }}</option>
+                  <option value="new_drilling">{{ isUa ? 'Буріння нової свердловини' : 'Drilling a new borehole' }}</option>
+                  <option value="repair_cleaning">{{ isUa ? 'Ремонт (чистка) існуючої свердловини' : 'Repair (cleaning) of an existing borehole' }}</option>
+                  <option value="new_near_existing">{{ isUa ? 'Буріння нової поруч із існуючою' : 'Drilling new next to existing' }}</option>
                 </select>
               </div>
+
+              @if (form.value.boreholeDrilling?.workType === 'new_near_existing') {
+                <div class="form-field">
+                  <label>{{ isUa ? 'Чи є відомості про водний горизонт?' : 'Do you have aquifer information?' }}</label>
+                  <select formControlName="hasAquiferInfo">
+                    <option [ngValue]="false">{{ isUa ? 'Ні' : 'No' }}</option>
+                    <option [ngValue]="true">{{ isUa ? 'Так' : 'Yes' }}</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>{{ isUa ? 'Глибина існуючої свердловини, м' : 'Existing borehole depth, m' }}</label>
+                  <input type="number" formControlName="existingDepth" min="1" max="280" placeholder="1 - 280" />
+                </div>
+                <div class="form-field">
+                  <label>{{ isUa ? 'Дебіт існуючої свердловини, м³/год' : 'Existing borehole debit, m³/h' }}</label>
+                  <input type="number" formControlName="existingDebit" min="1" max="30" placeholder="1 - 30" />
+                </div>
+                <div class="form-field">
+                  <label>{{ isUa ? 'Чи є інформація про конструкцію свердловини, її обладнанання?' : 'Design info available?' }}</label>
+                  <select formControlName="hasDesignInfo">
+                    <option [ngValue]="false">{{ isUa ? 'Ні' : 'No' }}</option>
+                    <option [ngValue]="true">{{ isUa ? 'Так' : 'Yes' }}</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label>{{ isUa ? 'Чи є паспорт на існуючу свердловину?' : 'Passport for existing borehole?' }}</label>
+                  <select formControlName="hasPassport">
+                    <option [ngValue]="false">{{ isUa ? 'Ні' : 'No' }}</option>
+                    <option [ngValue]="true">{{ isUa ? 'Так' : 'Yes' }}</option>
+                  </select>
+                </div>
+                <div class="form-field full-width">
+                  <label>{{ isUa ? 'Де розташована стара свердловина?' : 'Where is the old borehole located?' }}</label>
+                  <input formControlName="oldLocation" [placeholder]="isUa ? 'Опишіть розташування' : 'Describe location'" />
+                </div>
+              }
+
               <div class="form-field">
-                <label>{{ isUa ? 'Очікуваний дебіт, м3/год' : 'Expected flow rate, m3/h' }}</label>
+                <label>{{ isUa ? 'Очікуваний дебіт після виконання робіт, м³/год' : 'Expected flow rate after work, m³/h' }}</label>
                 <input type="number" formControlName="expectedFlowRate" min="1" max="50" placeholder="1 - 50" />
-              </div>
-              <div class="form-field">
-                <label>{{ isUa ? 'Бажаний діаметр, мм' : 'Desired diameter, mm' }}</label>
-                <input type="number" formControlName="desiredDiameter" min="125" max="160" placeholder="125 - 160" />
               </div>
               <div class="form-field full-width">
                 <label>{{ isUa ? 'Примітки' : 'Notes' }}</label>
@@ -160,7 +194,7 @@ import {
             <div class="section-header-optional">
               <div>
                 <h2 class="section-title">{{ isUa ? 'IV. Водонапірні башти' : 'IV. Water Towers' }}</h2>
-                <p class="section-hint">{{ isUa ? 'ВБР класифікуються за обʼємом бака (15, 25, 50 м3) та висотою опори (8, 12, 15, 18 м).' : 'VBRs classified by tank volume and support height.' }}</p>
+                <p class="section-hint">{{ isUa ? 'ВБР класифікуються за обʼємом бака та висотою опори.' : 'VBRs classified by tank volume and support height.' }}</p>
               </div>
               <span class="badge-optional">{{ isUa ? 'опціонально' : 'optional' }}</span>
             </div>
@@ -169,16 +203,57 @@ import {
                 <label>{{ isUa ? 'Тип башти' : 'Tower type' }}</label>
                 <select formControlName="towerType">
                   <option value="">{{ isUa ? '-- Оберіть --' : '-- Select --' }}</option>
-                  <option value="vbr_15">{{ isUa ? 'ВБР-15 (15 м3)' : 'VBR-15 (15 m3)' }}</option>
-                  <option value="vbr_25">{{ isUa ? 'ВБР-25 (25 м3)' : 'VBR-25 (25 m3)' }}</option>
-                  <option value="vbr_50">{{ isUa ? 'ВБР-50 (50 м3)' : 'VBR-50 (50 m3)' }}</option>
-                  <option value="vbr_over_50">{{ isUa ? 'ВБР понад 50 м3' : 'VBR over 50 m3' }}</option>
+                  <option value="vbr_15">{{ isUa ? 'ВБР-15 (15 м³)' : 'VBR-15 (15 m³)' }}</option>
+                  <option value="vbr_25">{{ isUa ? 'ВБР-25 (25 м³)' : 'VBR-25 (25 m³)' }}</option>
+                  <option value="vbr_50">{{ isUa ? 'ВБР-50 (50 м³)' : 'VBR-50 (50 m³)' }}</option>
+                  <option value="vbr_over_50">{{ isUa ? 'ВБР понад 50 м³' : 'VBR over 50 m³' }}</option>
                 </select>
               </div>
               <div class="form-field">
-                <label>{{ isUa ? 'Кількість' : 'Quantity' }}</label>
-                <input type="number" formControlName="quantity" min="1" placeholder="1" />
+                <label>{{ isUa ? 'Висота башти' : 'Tower height' }}</label>
+                <select formControlName="towerHeight">
+                  <option value="">{{ isUa ? '-- Оберіть --' : '-- Select --' }}</option>
+                  <option value="8">8 {{ isUa ? 'м (низька)' : 'm (low)' }}</option>
+                  <option value="12">12 {{ isUa ? 'м (низька)' : 'm (low)' }}</option>
+                  <option value="15">15 {{ isUa ? 'м (середня)' : 'm (average)' }}</option>
+                  <option value="18">18 {{ isUa ? 'м (середня)' : 'm (average)' }}</option>
+                  <option value="20">20 {{ isUa ? 'м (висока)' : 'm (high)' }}</option>
+                  <option value="25">25 {{ isUa ? 'м (висока)' : 'm (high)' }}</option>
+                  <option value="over_25">{{ isUa ? 'Понад 25 м' : 'Over 25 m' }}</option>
+                </select>
               </div>
+              @if (form.value.waterTower?.towerHeight === 'over_25') {
+                <div class="form-field">
+                  <label>{{ isUa ? 'Вкажіть висоту, м' : 'Enter height, m' }}</label>
+                  <input type="number" formControlName="customHeight" min="26" placeholder="26+" />
+                </div>
+              }
+            </div>
+
+            <div class="checklist" style="margin-top:1rem">
+              <label class="checklist-item">
+                <input type="checkbox" formControlName="hasFoundation" />
+                <span class="checklist-text">{{ isUa ? 'Чи є фундамент під Водонапірну башту?' : 'Is there a foundation for the Water Tower?' }}</span>
+              </label>
+              <label class="checklist-item">
+                <input type="checkbox" formControlName="isFoundationSuitable" />
+                <span class="checklist-text">{{ isUa ? 'Чи придатний фундамент для установки вибраної башти? (візуальна оцінка)' : 'Is the foundation suitable for installation? (visual assessment)' }}</span>
+              </label>
+              <label class="checklist-item">
+                <input type="checkbox" formControlName="needsFoundationReconstruction" />
+                <span class="checklist-text">{{ isUa ? 'Чи є потреба в реконструкції або будівництві нового фундаменту?' : 'Need for reconstruction or new foundation construction?' }}</span>
+              </label>
+              <label class="checklist-item">
+                <input type="checkbox" formControlName="canSelfReconstruct" />
+                <span class="checklist-text">{{ isUa ? 'Чи є можливість виконати реконструкцію / будівництво фундаменту власними силами?' : 'Can you carry out foundation reconstruction on your own?' }}</span>
+              </label>
+              <label class="checklist-item">
+                <input type="checkbox" formControlName="canProvideCrane" />
+                <span class="checklist-text">{{ isUa ? 'Чи є можливість надати кран для демонтажу / установки башти?' : 'Can you provide a crane for dismantling/installing the tower?' }}</span>
+              </label>
+            </div>
+
+            <div class="form-grid" style="margin-top:1rem">
               <div class="form-field full-width">
                 <label>{{ isUa ? 'Примітки' : 'Notes' }}</label>
                 <textarea formControlName="notes" rows="2" [placeholder]="isUa ? 'Додаткова інформація' : 'Additional information'"></textarea>
@@ -213,6 +288,14 @@ import {
               <label class="checklist-item">
                 <input type="checkbox" formControlName="hasPowerSupply" />
                 <span class="checklist-text">{{ isUa ? 'Електроживлення 220В та достатня кількість розеток' : '220V power supply and sufficient sockets' }}</span>
+              </label>
+              <label class="checklist-item">
+                <input type="checkbox" formControlName="canMaintainSystem" />
+                <span class="checklist-text">{{ isUa ? 'Спроможність обслуговування системи (оплата електроенергії, щорічне обслуговування, заміна витратних матеріалів)' : 'Ability to maintain system (electricity, annual maintenance, consumables replacement)' }}</span>
+              </label>
+              <label class="checklist-item">
+                <input type="checkbox" formControlName="willingToProvideWater" />
+                <span class="checklist-text">{{ isUa ? 'Готовність надавати очищену воду місцевим жителям, а не лише використовувати для власних потреб' : 'Willingness to provide purified water to local residents, not only for own needs' }}</span>
               </label>
             </div>
             <div class="form-grid" style="margin-top: 1rem">
@@ -323,9 +406,20 @@ import {
               <div class="review-block">
                 <h3>{{ isUa ? 'III. Буріння свердловин' : 'III. Borehole Drilling' }}</h3>
                 <div class="review-grid">
-                  <div class="review-item"><span class="review-label">{{ isUa ? 'Тип' : 'Type' }}</span><span class="review-value">{{ getBoreholeTypeLabel() }}</span></div>
-                  <div class="review-item"><span class="review-label">{{ isUa ? 'Дебіт' : 'Flow' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.expectedFlowRate }} m3/h</span></div>
-                  <div class="review-item"><span class="review-label">{{ isUa ? 'Діаметр' : 'Diameter' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.desiredDiameter }} mm</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Варіант робіт' : 'Work type' }}</span><span class="review-value">{{ getBoreholeTypeLabel() }}</span></div>
+                  @if (form.value.boreholeDrilling?.expectedFlowRate) {
+                    <div class="review-item"><span class="review-label">{{ isUa ? 'Очікуваний дебіт' : 'Expected flow' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.expectedFlowRate }} m³/h</span></div>
+                  }
+                  @if (form.value.boreholeDrilling?.workType === 'new_near_existing') {
+                    @if (form.value.boreholeDrilling?.existingDepth) {
+                      <div class="review-item"><span class="review-label">{{ isUa ? 'Глибина існуючої' : 'Existing depth' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.existingDepth }} m</span></div>
+                    }
+                    @if (form.value.boreholeDrilling?.existingDebit) {
+                      <div class="review-item"><span class="review-label">{{ isUa ? 'Дебіт існуючої' : 'Existing debit' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.existingDebit }} m³/h</span></div>
+                    }
+                    <div class="review-item"><span class="review-label">{{ isUa ? 'Водний горизонт' : 'Aquifer info' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.hasAquiferInfo ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                    <div class="review-item"><span class="review-label">{{ isUa ? 'Паспорт' : 'Passport' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.hasPassport ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                  }
                 </div>
               </div>
             }
@@ -335,7 +429,11 @@ import {
                 <h3>{{ isUa ? 'IV. Водонапірні башти' : 'IV. Water Towers' }}</h3>
                 <div class="review-grid">
                   <div class="review-item"><span class="review-label">{{ isUa ? 'Тип' : 'Type' }}</span><span class="review-value">{{ getWaterTowerTypeLabel() }}</span></div>
-                  <div class="review-item"><span class="review-label">{{ isUa ? 'Кількість' : 'Qty' }}</span><span class="review-value">{{ form.value.waterTower?.quantity }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Висота' : 'Height' }}</span><span class="review-value">{{ getWaterTowerHeightLabel() }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Фундамент' : 'Foundation' }}</span><span class="review-value">{{ form.value.waterTower?.hasFoundation ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Фундамент придатний' : 'Foundation suitable' }}</span><span class="review-value">{{ form.value.waterTower?.isFoundationSuitable ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Потреба реконструкції' : 'Needs reconstruction' }}</span><span class="review-value">{{ form.value.waterTower?.needsFoundationReconstruction ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Кран' : 'Crane' }}</span><span class="review-value">{{ form.value.waterTower?.canProvideCrane ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
                 </div>
               </div>
             }
@@ -344,10 +442,12 @@ import {
               <div class="review-block">
                 <h3>{{ isUa ? 'V. Системи очищення' : 'V. Purification' }}</h3>
                 <div class="review-grid">
-                  <div class="review-item"><span class="review-label">{{ isUa ? 'Приміщення' : 'Room' }}</span><span class="review-value">{{ form.value.purificationSystem?.hasRoom ? 'Так' : 'Ні' }}</span></div>
-                  <div class="review-item"><span class="review-label">{{ isUa ? 'Температура' : 'Temp' }}</span><span class="review-value">{{ form.value.purificationSystem?.hasTemperatureControl ? 'Так' : 'Ні' }}</span></div>
-                  <div class="review-item"><span class="review-label">{{ isUa ? 'Водопостачання' : 'Water' }}</span><span class="review-value">{{ form.value.purificationSystem?.hasWaterInletDrainage ? 'Так' : 'Ні' }}</span></div>
-                  <div class="review-item"><span class="review-label">{{ isUa ? 'Електрика' : 'Power' }}</span><span class="review-value">{{ form.value.purificationSystem?.hasPowerSupply ? 'Так' : 'Ні' }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Приміщення' : 'Room' }}</span><span class="review-value">{{ form.value.purificationSystem?.hasRoom ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Температура' : 'Temp' }}</span><span class="review-value">{{ form.value.purificationSystem?.hasTemperatureControl ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Водопостачання' : 'Water' }}</span><span class="review-value">{{ form.value.purificationSystem?.hasWaterInletDrainage ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Електрика' : 'Power' }}</span><span class="review-value">{{ form.value.purificationSystem?.hasPowerSupply ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Обслуговування' : 'Maintenance' }}</span><span class="review-value">{{ form.value.purificationSystem?.canMaintainSystem ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                  <div class="review-item"><span class="review-label">{{ isUa ? 'Надання води жителям' : 'Provide water' }}</span><span class="review-value">{{ form.value.purificationSystem?.willingToProvideWater ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
                 </div>
               </div>
             }
@@ -532,9 +632,9 @@ export class WashFormComponent implements OnInit {
     socialFacilities: [''],
     installationDeadline: [''],
     replacementReason: ['', [Validators.required, Validators.minLength(10)]],
-    boreholeDrilling: this.fb.group({ boreholeType: [''], expectedFlowRate: [null], desiredDiameter: [null], notes: [''] }),
-    waterTower: this.fb.group({ towerType: [''], quantity: [null], notes: [''] }),
-    purificationSystem: this.fb.group({ hasRoom: [false], hasTemperatureControl: [false], hasWaterInletDrainage: [false], hasPowerSupply: [false], notes: [''] }),
+    boreholeDrilling: this.fb.group({ workType: [''], hasAquiferInfo: [false], existingDepth: [null], existingDebit: [null], hasDesignInfo: [false], hasPassport: [false], oldLocation: [''], expectedFlowRate: [null], notes: [''] }),
+    waterTower: this.fb.group({ towerType: [''], towerHeight: [''], customHeight: [null], hasFoundation: [false], isFoundationSuitable: [false], needsFoundationReconstruction: [false], canSelfReconstruct: [false], canProvideCrane: [false], notes: [''] }),
+    purificationSystem: this.fb.group({ hasRoom: [false], hasTemperatureControl: [false], hasWaterInletDrainage: [false], hasPowerSupply: [false], canMaintainSystem: [false], willingToProvideWater: [false], notes: [''] }),
     items: this.fb.array([this.createItemGroup()]),
   });
 
@@ -620,22 +720,29 @@ export class WashFormComponent implements OnInit {
   getItemNameById(id: string): string { const i = this.itemsMap.get(id); return i ? (this.isUa ? i.nameUa : i.nameEn) : '---'; }
   getItemUnitById(id: string): string { const i = this.itemsMap.get(id); return i ? getUnitLabel(i.unit, this.isUa) : ''; }
 
-  isBoreholeFilled(): boolean { const v = this.form.value.boreholeDrilling; return !!(v?.boreholeType && v?.expectedFlowRate && v?.desiredDiameter); }
-  isWaterTowerFilled(): boolean { const v = this.form.value.waterTower; return !!(v?.towerType && v?.quantity); }
-  isPurificationFilled(): boolean { const v = this.form.value.purificationSystem; return !!(v?.hasRoom || v?.hasTemperatureControl || v?.hasWaterInletDrainage || v?.hasPowerSupply); }
+  isBoreholeFilled(): boolean { const v = this.form.value.boreholeDrilling; return !!v?.workType; }
+  isWaterTowerFilled(): boolean { const v = this.form.value.waterTower; return !!v?.towerType; }
+  isPurificationFilled(): boolean { const v = this.form.value.purificationSystem; return !!(v?.hasRoom || v?.hasTemperatureControl || v?.hasWaterInletDrainage || v?.hasPowerSupply || v?.canMaintainSystem || v?.willingToProvideWater); }
   hasEquipmentItems(): boolean { return this.getFilledItemsCount() > 0; }
   hasAnySectionFilled(): boolean { return this.isBoreholeFilled() || this.isWaterTowerFilled() || this.isPurificationFilled() || this.hasEquipmentItems(); }
   getFilledItemsCount(): number { return this.itemsArray.controls.filter((c) => c.value.equipmentItemId && c.value.quantity).length; }
   getFilledItems() { return this.itemsArray.controls.filter((c) => c.value.equipmentItemId && c.value.quantity); }
 
   getBoreholeTypeLabel(): string {
-    const t = this.form.value.boreholeDrilling?.boreholeType;
-    return t === 'sand' ? (this.isUa ? 'Піщана (15-30 м)' : 'Sand (15-30 m)') : t === 'artesian' ? (this.isUa ? 'Артезіанська (30-200+ м)' : 'Artesian (30-200+ m)') : '---';
+    const m: Record<string, [string, string]> = { new_drilling: ['Буріння нової', 'New drilling'], repair_cleaning: ['Ремонт (чистка)', 'Repair (cleaning)'], new_near_existing: ['Нова поруч з існуючою', 'New near existing'] };
+    const t = this.form.value.boreholeDrilling?.workType;
+    return t && m[t] ? (this.isUa ? m[t][0] : m[t][1]) : '---';
   }
   getWaterTowerTypeLabel(): string {
-    const m: Record<string, [string, string]> = { vbr_15: ['ВБР-15 (15 м3)', 'VBR-15 (15 m3)'], vbr_25: ['ВБР-25 (25 м3)', 'VBR-25 (25 m3)'], vbr_50: ['ВБР-50 (50 м3)', 'VBR-50 (50 m3)'], vbr_over_50: ['ВБР понад 50 м3', 'VBR over 50 m3'] };
+    const m: Record<string, [string, string]> = { vbr_15: ['ВБР-15 (15 м³)', 'VBR-15 (15 m³)'], vbr_25: ['ВБР-25 (25 м³)', 'VBR-25 (25 m³)'], vbr_50: ['ВБР-50 (50 м³)', 'VBR-50 (50 m³)'], vbr_over_50: ['ВБР понад 50 м³', 'VBR over 50 m³'] };
     const t = this.form.value.waterTower?.towerType;
     return t && m[t] ? (this.isUa ? m[t][0] : m[t][1]) : '---';
+  }
+  getWaterTowerHeightLabel(): string {
+    const h = this.form.value.waterTower?.towerHeight;
+    if (!h) return '---';
+    if (h === 'over_25') return this.form.value.waterTower?.customHeight ? `${this.form.value.waterTower.customHeight} m` : (this.isUa ? 'Понад 25 м' : 'Over 25 m');
+    return `${h} m`;
   }
 
   isOptionalStep(): boolean { return this.steps[this.currentStep()]?.optional ?? false; }
@@ -667,13 +774,46 @@ export class WashFormComponent implements OnInit {
       replacementReason: v.replacementReason,
     };
     if (this.isBoreholeFilled()) {
-      payload.boreholeDrilling = { boreholeType: v.boreholeDrilling.boreholeType, expectedFlowRate: v.boreholeDrilling.expectedFlowRate, desiredDiameter: v.boreholeDrilling.desiredDiameter, ...(v.boreholeDrilling.notes ? { notes: v.boreholeDrilling.notes } : {}) };
+      const bh = v.boreholeDrilling;
+      payload.boreholeDrilling = {
+        workType: bh.workType,
+        expectedFlowRate: bh.expectedFlowRate,
+        ...(bh.workType === 'new_near_existing' ? {
+          hasAquiferInfo: bh.hasAquiferInfo ?? false,
+          existingDepth: bh.existingDepth || undefined,
+          existingDebit: bh.existingDebit || undefined,
+          hasDesignInfo: bh.hasDesignInfo ?? false,
+          hasPassport: bh.hasPassport ?? false,
+          oldLocation: bh.oldLocation || undefined,
+        } : {}),
+        ...(bh.notes ? { notes: bh.notes } : {}),
+      };
     }
     if (this.isWaterTowerFilled()) {
-      payload.waterTower = { towerType: v.waterTower.towerType, quantity: v.waterTower.quantity, ...(v.waterTower.notes ? { notes: v.waterTower.notes } : {}) };
+      const wt = v.waterTower;
+      payload.waterTower = {
+        towerType: wt.towerType,
+        towerHeight: wt.towerHeight,
+        hasFoundation: wt.hasFoundation ?? false,
+        isFoundationSuitable: wt.isFoundationSuitable ?? false,
+        needsFoundationReconstruction: wt.needsFoundationReconstruction ?? false,
+        canSelfReconstruct: wt.canSelfReconstruct ?? false,
+        canProvideCrane: wt.canProvideCrane ?? false,
+        ...(wt.towerHeight === 'over_25' && wt.customHeight ? { customHeight: wt.customHeight } : {}),
+        ...(wt.notes ? { notes: wt.notes } : {}),
+      };
     }
     if (this.isPurificationFilled()) {
-      payload.purificationSystem = { hasRoom: v.purificationSystem.hasRoom, hasTemperatureControl: v.purificationSystem.hasTemperatureControl, hasWaterInletDrainage: v.purificationSystem.hasWaterInletDrainage, hasPowerSupply: v.purificationSystem.hasPowerSupply, ...(v.purificationSystem.notes ? { notes: v.purificationSystem.notes } : {}) };
+      const ps = v.purificationSystem;
+      payload.purificationSystem = {
+        hasRoom: ps.hasRoom ?? false,
+        hasTemperatureControl: ps.hasTemperatureControl ?? false,
+        hasWaterInletDrainage: ps.hasWaterInletDrainage ?? false,
+        hasPowerSupply: ps.hasPowerSupply ?? false,
+        canMaintainSystem: ps.canMaintainSystem ?? false,
+        willingToProvideWater: ps.willingToProvideWater ?? false,
+        ...(ps.notes ? { notes: ps.notes } : {}),
+      };
     }
     const filled = v.items?.filter((i: { equipmentItemId: string; quantity: number }) => i.equipmentItemId && i.quantity);
     if (filled?.length) {
@@ -686,7 +826,11 @@ export class WashFormComponent implements OnInit {
   }
 
   resetForm(): void {
-    this.form.reset({ boreholeDrilling: { boreholeType: '', notes: '' }, waterTower: { towerType: '', notes: '' }, purificationSystem: { hasRoom: false, hasTemperatureControl: false, hasWaterInletDrainage: false, hasPowerSupply: false, notes: '' } });
+    this.form.reset({
+      boreholeDrilling: { workType: '', hasAquiferInfo: false, hasDesignInfo: false, hasPassport: false, oldLocation: '', notes: '' },
+      waterTower: { towerType: '', towerHeight: '', hasFoundation: false, isFoundationSuitable: false, needsFoundationReconstruction: false, canSelfReconstruct: false, canProvideCrane: false, notes: '' },
+      purificationSystem: { hasRoom: false, hasTemperatureControl: false, hasWaterInletDrainage: false, hasPowerSupply: false, canMaintainSystem: false, willingToProvideWater: false, notes: '' },
+    });
     this.itemsArray.clear();
     this.itemsArray.push(this.createItemGroup());
     this.searchTexts.clear();

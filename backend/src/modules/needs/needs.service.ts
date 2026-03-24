@@ -129,20 +129,18 @@ export class NeedsService {
         'ID', 'Дата', 'Статус', 'Область', 'Організація', 'ПІБ керівника',
         'Телефон', 'Email', 'Назва обʼєкту', 'Кількість залежних людей',
         'Соціальні установи', 'Термін монтажу', 'Причини заміни',
-        'Тип свердловини', 'Дебіт (м3/год)', 'Діаметр (мм)',
-        'Тип башти', 'К-сть башт',
-        'Очищення: Приміщення', 'Очищення: Температура',
-        'Очищення: Водопостачання/Дренаж', 'Очищення: Електрика',
+        'Варіант буріння', 'Очікуваний дебіт (м³/год)', 'Глибина існуючої (м)', 'Дебіт існуючої (м³/год)', 'Паспорт свердловини',
+        'Тип башти', 'Висота башти', 'Фундамент', 'Фундамент придатний', 'Потреба реконструкції', 'Кран',
+        'Очищення: Приміщення', 'Очищення: Температура', 'Очищення: Водопостачання/Дренаж', 'Очищення: Електрика', 'Очищення: Обслуговування', 'Очищення: Надання води жителям',
         'К-сть позицій обладнання', 'Деталі обладнання', 'Нотатки менеджера',
       ]
       : [
         'ID', 'Date', 'Status', 'Region', 'Organization', 'Head Name',
         'Head Phone', 'Email', 'Object Name', 'Dependent Population',
         'Social Facilities', 'Installation Deadline', 'Replacement Reason',
-        'Borehole Type', 'Borehole Flow Rate', 'Borehole Diameter',
-        'Water Tower Type', 'Water Tower Qty',
-        'Purification: Room', 'Purification: Temperature',
-        'Purification: Water/Drainage', 'Purification: Power',
+        'Borehole Work Type', 'Expected Flow Rate (m³/h)', 'Existing Depth (m)', 'Existing Debit (m³/h)', 'Borehole Passport',
+        'Tower Type', 'Tower Height', 'Foundation', 'Foundation Suitable', 'Needs Reconstruction', 'Crane Available',
+        'Purification: Room', 'Purification: Temperature', 'Purification: Water/Drainage', 'Purification: Power', 'Purification: Maintenance', 'Purification: Provide Water',
         'Equipment Items Count', 'Equipment Details', 'Manager Notes',
       ];
 
@@ -150,30 +148,28 @@ export class NeedsService {
     const no = ua ? 'Ні' : 'No';
 
     const statusLabels: Record<string, [string, string]> = {
-      new: ['Нова', 'New'],
-      in_review: ['На розгляді', 'In review'],
-      approved: ['Затверджено', 'Approved'],
-      rejected: ['Відхилено', 'Rejected'],
-      in_progress: ['В роботі', 'In progress'],
-      completed: ['Завершено', 'Completed'],
+      new: ['Нова', 'New'], in_review: ['На розгляді', 'In review'],
+      approved: ['Затверджено', 'Approved'], rejected: ['Відхилено', 'Rejected'],
+      in_progress: ['В роботі', 'In progress'], completed: ['Завершено', 'Completed'],
     };
 
-    const boreholeLabels: Record<string, [string, string]> = {
-      sand: ['Піщана', 'Sand'],
-      artesian: ['Артезіанська', 'Artesian'],
+    const workTypeLabels: Record<string, [string, string]> = {
+      new_drilling: ['Буріння нової', 'New drilling'],
+      repair_cleaning: ['Ремонт (чистка)', 'Repair (cleaning)'],
+      new_near_existing: ['Нова поруч з існуючою', 'New near existing'],
     };
 
     const towerLabels: Record<string, [string, string]> = {
-      vbr_15: ['ВБР-15 (15 м³)', 'VBR-15 (15 m³)'],
-      vbr_25: ['ВБР-25 (25 м³)', 'VBR-25 (25 m³)'],
-      vbr_50: ['ВБР-50 (50 м³)', 'VBR-50 (50 m³)'],
-      vbr_over_50: ['ВБР понад 50 м³', 'VBR over 50 m³'],
+      vbr_15: ['ВБР-15 (15 м³)', 'VBR-15 (15 m³)'], vbr_25: ['ВБР-25 (25 м³)', 'VBR-25 (25 m³)'],
+      vbr_50: ['ВБР-50 (50 м³)', 'VBR-50 (50 m³)'], vbr_over_50: ['ВБР понад 50 м³', 'VBR over 50 m³'],
     };
 
-    const label = (map: Record<string, [string, string]>, key?: string): string => {
+    const lbl = (map: Record<string, [string, string]>, key?: string): string => {
       if (!key || !map[key]) return '';
       return ua ? map[key][0] : map[key][1];
     };
+
+    const bool = (v?: boolean): string => v ? yes : no;
 
     const esc = (val: unknown): string => {
       if (val === null || val === undefined) return '';
@@ -191,32 +187,24 @@ export class NeedsService {
         ?.map((i) => `${i.equipmentItem?.[nameField] ?? (ua ? 'Невідомо' : 'Unknown')}: ${i.quantity} ${i.equipmentItem?.unit ?? ''}`)
         .join('; ');
 
+      const heightLabel = wt?.towerHeight === 'over_25'
+        ? (wt?.customHeight ? `${wt.customHeight} m` : (ua ? 'Понад 25 м' : 'Over 25 m'))
+        : (wt?.towerHeight ? `${wt.towerHeight} m` : '');
+
       return [
-        f.id,
-        f.createdAt?.toISOString() ?? '',
-        label(statusLabels, f.status),
-        f.region,
-        f.organizationName,
-        f.headName,
-        f.headPhone,
-        f.email,
-        f.objectName,
-        f.dependentPopulation,
-        f.socialFacilities ?? '',
-        f.installationDeadline ?? '',
-        f.replacementReason,
-        label(boreholeLabels, bh?.boreholeType),
-        bh?.expectedFlowRate ?? '',
-        bh?.desiredDiameter ?? '',
-        label(towerLabels, wt?.towerType),
-        wt?.quantity ?? '',
-        ps ? (ps.hasRoom ? yes : no) : '',
-        ps ? (ps.hasTemperatureControl ? yes : no) : '',
-        ps ? (ps.hasWaterInletDrainage ? yes : no) : '',
-        ps ? (ps.hasPowerSupply ? yes : no) : '',
-        f.items?.length ?? 0,
-        equipDetails ?? '',
-        f.managerNotes ?? '',
+        f.id, f.createdAt?.toISOString() ?? '', lbl(statusLabels, f.status),
+        f.region, f.organizationName, f.headName, f.headPhone, f.email,
+        f.objectName, f.dependentPopulation, f.socialFacilities ?? '',
+        f.installationDeadline ?? '', f.replacementReason,
+        lbl(workTypeLabels, bh?.workType), bh?.expectedFlowRate ?? '',
+        bh?.existingDepth ?? '', bh?.existingDebit ?? '', bh ? bool(bh.hasPassport) : '',
+        lbl(towerLabels, wt?.towerType), heightLabel,
+        wt ? bool(wt.hasFoundation) : '', wt ? bool(wt.isFoundationSuitable) : '',
+        wt ? bool(wt.needsFoundationReconstruction) : '', wt ? bool(wt.canProvideCrane) : '',
+        ps ? bool(ps.hasRoom) : '', ps ? bool(ps.hasTemperatureControl) : '',
+        ps ? bool(ps.hasWaterInletDrainage) : '', ps ? bool(ps.hasPowerSupply) : '',
+        ps ? bool(ps.canMaintainSystem) : '', ps ? bool(ps.willingToProvideWater) : '',
+        f.items?.length ?? 0, equipDetails ?? '', f.managerNotes ?? '',
       ].map(esc).join(',');
     });
 
