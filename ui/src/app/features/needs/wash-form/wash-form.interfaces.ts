@@ -56,15 +56,26 @@ export interface CreateWashFormPayload {
 // ── WASH Activities ──
 
 export interface BoreholeDrillingPayload {
-  boreholeType: 'sand' | 'artesian';
+  workType: 'new_drilling' | 'repair_cleaning' | 'new_near_existing';
+  hasAquiferInfo?: boolean;
+  existingDepth?: number;
+  existingDebit?: number;
+  hasDesignInfo?: boolean;
+  hasPassport?: boolean;
+  oldLocation?: string;
   expectedFlowRate: number;
-  desiredDiameter: number;
   notes?: string;
 }
 
 export interface WaterTowerPayload {
   towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
-  quantity: number;
+  towerHeight: '8' | '12' | '15' | '18' | '20' | '25' | 'over_25';
+  customHeight?: number;
+  hasFoundation: boolean;
+  isFoundationSuitable: boolean;
+  needsFoundationReconstruction: boolean;
+  canSelfReconstruct: boolean;
+  canProvideCrane: boolean;
   notes?: string;
 }
 
@@ -73,6 +84,8 @@ export interface PurificationSystemPayload {
   hasTemperatureControl: boolean;
   hasWaterInletDrainage: boolean;
   hasPowerSupply: boolean;
+  canMaintainSystem: boolean;
+  willingToProvideWater: boolean;
   notes?: string;
 }
 

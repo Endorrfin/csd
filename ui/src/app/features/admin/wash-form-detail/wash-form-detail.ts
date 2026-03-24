@@ -83,9 +83,22 @@ import { TranslateService } from '@ngx-translate/core';
           <div class="section-card">
             <h3>{{ isUa ? 'III. Буріння свердловин' : 'III. Borehole Drilling' }}</h3>
             <div class="info-grid">
-              <div class="info-item"><span class="info-label">{{ isUa ? 'Тип' : 'Type' }}</span><span>{{ form()!.boreholeDrilling.boreholeType }}</span></div>
-              <div class="info-item"><span class="info-label">{{ isUa ? 'Дебіт' : 'Flow' }}</span><span>{{ form()!.boreholeDrilling.expectedFlowRate }} m3/h</span></div>
-              <div class="info-item"><span class="info-label">{{ isUa ? 'Діаметр' : 'Diameter' }}</span><span>{{ form()!.boreholeDrilling.desiredDiameter }} mm</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Варіант робіт' : 'Work type' }}</span><span>{{ form()!.boreholeDrilling.workType }}</span></div>
+              @if (form()!.boreholeDrilling.expectedFlowRate) {
+                <div class="info-item"><span class="info-label">{{ isUa ? 'Очікуваний дебіт' : 'Expected flow' }}</span><span>{{ form()!.boreholeDrilling.expectedFlowRate }} m³/h</span></div>
+              }
+              @if (form()!.boreholeDrilling.existingDepth) {
+                <div class="info-item"><span class="info-label">{{ isUa ? 'Глибина існуючої' : 'Existing depth' }}</span><span>{{ form()!.boreholeDrilling.existingDepth }} m</span></div>
+              }
+              @if (form()!.boreholeDrilling.existingDebit) {
+                <div class="info-item"><span class="info-label">{{ isUa ? 'Дебіт існуючої' : 'Existing debit' }}</span><span>{{ form()!.boreholeDrilling.existingDebit }} m³/h</span></div>
+              }
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Водний горизонт' : 'Aquifer info' }}</span><span>{{ form()!.boreholeDrilling.hasAquiferInfo ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Паспорт' : 'Passport' }}</span><span>{{ form()!.boreholeDrilling.hasPassport ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Інфо про конструкцію' : 'Design info' }}</span><span>{{ form()!.boreholeDrilling.hasDesignInfo ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              @if (form()!.boreholeDrilling.oldLocation) {
+                <div class="info-item full-w"><span class="info-label">{{ isUa ? 'Розташування старої' : 'Old location' }}</span><span>{{ form()!.boreholeDrilling.oldLocation }}</span></div>
+              }
               @if (form()!.boreholeDrilling.notes) {
                 <div class="info-item full-w"><span class="info-label">{{ isUa ? 'Примітки' : 'Notes' }}</span><span>{{ form()!.boreholeDrilling.notes }}</span></div>
               }
@@ -99,7 +112,12 @@ import { TranslateService } from '@ngx-translate/core';
             <h3>{{ isUa ? 'IV. Водонапірні башти' : 'IV. Water Towers' }}</h3>
             <div class="info-grid">
               <div class="info-item"><span class="info-label">{{ isUa ? 'Тип' : 'Type' }}</span><span>{{ form()!.waterTower.towerType }}</span></div>
-              <div class="info-item"><span class="info-label">{{ isUa ? 'Кількість' : 'Qty' }}</span><span>{{ form()!.waterTower.quantity }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Висота' : 'Height' }}</span><span>{{ form()!.waterTower.towerHeight === 'over_25' ? (form()!.waterTower.customHeight || 'Over 25') + ' m' : form()!.waterTower.towerHeight + ' m' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Фундамент' : 'Foundation' }}</span><span>{{ form()!.waterTower.hasFoundation ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Фундамент придатний' : 'Suitable' }}</span><span>{{ form()!.waterTower.isFoundationSuitable ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Потреба реконструкції' : 'Needs reconstruction' }}</span><span>{{ form()!.waterTower.needsFoundationReconstruction ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Власними силами' : 'Self-reconstruct' }}</span><span>{{ form()!.waterTower.canSelfReconstruct ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Кран' : 'Crane' }}</span><span>{{ form()!.waterTower.canProvideCrane ? 'Так/Yes' : 'Ні/No' }}</span></div>
               @if (form()!.waterTower.notes) {
                 <div class="info-item full-w"><span class="info-label">{{ isUa ? 'Примітки' : 'Notes' }}</span><span>{{ form()!.waterTower.notes }}</span></div>
               }
@@ -116,6 +134,8 @@ import { TranslateService } from '@ngx-translate/core';
               <div class="info-item"><span class="info-label">{{ isUa ? 'Температура' : 'Temp' }}</span><span>{{ form()!.purificationSystem.hasTemperatureControl ? 'Так/Yes' : 'Ні/No' }}</span></div>
               <div class="info-item"><span class="info-label">{{ isUa ? 'Водопостачання' : 'Water' }}</span><span>{{ form()!.purificationSystem.hasWaterInletDrainage ? 'Так/Yes' : 'Ні/No' }}</span></div>
               <div class="info-item"><span class="info-label">{{ isUa ? 'Електрика' : 'Power' }}</span><span>{{ form()!.purificationSystem.hasPowerSupply ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Обслуговування' : 'Maintenance' }}</span><span>{{ form()!.purificationSystem.canMaintainSystem ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Надання води жителям' : 'Provide water' }}</span><span>{{ form()!.purificationSystem.willingToProvideWater ? 'Так/Yes' : 'Ні/No' }}</span></div>
               @if (form()!.purificationSystem.notes) {
                 <div class="info-item full-w"><span class="info-label">{{ isUa ? 'Примітки' : 'Notes' }}</span><span>{{ form()!.purificationSystem.notes }}</span></div>
               }
