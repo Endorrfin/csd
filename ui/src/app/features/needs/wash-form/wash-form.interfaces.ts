@@ -34,6 +34,16 @@ export interface SelectedEquipmentRow {
 /** Matches backend CreateWashFormDto */
 export interface CreateWashFormPayload {
   region: string;
+  regionEn: string;
+  district: string;
+  districtEn: string;
+  community: string;
+  communityEn: string;
+  communityCode: string;
+  settlement?: string;
+  settlementEn?: string;
+  settlementCode?: string;
+
   organizationName: string;
   headName: string;
   headPhone: string;
