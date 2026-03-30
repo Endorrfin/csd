@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -33,7 +33,7 @@ export class UsersService {
     return this.usersRepo.save(user);
   }
 
-  // ── Password reset methods (added) ──
+  // ── Password reset methods ──
 
   async setResetToken(
     userId: string,
@@ -57,5 +57,20 @@ export class UsersService {
       resetToken: null,
       resetTokenExpiry: null,
     });
+  }
+
+  // ── User management (added) ──
+
+  async findAll(): Promise<User[]> {
+    return this.usersRepo.find({ order: { createdAt: 'DESC' } });
+  }
+
+  async findById(id: string): Promise<User | null> {
+    return this.usersRepo.findOne({ where: { id } });
+  }
+
+  async updateRole(userId: string, role: UserRole): Promise<User> {
+    await this.usersRepo.update(userId, { role });
+    return this.usersRepo.findOneOrFail({ where: { id: userId } });
   }
 }

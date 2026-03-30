@@ -1,3 +1,4 @@
+// ui/src/app/core/guards/auth.guard.ts
 import { inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { CanActivateFn, Router } from '@angular/router';
@@ -15,6 +16,25 @@ export const managerGuard: CanActivateFn = () => {
   const router = inject(Router);
 
   if (auth.isManager) {
+    return true;
+  }
+
+  router.navigate(['/login']);
+  return false;
+};
+
+
+export const superAdminGuard: CanActivateFn = () => {
+  const platformId = inject(PLATFORM_ID);
+
+  if (!isPlatformBrowser(platformId)) {
+    return true;
+  }
+
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.isSuperAdmin) {
     return true;
   }
 
