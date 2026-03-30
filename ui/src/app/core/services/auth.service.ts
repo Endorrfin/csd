@@ -1,3 +1,4 @@
+// ui/src/app/core/services/auth.service.ts
 import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 
@@ -12,7 +13,6 @@ interface TokenPayload {
 export class AuthService {
   private readonly platformId = inject(PLATFORM_ID);
 
-  // Reactive signals - components are automatically updated
   readonly isLoggedIn = signal(false);
   readonly userRole = signal<string | null>(null);
   readonly userEmail = signal<string | null>(null);
@@ -22,11 +22,17 @@ export class AuthService {
   }
 
   get isManager(): boolean {
-    return this.userRole() === 'manager' || this.userRole() === 'admin';
+    const role = this.userRole();
+    return role === 'manager' || role === 'admin' || role === 'super_admin';
   }
 
   get isAdmin(): boolean {
-    return this.userRole() === 'admin';
+    const role = this.userRole();
+    return role === 'admin' || role === 'super_admin';
+  }
+
+  get isSuperAdmin(): boolean {
+    return this.userRole() === 'super_admin';
   }
 
   login(token: string): void {
