@@ -1,3 +1,4 @@
+// backend/src/modules/auth/auth.controller.ts
 import {
   Controller,
   Post,
@@ -9,6 +10,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
@@ -20,17 +23,27 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
-  // LocalStrategy checks email and password, adds user to request
   @UseGuards(AuthGuard('local'))
   @Post('login')
   login(@Request() req: any) {
     return this.authService.login(req.user);
   }
 
-  // Protected endpoint — verifies the JWT token
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   getProfile(@Request() req: any) {
     return req.user;
+  }
+
+  // ── Password reset endpoints (added) ──
+
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.password);
   }
 }

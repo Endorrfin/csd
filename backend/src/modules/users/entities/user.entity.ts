@@ -7,8 +7,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-
-// Enum of roles – stored as a string in the database
 export enum UserRole {
   PUBLIC = 'public',
   MANAGER = 'manager',
@@ -35,6 +33,14 @@ export class User {
 
   @Column()
   lastName: string;
+
+  // ── Password reset fields ──
+
+  @Column({ type: 'varchar', nullable: true, select: false })
+  resetToken: string | null;
+
+  @Column({ type: 'timestamptz', nullable: true, select: false })
+  resetTokenExpiry: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

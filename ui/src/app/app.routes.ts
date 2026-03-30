@@ -1,3 +1,4 @@
+// ui/src/app/app.routes.ts
 import { Routes } from '@angular/router';
 import { managerGuard } from './core/guards/auth.guard';
 
@@ -55,11 +56,35 @@ export const routes: Routes = [
         (m) => m.ContactComponent,
       ),
   },
+
+  // ── Auth routes ──
   {
     path: 'login',
     loadComponent: () =>
       import('./features/login/login').then((m) => m.LoginComponent),
   },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/register/register').then(
+        (m) => m.RegisterComponent,
+      ),
+  },
+  {
+    path: 'forgot-password',
+    loadComponent: () =>
+      import('./features/forgot-password/forgot-password').then(
+        (m) => m.ForgotPasswordComponent,
+      ),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./features/reset-password/reset-password').then(
+        (m) => m.ResetPasswordComponent,
+      ),
+  },
+
   // Redirect old wash-form URL
   {
     path: 'wash-form',
