@@ -1,18 +1,3 @@
-/**
- * Seed: Create or promote the first super_admin user.
- *
- * Usage:
- *   npx ts-node -r tsconfig-paths/register src/database/seed-super-admin.ts
- *
- * Environment variables (from .env or inline):
- *   SUPER_ADMIN_EMAIL    — default: admin@csd-fund.org
- *   SUPER_ADMIN_EMAIL    — default: v.krupka.csd@gmail.com
- *   SUPER_ADMIN_PASSWORD — default: ChangeMe123!
- *   SUPER_ADMIN_PASSWORD — default: #KvN312233$
- *
- * If the user already exists, their role is promoted to super_admin.
- * If not, a new user is created.
- */
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import * as bcrypt from 'bcrypt';
@@ -33,6 +18,10 @@ async function seed(): Promise<void> {
     database: process.env.DB_NAME || 'csd',
     entities: [User],
     synchronize: false,
+    // synchronize: true, // initial create table RDS
+    ssl: process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false }
+      : false,
   });
 
   await ds.initialize();
