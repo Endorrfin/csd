@@ -63,7 +63,7 @@ export class AuthService {
     return this.generateToken(user);
   }
 
-  // ── Password reset (added) ──
+  // ── Password reset ──
 
   /**
    * Generate a reset token and log it (dev) or send email (prod).

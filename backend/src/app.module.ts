@@ -31,9 +31,12 @@ import { EquipmentCatalogModule } from './modules/equipment-catalog/equipment-ca
           password: config.get<string>('DB_PASSWORD'),
           database: config.get<string>('DB_NAME'),
           autoLoadEntities: true,
-          // synchronize: true creates tables automatically based on entities.
-          // For development only! Use migrations in production.
-          synchronize: true,
+          synchronize: config.get<string>('NODE_ENV') !== 'production',
+          // synchronize: true, // initial create table RDS
+          // ── SSL for AWS RDS (added) ──
+          ssl: config.get<string>('NODE_ENV') === 'production'
+            ? { rejectUnauthorized: false }
+            : false,
         }),
       }),
       UsersModule,

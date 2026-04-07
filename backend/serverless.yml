@@ -1,0 +1,43 @@
+# backend/serverless.yml
+org: csd2019
+service: csd-api
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: eu-central-1
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 29
+  environment:
+    NODE_ENV: production
+    DB_HOST: ${env:DB_HOST}
+    DB_PORT: '5432'
+    DB_USERNAME: ${env:DB_USERNAME}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_NAME: ${env:DB_NAME}
+    JWT_SECRET: ${env:JWT_SECRET}
+    FRONTEND_URL: ${env:FRONTEND_URL, ''}
+
+functions:
+  api:
+    handler: dist/lambda.handler
+    events:
+      - http:
+          method: ANY
+          path: /
+          cors: true
+      - http:
+          method: ANY
+          path: /{proxy+}
+          cors: true
+
+package:
+  patterns:
+    - 'dist/**'
+    - 'node_modules/**'
+    - '!node_modules/.cache/**'
+    - '!src/**'
+    - '!test/**'
+    - '!.env*'
+    - '!coverage/**'
