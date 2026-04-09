@@ -6,9 +6,9 @@ services:
     env_file:
       - backend/.env
     environment:
-      POSTGRES_USER: "${DB_USERNAME:-postgres}"
-      POSTGRES_PASSWORD: "${DB_PASSWORD:-postgres}"
-      POSTGRES_DB: "${DB_NAME:-csd}"
+      POSTGRES_USER: "${DB_USERNAME}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_NAME}"
     ports:
       - "5432:5432"
     volumes:
