@@ -13,19 +13,26 @@ import { TranslateModule } from '@ngx-translate/core';
     </footer>
   `,
   styles: [`
+  .footer {
+    background: #1a365d;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 1.5rem 1rem;
+    text-align: center;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+  .footer__container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 768px) {
     .footer {
-      background: #1a365d;
-      color: rgba(255, 255, 255, 0.7);
-      padding: 1.5rem 1rem;
-      text-align: center;
-      font-size: 0.875rem;
-      flex-shrink: 0;
+      font-size: 0.8rem; // CHANGED: трохи менший текст
+      padding: 1.25rem 1rem;
     }
-    .footer__container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-  `],
+  }
+`]
 })
 export class FooterComponent {
   year = new Date().getFullYear();
