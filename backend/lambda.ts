@@ -24,6 +24,9 @@ async function bootstrap() {
     new ValidationPipe({ whitelist: true, transform: true }),
   );
 
+  // add global prefix to match main.ts
+  app.setGlobalPrefix('api');
+
   await app.init();
   return serverlessExpress({ app: expressApp });
 }
