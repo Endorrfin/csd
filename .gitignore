@@ -12,6 +12,9 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
+#privat data, sensetive information
+csd-aws-deployment-guide*
+
 .npm/
 .pnpm-store/
 .tmp/

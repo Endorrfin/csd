@@ -1,0 +1,37 @@
+org: csd2019
+service: csd-ssr
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  region: eu-central-1
+  stage: ${opt:stage, 'dev'}
+  memorySize: 512
+  timeout: 29
+  environment:
+    NODE_ENV: production
+
+functions:
+  ssr:
+    handler: lambda.handler
+    events:
+      - http:
+          method: ANY
+          path: /
+          cors: false
+      - http:
+          method: ANY
+          path: /{proxy+}
+          cors: false
+
+package:
+  individually: false
+  patterns:
+    - 'lambda.mjs'
+    - 'dist/ui/server/**'
+    - 'node_modules/serverless-http/**'
+    - 'node_modules/express/**'
+    - '!node_modules/.cache/**'
+    - '!src/**'
+    - '!.angular/**'
+    - '!dist/ui/browser/**'
