@@ -42,9 +42,4 @@ jest-*.json
 .cache/
 *.local
 
-
-
-
-
-
-
+**/.serverless/
