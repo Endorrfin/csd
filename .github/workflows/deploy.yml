@@ -1,13 +1,19 @@
 name: Deploy to AWS
 
 on:
-  push:
+  pull_request:
     branches:
       - prod
+    types:
+      - closed
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   deploy-backend:
     name: Deploy Backend (NestJS → Lambda)
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -44,6 +50,7 @@ jobs:
 
   deploy-frontend:
     name: Deploy Frontend (Angular SSR → Lambda + S3)
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     defaults:
       run:
