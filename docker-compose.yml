@@ -1,15 +1,18 @@
 # docker-compose.yml
+version: "3.8"
 services:
   postgres:
-    image: postgres:16-alpine
-    ports:
-      - '5433:5432'
+    image: postgres:16
+    env_file:
+      - backend/.env
     environment:
-      POSTGRES_DB: csd_db
-      POSTGRES_USER: csd_user
-      POSTGRES_PASSWORD: csd_password
+      POSTGRES_USER: "${DB_USERNAME}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_NAME}"
+    ports:
+      - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  pgdata:
+  postgres_data:
