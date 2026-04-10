@@ -33,7 +33,6 @@ import { Router } from '@angular/router';
             {{ 'NAV.HOME' | translate }}
           </a>
           <a routerLink="/about" routerLinkActive="active" (click)="closeMenu()">{{ 'NAV.ABOUT' | translate }}</a>
-          <a routerLink="/blog" routerLinkActive="active" (click)="closeMenu()">{{ 'NAV.BLOG' | translate }}</a>
           <a routerLink="/partners" routerLinkActive="active" (click)="closeMenu()">{{ 'NAV.PARTNERS' | translate }}</a>
           <a routerLink="/cooperation" routerLinkActive="active" (click)="closeMenu()">{{ 'NAV.COOPERATION' | translate }}</a>
           <a routerLink="/needs" routerLinkActive="active" (click)="closeMenu()">{{ 'NAV.NEEDS' | translate }}</a>

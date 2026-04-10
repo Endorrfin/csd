@@ -1,4 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ApiService } from '../../core/services/api.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
@@ -7,24 +8,28 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   standalone: true,
   imports: [TranslateModule],
   template: `
-    <h1>{{ title }}</h1>
-    <div [innerHTML]="content">
-      <p>Ми – Благодійна організація «Благодійний фонд «Центр підтримки та розвитку».</p>
-      <p>Можливо ви про нас не чули, проте наша команда роками працювала на сході України, надаючи підтримку найвразливішим верствам населення.</p>
-    </div>
+    <h1>{{ title() }}</h1>
+    <div [innerHTML]="content()"></div>
   `,
 })
-export class AboutComponent implements OnInit {
+export class AboutComponent {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
-  title = '';
-  content = '';
 
-  ngOnInit() {
-    this.api.get<any>('pages/about').subscribe((page) => {
-      const lang = this.translate.currentLang || 'ua';
-      this.title = lang === 'ua' ? page.titleUa : page.titleEn;
-      this.content = lang === 'ua' ? page.contentUa : page.contentEn;
-    });
-  }
+  // CHANGE: toSignal — works both on server and client
+  private readonly page = toSignal(this.api.get<any>('pages/about'));
+
+  title = computed(() => {
+    const page = this.page();
+    if (!page) return '';
+    const lang = this.translate.currentLang || 'ua';
+    return lang === 'ua' ? page.titleUa : page.titleEn;
+  });
+
+  content = computed(() => {
+    const page = this.page();
+    if (!page) return '';
+    const lang = this.translate.currentLang || 'ua';
+    return lang === 'ua' ? page.contentUa : page.contentEn;
+  });
 }
