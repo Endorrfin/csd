@@ -14,10 +14,7 @@ import { firstValueFrom } from 'rxjs';
   standalone: true,
   imports: [TranslateModule, FormsModule, DatePipe, CarouselComponent],
   template: `
-    <section class="hero">
-      <h1>{{ 'HOME.TITLE' | translate }}</h1>
-      <p>{{ 'HOME.SUBTITLE' | translate }}</p>
-    </section>
+
 
     <section class="news">
       <div class="news__header">
@@ -200,14 +197,6 @@ import { firstValueFrom } from 'rxjs';
     </section>
   `,
   styles: [`
-    .hero {
-      text-align: center;
-      padding: 3rem 0;
-      border-bottom: 1px solid #e2e8f0;
-      margin-bottom: 2rem;
-    }
-    .hero h1 { color: #1a365d; font-size: 2rem; margin-bottom: 0.5rem; }
-    .hero p { color: #4a5568; font-size: 1.25rem; }
 
     .news__header {
       display: flex;
