@@ -45,7 +45,7 @@ import { Component, Input, signal } from '@angular/core';
     }
     .carousel__slide img {
       width: 100%;
-      height: 300px;
+      height: 600px;
       object-fit: cover;
       display: block;
     }

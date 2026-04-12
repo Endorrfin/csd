@@ -11,6 +11,7 @@ import { PartnersModule } from './modules/partners/partners.module';
 import { CooperationModule } from './modules/cooperation/cooperation.module';
 import { NeedsModule } from './modules/needs/needs.module';
 import { EquipmentCatalogModule } from './modules/equipment-catalog/equipment-catalog.module';
+import { UploadModule } from './modules/upload/upload.module';
 
 
 @Module({
@@ -39,14 +40,15 @@ import { EquipmentCatalogModule } from './modules/equipment-catalog/equipment-ca
             : false,
         }),
       }),
-      UsersModule,
-      AuthModule,
-      ContentModule,
-      BlogModule,
-      PartnersModule,
-      CooperationModule,
-      EquipmentCatalogModule,
-      NeedsModule,
+    UsersModule,
+    AuthModule,
+    ContentModule,
+    BlogModule,
+    PartnersModule,
+    CooperationModule,
+    EquipmentCatalogModule,
+    NeedsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],
