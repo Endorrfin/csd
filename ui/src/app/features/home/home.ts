@@ -4,10 +4,9 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CarouselComponent } from '../../shared/components/carousel/carousel';
-import { DatePipe } from '@angular/common';
+import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
-import { isPlatformBrowser } from '@angular/common';
 import { DOCUMENT } from '@angular/common';
 
 @Component({
@@ -565,13 +564,12 @@ export class HomeComponent implements OnInit {
   }
 
   // build per-article anchor URL for sharing
-// use DOCUMENT instead of window, guard for SSR
+  // use DOCUMENT instead of window, guard for SSR
   private getArticleUrl(post: any): string {
     if (!isPlatformBrowser(this.platformId)) {
-      // SSR: return relative URL — social bots won't crawl from server render anyway
-      return `https://www.csd-fund.org/#post-${post.slug}`;
+      return `https://www.csd-fund.org/blog/${post.slug}`;
     }
-    return `${this.document.location.origin}/#post-${post.slug}`;
+    return `${this.document.location.origin}/blog/${post.slug}`;
   }
 
   // NEW: social share URL builders

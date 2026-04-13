@@ -14,10 +14,13 @@ export class BlogService {
   ) {}
 
   findAllPublished(): Promise<Post[]> {
-    return this.postRepository.find({
-      where: { isPublished: true },
-      order: { createdAt: 'DESC' },
-    });
+    // sort by publishedAt if set, fallback to createdAt
+    return this.postRepository
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .where('post.isPublished = :isPublished', { isPublished: true })
+      .orderBy('COALESCE(post."publishedAt", post."createdAt")', 'DESC')
+      .getMany();
   }
 
   findAll(): Promise<Post[]> {
