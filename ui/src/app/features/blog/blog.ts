@@ -1,19 +1,24 @@
+// ui/src/app/features/blog/blog.ts
 import { Component, inject, OnInit } from '@angular/core';
 import { ApiService } from '../../core/services/api.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-blog',
   standalone: true,
-  imports: [DatePipe],
+  imports: [DatePipe, RouterLink],
   template: `
     <h1>Blog</h1>
     @for (post of posts; track post.id) {
       <article class="post-card">
-        <h2>{{ isUa ? post.titleUa : post.titleEn }}</h2>
+        <!-- title links to /blog/:slug -->
+        <a [routerLink]="['/blog', post.slug]" class="post-card__link">
+          <h2>{{ isUa ? post.titleUa : post.titleEn }}</h2>
+        </a>
         <p>{{ isUa ? post.excerptUa : post.excerptEn }}</p>
-        <small>{{ post.createdAt | date }}</small>
+        <small>{{ post.publishedAt || post.createdAt | date }}</small>
       </article>
     }
   `,
@@ -26,12 +31,16 @@ import { DatePipe } from '@angular/common';
     }
     .post-card h2 { color: #1a365d; margin-bottom: 0.5rem; }
     .post-card small { color: #718096; }
+    /* link style */
+    .post-card__link { text-decoration: none; }
+    .post-card__link:hover h2 { color: #2a4a7f; }
   `],
 })
 export class BlogComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
   posts: any[] = [];
+
   get isUa() { return (this.translate.currentLang || 'ua') === 'ua'; }
 
   ngOnInit() {
