@@ -1,7 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Meta, Title } from '@angular/platform-browser';
-import { ApiService } from '../../core/services/api.service';
 import { DatePipe } from '@angular/common';
 import { CarouselComponent } from '../../shared/components/carousel/carousel';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
@@ -19,13 +18,11 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           <h1>{{ post().titleUa }}</h1>
           <div class="post__content" [innerHTML]="post().contentUa"></div>
         </div>
-
         @if (post().images?.length) {
           <div class="post__carousel-wrap">
             <app-carousel [images]="post().images" />
           </div>
         }
-
         @if (post().videoUrl) {
           <div class="post__video-wrap">
             <iframe [src]="getEmbedUrl(post().videoUrl)" width="100%" height="630"
@@ -33,8 +30,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
           </div>
         }
       </article>
-    } @else {
-      <p>Loading...</p>
     }
   `,
   styles: [`
@@ -54,7 +49,6 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 })
 export class BlogPostComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly api = inject(ApiService);
   private readonly meta = inject(Meta);
   private readonly title = inject(Title);
   private readonly sanitizer = inject(DomSanitizer);
@@ -62,32 +56,25 @@ export class BlogPostComponent implements OnInit {
   post = signal<any>(null);
 
   ngOnInit(): void {
-    const slug = this.route.snapshot.paramMap.get('slug')!;
-    this.api.get<any>(`blog/${slug}`).subscribe((data) => {
-      this.post.set(data);
-      // set OG (Open Graph) meta tags for Facebook/LinkedIn sharing
-      this.setMetaTags(data);
-    });
+    // read from resolver data — available synchronously during SSR
+    const data = this.route.snapshot.data['post'];
+    this.post.set(data);
+    this.setMetaTags(data);
   }
 
-  // NEW: dynamic OG meta tags for social sharing
   private setMetaTags(post: any): void {
     const pageTitle = `${post.titleUa} — CSD`;
     const description = post.excerptUa || post.contentUa?.slice(0, 160) || '';
-    const image = post.images?.[0] || post.coverImage || 'https://www.csd-fund.org/web-app-manifest-512x512.png';
+    const image = post.images?.[0] || post.coverImage
+      || 'https://www.csd-fund.org/web-app-manifest-512x512.png';
     const url = `https://www.csd-fund.org/blog/${post.slug}`;
 
     this.title.setTitle(pageTitle);
-
-    // Open Graph
     this.meta.updateTag({ property: 'og:title', content: pageTitle });
     this.meta.updateTag({ property: 'og:description', content: description });
     this.meta.updateTag({ property: 'og:image', content: image });
     this.meta.updateTag({ property: 'og:url', content: url });
     this.meta.updateTag({ property: 'og:type', content: 'article' });
-    this.meta.updateTag({ property: 'og:site_name', content: 'CSD Fund' });
-
-    // Twitter Card
     this.meta.updateTag({ name: 'twitter:card', content: 'summary_large_image' });
     this.meta.updateTag({ name: 'twitter:title', content: pageTitle });
     this.meta.updateTag({ name: 'twitter:description', content: description });

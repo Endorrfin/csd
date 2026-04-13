@@ -1,6 +1,8 @@
 // ui/src/app/app.routes.ts
 import { Routes } from '@angular/router';
 import { managerGuard } from './core/guards/auth.guard';
+import { blogPostResolver } from './features/blog/blog-post.resolver';
+
 
 export const routes: Routes = [
   {
@@ -18,10 +20,16 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/blog/blog').then((m) => m.BlogComponent),
   },
+  // {
+  //   path: 'blog/:slug',
+  //   loadComponent: () =>
+  //     import('./features/blog/blog-post').then((m) => m.BlogPostComponent),
+  // },
   {
     path: 'blog/:slug',
     loadComponent: () =>
       import('./features/blog/blog-post').then((m) => m.BlogPostComponent),
+    resolve: { post: blogPostResolver }, // resolve before render
   },
   {
     path: 'partners',
