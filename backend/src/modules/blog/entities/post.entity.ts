@@ -59,6 +59,9 @@ export class Post {
   @CreateDateColumn()
   createdAt: Date;
 
+  @Column({ type: 'timestamptz', nullable: true })
+  publishedAt: Date | null;
+
   @UpdateDateColumn()
   updatedAt: Date;
 }

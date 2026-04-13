@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
@@ -33,7 +33,16 @@ export class BlogService {
   }
 
   // author comes from request.user (JWT)
-  create(dto: CreatePostDto, author: User): Promise<Post> {
+  async create(dto: CreatePostDto, author: User): Promise<Post> {
+    const existing = await this.postRepository.findOne({
+      where: { slug: dto.slug },
+    });
+    if (existing) {
+      throw new ConflictException(
+        `Post with slug "${dto.slug}" already exists`,
+      );
+    }
+
     const post = this.postRepository.create({ ...dto, author });
     return this.postRepository.save(post);
   }

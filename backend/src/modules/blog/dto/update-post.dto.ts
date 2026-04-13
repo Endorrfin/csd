@@ -6,6 +6,7 @@ import {
   ArrayMaxSize,
   MinLength,
   Matches,
+  IsDateString
 } from 'class-validator';
 
 export class UpdatePostDto {
@@ -60,4 +61,8 @@ export class UpdatePostDto {
   @IsBoolean()
   @IsOptional()
   isPublished?: boolean;
+
+  @IsDateString()
+  @IsOptional()
+  publishedAt?: string;
 }
