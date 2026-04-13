@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, PLATFORM_ID } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
@@ -6,8 +6,9 @@ import { AuthService } from '../../core/services/auth.service';
 import { CarouselComponent } from '../../shared/components/carousel/carousel';
 import { DatePipe } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-// firstValueFrom for async upload flow
 import { firstValueFrom } from 'rxjs';
+import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
   selector: 'app-home',
@@ -114,6 +115,19 @@ import { firstValueFrom } from 'rxjs';
               <option value="update">{{ isUa ? 'Оновлення' : 'Update' }}</option>
             </select>
           </label>
+          
+          <label>{{ isUa ? 'Дата публікації (для перенесених записів)' : 'Publication date (for migrated posts)' }}
+            <input
+              type="date"
+              [ngModel]="form().publishedAt"
+              (ngModelChange)="updateFormField('publishedAt', $event)"
+            />
+            <small style="color:#718096">
+              {{ isUa
+                ? 'Залиш порожнім для нових публікацій — встановиться поточна дата'
+                : 'Leave empty for new posts — current date will be used' }}
+            </small>
+          </label>
 
           @if (formError()) {
             <p class="news-form__error">{{ formError() }}</p>
@@ -140,7 +154,7 @@ import { firstValueFrom } from 'rxjs';
           <div class="news-card__body">
             <div class="news-card__top">
               <span class="news-card__category">{{ post.category }}</span>
-              <small class="news-card__date">{{ post.createdAt | date:'mediumDate' }}</small>
+              <small class="news-card__date">{{ getPostDate(post) | date:'mediumDate' }}</small>
               @if (auth.isManager) {
                 <button class="news-card__edit" (click)="openEditForm(post)" [title]="isUa ? 'Редагувати' : 'Edit'">✏️</button>
                 <button class="news-card__delete" (click)="deletePost(post)" [title]="isUa ? 'Видалити' : 'Delete'">🗑️</button>
@@ -372,6 +386,8 @@ export class HomeComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
   private readonly sanitizer = inject(DomSanitizer);
+  private readonly document = inject(DOCUMENT);
+  private readonly platformId = inject(PLATFORM_ID);
   readonly auth = inject(AuthService);
 
   posts = signal<any[]>([]);
@@ -420,19 +436,25 @@ export class HomeComponent implements OnInit {
     });
   }
 
+  getPostDate(post: any): Date {
+    // use publishedAt if set, fallback to createdAt
+    return post.publishedAt ? new Date(post.publishedAt) : new Date(post.createdAt);
+  }
+
   openEditForm(post: any): void {
     this.editingPostId.set(post.slug);
     this.form.set({
-      slug: post.slug,
-      titleUa: post.titleUa,
-      titleEn: post.titleEn,
-      contentUa: post.contentUa,
-      contentEn: post.contentEn,
-      excerptUa: post.excerptUa || '',
-      excerptEn: post.excerptEn || '',
-      images: post.images?.length ? [...post.images] : [],
-      videoUrl: post.videoUrl || '',
-      category: post.category || 'news',
+      slug:post.slug,
+      titleUa:post.titleUa,
+      titleEn:post.titleEn,
+      contentUa:post.contentUa,
+      contentEn:post.contentEn,
+      excerptUa:post.excerptUa || '',
+      excerptEn:post.excerptEn || '',
+      images:post.images?.length ? [...post.images] : [],
+      videoUrl:post.videoUrl || '',
+      category:post.category || 'news',
+      publishedAt:post.publishedAt || ''
     });
     this.formError.set('');
     this.showForm.set(true);
@@ -543,8 +565,13 @@ export class HomeComponent implements OnInit {
   }
 
   // build per-article anchor URL for sharing
+// use DOCUMENT instead of window, guard for SSR
   private getArticleUrl(post: any): string {
-    return `${window.location.origin}/#post-${post.slug}`;
+    if (!isPlatformBrowser(this.platformId)) {
+      // SSR: return relative URL — social bots won't crawl from server render anyway
+      return `https://www.csd-fund.org/#post-${post.slug}`;
+    }
+    return `${this.document.location.origin}/#post-${post.slug}`;
   }
 
   // NEW: social share URL builders
@@ -581,6 +608,8 @@ export class HomeComponent implements OnInit {
     if (!body.excerptUa) delete body.excerptUa;
     if (!body.excerptEn) delete body.excerptEn;
     if (body.images.length === 0) delete body.images;
+    // remove publishedAt if empty — backend keeps existing value
+    if (!body.publishedAt) delete body.publishedAt;
     return body;
   }
 
@@ -591,6 +620,7 @@ export class HomeComponent implements OnInit {
       excerptUa: '', excerptEn: '',
       images: [] as string[],
       videoUrl: '', category: 'news',
+      publishedAt: '',
     };
   }
 }

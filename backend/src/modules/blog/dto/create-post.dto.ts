@@ -6,6 +6,8 @@ import {
   ArrayMaxSize,
   MinLength,
   Matches,
+  IsDateString,
+
 } from 'class-validator';
 
 export class CreatePostDto {
@@ -59,4 +61,8 @@ export class CreatePostDto {
   @IsBoolean()
   @IsOptional()
   isPublished?: boolean;
+
+  @IsDateString()
+  @IsOptional()
+  publishedAt?: string;
 }
