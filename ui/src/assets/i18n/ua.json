@@ -41,33 +41,51 @@
       "empty": "Наразі активних тендерів немає"
     },
     "steps": {
-      "basicInfo": "Інфо", "details": "Метод", "technical": "Технічні",
-      "timeline": "Терміни", "evaluation": "Оцінка",
-      "attachments": "Документи", "review": "Перегляд"
+      "basicInfo": "Інфо",
+      "details": "Метод",
+      "technical": "Технічні",
+      "timeline": "Терміни",
+      "evaluation": "Оцінка",
+      "attachments": "Документи",
+      "review": "Перегляд"
     },
     "form": {
-      "createTitle": "Новий тендер", "editTitle": "Редагування тендеру",
-      "tenderTitleUa": "Назва тендеру (UA)", "tenderTitleUaPlaceholder": "Постачання обладнання...",
+      "createTitle": "Новий тендер",
+      "editTitle": "Редагування тендеру",
+      "tenderTitleUa": "Назва тендеру (UA)",
+      "tenderTitleUaPlaceholder": "Постачання обладнання...",
       "tenderTitleEn": "Назва тендеру (EN)",
-      "referenceNumber": "Реєстраційний номер", "donor": "Донор",
-      "projectName": "Назва проєкту", "projectCode": "Код проєкту / Grant ID",
+      "referenceNumber": "Реєстраційний номер",
+      "donor": "Донор",
+      "projectName": "Назва проєкту",
+      "projectCode": "Код проєкту / Grant ID",
       "implementingOrganization": "Організація-виконавець",
       "implementingOrgPlaceholder": "Charitable Organization CSD",
-      "procurementMethod": "Метод закупки", "procurementCategory": "Категорія",
+      "procurementMethod": "Метод закупки",
+      "procurementCategory": "Категорія",
       "lotStructure": "Структура лотів",
-      "shortDescriptionUa": "Короткий опис (UA)", "shortDescUaPlaceholder": "Встановлення систем...",
+      "shortDescriptionUa": "Короткий опис (UA)",
+      "shortDescUaPlaceholder": "Встановлення систем...",
       "shortDescriptionEn": "Короткий опис (EN)",
-      "detailedDescriptionUa": "Детальний опис (UA)", "detailedDescUaPlaceholder": "ТОР / Обсяг робіт (UA)",
+      "detailedDescriptionUa": "Детальний опис (UA)",
+      "detailedDescUaPlaceholder": "ТОР / Обсяг робіт (UA)",
       "detailedDescriptionEn": "Детальний опис (EN)",
-      "region": "Область", "regionPlaceholder": "Харківська область",
+      "region": "Область",
+      "regionPlaceholder": "Харківська область",
       "implementationPeriodDays": "Термін виконання (днів)",
-      "publicationDate": "Дата публікації", "clarificationDeadline": "Дедлайн роз'яснень",
-      "bidSubmissionDeadline": "Дедлайн подачі заявок", "expectedStartDate": "Очікувана дата початку",
-      "submissionMethods": "Спосіб подачі", "submissionEmail": "Email для подачі",
+      "publicationDate": "Дата публікації",
+      "clarificationDeadline": "Дедлайн роз'яснень",
+      "bidSubmissionDeadline": "Дедлайн подачі заявок",
+      "expectedStartDate": "Очікувана дата початку",
+      "submissionMethods": "Спосіб подачі",
+      "submissionEmail": "Email для подачі",
       "fileRequirements": "Вимоги до файлів",
-      "evaluationMethod": "Метод оцінки", "evaluationMethodPlaceholder": "Best Value for Money",
+      "evaluationMethod": "Метод оцінки",
+      "evaluationMethodPlaceholder": "Best Value for Money",
       "evaluationCriteria": "Критерії оцінки",
-      "criteriaUa": "Критерій (UA)", "criteriaEn": "Критерій (EN)", "weight": "Вага",
+      "criteriaUa": "Критерій (UA)",
+      "criteriaEn": "Критерій (EN)",
+      "weight": "Вага",
       "addCriteria": "Додати критерій",
       "eligibilityRequirements": "Вимоги до учасників",
       "requirementPlaceholder": "Свідоцтво про реєстрацію...",
@@ -76,17 +94,138 @@
       "attachmentName": "Назва файлу",
       "addAttachment": "Додати документ",
       "publishWarning": "Заповніть обов'язкові поля (Назва UA та EN) перед публікацією",
-      "saveDraft": "Зберегти чернетку", "publish": "Опублікувати"
+      "saveDraft": "Зберегти чернетку",
+      "publish": "Опублікувати"
     },
-    "method": { "open_tender": "Відкритий тендер (ITB)", "rfq": "Запит ціни (RFQ)", "rfp": "Запит пропозицій (RFP)" },
-    "category": { "goods": "Товари", "works": "Роботи", "services": "Послуги" },
-    "lotStructure": { "single": "Один лот", "multiple": "Декілька лотів" },
-    "submissionMethod": { "email": "Ел. пошта", "courier": "Кур'єрська пошта", "eplatform": "E-платформа" },
-    "status": { "draft": "Чернетка", "published": "Опубліковано", "closed": "Закрито" },
+    "method": {
+      "open_tender": "Відкритий тендер (ITB)",
+      "rfq": "Запит ціни (RFQ)",
+      "rfp": "Запит пропозицій (RFP)"
+    },
+    "category": {
+      "goods": "Товари",
+      "works": "Роботи",
+      "services": "Послуги"
+    },
+    "lotStructure": {
+      "single": "Один лот",
+      "multiple": "Декілька лотів"
+    },
+    "submissionMethod": {
+      "email": "Ел. пошта",
+      "courier": "Кур'єрська пошта",
+      "eplatform": "E-платформа"
+    },
+    "status": {
+      "draft": "Чернетка",
+      "published": "Опубліковано",
+      "closed": "Закрито"
+    },
     "common": {
       "edit": "Редагувати",
       "days": "днів",
       "notFound": "Запис не знайдено"
+    }
+  },
+  "vacancy": {
+    "list": {
+      "title": "Вакансії",
+      "subtitle": "Відкриті позиції в організації",
+      "createNew": "Нова вакансія",
+      "deadline": "Дедлайн",
+      "empty": "Наразі відкритих вакансій немає"
+    },
+    "form": {
+      "createTitle": "Нова вакансія",
+      "editTitle": "Редагування вакансії",
+      "titleUa": "Назва посади (UA)",
+      "titleEn": "Назва посади (EN)",
+      "descriptionUa": "Опис (UA)",
+      "descriptionEn": "Опис (EN)",
+      "requirementsUa": "Вимоги (UA)",
+      "requirementsEn": "Вимоги (EN)",
+      "employmentType": "Тип зайнятості",
+      "applicationDeadline": "Дедлайн подачі заявок",
+      "salary": "Зарплата / компенсація",
+      "salaryPlaceholder": "Наприклад: 30 000 грн або за домовленістю",
+      "publishedAt": "Дата публікації (залишити порожнім = сьогодні)",
+      "saveDraft": "Зберегти чернетку",
+      "publish": "Опублікувати",
+      "publishWarning": "Заповніть назву UA та EN перед публікацією"
+    },
+    "employmentType": {
+      "full_time": "Повна зайнятість",
+      "part_time": "Часткова зайнятість",
+      "volunteer": "Волонтерство"
+    },
+    "status": {
+      "draft": "Чернетка",
+      "published": "Опубліковано",
+      "closed": "Закрито"
+    },
+    "detail": {
+      "requirements": "Вимоги",
+      "location": "Місцезнаходження",
+      "salary": "Зарплата",
+      "deadline": "Дедлайн подачі",
+      "edit": "Редагувати"
+    }
+  },
+  "testimonial": {
+    "list": {
+      "title": "Відгуки",
+      "submit": "Залишити відгук",
+      "empty": "Відгуків поки немає",
+      "verified": "Верифіковано"
+    },
+    "form": {
+      "title": "Залишити відгук",
+      "authorName": "Ваше ім'я",
+      "organization": "Організація (необов'язково)",
+      "text": "Текст відгуку",
+      "rating": "Оцінка",
+      "location": "Локація (необов'язково)",
+      "publishedAt": "Дата відгуку (залишити порожнім = сьогодні)",
+      "submit": "Надіслати відгук",
+      "success": "Дякуємо! Ваш відгук надіслано на модерацію.",
+      "loginRequired": "Щоб залишити відгук, увійдіть в систему."
+    },
+    "status": {
+      "pending": "На модерації",
+      "approved": "Схвалено",
+      "rejected": "Відхилено"
+    }
+  },
+  "complaint": {
+    "form": {
+      "title": "Подати скаргу",
+      "subtitle": "Ваше звернення буде розглянуто конфіденційно",
+      "category": "Категорія скарги",
+      "description": "Опис ситуації",
+      "email": "Email для зворотного зв'язку (необов'язково)",
+      "emailHint": "Якщо хочете отримати відповідь, вкажіть email",
+      "location": "Локація (необов'язково)",
+      "attachments": "Прикріплення (посилання S3 / Google Drive)",
+      "attachmentName": "Назва файлу",
+      "attachmentUrl": "Посилання",
+      "addAttachment": "Додати файл",
+      "expectedResolution": "Очікуваний результат",
+      "submittedAt": "Дата події (залишити порожнім = сьогодні)",
+      "submit": "Надіслати скаргу",
+      "success": "Ваша скарга прийнята. Ми розглянемо її найближчим часом."
+    },
+    "category": {
+      "service_quality": "Якість послуг",
+      "staff_behavior": "Поведінка персоналу",
+      "corruption": "Корупція",
+      "delay": "Затримка",
+      "other": "Інше"
+    },
+    "status": {
+      "new": "Нова",
+      "in_review": "На розгляді",
+      "resolved": "Вирішено",
+      "closed": "Закрито"
     }
   }
 }
