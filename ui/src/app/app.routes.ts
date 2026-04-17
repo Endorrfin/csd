@@ -20,11 +20,6 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/blog/blog').then((m) => m.BlogComponent),
   },
-  // {
-  //   path: 'blog/:slug',
-  //   loadComponent: () =>
-  //     import('./features/blog/blog-post').then((m) => m.BlogPostComponent),
-  // },
   {
     path: 'blog/:slug',
     loadComponent: () =>
@@ -38,12 +33,22 @@ export const routes: Routes = [
         (m) => m.PartnersComponent,
       ),
   },
+  // procurement is a child route of cooperation
   {
     path: 'cooperation',
     loadComponent: () =>
       import('./features/cooperation/cooperation').then(
         (m) => m.CooperationComponent,
       ),
+    children: [
+      {
+        path: 'procurement',
+        loadChildren: () =>
+          import('./features/cooperation/procurement/procurement.routes').then(
+            (m) => m.PROCUREMENT_ROUTES,
+          ),
+      },
+    ],
   },
   // ── Needs section with child routes ──
   {

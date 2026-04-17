@@ -12,6 +12,7 @@ import { CooperationModule } from './modules/cooperation/cooperation.module';
 import { NeedsModule } from './modules/needs/needs.module';
 import { EquipmentCatalogModule } from './modules/equipment-catalog/equipment-catalog.module';
 import { UploadModule } from './modules/upload/upload.module';
+import { ProcurementModule } from './modules/procurement/procurement.module';
 
 
 @Module({
@@ -32,7 +33,8 @@ import { UploadModule } from './modules/upload/upload.module';
           password: config.get<string>('DB_PASSWORD'),
           database: config.get<string>('DB_NAME'),
           autoLoadEntities: true,
-          synchronize: config.get<string>('NODE_ENV') !== 'production',
+          // synchronize: config.get<string>('NODE_ENV') !== 'production',
+          synchronize: false,
           // synchronize: true, // initial create table RDS
           // ── SSL for AWS RDS (added) ──
           ssl: config.get<string>('NODE_ENV') === 'production'
@@ -49,6 +51,7 @@ import { UploadModule } from './modules/upload/upload.module';
     EquipmentCatalogModule,
     NeedsModule,
     UploadModule,
+    ProcurementModule
   ],
   controllers: [AppController],
   providers: [AppService],
