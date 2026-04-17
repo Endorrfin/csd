@@ -33,7 +33,7 @@ export const routes: Routes = [
         (m) => m.PartnersComponent,
       ),
   },
-  // procurement is a child route of cooperation
+  // added procurement vacancy, testimonial, complaint children route of cooperation + default redirect
   {
     path: 'cooperation',
     loadComponent: () =>
@@ -41,11 +41,33 @@ export const routes: Routes = [
         (m) => m.CooperationComponent,
       ),
     children: [
+      { path: '', redirectTo: 'procurement', pathMatch: 'full' },
       {
         path: 'procurement',
         loadChildren: () =>
           import('./features/cooperation/procurement/procurement.routes').then(
             (m) => m.PROCUREMENT_ROUTES,
+          ),
+      },
+      {
+        path: 'vacancy',
+        loadChildren: () =>
+          import('./features/cooperation/vacancy/vacancy.routes').then(
+            (m) => m.VACANCY_ROUTES,
+          ),
+      },
+      {
+        path: 'testimonial',
+        loadChildren: () =>
+          import('./features/cooperation/testimonial/testimonial.routes').then(
+            (m) => m.TESTIMONIAL_ROUTES,
+          ),
+      },
+      {
+        path: 'complaint',
+        loadChildren: () =>
+          import('./features/cooperation/complaint/complaint.routes').then(
+            (m) => m.COMPLAINT_ROUTES,
           ),
       },
     ],

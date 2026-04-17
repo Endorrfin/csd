@@ -41,3 +41,22 @@ export const superAdminGuard: CanActivateFn = () => {
   router.navigate(['/login']);
   return false;
 };
+
+// added authGuard for any authenticated user (used by testimonial)
+export const authGuard: CanActivateFn = () => {
+  const platformId = inject(PLATFORM_ID);
+
+  if (!isPlatformBrowser(platformId)) {
+    return true;
+  }
+
+  const auth = inject(AuthService);
+  const router = inject(Router);
+
+  if (auth.isLoggedIn()) {
+    return true;
+  }
+
+  router.navigate(['/login']);
+  return false;
+};

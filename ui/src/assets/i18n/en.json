@@ -34,59 +34,198 @@
   },
   "procurement": {
     "list": {
-      "title": "Закупки",
-      "subtitle": "Тендери та запити пропозицій",
-      "createNew": "Новий тендер",
-      "deadline": "Дедлайн",
-      "empty": "Наразі активних тендерів немає"
+      "title": "Procurements",
+      "subtitle": "Tenders and requests for proposals",
+      "createNew": "New tender",
+      "deadline": "Deadline",
+      "empty": "There are currently no active tenders"
     },
     "steps": {
-      "basicInfo": "Інфо", "details": "Метод", "technical": "Технічні",
-      "timeline": "Терміни", "evaluation": "Оцінка",
-      "attachments": "Документи", "review": "Перегляд"
+      "basicInfo": "Info",
+      "details": "Method",
+      "technical": "Technical",
+      "timeline": "Timeline",
+      "evaluation": "Evaluation",
+      "attachments": "Documents",
+      "review": "Review"
     },
     "form": {
-      "createTitle": "Новий тендер", "editTitle": "Редагування тендеру",
-      "tenderTitleUa": "Назва тендеру (UA)", "tenderTitleUaPlaceholder": "Постачання обладнання...",
-      "tenderTitleEn": "Назва тендеру (EN)",
-      "referenceNumber": "Реєстраційний номер", "donor": "Донор",
-      "projectName": "Назва проєкту", "projectCode": "Код проєкту / Grant ID",
-      "implementingOrganization": "Організація-виконавець",
+      "createTitle": "New tender",
+      "editTitle": "Edit tender",
+      "tenderTitleUa": "Tender title (UA)",
+      "tenderTitleUaPlaceholder": "Supply of equipment...",
+      "tenderTitleEn": "Tender title (EN)",
+      "referenceNumber": "Reference number",
+      "donor": "Donor",
+      "projectName": "Project name",
+      "projectCode": "Project code / Grant ID",
+      "implementingOrganization": "Implementing organization",
       "implementingOrgPlaceholder": "Charitable Organization CSD",
-      "procurementMethod": "Метод закупки", "procurementCategory": "Категорія",
-      "lotStructure": "Структура лотів",
-      "shortDescriptionUa": "Короткий опис (UA)", "shortDescUaPlaceholder": "Встановлення систем...",
-      "shortDescriptionEn": "Короткий опис (EN)",
-      "detailedDescriptionUa": "Детальний опис (UA)", "detailedDescUaPlaceholder": "ТОР / Обсяг робіт (UA)",
-      "detailedDescriptionEn": "Детальний опис (EN)",
-      "region": "Область", "regionPlaceholder": "Харківська область",
-      "implementationPeriodDays": "Термін виконання (днів)",
-      "publicationDate": "Дата публікації", "clarificationDeadline": "Дедлайн роз'яснень",
-      "bidSubmissionDeadline": "Дедлайн подачі заявок", "expectedStartDate": "Очікувана дата початку",
-      "submissionMethods": "Спосіб подачі", "submissionEmail": "Email для подачі",
-      "fileRequirements": "Вимоги до файлів",
-      "evaluationMethod": "Метод оцінки", "evaluationMethodPlaceholder": "Best Value for Money",
-      "evaluationCriteria": "Критерії оцінки",
-      "criteriaUa": "Критерій (UA)", "criteriaEn": "Критерій (EN)", "weight": "Вага",
-      "addCriteria": "Додати критерій",
-      "eligibilityRequirements": "Вимоги до учасників",
-      "requirementPlaceholder": "Свідоцтво про реєстрацію...",
-      "addRequirement": "Додати вимогу",
-      "attachmentsHint": "Вкажіть посилання на документи (S3 / Google Drive)",
-      "attachmentName": "Назва файлу",
-      "addAttachment": "Додати документ",
-      "publishWarning": "Заповніть обов'язкові поля (Назва UA та EN) перед публікацією",
-      "saveDraft": "Зберегти чернетку", "publish": "Опублікувати"
+      "procurementMethod": "Procurement method",
+      "procurementCategory": "Category",
+      "lotStructure": "Lot structure",
+      "shortDescriptionUa": "Short description (UA)",
+      "shortDescUaPlaceholder": "Installation of systems...",
+      "shortDescriptionEn": "Short description (EN)",
+      "detailedDescriptionUa": "Detailed description (UA)",
+      "detailedDescUaPlaceholder": "TOR / Scope of works (UA)",
+      "detailedDescriptionEn": "Detailed description (EN)",
+      "region": "Region",
+      "regionPlaceholder": "Kharkiv region",
+      "implementationPeriodDays": "Implementation period (days)",
+      "publicationDate": "Publication date",
+      "clarificationDeadline": "Clarification deadline",
+      "bidSubmissionDeadline": "Bid submission deadline",
+      "expectedStartDate": "Expected start date",
+      "submissionMethods": "Submission methods",
+      "submissionEmail": "Submission email",
+      "fileRequirements": "File requirements",
+      "evaluationMethod": "Evaluation method",
+      "evaluationMethodPlaceholder": "Best Value for Money",
+      "evaluationCriteria": "Evaluation criteria",
+      "criteriaUa": "Criterion (UA)",
+      "criteriaEn": "Criterion (EN)",
+      "weight": "Weight",
+      "addCriteria": "Add criterion",
+      "eligibilityRequirements": "Eligibility requirements",
+      "requirementPlaceholder": "Certificate of registration...",
+      "addRequirement": "Add requirement",
+      "attachmentsHint": "Provide links to documents (S3 / Google Drive)",
+      "attachmentName": "Attachment name",
+      "addAttachment": "Add attachment",
+      "publishWarning": "Fill in required fields (Title UA and EN) before publishing",
+      "saveDraft": "Save draft",
+      "publish": "Publish"
     },
-    "method": { "open_tender": "Відкритий тендер (ITB)", "rfq": "Запит ціни (RFQ)", "rfp": "Запит пропозицій (RFP)" },
-    "category": { "goods": "Товари", "works": "Роботи", "services": "Послуги" },
-    "lotStructure": { "single": "Один лот", "multiple": "Декілька лотів" },
-    "submissionMethod": { "email": "Ел. пошта", "courier": "Кур'єрська пошта", "eplatform": "E-платформа" },
-    "status": { "draft": "Чернетка", "published": "Опубліковано", "closed": "Закрито" },
+    "method": {
+      "open_tender": "Open tender (ITB)",
+      "rfq": "Request for quotation (RFQ)",
+      "rfp": "Request for proposals (RFP)"
+    },
+    "category": {
+      "goods": "Goods",
+      "works": "Works",
+      "services": "Services"
+    },
+    "lotStructure": {
+      "single": "Single lot",
+      "multiple": "Multiple lots"
+    },
+    "submissionMethod": {
+      "email": "Email",
+      "courier": "Courier",
+      "eplatform": "E-platform"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "closed": "Closed"
+    },
     "common": {
       "edit": "Edit",
       "days": "days",
       "notFound": "Record not found"
+    }
+  },
+  "vacancy": {
+    "list": {
+      "title": "Vacancies",
+      "subtitle": "Open positions in the organization",
+      "createNew": "New vacancy",
+      "deadline": "Deadline",
+      "empty": "No open vacancies at the moment"
+    },
+    "form": {
+      "createTitle": "New vacancy",
+      "editTitle": "Edit vacancy",
+      "titleUa": "Position title (UA)",
+      "titleEn": "Position title (EN)",
+      "descriptionUa": "Description (UA)",
+      "descriptionEn": "Description (EN)",
+      "requirementsUa": "Requirements (UA)",
+      "requirementsEn": "Requirements (EN)",
+      "employmentType": "Employment type",
+      "applicationDeadline": "Application deadline",
+      "salary": "Salary / compensation",
+      "salaryPlaceholder": "E.g.: 30 000 UAH or negotiable",
+      "publishedAt": "Publication date (leave empty = today)",
+      "saveDraft": "Save draft",
+      "publish": "Publish",
+      "publishWarning": "Fill in title UA and EN before publishing"
+    },
+    "employmentType": {
+      "full_time": "Full-time",
+      "part_time": "Part-time",
+      "volunteer": "Volunteer"
+    },
+    "status": {
+      "draft": "Draft",
+      "published": "Published",
+      "closed": "Closed"
+    },
+    "detail": {
+      "requirements": "Requirements",
+      "location": "Location",
+      "salary": "Salary",
+      "deadline": "Application deadline",
+      "edit": "Edit"
+    }
+  },
+  "testimonial": {
+    "list": {
+      "title": "Testimonials",
+      "submit": "Leave a testimonial",
+      "empty": "No testimonials yet",
+      "verified": "Verified"
+    },
+    "form": {
+      "title": "Leave a testimonial",
+      "authorName": "Your name",
+      "organization": "Organization (optional)",
+      "text": "Testimonial text",
+      "rating": "Rating",
+      "location": "Location (optional)",
+      "publishedAt": "Testimonial date (leave empty = today)",
+      "submit": "Submit testimonial",
+      "success": "Thank you! Your testimonial has been submitted for moderation.",
+      "loginRequired": "Please log in to leave a testimonial."
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    }
+  },
+  "complaint": {
+    "form": {
+      "title": "Submit a complaint",
+      "subtitle": "Your submission will be handled confidentially",
+      "category": "Complaint category",
+      "description": "Description",
+      "email": "Email for feedback (optional)",
+      "emailHint": "Provide your email if you want a response",
+      "location": "Location (optional)",
+      "attachments": "Attachments (S3 / Google Drive links)",
+      "attachmentName": "File name",
+      "attachmentUrl": "URL",
+      "addAttachment": "Add file",
+      "expectedResolution": "Expected resolution",
+      "submittedAt": "Date of incident (leave empty = today)",
+      "submit": "Submit complaint",
+      "success": "Your complaint has been received. We will review it shortly."
+    },
+    "category": {
+      "service_quality": "Service quality",
+      "staff_behavior": "Staff behavior",
+      "corruption": "Corruption",
+      "delay": "Delay",
+      "other": "Other"
+    },
+    "status": {
+      "new": "New",
+      "in_review": "In review",
+      "resolved": "Resolved",
+      "closed": "Closed"
     }
   }
 }

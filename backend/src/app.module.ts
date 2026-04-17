@@ -13,6 +13,9 @@ import { NeedsModule } from './modules/needs/needs.module';
 import { EquipmentCatalogModule } from './modules/equipment-catalog/equipment-catalog.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { ProcurementModule } from './modules/procurement/procurement.module';
+import { VacancyModule } from './modules/vacancy/vacancy.module';
+import { TestimonialModule } from './modules/testimonial/testimonial.module';
+import { ComplaintModule } from './modules/complaint/complaint.module';
 
 
 @Module({
@@ -51,7 +54,10 @@ import { ProcurementModule } from './modules/procurement/procurement.module';
     EquipmentCatalogModule,
     NeedsModule,
     UploadModule,
-    ProcurementModule
+    ProcurementModule,
+    VacancyModule,
+    TestimonialModule,
+    ComplaintModule,
   ],
   controllers: [AppController],
   providers: [AppService],
