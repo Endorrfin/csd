@@ -1,5 +1,8 @@
+// path: ui/src/app/features/home/home.ts
 import { Component, inject, OnInit, signal, PLATFORM_ID } from '@angular/core';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { QuillModule } from 'ngx-quill';
+import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -12,7 +15,7 @@ import { DOCUMENT } from '@angular/common';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [TranslateModule, FormsModule, DatePipe, CarouselComponent],
+  imports: [TranslateModule, FormsModule, DatePipe, CarouselComponent, QuillModule, QuillHtmlPipe],
   template: `
 
 
@@ -53,14 +56,35 @@ import { DOCUMENT } from '@angular/common';
             <input [ngModel]="form().excerptEn" (ngModelChange)="updateFormField('excerptEn', $event)" />
           </label>
 
-          <!-- rows 5 → 13 (2.5x) -->
-          <label>{{ isUa ? 'Зміст (UA)' : 'Content (UA)' }} *
-            <textarea [ngModel]="form().contentUa" (ngModelChange)="updateFormField('contentUa', $event)" rows="13"></textarea>
+          <label>{{ isUa ? 'Детальний опис (UA)' : 'Content (UA)' }} *
+            @if (isBrowser) {
+              <quill-editor
+                class="custom-quill"
+                [ngModel]="form().contentUa"
+                (ngModelChange)="updateFormField('contentUa', $event)"
+                [modules]="quillModules"
+                [placeholder]="isUa ? 'Вводити детальний опис...' : 'Enter content...'"
+              ></quill-editor>
+            } @else {
+              <textarea [ngModel]="form().contentUa"
+              (ngModelChange)="updateFormField('contentUa', $event)" rows="13"></textarea>
+            }
           </label>
 
-          <!-- rows 5 → 13 (2.5x) -->
-          <label>{{ isUa ? 'Зміст (EN)' : 'Content (EN)' }} *
-            <textarea [ngModel]="form().contentEn" (ngModelChange)="updateFormField('contentEn', $event)" rows="13"></textarea>
+          <!-- replaced textarea with Quill rich text editor (browser only) -->
+          <label>{{ isUa ? 'Детальний опис (EN)' : 'Content (EN)' }} *
+            @if (isBrowser) {
+              <quill-editor
+                [ngModel]="form().contentEn"
+                (ngModelChange)="updateFormField('contentEn', $event)"
+                [modules]="quillModules"
+                [placeholder]="isUa ? 'Вводити детальний опис..' : 'Enter content...'"
+                class="news-form__quill">
+              </quill-editor>
+            } @else {
+              <textarea [ngModel]="form().contentEn"
+                        (ngModelChange)="updateFormField('contentEn', $event)" rows="13"></textarea>
+            }
           </label>
 
           <!-- file upload instead of URL inputs -->
@@ -161,7 +185,7 @@ import { DOCUMENT } from '@angular/common';
             </div>
 
             <h3>{{ isUa ? post.titleUa : post.titleEn }}</h3>
-            <div class="news-card__content" [innerHTML]="isUa ? post.contentUa : post.contentEn"></div>
+            <div class="rich-content news-card__content" [innerHTML]="(isUa ? post.contentUa : post.contentEn) | quillHtml"></div>
 
             <!-- social share buttons -->
             <div class="news-card__share">
@@ -320,6 +344,8 @@ import { DOCUMENT } from '@angular/common';
       border-radius: 8px;
       overflow: hidden;
       margin-bottom: 1.5rem;
+      min-width: 0;
+      max-width: 100%;
     }
     .news-card__video-wrap { padding: 0 1.5rem 1.5rem; }
 
@@ -347,8 +373,16 @@ import { DOCUMENT } from '@angular/common';
       font-size: 1rem; opacity: 0.5; transition: opacity 0.2s;
     }
     .news-card__edit:hover, .news-card__delete:hover { opacity: 1; }
-    .news-card__body h3 { color: #1a365d; margin: 0.25rem 0 0.75rem; }
-    .news-card__content { color: #4a5568; line-height: 1.6; }
+    .news-card__body h3 { color: #1a365d; margin: 0.25rem 0 0.75rem; word-break: break-word; }
+    .news-card__content {
+      color: #4a5568; 
+      line-height: 1.6;
+    }
+    
+    .custom-quill .ql-container .ql-editor {
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
     .news-card__video { border-radius: 4px; }
     .news__empty { color: #a0aec0; text-align: center; padding: 2rem; }
 
@@ -379,6 +413,24 @@ import { DOCUMENT } from '@angular/common';
     .news-card__share-btn--fb { background: #1877f2; }
     .news-card__share-btn--li { background: #0a66c2; }
     .news-card__share-btn--x  { background: #000; }
+    
+    /* Quill editor sizing inside form */
+    .news-form__quill {
+      display: block;
+      margin-top: 0.25rem;
+    
+      :host ::ng-deep .ql-container {
+        min-height: 260px;
+        font-size: 0.9375rem;
+        border-radius: 0 0 4px 4px;
+        border-color: #cbd5e0;
+      }
+    
+      :host ::ng-deep .ql-toolbar {
+        border-radius: 4px 4px 0 0;
+        border-color: #cbd5e0;
+      }
+    }
   `],
 })
 export class HomeComponent implements OnInit {
@@ -388,6 +440,18 @@ export class HomeComponent implements OnInit {
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
   readonly auth = inject(AuthService);
+  readonly isBrowser = isPlatformBrowser(this.platformId);
+
+  // Quill (rich text)  toolbar config for news content
+  readonly quillModules = {
+    toolbar: [
+      ['bold', 'italic', 'underline'],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      [{ header: [1, 2, 3, false] }],
+      ['link'],
+      ['clean'],
+    ],
+  };
 
   posts = signal<any[]>([]);
   showForm = signal(false);
