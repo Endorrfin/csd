@@ -8,9 +8,9 @@ import { TranslateModule } from '@ngx-translate/core';
   imports: [RouterLink, RouterLinkActive, RouterOutlet, TranslateModule],
   template: `
     <div class="cooperation">
-      <div class="cooperation__header">
-        <h1>{{ 'NAV.COOPERATION' | translate }}</h1>
-      </div>
+      <!-- <div class="cooperation__header"> -->
+        <!-- <h1>{{ 'NAV.COOPERATION' | translate }}</h1> -->
+      <!-- </div> -->
 
       <!-- CHANGED: all tabs are now active routerLinks -->
       <nav class="coop-tabs">

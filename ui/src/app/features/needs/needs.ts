@@ -9,11 +9,11 @@ import { TranslateService } from '@ngx-translate/core';
   template: `
     <div class="needs-layout">
       <div class="needs-header">
-        <h1>{{ isUa ? 'Потреби' : 'Needs' }}</h1>
+        <!-- <h1>{{ isUa ? 'Потреби' : 'Needs' }}</h1> -->
         <p class="needs-subtitle">
           {{ isUa
-            ? 'Форми для збору та оцінки потреб громад'
-            : 'Community needs assessment forms'
+            ? 'Форми для збору потреб та їх подальшої оцінки і верифікації'
+            : 'Forms for collecting needs and their subsequent assessment and verification'
           }}
         </p>
       </div>

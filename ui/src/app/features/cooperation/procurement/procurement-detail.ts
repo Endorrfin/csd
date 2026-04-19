@@ -42,7 +42,7 @@ import { Procurement } from './procurement.interfaces';
           <!-- Edit button for manager and above -->
           @if (canManage()) {
             <a [routerLink]="['../', item()!.id, 'edit']" class="btn btn--secondary">
-              ✏️ {{ 'common.edit' | translate }}
+              ✏️ {{ 'procurement.common.edit' | translate }}
             </a>
           }
         </div>

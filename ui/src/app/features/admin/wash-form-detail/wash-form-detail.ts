@@ -116,7 +116,7 @@ import { TranslateService } from '@ngx-translate/core';
               @if (form()!.boreholeDrilling.existingDebit) {
                 <div class="info-item"><span class="info-label">{{ isUa ? 'Дебіт існуючої' : 'Existing debit' }}</span><span>{{ form()!.boreholeDrilling.existingDebit }} m³/h</span></div>
               }
-              <div class="info-item"><span class="info-label">{{ isUa ? 'Водний горизонт' : 'Aquifer info' }}</span><span>{{ form()!.boreholeDrilling.hasAquiferInfo ? 'Так/Yes' : 'Ні/No' }}</span></div>
+              <div class="info-item"><span class="info-label">{{ isUa ? 'Водоносний горизонт' : 'Aquifer info' }}</span><span>{{ form()!.boreholeDrilling.hasAquiferInfo ? 'Так/Yes' : 'Ні/No' }}</span></div>
               <div class="info-item"><span class="info-label">{{ isUa ? 'Паспорт' : 'Passport' }}</span><span>{{ form()!.boreholeDrilling.hasPassport ? 'Так/Yes' : 'Ні/No' }}</span></div>
               <div class="info-item"><span class="info-label">{{ isUa ? 'Інфо про конструкцію' : 'Design info' }}</span><span>{{ form()!.boreholeDrilling.hasDesignInfo ? 'Так/Yes' : 'Ні/No' }}</span></div>
               @if (form()!.boreholeDrilling.oldLocation) {

@@ -73,8 +73,8 @@ import {
               </div>    
               
               <div class="form-field">
-                <label>{{ isUa ? 'Назва організації' : 'Organization name' }} <span class="req">*</span></label>
-                <input formControlName="organizationName" [placeholder]="isUa ? 'Громада, водоканал...' : 'Community, water utility...'" />
+                <label>{{ isUa ? 'Назва організації / установи / закладу' : 'Name of organization / institution / facility' }} <span class="req">*</span></label>
+                <input formControlName="organizationName" [placeholder]="isUa ? 'Громада, школа, лікарня, водоканал...' : 'Community, school, hospital, water utility...'" />
                 @if (showError('organizationName')) { <span class="error">{{ isUa ? 'Обовʼязкове поле' : 'Required' }}</span> }
               </div>
               <div class="form-field">
@@ -121,7 +121,7 @@ import {
               </div>
               <div class="form-field full-width">
                 <label>{{ isUa ? 'Причини заміни / опис проблеми' : 'Replacement reason' }} <span class="req">*</span></label>
-                <textarea formControlName="replacementReason" rows="3" [placeholder]="isUa ? 'Опишіть причини необхідності заміни' : 'Describe replacement reasons'"></textarea>
+                <textarea formControlName="replacementReason" rows="3" [placeholder]="isUa ? 'Опишіть причини необхідності заміни (пошкодження, фізичний знос, тощо)' : 'Describe replacement reasons (damage, physical wear, etc.)'"></textarea>
                 @if (showError('replacementReason')) { <span class="error">{{ isUa ? 'Мінімум 10 символів' : 'Min 10 chars' }}</span> }
               </div>
             </div>
@@ -151,7 +151,7 @@ import {
 
               @if (form.value.boreholeDrilling?.workType === 'new_near_existing') {
                 <div class="form-field">
-                  <label>{{ isUa ? 'Чи є відомості про водний горизонт?' : 'Do you have aquifer information?' }}</label>
+                  <label>{{ isUa ? 'Чи є відомості про водоносний горизонт?' : 'Do you have aquifer information?' }}</label>
                   <select formControlName="hasAquiferInfo">
                     <option [ngValue]="false">{{ isUa ? 'Ні' : 'No' }}</option>
                     <option [ngValue]="true">{{ isUa ? 'Так' : 'Yes' }}</option>
@@ -445,7 +445,7 @@ import {
                     @if (form.value.boreholeDrilling?.existingDebit) {
                       <div class="review-item"><span class="review-label">{{ isUa ? 'Дебіт існуючої' : 'Existing debit' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.existingDebit }} m³/h</span></div>
                     }
-                    <div class="review-item"><span class="review-label">{{ isUa ? 'Водний горизонт' : 'Aquifer info' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.hasAquiferInfo ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
+                    <div class="review-item"><span class="review-label">{{ isUa ? 'Водоносний горизонт' : 'Aquifer info' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.hasAquiferInfo ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
                     <div class="review-item"><span class="review-label">{{ isUa ? 'Паспорт' : 'Passport' }}</span><span class="review-value">{{ form.value.boreholeDrilling?.hasPassport ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span></div>
                   }
                 </div>
