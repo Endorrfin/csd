@@ -43,6 +43,13 @@ export enum SubmissionMethod {
 export enum ProcurementStatus {
   DRAFT = 'draft',
   PUBLISHED = 'published',
+  EXTENDED = 'extended',
+  EVALUATION = 'evaluation',
+  AWARDED = 'awarded',
+  SUSPENDED = 'suspended',
+  CANCELLED = 'cancelled',
+  COMPLETED = 'completed',
+  /** @deprecated use COMPLETED instead. Kept for PostgreSQL enum compatibility. */
   CLOSED = 'closed',
 }
 

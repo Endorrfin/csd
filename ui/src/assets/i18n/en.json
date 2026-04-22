@@ -119,7 +119,13 @@
     "status": {
       "draft": "Draft",
       "published": "Published",
-      "closed": "Closed"
+      "extended": "Extended",
+      "evaluation": "Under evaluation",
+      "awarded": "Awarded",
+      "suspended": "Suspended",
+      "cancelled": "Cancelled",
+      "completed": "Completed",
+      "closed": "Closed (legacy)"
     },
     "common": {
       "edit": "Edit",
@@ -160,8 +166,13 @@
     },
     "status": {
       "draft": "Draft",
-      "published": "Published",
-      "closed": "Closed"
+      "published": "Open",
+      "extended": "Extended",
+      "on_hold": "On hold",
+      "suspended": "Suspended",
+      "cancelled": "Cancelled",
+      "hired": "Filled",
+      "closed": "Closed (legacy)"
     },
     "detail": {
       "requirements": "Requirements",

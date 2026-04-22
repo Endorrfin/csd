@@ -13,6 +13,7 @@ export const AppDataSource = new DataSource({
   database: process.env.DB_NAME || 'csd',
   entities: ['src/**/*.entity.ts'],
   migrations: ['src/database/migrations/*.ts'],
+  migrationsTransactionMode: 'each',
   synchronize: false,
   ssl:
     process.env.NODE_ENV === 'production'
