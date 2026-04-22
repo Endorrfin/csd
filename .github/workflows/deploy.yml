@@ -6,8 +6,8 @@ on:
       - main
     types:
       - closed
-    # allow manual trigger from GitHub UI
-    workflow_dispatch:
+  # allow manual trigger using main branch
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
