@@ -110,6 +110,11 @@ export class AddVacancyTestimonialComplaintTables1777000000000
         CONSTRAINT "PK_complaints" PRIMARY KEY ("id")
       )
     `);
+
+    // add phone column to complaints table
+    await queryRunner.query(`
+      ALTER TABLE "complaints" ADD COLUMN IF NOT EXISTS "phone" VARCHAR
+    `);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -121,5 +126,6 @@ export class AddVacancyTestimonialComplaintTables1777000000000
     await queryRunner.query(`DROP TYPE "testimonials_status_enum"`);
     await queryRunner.query(`DROP TYPE "vacancies_status_enum"`);
     await queryRunner.query(`DROP TYPE "vacancies_employmenttype_enum"`);
+    await queryRunner.query(`ALTER TABLE "complaints" DROP COLUMN IF EXISTS "phone"`);
   }
 }

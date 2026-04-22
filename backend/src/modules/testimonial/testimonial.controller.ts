@@ -44,7 +44,7 @@ export class TestimonialController {
 
   // Any registered user can submit a testimonial
   @Post()
-  @UseGuards(JwtAuthGuard)
+  // @UseGuards(JwtAuthGuard) // any users publish Testimonial
   create(@Body() dto: CreateTestimonialDto, @Req() req: any) {
     return this.service.create(dto, req.user.id as string);
   }

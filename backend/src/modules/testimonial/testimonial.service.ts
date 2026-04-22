@@ -31,14 +31,12 @@ export class TestimonialService {
     return record;
   }
 
-  async create(dto: CreateTestimonialDto, userId: string): Promise<Testimonial> {
+  async create(dto: CreateTestimonialDto): Promise<Testimonial> {
     const entity = this.repo.create({
       ...dto,
-      // Users cannot set status directly; always starts as PENDING
       status: TestimonialStatus.PENDING,
       publishedAt: null,
       isVerified: false,
-      createdById: userId,
     });
     return this.repo.save(entity);
   }
