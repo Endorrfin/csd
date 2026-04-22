@@ -18,6 +18,12 @@ export enum EmploymentType {
 export enum VacancyStatus {
   DRAFT = 'draft',
   PUBLISHED = 'published',
+  EXTENDED = 'extended',
+  ON_HOLD = 'on_hold',
+  SUSPENDED = 'suspended',
+  CANCELLED = 'cancelled',
+  HIRED = 'hired',
+  /** @deprecated use HIRED instead. Kept for PostgreSQL enum compatibility. */
   CLOSED = 'closed',
 }
 
