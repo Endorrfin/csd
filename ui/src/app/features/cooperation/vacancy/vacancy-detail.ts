@@ -1,10 +1,9 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { ApiService } from '../../../core/services/api.service';
 import { DatePipe } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/services/auth.service';
-import { environment } from '../../../../environments/environment';
 
 interface VacancyDetail {
   id: string;
@@ -130,7 +129,7 @@ interface VacancyDetail {
 })
 export class VacancyDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  private http = inject(HttpClient);
+  private api = inject(ApiService);
   private translate = inject(TranslateService);
   protected auth = inject(AuthService);
 
@@ -140,7 +139,14 @@ export class VacancyDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
-    this.http.get<VacancyDetail>(`${environment.apiUrl}/vacancies/${id}`).subscribe({
+    // this.http.get<VacancyDetail>(`${environment.apiUrl}/vacancies/${id}`).subscribe({
+    //   next: (data) => { this.vacancy.set(data); this.loading.set(false); },
+    //   error: () => this.loading.set(false),
+    // });
+
+    this
+      .api.get<VacancyDetail>(`vacancies/${id}`)
+      .subscribe({
       next: (data) => { this.vacancy.set(data); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

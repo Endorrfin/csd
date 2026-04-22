@@ -11,7 +11,7 @@ import {
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
 import { LocationValue } from '../../../shared/interfaces/location.interfaces';
-import { environment } from '../../../../environments/environment';
+import { ApiService } from '../../../core/services/api.service';
 
 type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | 'delay' | 'other';
 
@@ -282,7 +282,7 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
 })
 export class ComplaintFormComponent {
   private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
+  private api = inject(ApiService);
   private translate = inject(TranslateService);
 
   protected saving = signal(false);
@@ -374,7 +374,7 @@ export class ComplaintFormComponent {
       ...(raw.submittedAt && { submittedAt: raw.submittedAt }),
     };
 
-    this.http.post(`${environment.apiUrl}/complaints`, payload).subscribe({
+    this.api.post('complaints', payload).subscribe({
       next: () => this.submitted.set(true),
       error: () => {
         this.error.set('Error submitting. Please try again.');

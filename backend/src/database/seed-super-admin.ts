@@ -19,9 +19,10 @@ async function seed(): Promise<void> {
     entities: [User],
     synchronize: false,
     // synchronize: true, // initial create table RDS
-    ssl: process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+    ssl:
+      process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: false }
+        : false,
   });
 
   await ds.initialize();
@@ -34,7 +35,9 @@ async function seed(): Promise<void> {
       console.log(`✅ User ${email} is already super_admin.`);
     } else {
       await repo.update(existing.id, { role: UserRole.SUPER_ADMIN });
-      console.log(`✅ Promoted ${email} from "${existing.role}" to super_admin.`);
+      console.log(
+        `✅ Promoted ${email} from "${existing.role}" to super_admin.`,
+      );
     }
   } else {
     const passwordHash = await bcrypt.hash(password, 10);

@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddVacancyTestimonialComplaintTables1777000000000
-  implements MigrationInterface
-{
+export class AddVacancyTestimonialComplaintTables1777000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // ── Enums ──
     await queryRunner.query(`
@@ -110,13 +108,7 @@ export class AddVacancyTestimonialComplaintTables1777000000000
         CONSTRAINT "PK_complaints" PRIMARY KEY ("id")
       )
     `);
-
-    // add phone column to complaints table
-    await queryRunner.query(`
-      ALTER TABLE "complaints" ADD COLUMN IF NOT EXISTS "phone" VARCHAR
-    `);
   }
-
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // drop tables only (phone column drops with the table)
@@ -127,7 +119,8 @@ export class AddVacancyTestimonialComplaintTables1777000000000
     await queryRunner.query(`DROP TYPE IF EXISTS "complaints_category_enum"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "testimonials_status_enum"`);
     await queryRunner.query(`DROP TYPE IF EXISTS "vacancies_status_enum"`);
-    await queryRunner.query(`DROP TYPE IF EXISTS "vacancies_employmenttype_enum"`);
+    await queryRunner.query(
+      `DROP TYPE IF EXISTS "vacancies_employmenttype_enum"`,
+    );
   }
-
 }

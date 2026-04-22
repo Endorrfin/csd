@@ -1,6 +1,5 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -10,7 +9,7 @@ import {
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
 import { LocationValue } from '../../../shared/interfaces/location.interfaces';
-import { environment } from '../../../../environments/environment';
+import { ApiService } from '../../../core/services/api.service';
 
 type EmploymentType = 'full_time' | 'part_time' | 'volunteer';
 type VacancyStatus = 'draft' | 'published' | 'closed';
@@ -222,7 +221,7 @@ interface VacancyPayload {
 })
 export class VacancyFormComponent implements OnInit {
   private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
+  private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private translate = inject(TranslateService);
@@ -255,8 +254,8 @@ export class VacancyFormComponent implements OnInit {
     this.isEdit = !!this.editId;
 
     if (this.isEdit) {
-      this.http
-        .get<any>(`${environment.apiUrl}/vacancies/${this.editId}`)
+      this.api
+        .get<any>(`vacancies/${this.editId}`)
         .subscribe((v) => {
           this.form.patchValue({
             titleUa: v.titleUa,
@@ -333,8 +332,8 @@ export class VacancyFormComponent implements OnInit {
     };
 
     const req$ = this.isEdit
-      ? this.http.patch(`${environment.apiUrl}/vacancies/${this.editId}`, payload)
-      : this.http.post(`${environment.apiUrl}/vacancies`, payload);
+      ? this.api.patch(`vacancies/${this.editId}`, payload)
+      : this.api.post('vacancies', payload);
 
     req$.subscribe({
       next: () => this.router.navigate(['..'], { relativeTo: this.route }),

@@ -63,7 +63,9 @@ export class ProcurementController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   publish(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.update(id, { status: 'published' } as UpdateProcurementDto);
+    return this.service.update(id, {
+      status: 'published',
+    } as UpdateProcurementDto);
   }
 
   @Delete(':id')

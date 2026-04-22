@@ -79,7 +79,7 @@ export interface BoreholeDrillingPayload {
 
 export interface WaterTowerPayload {
   towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
-  towerHeight: '8' | '12' | '15' | '18' | '20' | '25' | 'over_25';
+  towerHeight: '8' | '10' | '12' | '15' | '18' | '20' | '25' | 'over_25';
   customHeight?: number;
   hasFoundation: boolean;
   isFoundationSuitable: boolean;

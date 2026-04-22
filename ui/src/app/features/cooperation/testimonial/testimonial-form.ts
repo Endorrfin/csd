@@ -1,11 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
 import { LocationValue } from '../../../shared/interfaces/location.interfaces';
-import { environment } from '../../../../environments/environment';
+import { ApiService } from '../../../core/services/api.service';
 
 @Component({
   selector: 'app-testimonial-form',
@@ -176,7 +175,7 @@ import { environment } from '../../../../environments/environment';
 })
 export class TestimonialFormComponent {
   private fb = inject(FormBuilder);
-  private http = inject(HttpClient);
+  private api = inject(ApiService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private translate = inject(TranslateService);
@@ -231,7 +230,7 @@ export class TestimonialFormComponent {
       ...(raw.publishedAt && { publishedAt: raw.publishedAt }),
     };
 
-    this.http.post(`${environment.apiUrl}/testimonials`, payload).subscribe({
+    this.api.post('testimonials', payload).subscribe({
       next: () => this.submitted.set(true),
       error: () => {
         this.error.set('Error submitting. Please try again.');

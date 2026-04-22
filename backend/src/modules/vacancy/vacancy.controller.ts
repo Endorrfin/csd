@@ -63,7 +63,10 @@ export class VacancyController {
   @Patch(':id/publish')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  publish(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateVacancyDto) {
+  publish(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateVacancyDto,
+  ) {
     return this.service.update(id, {
       ...dto,
       status: VacancyStatus.PUBLISHED,

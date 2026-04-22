@@ -1,10 +1,9 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { ApiService } from '../../../core/services/api.service';
 import { DatePipe } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/services/auth.service';
-import { environment } from '../../../../environments/environment';
 
 interface VacancySummary {
   id: string;
@@ -115,7 +114,7 @@ interface VacancySummary {
   `],
 })
 export class VacancyListComponent implements OnInit {
-  private http = inject(HttpClient);
+  private api = inject(ApiService);
   private translate = inject(TranslateService);
   protected auth = inject(AuthService);
 
@@ -123,8 +122,16 @@ export class VacancyListComponent implements OnInit {
   protected loading = signal(true);
   protected get lang(): string { return this.translate.currentLang ?? 'ua'; }
 
+  // ngOnInit(): void {
+  //   this.http.get<VacancySummary[]>(`${environment.apiUrl}/vacancies`).subscribe({
+  //     next: (data) => { this.vacancies.set(data); this.loading.set(false); },
+  //     error: () => this.loading.set(false),
+  //   });
+  // }
+
   ngOnInit(): void {
-    this.http.get<VacancySummary[]>(`${environment.apiUrl}/vacancies`).subscribe({
+    this.api
+      .get<VacancySummary[]>(`vacancies`).subscribe({
       next: (data) => { this.vacancies.set(data); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

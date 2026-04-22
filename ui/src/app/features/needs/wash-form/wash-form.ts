@@ -223,6 +223,7 @@ import {
                 <select formControlName="towerHeight">
                   <option value="">{{ isUa ? '-- Оберіть --' : '-- Select --' }}</option>
                   <option value="8">8 {{ isUa ? 'м (низька)' : 'm (low)' }}</option>
+                  <option value="10">10 {{ isUa ? 'м (низька)' : 'm (low)' }}</option>
                   <option value="12">12 {{ isUa ? 'м (низька)' : 'm (low)' }}</option>
                   <option value="15">15 {{ isUa ? 'м (середня)' : 'm (average)' }}</option>
                   <option value="18">18 {{ isUa ? 'м (середня)' : 'm (average)' }}</option>

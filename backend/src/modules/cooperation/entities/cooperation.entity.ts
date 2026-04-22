@@ -25,7 +25,11 @@ export class Cooperation {
   @Column({ type: 'enum', enum: CooperationType })
   type: CooperationType;
 
-  @Column({ type: 'enum', enum: CooperationStatus, default: CooperationStatus.OPEN })
+  @Column({
+    type: 'enum',
+    enum: CooperationStatus,
+    default: CooperationStatus.OPEN,
+  })
   status: CooperationStatus;
 
   @Column()

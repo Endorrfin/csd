@@ -6,7 +6,7 @@ import {
   IsArray,
   IsDateString,
   ValidateNested,
-  Matches
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ComplaintCategory } from '../entities/complaint.entity';

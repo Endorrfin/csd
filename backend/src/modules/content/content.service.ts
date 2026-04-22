@@ -8,8 +8,8 @@ import { UpdatePageDto } from './dto/update-page.dto';
 @Injectable()
 export class ContentService {
   constructor(
-      @InjectRepository(Page)
-      private readonly pageRepository: Repository<Page>,
+    @InjectRepository(Page)
+    private readonly pageRepository: Repository<Page>,
   ) {}
 
   // Public - only published pages

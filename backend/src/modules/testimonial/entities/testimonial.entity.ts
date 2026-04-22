@@ -71,7 +71,11 @@ export class Testimonial {
   @Column({ type: 'boolean', default: false })
   isVerified: boolean;
 
-  @Column({ type: 'enum', enum: TestimonialStatus, default: TestimonialStatus.PENDING })
+  @Column({
+    type: 'enum',
+    enum: TestimonialStatus,
+    default: TestimonialStatus.PENDING,
+  })
   status: TestimonialStatus;
 
   // Historical publication date; set on approval
