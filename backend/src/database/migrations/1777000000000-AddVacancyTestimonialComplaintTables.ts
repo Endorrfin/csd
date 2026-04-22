@@ -117,15 +117,17 @@ export class AddVacancyTestimonialComplaintTables1777000000000
     `);
   }
 
+
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE "complaints"`);
-    await queryRunner.query(`DROP TABLE "testimonials"`);
-    await queryRunner.query(`DROP TABLE "vacancies"`);
-    await queryRunner.query(`DROP TYPE "complaints_status_enum"`);
-    await queryRunner.query(`DROP TYPE "complaints_category_enum"`);
-    await queryRunner.query(`DROP TYPE "testimonials_status_enum"`);
-    await queryRunner.query(`DROP TYPE "vacancies_status_enum"`);
-    await queryRunner.query(`DROP TYPE "vacancies_employmenttype_enum"`);
-    await queryRunner.query(`ALTER TABLE "complaints" DROP COLUMN IF EXISTS "phone"`);
+    // drop tables only (phone column drops with the table)
+    await queryRunner.query(`DROP TABLE IF EXISTS "complaints"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "testimonials"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "vacancies"`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "complaints_status_enum"`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "complaints_category_enum"`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "testimonials_status_enum"`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "vacancies_status_enum"`);
+    await queryRunner.query(`DROP TYPE IF EXISTS "vacancies_employmenttype_enum"`);
   }
+
 }
