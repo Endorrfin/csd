@@ -17,6 +17,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
+import { UsePipes } from '@nestjs/common';
+import { SanitizeHtmlPipe } from '../../common/pipes/sanitize-html.pipe';
 
 @Controller('procurement')
 export class ProcurementController {
@@ -44,6 +46,7 @@ export class ProcurementController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @UsePipes(SanitizeHtmlPipe)
   create(@Body() dto: CreateProcurementDto, @Req() req: any) {
     return this.service.create(dto, req.user.id as string);
   }
@@ -51,6 +54,7 @@ export class ProcurementController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @UsePipes(SanitizeHtmlPipe)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProcurementDto,

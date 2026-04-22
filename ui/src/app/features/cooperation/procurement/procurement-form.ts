@@ -26,6 +26,7 @@ import {
   ProcurementStatus,
   Procurement,
 } from './procurement.interfaces';
+import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
 @Component({
   selector: 'app-procurement-form',
@@ -161,20 +162,41 @@ import {
         @if (currentStep() === 3) {
           <section class="fs">
             <h3>{{ 'procurement.steps.technical' | translate }}</h3>
-
-            <div class="form-row">
-              <div class="fg">
-                <label>{{ 'procurement.form.shortDescriptionUa' | translate }}</label>
-                <textarea formControlName="shortDescriptionUa" rows="3"
-                          placeholder="{{ 'procurement.form.shortDescUaPlaceholder' | translate }}"></textarea>
+            
+            <!-- ── textarea → quill-editor for short descriptions ── -->
+            @if (isBrowser) {
+              <div class="form-row">
+                <div class="fg">
+                  <label>{{ 'procurement.form.shortDescriptionUa' | translate }}</label>
+                  <quill-editor formControlName="shortDescriptionUa"
+                                [modules]="quillModules"
+                                [placeholder]="'procurement.form.shortDescUaPlaceholder' | translate">
+                  </quill-editor>
+                </div>
+                <div class="fg">
+                  <label>{{ 'procurement.form.shortDescriptionEn' | translate }}</label>
+                  <quill-editor formControlName="shortDescriptionEn"
+                                [modules]="quillModules"
+                                placeholder="Installation of modular water purification systems">
+                  </quill-editor>
+                </div>
               </div>
-              <div class="fg">
-                <label>{{ 'procurement.form.shortDescriptionEn' | translate }}</label>
-                <textarea formControlName="shortDescriptionEn" rows="3"
-                          placeholder="Installation of modular water purification systems"></textarea>
+            } @else {
+              <!-- SSR fallback: plain textarea, no Quill DOM dependencies -->
+              <div class="form-row">
+                <div class="fg">
+                  <label>{{ 'procurement.form.shortDescriptionUa' | translate }}</label>
+                  <textarea formControlName="shortDescriptionUa" rows="3"
+                            placeholder="{{ 'procurement.form.shortDescUaPlaceholder' | translate }}"></textarea>
+                </div>
+                <div class="fg">
+                  <label>{{ 'procurement.form.shortDescriptionEn' | translate }}</label>
+                  <textarea formControlName="shortDescriptionEn" rows="3"
+                            placeholder="Installation of modular water purification systems"></textarea>
+                </div>
               </div>
-            </div>
-
+            }
+            
             <!-- Quill rendered only in browser — SSR unsafe -->
             @if (isBrowser) {
               <div class="fg">
@@ -681,16 +703,7 @@ export class ProcurementFormComponent implements OnInit {
     { key: 'submissionEmail', labelKey: 'procurement.form.submissionEmail' },
   ];
 
-  readonly quillModules = {
-    toolbar: [
-      ['bold', 'italic', 'underline'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ header: [1, 2, 3, false] }],
-      ['link'],
-      ['clean'],
-    ],
-  };
-
+  readonly quillModules = QUILL_MODULES;
   readonly donors = Object.values(ProcurementDonor);
 
   form = new FormGroup({

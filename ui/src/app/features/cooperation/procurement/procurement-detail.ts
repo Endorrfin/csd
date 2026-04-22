@@ -5,12 +5,13 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Procurement } from './procurement.interfaces';
+import { QuillHtmlPipe } from '../../../shared/pipes/quill-html.pipe';
 
 
 @Component({
   selector: 'app-procurement-detail',
   standalone: true,
-  imports: [RouterLink, TranslateModule, SlicePipe],
+  imports: [RouterLink, TranslateModule, SlicePipe, QuillHtmlPipe],
   template: `
     <div class="pd">
       @if (isLoading()) {
@@ -88,14 +89,14 @@ import { Procurement } from './procurement.interfaces';
         @if (item()!.shortDescriptionUa || item()!.shortDescriptionEn) {
           <section class="pd__section">
             <h2>{{ 'procurement.steps.technical' | translate }}</h2>
-            <p class="pd__description">
-              {{ isUa ? item()!.shortDescriptionUa : item()!.shortDescriptionEn }}
-            </p>
-
-            <!-- Rich text (HTML from Quill) — rendered only in browser -->
-            @if (isBrowser && (item()!.detailedDescriptionUa || item()!.detailedDescriptionEn)) {
+            <div class="pd__rich-text"
+                 [innerHTML]="(isUa ? item()!.shortDescriptionUa : item()!.shortDescriptionEn) | quillHtml">
+            </div>
+        
+            <!-- ── use quillHtml pipe for &nbsp;/list normalization ── -->
+            @if (item()!.detailedDescriptionUa || item()!.detailedDescriptionEn) {
               <div class="pd__rich-text"
-                   [innerHTML]="isUa ? item()!.detailedDescriptionUa : item()!.detailedDescriptionEn">
+                   [innerHTML]="(isUa ? item()!.detailedDescriptionUa : item()!.detailedDescriptionEn) | quillHtml">
               </div>
             }
           </section>
