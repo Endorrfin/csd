@@ -6,7 +6,7 @@ on:
       - main
     types:
       - closed
-  # allow manual trigger
+  # allow manual trigger using main branch
   workflow_dispatch:
 
 env:

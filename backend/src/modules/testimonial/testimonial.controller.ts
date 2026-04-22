@@ -43,7 +43,6 @@ export class TestimonialController {
 
   // Any registered user can submit a testimonial
   @Post()
-  // @UseGuards(JwtAuthGuard) // any users publish Testimonial
   create(@Body() dto: CreateTestimonialDto) {
     return this.service.create(dto);
   }
