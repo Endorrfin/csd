@@ -7,7 +7,6 @@ import {
   Param,
   Body,
   UseGuards,
-  Req,
   ParseUUIDPipe,
 } from '@nestjs/common';
 import { TestimonialService } from './testimonial.service';
@@ -45,8 +44,8 @@ export class TestimonialController {
   // Any registered user can submit a testimonial
   @Post()
   // @UseGuards(JwtAuthGuard) // any users publish Testimonial
-  create(@Body() dto: CreateTestimonialDto, @Req() req: any) {
-    return this.service.create(dto, req.user.id as string);
+  create(@Body() dto: CreateTestimonialDto) {
+    return this.service.create(dto);
   }
 
   @Patch(':id')
