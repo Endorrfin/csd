@@ -32,6 +32,9 @@ export class Complaint {
   @Column({ type: 'text' })
   description: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  phone: string | null;
+
   // Optional for anonymous submission
   @Column({ type: 'varchar', nullable: true })
   email: string | null;

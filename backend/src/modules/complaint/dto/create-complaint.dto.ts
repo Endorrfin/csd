@@ -6,6 +6,7 @@ import {
   IsArray,
   IsDateString,
   ValidateNested,
+  Matches
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ComplaintCategory } from '../entities/complaint.entity';
@@ -24,6 +25,12 @@ export class CreateComplaintDto {
 
   @IsString()
   description: string;
+
+  // added optional phone field
+  @IsOptional()
+  @IsString()
+  @Matches(/^\+380\d{9}$/, { message: 'Phone must be in format +380XXXXXXXXX' })
+  phone?: string;
 
   // Anonymous: email is optional
   @IsOptional()

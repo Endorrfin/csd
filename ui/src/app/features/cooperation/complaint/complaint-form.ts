@@ -26,7 +26,23 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
         <div class="cf__success">
           ✅ {{ 'complaint.form.success' | translate }}
         </div>
-      } @else {
+      } @else if (!showForm()) {
+        <!-- landing view with button + recommendations -->
+        <div class="cf__header">
+          <h2>{{ 'complaint.form.title' | translate }}</h2>
+          <p class="cf__subtitle">{{ 'complaint.form.subtitle' | translate }}</p>
+        </div>
+        
+        <div class="cf__recommendations">
+          <h3>{{ 'complaint.recommendations.title' | translate }}</h3>
+          <div [innerHTML]="'complaint.recommendations.text' | translate"></div>
+        </div>
+        
+        <button type="button" class="btn-primary" (click)="showForm.set(true)">
+          📝 {{ 'complaint.form.openForm' | translate }}
+        </button>
+        
+      } @else {        
         <div class="cf__header">
           <h2>{{ 'complaint.form.title' | translate }}</h2>
           <p class="cf__subtitle">{{ 'complaint.form.subtitle' | translate }}</p>
@@ -63,6 +79,25 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
           <div class="form-field">
             <label>{{ 'complaint.form.expectedResolution' | translate }}</label>
             <textarea formControlName="expectedResolution" rows="3"></textarea>
+          </div>
+          
+          <!-- add phone field (optional) -->          
+          <div class="form-field">
+            <label>{{ 'complaint.form.phone' | translate }}</label>
+            <div class="cf__phone-wrapper">
+              <span class="cf__phone-prefix">+38</span>
+              <input
+                formControlName="phone"
+                type="tel"
+                maxlength="10"
+                placeholder="0501234567"
+                (input)="onPhoneInput($event)"
+              />
+            </div>
+            <span class="hint">{{ 'complaint.form.phoneHint' | translate }}</span>
+            @if (form.get('phone')?.hasError('pattern') && form.get('phone')?.touched) {
+              <span class="err">10 digits required</span>
+            }
           </div>
 
           <!-- Email (optional) -->
@@ -157,6 +192,40 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
         color: #276749;
         font-size: 0.9375rem;
       }
+      
+      &__recommendations {
+        padding: 1rem 1.25rem;
+        background: #fffbeb;
+        border: 1px solid #fbd38d;
+        border-radius: 8px;
+        margin-bottom: 1.25rem;
+        h3 { font-size: 0.9375rem; color: #744210; margin: 0 0 0.5rem; }
+        ul { margin: 0; padding-left: 1.25rem; color: #744210; font-size: 0.875rem; li { margin-bottom: 0.25rem; } }
+      }
+      
+      &__phone-wrapper {
+        display: flex;
+        align-items: center;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        overflow: hidden;
+        &:focus-within { border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43,108,176,.1); }
+      }
+      &__phone-prefix {
+        padding: 0.55rem 0.625rem;
+        background: #f1f5f9;
+        color: #4a5568;
+        font-size: 0.9rem;
+        border-right: 1px solid #cbd5e0;
+        white-space: nowrap;
+      }
+      &__phone-wrapper input {
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        flex: 1;
+      }
+
     }
     .form-field {
       display: flex;
@@ -205,6 +274,7 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
       cursor: pointer;
       font-size: 0.8125rem;
     }
+    
     @media (max-width: 640px) {
       .cf__attachment-row { grid-template-columns: 1fr; }
     }
@@ -218,6 +288,7 @@ export class ComplaintFormComponent {
   protected saving = signal(false);
   protected submitted = signal(false);
   protected error = signal<string | null>(null);
+  protected showForm = signal(false);
 
   protected get lang(): string { return this.translate.currentLang ?? 'ua'; }
 
@@ -233,6 +304,7 @@ export class ComplaintFormComponent {
     category: ['' as ComplaintCategory | '', Validators.required],
     description: ['', Validators.required],
     expectedResolution: [''],
+    phone: ['', Validators.pattern(/^\d{10}$/)],
     email: ['', Validators.email],
     location: [null as LocationValue | null],
     submittedAt: [''],
@@ -246,6 +318,13 @@ export class ComplaintFormComponent {
   // Template helper: cast AbstractControl to FormGroup for nested formGroup directive
   protected asGroup(ctrl: AbstractControl) {
     return ctrl as ReturnType<FormBuilder['group']>;
+  }
+
+  protected onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = input.value.replace(/\D/g, '').slice(0, 10);
+    input.value = digits;
+    this.form.get('phone')!.setValue(digits, { emitEvent: false });
   }
 
   protected addAttachment(): void {
@@ -276,6 +355,7 @@ export class ComplaintFormComponent {
       category: raw.category,
       description: raw.description,
       ...(raw.expectedResolution && { expectedResolution: raw.expectedResolution }),
+      ...(raw.phone && raw.phone.length === 10 && { phone: `+38${raw.phone}` }),
       ...(raw.email && { email: raw.email }),
       // Map LocationValue → flat entity fields
       ...(loc && {

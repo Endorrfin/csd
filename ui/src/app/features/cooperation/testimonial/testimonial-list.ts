@@ -27,7 +27,7 @@ interface TestimonialItem {
           <h2>{{ 'testimonial.list.title' | translate }}</h2>
         </div>
         <!-- Any logged-in user can submit -->
-        @if (auth.isLoggedIn()) {
+        @if (true) {
           <a routerLink="new" class="btn-primary">
             ✍️ {{ 'testimonial.list.submit' | translate }}
           </a>
@@ -133,7 +133,7 @@ interface TestimonialItem {
 })
 export class TestimonialListComponent implements OnInit {
   private http = inject(HttpClient);
-  protected auth = inject(AuthService);
+  // protected auth = inject(AuthService);
 
   protected items = signal<TestimonialItem[]>([]);
   protected loading = signal(true);

@@ -197,11 +197,18 @@
     }
   },
   "complaint": {
+    "recommendations": {
+      "title": "Recommendations for filing a complaint",
+      "text": "<ul><li>Describe the situation clearly and concisely</li><li>Indicate the date and place of the incident</li><li>Attach supporting materials if available</li><li>Provide your email if you expect a response</li></ul>"
+    },
     "form": {
+      "openForm": "Submit a complaint",
       "title": "Submit a complaint",
       "subtitle": "Your submission will be handled confidentially",
       "category": "Complaint category",
       "description": "Description",
+      "phone": "Phone for feedback (optional)",
+      "phoneHint": "Enter number in format +380XXXXXXXXXX",
       "email": "Email for feedback (optional)",
       "emailHint": "Provide your email if you want a response",
       "location": "Location (optional)",
@@ -215,7 +222,7 @@
       "success": "Your complaint has been received. We will review it shortly."
     },
     "category": {
-      "service_quality": "Service quality",
+      "service_quality": "Quality of charitable assistance provided",
       "staff_behavior": "Staff behavior",
       "corruption": "Corruption",
       "delay": "Delay",

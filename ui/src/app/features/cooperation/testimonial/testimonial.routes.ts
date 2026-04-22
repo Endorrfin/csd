@@ -13,6 +13,6 @@ export const TESTIMONIAL_ROUTES: Routes = [
     path: 'new',
     loadComponent: () =>
       import('./testimonial-form').then((m) => m.TestimonialFormComponent),
-    canActivate: [authGuard], // CHANGED: login required
+    // canActivate: [authGuard], // login required
   },
 ];
