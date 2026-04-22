@@ -11,6 +11,7 @@ import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
+import { QUILL_MODULES } from '../../shared/config/quill.config';
 
 @Component({
   selector: 'app-home',
@@ -443,15 +444,7 @@ export class HomeComponent implements OnInit {
   readonly isBrowser = isPlatformBrowser(this.platformId);
 
   // Quill (rich text)  toolbar config for news content
-  readonly quillModules = {
-    toolbar: [
-      ['bold', 'italic', 'underline'],
-      [{ list: 'ordered' }, { list: 'bullet' }],
-      [{ header: [1, 2, 3, false] }],
-      ['link'],
-      ['clean'],
-    ],
-  };
+  readonly quillModules = QUILL_MODULES;
 
   posts = signal<any[]>([]);
   showForm = signal(false);

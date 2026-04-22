@@ -4,6 +4,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { DatePipe } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/services/auth.service';
+import { QuillHtmlPipe } from '../../../shared/pipes/quill-html.pipe';
 
 interface VacancyDetail {
   id: string;
@@ -26,7 +27,7 @@ interface VacancyDetail {
 @Component({
   selector: 'app-vacancy-detail',
   standalone: true,
-  imports: [RouterLink, TranslateModule, DatePipe],
+  imports: [RouterLink, TranslateModule, DatePipe, QuillHtmlPipe],
   template: `
     <div class="vacancy-detail">
       <div class="vacancy-detail__nav">
@@ -71,13 +72,14 @@ interface VacancyDetail {
           }
 
           <section class="vacancy-detail__section">
-            <div [innerHTML]="lang === 'ua' ? vacancy()!.descriptionUa : vacancy()!.descriptionEn"></div>
+            <!-- ── pipe handles &nbsp; and Quill list normalization ── -->
+            <div [innerHTML]="(lang === 'ua' ? vacancy()!.descriptionUa : vacancy()!.descriptionEn) | quillHtml"></div>
           </section>
 
           @if (vacancy()!.requirementsUa || vacancy()!.requirementsEn) {
             <section class="vacancy-detail__section">
               <h3>{{ 'vacancy.detail.requirements' | translate }}</h3>
-              <div [innerHTML]="lang === 'ua' ? vacancy()!.requirementsUa : vacancy()!.requirementsEn"></div>
+              <div [innerHTML]="(lang === 'ua' ? vacancy()!.requirementsUa : vacancy()!.requirementsEn) | quillHtml"></div>
             </section>
           }
         </article>

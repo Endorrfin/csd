@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   ReactiveFormsModule,
@@ -10,6 +10,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
 import { LocationValue } from '../../../shared/interfaces/location.interfaces';
 import { ApiService } from '../../../core/services/api.service';
+import { isPlatformBrowser } from '@angular/common';
+import { QuillModule } from 'ngx-quill';
+import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
 type EmploymentType = 'full_time' | 'part_time' | 'volunteer';
 type VacancyStatus = 'draft' | 'published' | 'closed';
@@ -41,7 +44,7 @@ interface VacancyPayload {
 @Component({
   selector: 'app-vacancy-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, LocationSelectorComponent],
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, LocationSelectorComponent, QuillModule],
   template: `
     <div class="vf">
       <div class="vf__nav">
@@ -87,25 +90,51 @@ interface VacancyPayload {
         <!-- Description UA -->
         <div class="form-field">
           <label>{{ 'vacancy.form.descriptionUa' | translate }} *</label>
-          <textarea formControlName="descriptionUa" rows="5"></textarea>
+          @if (isBrowser) {
+            <quill-editor formControlName="descriptionUa"
+                          [modules]="quillModules"
+                          [placeholder]="'vacancy.form.descriptionUa' | translate">
+            </quill-editor>
+          } @else {
+            <textarea formControlName="descriptionUa" rows="5"></textarea>
+          }
         </div>
 
         <!-- Description EN -->
         <div class="form-field">
           <label>{{ 'vacancy.form.descriptionEn' | translate }} *</label>
-          <textarea formControlName="descriptionEn" rows="5"></textarea>
+          @if (isBrowser) {
+            <quill-editor formControlName="descriptionEn"
+                          [modules]="quillModules"
+                          placeholder="Job description...">
+            </quill-editor>
+          } @else {
+            <textarea formControlName="descriptionEn" rows="5"></textarea>
+          }
         </div>
 
         <!-- Requirements UA -->
         <div class="form-field">
           <label>{{ 'vacancy.form.requirementsUa' | translate }}</label>
-          <textarea formControlName="requirementsUa" rows="4"></textarea>
+          @if (isBrowser) {
+            <quill-editor formControlName="requirementsUa"
+                          [modules]="quillModules">
+            </quill-editor>
+          } @else {
+            <textarea formControlName="requirementsUa" rows="4"></textarea>
+          }
         </div>
 
         <!-- Requirements EN -->
         <div class="form-field">
           <label>{{ 'vacancy.form.requirementsEn' | translate }}</label>
-          <textarea formControlName="requirementsEn" rows="4"></textarea>
+          @if (isBrowser) {
+            <quill-editor formControlName="requirementsEn"
+                          [modules]="quillModules">
+            </quill-editor>
+          } @else {
+            <textarea formControlName="requirementsEn" rows="4"></textarea>
+          }
         </div>
 
         <!-- Location -->
@@ -225,6 +254,7 @@ export class VacancyFormComponent implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private translate = inject(TranslateService);
+  private platformId = inject(PLATFORM_ID);
 
   protected saving = signal(false);
   protected error = signal<string | null>(null);
@@ -234,6 +264,8 @@ export class VacancyFormComponent implements OnInit {
   protected get lang(): string { return this.translate.currentLang ?? 'ua'; }
 
   protected readonly employmentTypes: EmploymentType[] = ['full_time', 'part_time', 'volunteer'];
+  protected readonly isBrowser = isPlatformBrowser(this.platformId);
+  protected readonly quillModules = QUILL_MODULES;
 
   protected form: FormGroup = this.fb.group({
     titleUa: ['', Validators.required],

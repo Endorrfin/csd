@@ -18,6 +18,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { VacancyStatus } from './entities/vacancy.entity';
+import { UsePipes } from '@nestjs/common';
+import { SanitizeHtmlPipe } from '../../common/pipes/sanitize-html.pipe';
 
 @Controller('vacancies')
 export class VacancyController {
@@ -45,6 +47,7 @@ export class VacancyController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @UsePipes(SanitizeHtmlPipe)
   create(@Body() dto: CreateVacancyDto, @Req() req: any) {
     return this.service.create(dto, req.user.id as string);
   }
@@ -52,6 +55,7 @@ export class VacancyController {
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @UsePipes(SanitizeHtmlPipe)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateVacancyDto,
@@ -63,6 +67,7 @@ export class VacancyController {
   @Patch(':id/publish')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @UsePipes(SanitizeHtmlPipe)
   publish(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateVacancyDto,
