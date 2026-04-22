@@ -6,7 +6,7 @@ import {
   ArrayMaxSize,
   MinLength,
   Matches,
-  IsDateString
+  IsDateString,
 } from 'class-validator';
 
 export class UpdatePostDto {

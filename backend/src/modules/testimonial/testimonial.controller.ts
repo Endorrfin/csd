@@ -61,7 +61,10 @@ export class TestimonialController {
   @Patch(':id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  approve(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateTestimonialDto) {
+  approve(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTestimonialDto,
+  ) {
     return this.service.update(id, {
       ...dto,
       status: TestimonialStatus.APPROVED,
@@ -72,7 +75,10 @@ export class TestimonialController {
   @Patch(':id/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  reject(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateTestimonialDto) {
+  reject(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTestimonialDto,
+  ) {
     return this.service.update(id, {
       ...dto,
       status: TestimonialStatus.REJECTED,

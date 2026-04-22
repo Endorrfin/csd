@@ -1,9 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { AuthService } from '../../../core/services/auth.service';
-import { environment } from '../../../../environments/environment';
+import { TranslateModule } from '@ngx-translate/core';
+import { ApiService } from '../../../core/services/api.service';
 
 interface TestimonialItem {
   id: string;
@@ -132,7 +130,7 @@ interface TestimonialItem {
   `],
 })
 export class TestimonialListComponent implements OnInit {
-  private http = inject(HttpClient);
+  private api = inject(ApiService);
   // protected auth = inject(AuthService);
 
   protected items = signal<TestimonialItem[]>([]);
@@ -147,7 +145,14 @@ export class TestimonialListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.http.get<TestimonialItem[]>(`${environment.apiUrl}/testimonials`).subscribe({
+    // this.http.get<TestimonialItem[]>(`${environment.apiUrl}/testimonials`).subscribe({
+    //   next: (data) => { this.items.set(data); this.loading.set(false); },
+    //   error: () => this.loading.set(false),
+    // });
+
+    this.api
+      .get<TestimonialItem[]>(`testimonials`)
+      .subscribe({
       next: (data) => { this.items.set(data); this.loading.set(false); },
       error: () => this.loading.set(false),
     });

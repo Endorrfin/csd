@@ -77,8 +77,8 @@ export class WaterTowerDto {
   @IsIn(['vbr_15', 'vbr_25', 'vbr_50', 'vbr_over_50'])
   towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
 
-  @IsIn(['8', '12', '15', '18', '20', '25', 'over_25'])
-  towerHeight: '8' | '12' | '15' | '18' | '20' | '25' | 'over_25';
+  @IsIn(['8', '10', '12', '15', '18', '20', '25', 'over_25'])
+  towerHeight: '8' | '10' | '12' | '15' | '18' | '20' | '25' | 'over_25';
 
   @IsNumber()
   @IsOptional()

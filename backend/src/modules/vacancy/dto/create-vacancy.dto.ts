@@ -1,9 +1,4 @@
-import {
-  IsString,
-  IsOptional,
-  IsEnum,
-  IsDateString,
-} from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
 import { EmploymentType, VacancyStatus } from '../entities/vacancy.entity';
 
 export class CreateVacancyDto {

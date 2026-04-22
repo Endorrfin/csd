@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
@@ -9,8 +13,8 @@ import { User } from '../users/entities/user.entity';
 @Injectable()
 export class BlogService {
   constructor(
-      @InjectRepository(Post)
-      private readonly postRepository: Repository<Post>,
+    @InjectRepository(Post)
+    private readonly postRepository: Repository<Post>,
   ) {}
 
   findAllPublished(): Promise<Post[]> {

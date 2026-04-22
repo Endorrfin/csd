@@ -17,11 +17,11 @@ async function bootstrap() {
 
   // Global DTO validation — rejects requests with invalid data
   app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true, // Removes fields that are not in the DTO
-        forbidNonWhitelisted: true, // Error if extra fields are received
-        transform: true, // Automatic type conversion
-      }),
+    new ValidationPipe({
+      whitelist: true, // Removes fields that are not in the DTO
+      forbidNonWhitelisted: true, // Error if extra fields are received
+      transform: true, // Automatic type conversion
+    }),
   );
   await app.listen(process.env.PORT ?? 3000);
 

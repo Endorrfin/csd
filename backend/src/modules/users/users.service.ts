@@ -46,7 +46,11 @@ export class UsersService {
   async findByResetToken(token: string): Promise<User | null> {
     return this.usersRepo
       .createQueryBuilder('user')
-      .addSelect(['user.resetToken', 'user.resetTokenExpiry', 'user.passwordHash'])
+      .addSelect([
+        'user.resetToken',
+        'user.resetTokenExpiry',
+        'user.passwordHash',
+      ])
       .where('user.resetToken = :token', { token })
       .getOne();
   }

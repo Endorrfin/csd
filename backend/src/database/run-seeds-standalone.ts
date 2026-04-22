@@ -17,9 +17,10 @@ async function run(): Promise<void> {
     entities: [EquipmentCategory, EquipmentItem],
     synchronize: false,
     // synchronize: true, // initial create table RDS
-    ssl: process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+    ssl:
+      process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: false }
+        : false,
   });
 
   await ds.initialize();

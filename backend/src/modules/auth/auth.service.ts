@@ -76,9 +76,16 @@ export class AuthService {
       const resetToken = crypto.randomBytes(32).toString('hex');
       const resetTokenExpiry = new Date(Date.now() + RESET_TOKEN_TTL_MS);
 
-      await this.usersService.setResetToken(user.id, resetToken, resetTokenExpiry);
+      await this.usersService.setResetToken(
+        user.id,
+        resetToken,
+        resetTokenExpiry,
+      );
 
-      const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:4200');
+      const frontendUrl = this.configService.get<string>(
+        'FRONTEND_URL',
+        'http://localhost:4200',
+      );
       const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
 
       // TODO: Replace with EmailService when SMTP is configured
@@ -92,7 +99,10 @@ export class AuthService {
   /**
    * Validate token and set new password.
    */
-  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
     const user = await this.usersService.findByResetToken(token);
 
     if (!user || !user.resetTokenExpiry) {

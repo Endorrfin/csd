@@ -7,7 +7,10 @@ import {
   IsDateString,
   MinLength,
 } from 'class-validator';
-import { CooperationType, CooperationStatus } from '../entities/cooperation.entity';
+import {
+  CooperationType,
+  CooperationStatus,
+} from '../entities/cooperation.entity';
 
 export class CreateCooperationDto {
   @IsEnum(CooperationType)

@@ -7,7 +7,6 @@ import {
   MinLength,
   Matches,
   IsDateString,
-
 } from 'class-validator';
 
 export class CreatePostDto {
