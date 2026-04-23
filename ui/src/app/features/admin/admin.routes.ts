@@ -1,9 +1,11 @@
 // ui/src/app/features/admin/admin.routes.ts
 import { Routes } from '@angular/router';
-import { superAdminGuard } from '../../core/guards/auth.guard';
+import { adminGuard, superAdminGuard } from '../../core/guards/auth.guard';
 
 export const adminRoutes: Routes = [
   { path: '', redirectTo: 'wash-forms', pathMatch: 'full' },
+
+  // WASH forms
   {
     path: 'wash-forms',
     loadComponent: () =>
@@ -15,6 +17,36 @@ export const adminRoutes: Routes = [
       import('./wash-form-detail/wash-form-detail').then((m) => m.WashFormDetailComponent),
   },
 
+  // Procurements admin (placeholder — replaced in Step 4)
+  {
+    path: 'procurements',
+    loadComponent: () =>
+      import('./procurements/procurements-list').then((m) => m.AdminProcurementsListComponent),
+  },
+
+  // Vacancies admin (placeholder — replaced in Step 5)
+  {
+    path: 'vacancies',
+    loadComponent: () =>
+      import('./vacancies/vacancies-list').then((m) => m.AdminVacanciesListComponent),
+  },
+
+  // Testimonials admin (placeholder — replaced in Step 6)
+  {
+    path: 'testimonials',
+    loadComponent: () =>
+      import('./testimonials/testimonials-list').then((m) => m.AdminTestimonialsListComponent),
+  },
+
+  // Complaints admin (placeholder — replaced in Step 7; admin+ only)
+  {
+    path: 'complaints',
+    loadComponent: () =>
+      import('./complaints/complaints-list').then((m) => m.AdminComplaintsListComponent),
+    canActivate: [adminGuard],
+  },
+
+  // Users management (super_admin only)
   {
     path: 'users',
     loadComponent: () =>

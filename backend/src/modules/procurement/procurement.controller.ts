@@ -1,3 +1,4 @@
+// backend/src/modules/procurement/procurement.controller.ts
 import {
   Controller,
   Get,
@@ -9,6 +10,8 @@ import {
   UseGuards,
   Req,
   ParseUUIDPipe,
+  UsePipes,
+  Query, // CHANGED: added
 } from '@nestjs/common';
 import { ProcurementService } from './procurement.service';
 import { CreateProcurementDto } from './dto/create-procurement.dto';
@@ -17,9 +20,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
-import { UsePipes } from '@nestjs/common';
 import { SanitizeHtmlPipe } from '../../common/pipes/sanitize-html.pipe';
 import { UpdateProcurementStatusDto } from './dto/update-status.dto';
+import { AdminProcurementQueryDto } from './dto/admin-query.dto';
 
 @Controller('procurement')
 export class ProcurementController {
@@ -31,12 +34,12 @@ export class ProcurementController {
     return this.service.findAllPublished();
   }
 
-  // Admin: all records including drafts
-  @Get('admin/all')
+  // CHANGED: paginated + filtered admin endpoint (replaces /admin/all)
+  @Get('admin/list')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  findAllAdmin() {
-    return this.service.findAll();
+  findAllForAdmin(@Query() query: AdminProcurementQueryDto) {
+    return this.service.findAllForAdmin(query);
   }
 
   @Get(':id')
@@ -63,7 +66,6 @@ export class ProcurementController {
     return this.service.update(id, dto);
   }
 
-  // ── dedicated status update endpoint ──
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
@@ -74,7 +76,8 @@ export class ProcurementController {
     return this.service.updateStatus(id, dto.status);
   }
 
-  // Dedicated publish endpoint — sets status to PUBLISHED
+  // Legacy publish endpoint — kept for backward compat, will be removed
+  // after UI fully switches to /:id/status (technical debt note in roadmap)
   @Patch(':id/publish')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
@@ -84,9 +87,10 @@ export class ProcurementController {
     } as UpdateProcurementDto);
   }
 
+  // Hard delete — service enforces draft-only rule
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.remove(id);
   }
