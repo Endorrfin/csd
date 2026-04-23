@@ -1,3 +1,4 @@
+// ui/src/app/features/cooperation/procurement/procurement.interfaces.ts
 export enum ProcurementDonor {
   UNICEF = 'UNICEF',
   UHF = 'UHF',
@@ -29,9 +30,17 @@ export enum SubmissionMethod {
   EPLATFORM = 'eplatform',
 }
 
+// CHANGED: synced with backend entity (8 active + 1 legacy)
 export enum ProcurementStatus {
   DRAFT = 'draft',
   PUBLISHED = 'published',
+  EXTENDED = 'extended',
+  EVALUATION = 'evaluation',
+  AWARDED = 'awarded',
+  SUSPENDED = 'suspended',
+  CANCELLED = 'cancelled',
+  COMPLETED = 'completed',
+  /** @deprecated kept for PostgreSQL enum compatibility; remapped to COMPLETED */
   CLOSED = 'closed',
 }
 
@@ -59,6 +68,14 @@ export interface ProcurementListItem {
   publicationDate: string | null;
   status: ProcurementStatus;
   createdAt: string;
+}
+
+// CHANGED: paginated response shape — matches GET /procurement/admin/list
+export interface PaginatedProcurements {
+  data: ProcurementListItem[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface Procurement extends ProcurementListItem {
