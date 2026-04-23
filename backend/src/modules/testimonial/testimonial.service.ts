@@ -1,9 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+// backend/src/modules/testimonial/testimonial.service.ts
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Testimonial, TestimonialStatus } from './entities/testimonial.entity';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { UpdateTestimonialDto } from './dto/update-testimonial.dto';
+import { AdminTestimonialQueryDto } from './dto/admin-query.dto';
+
+export interface PaginatedTestimonials {
+  data: Testimonial[];
+  total: number;
+  page: number;
+  limit: number;
+}
 
 @Injectable()
 export class TestimonialService {
@@ -12,17 +25,38 @@ export class TestimonialService {
     private readonly repo: Repository<Testimonial>,
   ) {}
 
-  // Public: approved only
   findAllApproved(): Promise<Testimonial[]> {
     return this.repo.find({
       where: { status: TestimonialStatus.APPROVED },
-      order: { publishedAt: 'DESC' },
+      order: { publishedAt: 'ASC', createdAt: 'ASC' },
     });
   }
 
-  // Manager+: all statuses
-  findAll(): Promise<Testimonial[]> {
-    return this.repo.find({ order: { createdAt: 'DESC' } });
+  // CHANGED: paginated + filtered admin grid
+  async findAllForAdmin(
+    query: AdminTestimonialQueryDto,
+  ): Promise<PaginatedTestimonials> {
+    const qb = this.repo.createQueryBuilder('t').orderBy('t.createdAt', 'DESC');
+
+    if (query.status) {
+      qb.andWhere('t.status = :status', { status: query.status });
+    }
+    if (query.verifiedOnly === 'true') {
+      qb.andWhere('t.isVerified = true');
+    }
+    if (query.search) {
+      qb.andWhere(
+        '(t.authorName ILIKE :s OR t.organization ILIKE :s OR t.text ILIKE :s)',
+        { s: `%${query.search}%` },
+      );
+    }
+
+    const [data, total] = await qb
+      .skip((query.page - 1) * query.limit)
+      .take(query.limit)
+      .getManyAndCount();
+
+    return { data, total, page: query.page, limit: query.limit };
   }
 
   async findById(id: string): Promise<Testimonial> {
@@ -44,7 +78,6 @@ export class TestimonialService {
   async update(id: string, dto: UpdateTestimonialDto): Promise<Testimonial> {
     const existing = await this.findById(id);
 
-    // publishedAt mapped inline to avoid string→Date type mismatch
     const updates: Partial<Testimonial> = {
       ...dto,
       publishedAt:
@@ -60,7 +93,6 @@ export class TestimonialService {
     return this.findById(id);
   }
 
-  // ── dedicated status transition with side effects ──
   async updateStatus(
     id: string,
     status: TestimonialStatus,
@@ -70,7 +102,6 @@ export class TestimonialService {
 
     const updates: Partial<Testimonial> = { status };
 
-    // Set publishedAt only when transitioning into APPROVED for the first time
     if (
       status === TestimonialStatus.APPROVED &&
       existing.status !== TestimonialStatus.APPROVED &&
@@ -87,8 +118,22 @@ export class TestimonialService {
     return this.findById(id);
   }
 
-  async remove(id: string): Promise<void> {
+  async setVerified(id: string, isVerified: boolean): Promise<Testimonial> {
     await this.findById(id);
+    await this.repo.update(id, { isVerified });
+    return this.findById(id);
+  }
+
+  // CHANGED: only rejected testimonials can be hard-deleted
+  async remove(id: string): Promise<void> {
+    const existing = await this.findById(id);
+
+    if (existing.status !== TestimonialStatus.REJECTED) {
+      throw new BadRequestException(
+        'Only rejected testimonials can be deleted. Reject it first to remove.',
+      );
+    }
+
     await this.repo.delete(id);
   }
 }

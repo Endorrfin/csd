@@ -1,18 +1,9 @@
+// ui/src/app/features/cooperation/testimonial/testimonial-list.ts
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
-
-interface TestimonialItem {
-  id: string;
-  authorName: string;
-  organization: string | null;
-  text: string;
-  rating: number | null;
-  region: string | null;
-  isVerified: boolean;
-  publishedAt: string | null;
-}
+import { TestimonialItem } from './testimonial.interfaces';
 
 @Component({
   selector: 'app-testimonial-list',
@@ -24,12 +15,10 @@ interface TestimonialItem {
         <div>
           <h2>{{ 'testimonial.list.title' | translate }}</h2>
         </div>
-        <!-- Any logged-in user can submit -->
-        @if (true) {
-          <a routerLink="new" class="btn-primary">
-            ✍️ {{ 'testimonial.list.submit' | translate }}
-          </a>
-        }
+        <!-- CHANGED: removed redundant @if (true) wrapper -->
+        <a routerLink="new" class="btn-primary">
+          ✍️ {{ 'testimonial.list.submit' | translate }}
+        </a>
       </div>
 
       @if (loading()) {
@@ -53,9 +42,7 @@ interface TestimonialItem {
               <p class="testimonial-card__text">{{ t.text }}</p>
               <div class="testimonial-card__author">
                 <strong>{{ t.authorName }}</strong>
-                @if (t.organization) {
-                  <span>· {{ t.organization }}</span>
-                }
+                @if (t.organization) { <span>· {{ t.organization }}</span> }
                 @if (t.isVerified) {
                   <span class="verified-badge">
                     ✓ {{ 'testimonial.list.verified' | translate }}
@@ -73,18 +60,12 @@ interface TestimonialItem {
   `,
   styles: [
     `
-      .testimonial-list {
-        &__header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 1.5rem;
-          h2 {
-            font-size: 1.375rem;
-            color: #1a365d;
-            margin: 0;
-          }
-        }
+      .testimonial-list__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        h2 { font-size: 1.375rem; color: #1a365d; margin: 0; }
       }
       .testimonial-grid {
         display: grid;
@@ -100,9 +81,7 @@ interface TestimonialItem {
           font-size: 1.125rem;
           color: #f6ad55;
           margin-bottom: 0.5rem;
-          .empty {
-            color: #e2e8f0;
-          }
+          .empty { color: #e2e8f0; }
         }
         &__text {
           font-size: 0.9375rem;
@@ -139,15 +118,12 @@ interface TestimonialItem {
         text-decoration: none;
         font-size: 0.875rem;
       }
-      .state-msg {
-        color: #718096;
-      }
+      .state-msg { color: #718096; }
     `,
   ],
 })
 export class TestimonialListComponent implements OnInit {
   private api = inject(ApiService);
-  // protected auth = inject(AuthService);
 
   protected items = signal<TestimonialItem[]>([]);
   protected loading = signal(true);
@@ -161,12 +137,7 @@ export class TestimonialListComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // this.http.get<TestimonialItem[]>(`${environment.apiUrl}/testimonials`).subscribe({
-    //   next: (data) => { this.items.set(data); this.loading.set(false); },
-    //   error: () => this.loading.set(false),
-    // });
-
-    this.api.get<TestimonialItem[]>(`testimonials`).subscribe({
+    this.api.get<TestimonialItem[]>('testimonials').subscribe({
       next: (data) => {
         this.items.set(data);
         this.loading.set(false);
