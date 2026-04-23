@@ -1,6 +1,4 @@
 import { Component, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -21,35 +19,30 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
   imports: [ReactiveFormsModule, TranslateModule, LocationSelectorComponent],
   template: `
     <div class="cf">
-
       @if (submitted()) {
-        <div class="cf__success">
-          ✅ {{ 'complaint.form.success' | translate }}
-        </div>
+        <div class="cf__success">✅ {{ 'complaint.form.success' | translate }}</div>
       } @else if (!showForm()) {
         <!-- landing view with button + recommendations -->
         <div class="cf__header">
           <h2>{{ 'complaint.form.title' | translate }}</h2>
           <p class="cf__subtitle">{{ 'complaint.form.subtitle' | translate }}</p>
         </div>
-        
+
         <div class="cf__recommendations">
           <h3>{{ 'complaint.recommendations.title' | translate }}</h3>
           <div [innerHTML]="'complaint.recommendations.text' | translate"></div>
         </div>
-        
+
         <button type="button" class="btn-primary" (click)="showForm.set(true)">
           📝 {{ 'complaint.form.openForm' | translate }}
         </button>
-        
-      } @else {        
+      } @else {
         <div class="cf__header">
           <h2>{{ 'complaint.form.title' | translate }}</h2>
           <p class="cf__subtitle">{{ 'complaint.form.subtitle' | translate }}</p>
         </div>
 
         <form [formGroup]="form" class="cf__form" novalidate>
-
           <!-- Category -->
           <div class="form-field">
             <label>{{ 'complaint.form.category' | translate }} *</label>
@@ -80,8 +73,8 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
             <label>{{ 'complaint.form.expectedResolution' | translate }}</label>
             <textarea formControlName="expectedResolution" rows="3"></textarea>
           </div>
-          
-          <!-- add phone field (optional) -->          
+
+          <!-- add phone field (optional) -->
           <div class="form-field">
             <label>{{ 'complaint.form.phone' | translate }}</label>
             <div class="cf__phone-wrapper">
@@ -113,10 +106,7 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
           <!-- Location (optional) -->
           <div class="form-field">
             <label>{{ 'complaint.form.location' | translate }}</label>
-            <app-location-selector
-              formControlName="location"
-              [isUa]="lang === 'ua'"
-            />
+            <app-location-selector formControlName="location" [isUa]="lang === 'ua'" />
           </div>
 
           <!-- Attachments (S3/Drive links) -->
@@ -164,121 +154,180 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
               {{ saving() ? ('common.saving' | translate) : ('complaint.form.submit' | translate) }}
             </button>
           </div>
-
         </form>
       }
     </div>
   `,
-  styles: [`
-    .cf {
-      max-width: 640px;
-      &__header { margin-bottom: 1.5rem; }
-      h2 { font-size: 1.375rem; color: #1a365d; margin: 0 0 0.25rem; }
-      &__subtitle { color: #718096; font-size: 0.875rem; margin: 0; }
-      &__form { display: flex; flex-direction: column; gap: 1.25rem; }
-      &__attachment-row {
-        display: grid;
-        grid-template-columns: 1fr 2fr auto;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-        align-items: center;
+  styles: [
+    `
+      .cf {
+        max-width: 640px;
+        &__header {
+          margin-bottom: 1.5rem;
+        }
+        h2 {
+          font-size: 1.375rem;
+          color: #1a365d;
+          margin: 0 0 0.25rem;
+        }
+        &__subtitle {
+          color: #718096;
+          font-size: 0.875rem;
+          margin: 0;
+        }
+        &__form {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+        &__attachment-row {
+          display: grid;
+          grid-template-columns: 1fr 2fr auto;
+          gap: 0.5rem;
+          margin-bottom: 0.5rem;
+          align-items: center;
+        }
+        &__actions {
+          display: flex;
+          justify-content: flex-end;
+          padding-top: 0.5rem;
+        }
+        &__success {
+          padding: 1.25rem;
+          background: #f0fff4;
+          border: 1px solid #9ae6b4;
+          border-radius: 8px;
+          color: #276749;
+          font-size: 0.9375rem;
+        }
+
+        &__recommendations {
+          padding: 1rem 1.25rem;
+          background: #fffbeb;
+          border: 1px solid #fbd38d;
+          border-radius: 8px;
+          margin-bottom: 1.25rem;
+          h3 {
+            font-size: 0.9375rem;
+            color: #744210;
+            margin: 0 0 0.5rem;
+          }
+          ul {
+            margin: 0;
+            padding-left: 1.25rem;
+            color: #744210;
+            font-size: 0.875rem;
+            li {
+              margin-bottom: 0.25rem;
+            }
+          }
+        }
+
+        &__phone-wrapper {
+          display: flex;
+          align-items: center;
+          border: 1px solid #cbd5e0;
+          border-radius: 6px;
+          overflow: hidden;
+          &:focus-within {
+            border-color: #2b6cb0;
+            box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+          }
+        }
+        &__phone-prefix {
+          padding: 0.55rem 0.625rem;
+          background: #f1f5f9;
+          color: #4a5568;
+          font-size: 0.9rem;
+          border-right: 1px solid #cbd5e0;
+          white-space: nowrap;
+        }
+        &__phone-wrapper input {
+          border: none !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+          flex: 1;
+        }
       }
-      &__actions { display: flex; justify-content: flex-end; padding-top: 0.5rem; }
-      &__success {
-        padding: 1.25rem;
-        background: #f0fff4;
-        border: 1px solid #9ae6b4;
-        border-radius: 8px;
-        color: #276749;
-        font-size: 0.9375rem;
-      }
-      
-      &__recommendations {
-        padding: 1rem 1.25rem;
-        background: #fffbeb;
-        border: 1px solid #fbd38d;
-        border-radius: 8px;
-        margin-bottom: 1.25rem;
-        h3 { font-size: 0.9375rem; color: #744210; margin: 0 0 0.5rem; }
-        ul { margin: 0; padding-left: 1.25rem; color: #744210; font-size: 0.875rem; li { margin-bottom: 0.25rem; } }
-      }
-      
-      &__phone-wrapper {
+      .form-field {
         display: flex;
-        align-items: center;
-        border: 1px solid #cbd5e0;
+        flex-direction: column;
+        gap: 0.375rem;
+        label {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #334155;
+        }
+        input,
+        select,
+        textarea {
+          padding: 0.55rem 0.75rem;
+          border: 1px solid #cbd5e0;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-family: inherit;
+          &:focus {
+            outline: none;
+            border-color: #2b6cb0;
+            box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+          }
+        }
+        textarea {
+          resize: vertical;
+        }
+      }
+      .hint {
+        font-size: 0.8125rem;
+        color: #a0aec0;
+      }
+      .err {
+        color: #e53e3e;
+        font-size: 0.8125rem;
+      }
+      .btn-primary {
+        padding: 0.5rem 1.25rem;
+        background: #2b6cb0;
+        color: #fff;
+        border: none;
         border-radius: 6px;
-        overflow: hidden;
-        &:focus-within { border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43,108,176,.1); }
-      }
-      &__phone-prefix {
-        padding: 0.55rem 0.625rem;
-        background: #f1f5f9;
-        color: #4a5568;
         font-size: 0.9rem;
-        border-right: 1px solid #cbd5e0;
-        white-space: nowrap;
+        cursor: pointer;
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
       }
-      &__phone-wrapper input {
-        border: none !important;
-        box-shadow: none !important;
-        border-radius: 0 !important;
-        flex: 1;
+      .btn-add {
+        padding: 0.375rem 0.875rem;
+        background: #fff;
+        border: 1px dashed #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        color: #4a5568;
+        cursor: pointer;
+        align-self: flex-start;
+        &:hover {
+          border-color: #2b6cb0;
+          color: #2b6cb0;
+        }
+      }
+      .btn-remove {
+        padding: 0.375rem 0.625rem;
+        background: none;
+        border: 1px solid #fed7d7;
+        border-radius: 6px;
+        color: #e53e3e;
+        cursor: pointer;
+        font-size: 0.8125rem;
       }
 
-    }
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.375rem;
-      label { font-size: 0.875rem; font-weight: 500; color: #334155; }
-      input, select, textarea {
-        padding: 0.55rem 0.75rem;
-        border: 1px solid #cbd5e0;
-        border-radius: 6px;
-        font-size: 0.9rem;
-        font-family: inherit;
-        &:focus { outline: none; border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43,108,176,.1); }
+      @media (max-width: 640px) {
+        .cf__attachment-row {
+          grid-template-columns: 1fr;
+        }
       }
-      textarea { resize: vertical; }
-    }
-    .hint { font-size: 0.8125rem; color: #a0aec0; }
-    .err { color: #e53e3e; font-size: 0.8125rem; }
-    .btn-primary {
-      padding: 0.5rem 1.25rem;
-      background: #2b6cb0;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
-    }
-    .btn-add {
-      padding: 0.375rem 0.875rem;
-      background: #fff;
-      border: 1px dashed #cbd5e0;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      color: #4a5568;
-      cursor: pointer;
-      align-self: flex-start;
-      &:hover { border-color: #2b6cb0; color: #2b6cb0; }
-    }
-    .btn-remove {
-      padding: 0.375rem 0.625rem;
-      background: none;
-      border: 1px solid #fed7d7;
-      border-radius: 6px;
-      color: #e53e3e;
-      cursor: pointer;
-      font-size: 0.8125rem;
-    }
-    
-    @media (max-width: 640px) {
-      .cf__attachment-row { grid-template-columns: 1fr; }
-    }
-  `],
+    `,
+  ],
 })
 export class ComplaintFormComponent {
   private fb = inject(FormBuilder);
@@ -290,7 +339,9 @@ export class ComplaintFormComponent {
   protected error = signal<string | null>(null);
   protected showForm = signal(false);
 
-  protected get lang(): string { return this.translate.currentLang ?? 'ua'; }
+  protected get lang(): string {
+    return this.translate.currentLang ?? 'ua';
+  }
 
   protected readonly categories: ComplaintCategory[] = [
     'service_quality',
@@ -328,9 +379,7 @@ export class ComplaintFormComponent {
   }
 
   protected addAttachment(): void {
-    this.attachmentsArray.push(
-      this.fb.group({ name: [''], url: [''] }),
-    );
+    this.attachmentsArray.push(this.fb.group({ name: [''], url: [''] }));
   }
 
   protected removeAttachment(index: number): void {
@@ -348,8 +397,9 @@ export class ComplaintFormComponent {
     const loc = raw.location as LocationValue | null;
 
     // Filter out empty attachment rows
-    const attachments = (raw.attachments as { name: string; url: string }[])
-      .filter((a) => a.url.trim());
+    const attachments = (raw.attachments as { name: string; url: string }[]).filter((a) =>
+      a.url.trim(),
+    );
 
     const payload = {
       category: raw.category,

@@ -9,29 +9,33 @@ import { TranslateModule } from '@ngx-translate/core';
   template: `
     <div class="cooperation">
       <!-- <div class="cooperation__header"> -->
-        <!-- <h1>{{ 'NAV.COOPERATION' | translate }}</h1> -->
+      <!-- <h1>{{ 'NAV.COOPERATION' | translate }}</h1> -->
       <!-- </div> -->
 
       <!-- CHANGED: all tabs are now active routerLinks -->
       <nav class="coop-tabs">
-        <a routerLink="procurement"
-           routerLinkActive="coop-tabs__item--active"
-           class="coop-tabs__item">
+        <a
+          routerLink="procurement"
+          routerLinkActive="coop-tabs__item--active"
+          class="coop-tabs__item"
+        >
           🛒 {{ 'cooperation.tabs.procurement' | translate }}
         </a>
-        <a routerLink="vacancy"
-           routerLinkActive="coop-tabs__item--active"
-           class="coop-tabs__item">
+        <a routerLink="vacancy" routerLinkActive="coop-tabs__item--active" class="coop-tabs__item">
           👷‍👷‍♂️ {{ 'cooperation.tabs.vacancy' | translate }}
         </a>
-        <a routerLink="testimonial"
-           routerLinkActive="coop-tabs__item--active"
-           class="coop-tabs__item">
+        <a
+          routerLink="testimonial"
+          routerLinkActive="coop-tabs__item--active"
+          class="coop-tabs__item"
+        >
           ✍️ {{ 'cooperation.tabs.testimonial' | translate }}
         </a>
-        <a routerLink="complaint"
-           routerLinkActive="coop-tabs__item--active"
-           class="coop-tabs__item">
+        <a
+          routerLink="complaint"
+          routerLinkActive="coop-tabs__item--active"
+          class="coop-tabs__item"
+        >
           📝 {{ 'cooperation.tabs.complaint' | translate }}
         </a>
       </nav>
@@ -41,48 +45,56 @@ import { TranslateModule } from '@ngx-translate/core';
       </div>
     </div>
   `,
-  styles: [`
-    .cooperation {
-      max-width: 960px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+  styles: [
+    `
+      .cooperation {
+        max-width: 960px;
+        margin: 2rem auto;
+        padding: 0 1rem;
 
-      &__header h1 {
-        font-size: 1.75rem;
-        color: #1a365d;
-        margin-bottom: 1.5rem;
-      }
+        &__header h1 {
+          font-size: 1.75rem;
+          color: #1a365d;
+          margin-bottom: 1.5rem;
+        }
 
-      &__content { padding-top: 1.5rem; }
-    }
-
-    .coop-tabs {
-      display: flex;
-      gap: 0.25rem;
-      border-bottom: 2px solid #e2e8f0;
-      flex-wrap: wrap;
-
-      &__item {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.375rem;
-        padding: 0.625rem 1.125rem;
-        font-size: 0.9375rem;
-        color: #4a5568;
-        text-decoration: none;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -2px;
-        transition: color 0.15s, border-color 0.15s;
-
-        &:hover { color: #2b6cb0; }
-
-        &--active {
-          color: #2b6cb0;
-          border-bottom-color: #2b6cb0;
-          font-weight: 500;
+        &__content {
+          padding-top: 1.5rem;
         }
       }
-    }
-  `],
+
+      .coop-tabs {
+        display: flex;
+        gap: 0.25rem;
+        border-bottom: 2px solid #e2e8f0;
+        flex-wrap: wrap;
+
+        &__item {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.375rem;
+          padding: 0.625rem 1.125rem;
+          font-size: 0.9375rem;
+          color: #4a5568;
+          text-decoration: none;
+          border-bottom: 2px solid transparent;
+          margin-bottom: -2px;
+          transition:
+            color 0.15s,
+            border-color 0.15s;
+
+          &:hover {
+            color: #2b6cb0;
+          }
+
+          &--active {
+            color: #2b6cb0;
+            border-bottom-color: #2b6cb0;
+            font-weight: 500;
+          }
+        }
+      }
+    `,
+  ],
 })
 export class CooperationComponent {}

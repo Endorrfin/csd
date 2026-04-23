@@ -166,8 +166,13 @@
     },
     "status": {
       "draft": "Чернетка",
-      "published": "Опубліковано",
-      "closed": "Закрито"
+      "published": "Відкрита",
+      "extended": "Продовжена",
+      "on_hold": "На паузі",
+      "suspended": "Призупинена",
+      "cancelled": "Скасована",
+      "hired": "Закрита",
+      "closed": "Закрита (застаріле)"
     },
     "detail": {
       "requirements": "Вимоги",

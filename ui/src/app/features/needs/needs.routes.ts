@@ -8,8 +8,7 @@ export const needsRoutes: Routes = [
   },
   {
     path: 'wash-form',
-    loadComponent: () =>
-      import('./wash-form/wash-form').then((m) => m.WashFormComponent),
+    loadComponent: () => import('./wash-form/wash-form').then((m) => m.WashFormComponent),
   },
   // Stage 2 — placeholder routes
   // {

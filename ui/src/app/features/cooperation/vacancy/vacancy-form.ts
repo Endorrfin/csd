@@ -1,11 +1,6 @@
 import { Component, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import {
-  ReactiveFormsModule,
-  FormBuilder,
-  Validators,
-  FormGroup,
-} from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
 import { LocationValue } from '../../../shared/interfaces/location.interfaces';
@@ -44,7 +39,13 @@ interface VacancyPayload {
 @Component({
   selector: 'app-vacancy-form',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, LocationSelectorComponent, QuillModule],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    TranslateModule,
+    LocationSelectorComponent,
+    QuillModule,
+  ],
   template: `
     <div class="vf">
       <div class="vf__nav">
@@ -56,7 +57,6 @@ interface VacancyPayload {
       </h2>
 
       <form [formGroup]="form" class="vf__form" novalidate>
-
         <!-- Title UA / EN -->
         <div class="form-row">
           <div class="form-field">
@@ -91,9 +91,11 @@ interface VacancyPayload {
         <div class="form-field">
           <label>{{ 'vacancy.form.descriptionUa' | translate }} *</label>
           @if (isBrowser) {
-            <quill-editor formControlName="descriptionUa"
-                          [modules]="quillModules"
-                          [placeholder]="'vacancy.form.descriptionUa' | translate">
+            <quill-editor
+              formControlName="descriptionUa"
+              [modules]="quillModules"
+              [placeholder]="'vacancy.form.descriptionUa' | translate"
+            >
             </quill-editor>
           } @else {
             <textarea formControlName="descriptionUa" rows="5"></textarea>
@@ -104,9 +106,11 @@ interface VacancyPayload {
         <div class="form-field">
           <label>{{ 'vacancy.form.descriptionEn' | translate }} *</label>
           @if (isBrowser) {
-            <quill-editor formControlName="descriptionEn"
-                          [modules]="quillModules"
-                          placeholder="Job description...">
+            <quill-editor
+              formControlName="descriptionEn"
+              [modules]="quillModules"
+              placeholder="Job description..."
+            >
             </quill-editor>
           } @else {
             <textarea formControlName="descriptionEn" rows="5"></textarea>
@@ -117,9 +121,7 @@ interface VacancyPayload {
         <div class="form-field">
           <label>{{ 'vacancy.form.requirementsUa' | translate }}</label>
           @if (isBrowser) {
-            <quill-editor formControlName="requirementsUa"
-                          [modules]="quillModules">
-            </quill-editor>
+            <quill-editor formControlName="requirementsUa" [modules]="quillModules"> </quill-editor>
           } @else {
             <textarea formControlName="requirementsUa" rows="4"></textarea>
           }
@@ -129,9 +131,7 @@ interface VacancyPayload {
         <div class="form-field">
           <label>{{ 'vacancy.form.requirementsEn' | translate }}</label>
           @if (isBrowser) {
-            <quill-editor formControlName="requirementsEn"
-                          [modules]="quillModules">
-            </quill-editor>
+            <quill-editor formControlName="requirementsEn" [modules]="quillModules"> </quill-editor>
           } @else {
             <textarea formControlName="requirementsEn" rows="4"></textarea>
           }
@@ -140,10 +140,7 @@ interface VacancyPayload {
         <!-- Location -->
         <div class="form-field">
           <label>{{ 'vacancy.detail.location' | translate }}</label>
-          <app-location-selector
-            formControlName="location"
-            [isUa]="lang === 'ua'"
-          />
+          <app-location-selector formControlName="location" [isUa]="lang === 'ua'" />
         </div>
 
         <!-- Deadline + Salary -->
@@ -190,63 +187,107 @@ interface VacancyPayload {
             {{ saving() ? ('common.saving' | translate) : ('vacancy.form.publish' | translate) }}
           </button>
         </div>
-
       </form>
     </div>
   `,
-  styles: [`
-    .vf {
-      max-width: 720px;
-      &__nav { margin-bottom: 1.5rem; }
-      h2 { font-size: 1.375rem; color: #1a365d; margin: 0 0 1.5rem; }
-      &__form { display: flex; flex-direction: column; gap: 1.25rem; }
-      &__actions {
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
-        padding-top: 0.5rem;
+  styles: [
+    `
+      .vf {
+        max-width: 720px;
+        &__nav {
+          margin-bottom: 1.5rem;
+        }
+        h2 {
+          font-size: 1.375rem;
+          color: #1a365d;
+          margin: 0 0 1.5rem;
+        }
+        &__form {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+        &__actions {
+          display: flex;
+          gap: 0.75rem;
+          justify-content: flex-end;
+          padding-top: 0.5rem;
+        }
       }
-    }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.375rem;
-      label { font-size: 0.875rem; font-weight: 500; color: #334155; }
-      input, select, textarea {
-        padding: 0.55rem 0.75rem;
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.375rem;
+        label {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #334155;
+        }
+        input,
+        select,
+        textarea {
+          padding: 0.55rem 0.75rem;
+          border: 1px solid #cbd5e0;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-family: inherit;
+          &:focus {
+            outline: none;
+            border-color: #2b6cb0;
+            box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+          }
+        }
+        textarea {
+          resize: vertical;
+        }
+      }
+      .err {
+        color: #e53e3e;
+        font-size: 0.8125rem;
+      }
+      .back-link {
+        color: #4a5568;
+        text-decoration: none;
+        font-size: 0.875rem;
+      }
+      .btn-primary {
+        padding: 0.5rem 1.25rem;
+        background: #2b6cb0;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+      .btn-secondary {
+        padding: 0.5rem 1.25rem;
+        background: #fff;
+        color: #4a5568;
         border: 1px solid #cbd5e0;
         border-radius: 6px;
         font-size: 0.9rem;
-        font-family: inherit;
-        &:focus { outline: none; border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43,108,176,.1); }
+        cursor: pointer;
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
       }
-      textarea { resize: vertical; }
-    }
-    .err { color: #e53e3e; font-size: 0.8125rem; }
-    .back-link { color: #4a5568; text-decoration: none; font-size: 0.875rem; }
-    .btn-primary {
-      padding: 0.5rem 1.25rem;
-      background: #2b6cb0;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
-    }
-    .btn-secondary {
-      padding: 0.5rem 1.25rem;
-      background: #fff;
-      color: #4a5568;
-      border: 1px solid #cbd5e0;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
-    }
-    @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
-  `],
+      @media (max-width: 640px) {
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    `,
+  ],
 })
 export class VacancyFormComponent implements OnInit {
   private fb = inject(FormBuilder);
@@ -261,7 +302,9 @@ export class VacancyFormComponent implements OnInit {
   protected isEdit = false;
   private editId: string | null = null;
 
-  protected get lang(): string { return this.translate.currentLang ?? 'ua'; }
+  protected get lang(): string {
+    return this.translate.currentLang ?? 'ua';
+  }
 
   protected readonly employmentTypes: EmploymentType[] = ['full_time', 'part_time', 'volunteer'];
   protected readonly isBrowser = isPlatformBrowser(this.platformId);
@@ -286,25 +329,21 @@ export class VacancyFormComponent implements OnInit {
     this.isEdit = !!this.editId;
 
     if (this.isEdit) {
-      this.api
-        .get<any>(`vacancies/${this.editId}`)
-        .subscribe((v) => {
-          this.form.patchValue({
-            titleUa: v.titleUa,
-            titleEn: v.titleEn,
-            descriptionUa: v.descriptionUa,
-            descriptionEn: v.descriptionEn,
-            requirementsUa: v.requirementsUa ?? '',
-            requirementsEn: v.requirementsEn ?? '',
-            employmentType: v.employmentType,
-            applicationDeadline: v.applicationDeadline
-              ? v.applicationDeadline.substring(0, 10)
-              : '',
-            salary: v.salary ?? '',
-            publishedAt: v.publishedAt ? v.publishedAt.substring(0, 10) : '',
-            // Restore location from flat entity fields
-            location: v.region
-              ? {
+      this.api.get<any>(`vacancies/${this.editId}`).subscribe((v) => {
+        this.form.patchValue({
+          titleUa: v.titleUa,
+          titleEn: v.titleEn,
+          descriptionUa: v.descriptionUa,
+          descriptionEn: v.descriptionEn,
+          requirementsUa: v.requirementsUa ?? '',
+          requirementsEn: v.requirementsEn ?? '',
+          employmentType: v.employmentType,
+          applicationDeadline: v.applicationDeadline ? v.applicationDeadline.substring(0, 10) : '',
+          salary: v.salary ?? '',
+          publishedAt: v.publishedAt ? v.publishedAt.substring(0, 10) : '',
+          // Restore location from flat entity fields
+          location: v.region
+            ? {
                 regionUa: v.region,
                 regionEn: v.regionEn ?? '',
                 districtUa: v.district ?? '',
@@ -316,17 +355,19 @@ export class VacancyFormComponent implements OnInit {
                 settlementEn: v.settlementEn ?? '',
                 settlementCode: v.settlementCode ?? '',
               }
-              : null,
-          });
+            : null,
         });
+      });
     }
   }
 
   protected submit(status: VacancyStatus): void {
     this.form.markAllAsTouched();
 
-    if (status === 'published' &&
-      (this.form.get('titleUa')?.invalid || this.form.get('titleEn')?.invalid)) {
+    if (
+      status === 'published' &&
+      (this.form.get('titleUa')?.invalid || this.form.get('titleEn')?.invalid)
+    ) {
       return;
     }
 

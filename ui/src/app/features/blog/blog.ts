@@ -22,26 +22,39 @@ import { RouterLink } from '@angular/router';
       </article>
     }
   `,
-  styles: [`
-    .post-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .post-card h2 { color: #1a365d; margin-bottom: 0.5rem; }
-    .post-card small { color: #718096; }
-    /* link style */
-    .post-card__link { text-decoration: none; }
-    .post-card__link:hover h2 { color: #2a4a7f; }
-  `],
+  styles: [
+    `
+      .post-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .post-card h2 {
+        color: #1a365d;
+        margin-bottom: 0.5rem;
+      }
+      .post-card small {
+        color: #718096;
+      }
+      /* link style */
+      .post-card__link {
+        text-decoration: none;
+      }
+      .post-card__link:hover h2 {
+        color: #2a4a7f;
+      }
+    `,
+  ],
 })
 export class BlogComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
   posts: any[] = [];
 
-  get isUa() { return (this.translate.currentLang || 'ua') === 'ua'; }
+  get isUa() {
+    return (this.translate.currentLang || 'ua') === 'ua';
+  }
 
   ngOnInit() {
     this.api.get<any[]>('blog').subscribe((data) => (this.posts = data));

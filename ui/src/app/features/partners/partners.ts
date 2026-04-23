@@ -17,22 +17,30 @@ import { TranslateService } from '@ngx-translate/core';
       </div>
     }
   `,
-  styles: [`
-    .partner-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .partner-card h3 { color: #1a365d; }
-    .partner-card a { color: #2b6cb0; }
-  `],
+  styles: [
+    `
+      .partner-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .partner-card h3 {
+        color: #1a365d;
+      }
+      .partner-card a {
+        color: #2b6cb0;
+      }
+    `,
+  ],
 })
 export class PartnersComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
   partners: any[] = [];
-  get isUa() { return (this.translate.currentLang || 'ua') === 'ua'; }
+  get isUa() {
+    return (this.translate.currentLang || 'ua') === 'ua';
+  }
 
   ngOnInit() {
     this.api.get<any[]>('partners').subscribe((data) => (this.partners = data));

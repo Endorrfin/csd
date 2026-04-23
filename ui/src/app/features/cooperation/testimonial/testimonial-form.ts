@@ -17,14 +17,11 @@ import { ApiService } from '../../../core/services/api.service';
       </div>
 
       @if (submitted()) {
-        <div class="tf__success">
-          ✅ {{ 'testimonial.form.success' | translate }}
-        </div>
+        <div class="tf__success">✅ {{ 'testimonial.form.success' | translate }}</div>
       } @else {
         <h2>{{ 'testimonial.form.title' | translate }}</h2>
 
         <form [formGroup]="form" class="tf__form" novalidate>
-
           <!-- Author + Organization -->
           <div class="form-row">
             <div class="form-field">
@@ -53,13 +50,15 @@ import { ApiService } from '../../../core/services/api.service';
           <div class="form-field">
             <label>{{ 'testimonial.form.rating' | translate }}</label>
             <div class="tf__stars">
-              @for (n of [1,2,3,4,5]; track n) {
+              @for (n of [1, 2, 3, 4, 5]; track n) {
                 <button
                   type="button"
                   class="tf__star"
                   [class.tf__star--active]="n <= (form.get('rating')?.value ?? 0)"
                   (click)="setRating(n)"
-                >★</button>
+                >
+                  ★
+                </button>
               }
               @if (form.get('rating')?.value) {
                 <button type="button" class="tf__star-clear" (click)="setRating(0)">✕</button>
@@ -70,10 +69,7 @@ import { ApiService } from '../../../core/services/api.service';
           <!-- Location (optional) -->
           <div class="form-field">
             <label>{{ 'testimonial.form.location' | translate }}</label>
-            <app-location-selector
-              formControlName="location"
-              [isUa]="lang === 'ua'"
-            />
+            <app-location-selector formControlName="location" [isUa]="lang === 'ua'" />
           </div>
 
           <!-- Historical date -->
@@ -93,85 +89,135 @@ import { ApiService } from '../../../core/services/api.service';
               [disabled]="saving() || form.invalid"
               (click)="submit()"
             >
-              {{ saving() ? ('common.saving' | translate) : ('testimonial.form.submit' | translate) }}
+              {{
+                saving() ? ('common.saving' | translate) : ('testimonial.form.submit' | translate)
+              }}
             </button>
           </div>
-
         </form>
       }
     </div>
   `,
-  styles: [`
-    .tf {
-      max-width: 640px;
-      &__nav { margin-bottom: 1.5rem; }
-      h2 { font-size: 1.375rem; color: #1a365d; margin: 0 0 1.5rem; }
-      &__form { display: flex; flex-direction: column; gap: 1.25rem; }
-      &__stars {
+  styles: [
+    `
+      .tf {
+        max-width: 640px;
+        &__nav {
+          margin-bottom: 1.5rem;
+        }
+        h2 {
+          font-size: 1.375rem;
+          color: #1a365d;
+          margin: 0 0 1.5rem;
+        }
+        &__form {
+          display: flex;
+          flex-direction: column;
+          gap: 1.25rem;
+        }
+        &__stars {
+          display: flex;
+          gap: 0.25rem;
+          align-items: center;
+        }
+        &__star {
+          font-size: 1.75rem;
+          background: none;
+          border: none;
+          color: #e2e8f0;
+          cursor: pointer;
+          padding: 0;
+          line-height: 1;
+          transition: color 0.1s;
+          &--active {
+            color: #f6ad55;
+          }
+          &:hover {
+            color: #f6ad55;
+          }
+        }
+        &__star-clear {
+          background: none;
+          border: none;
+          color: #a0aec0;
+          cursor: pointer;
+          font-size: 0.875rem;
+          margin-left: 0.25rem;
+        }
+        &__actions {
+          display: flex;
+          justify-content: flex-end;
+          padding-top: 0.5rem;
+        }
+        &__success {
+          padding: 1.25rem;
+          background: #f0fff4;
+          border: 1px solid #9ae6b4;
+          border-radius: 8px;
+          color: #276749;
+          font-size: 0.9375rem;
+        }
+      }
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .form-field {
         display: flex;
-        gap: 0.25rem;
-        align-items: center;
+        flex-direction: column;
+        gap: 0.375rem;
+        label {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #334155;
+        }
+        input,
+        textarea {
+          padding: 0.55rem 0.75rem;
+          border: 1px solid #cbd5e0;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          font-family: inherit;
+          &:focus {
+            outline: none;
+            border-color: #2b6cb0;
+            box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+          }
+        }
+        textarea {
+          resize: vertical;
+        }
       }
-      &__star {
-        font-size: 1.75rem;
-        background: none;
-        border: none;
-        color: #e2e8f0;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-        transition: color 0.1s;
-        &--active { color: #f6ad55; }
-        &:hover { color: #f6ad55; }
+      .err {
+        color: #e53e3e;
+        font-size: 0.8125rem;
       }
-      &__star-clear {
-        background: none;
-        border: none;
-        color: #a0aec0;
-        cursor: pointer;
+      .back-link {
+        color: #4a5568;
+        text-decoration: none;
         font-size: 0.875rem;
-        margin-left: 0.25rem;
       }
-      &__actions { display: flex; justify-content: flex-end; padding-top: 0.5rem; }
-      &__success {
-        padding: 1.25rem;
-        background: #f0fff4;
-        border: 1px solid #9ae6b4;
-        border-radius: 8px;
-        color: #276749;
-        font-size: 0.9375rem;
-      }
-    }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .form-field {
-      display: flex;
-      flex-direction: column;
-      gap: 0.375rem;
-      label { font-size: 0.875rem; font-weight: 500; color: #334155; }
-      input, textarea {
-        padding: 0.55rem 0.75rem;
-        border: 1px solid #cbd5e0;
+      .btn-primary {
+        padding: 0.5rem 1.25rem;
+        background: #2b6cb0;
+        color: #fff;
+        border: none;
         border-radius: 6px;
         font-size: 0.9rem;
-        font-family: inherit;
-        &:focus { outline: none; border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43,108,176,.1); }
+        cursor: pointer;
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
       }
-      textarea { resize: vertical; }
-    }
-    .err { color: #e53e3e; font-size: 0.8125rem; }
-    .back-link { color: #4a5568; text-decoration: none; font-size: 0.875rem; }
-    .btn-primary {
-      padding: 0.5rem 1.25rem;
-      background: #2b6cb0;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
-    }
-    @media (max-width: 640px) { .form-row { grid-template-columns: 1fr; } }
-  `],
+      @media (max-width: 640px) {
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    `,
+  ],
 })
 export class TestimonialFormComponent {
   private fb = inject(FormBuilder);
@@ -184,7 +230,9 @@ export class TestimonialFormComponent {
   protected submitted = signal(false);
   protected error = signal<string | null>(null);
 
-  protected get lang(): string { return this.translate.currentLang ?? 'ua'; }
+  protected get lang(): string {
+    return this.translate.currentLang ?? 'ua';
+  }
 
   protected form = this.fb.group({
     authorName: ['', Validators.required],

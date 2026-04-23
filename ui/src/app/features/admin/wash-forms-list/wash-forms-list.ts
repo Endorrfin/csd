@@ -36,8 +36,11 @@ interface PaginatedResponse {
   imports: [CommonModule, FormsModule],
   template: `
     <div class="list-header">
-      <h2>{{ isUa ? 'WASH Заявки' : 'WASH Forms' }}
-        @if (total() > 0) { <span class="count">({{ total() }})</span> }
+      <h2>
+        {{ isUa ? 'WASH Заявки' : 'WASH Forms' }}
+        @if (total() > 0) {
+          <span class="count">({{ total() }})</span>
+        }
       </h2>
       <button class="btn btn-export" (click)="exportCsv()">
         {{ isUa ? 'Експорт CSV' : 'Export CSV' }}
@@ -47,7 +50,9 @@ interface PaginatedResponse {
     <!-- Filters -->
     <div class="filters">
       <input
-        [placeholder]="isUa ? 'Пошук по організації, ПІБ, email...' : 'Search by org, name, email...'"
+        [placeholder]="
+          isUa ? 'Пошук по організації, ПІБ, email...' : 'Search by org, name, email...'
+        "
         [(ngModel)]="searchQuery"
         (input)="onSearchChange()"
         class="filter-input filter-search"
@@ -93,8 +98,12 @@ interface PaginatedResponse {
             @for (f of forms(); track f.id; let i = $index) {
               <tr class="clickable" (click)="openDetail(f.id)">
                 <td class="td-num">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
-                <td class="td-date">{{ f.createdAt | date:'dd.MM.yyyy' }}</td>
-                <td><span class="status-badge" [attr.data-status]="f.status">{{ getStatusLabel(f.status) }}</span></td>
+                <td class="td-date">{{ f.createdAt | date: 'dd.MM.yyyy' }}</td>
+                <td>
+                  <span class="status-badge" [attr.data-status]="f.status">{{
+                    getStatusLabel(f.status)
+                  }}</span>
+                </td>
                 <td>{{ f.region }}</td>
                 <td class="td-org">{{ f.organizationName }}</td>
                 <td>{{ f.objectName }}</td>
@@ -112,63 +121,212 @@ interface PaginatedResponse {
       <!-- Pagination -->
       @if (totalPages() > 1) {
         <div class="pagination">
-          <button class="btn btn-sm" [disabled]="currentPage <= 1" (click)="goPage(currentPage - 1)">
+          <button
+            class="btn btn-sm"
+            [disabled]="currentPage <= 1"
+            (click)="goPage(currentPage - 1)"
+          >
             {{ isUa ? 'Попередня' : 'Previous' }}
           </button>
           <span class="page-info">{{ currentPage }} / {{ totalPages() }}</span>
-          <button class="btn btn-sm" [disabled]="currentPage >= totalPages()" (click)="goPage(currentPage + 1)">
+          <button
+            class="btn btn-sm"
+            [disabled]="currentPage >= totalPages()"
+            (click)="goPage(currentPage + 1)"
+          >
             {{ isUa ? 'Наступна' : 'Next' }}
           </button>
         </div>
       }
     }
   `,
-  styles: [`
-    .list-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; }
-    .list-header h2 { font-size:1.2rem; font-weight:600; color:#1a365d; margin:0; }
-    .count { color:#64748b; font-weight:400; }
-    .btn-export { background:#2b6cb0; color:#fff; padding:.5rem 1.25rem; border:none; border-radius:6px; font-size:.85rem; font-weight:500; cursor:pointer; }
-    .btn-export:hover { background:#2c5282; }
-    .filters { display:flex; gap:.75rem; margin-bottom:1.25rem; flex-wrap:wrap; }
-    .filter-input { padding:.5rem .75rem; border:1px solid #cbd5e0; border-radius:6px; font-size:.85rem; }
-    .filter-search { flex:1; min-width:200px; }
-    .table-wrap { overflow-x:auto; }
-    .data-table { width:100%; border-collapse:collapse; font-size:.85rem; }
-    .data-table th { text-align:left; padding:.65rem .5rem; border-bottom:2px solid #e2e8f0; color:#64748b; font-weight:600; font-size:.75rem; text-transform:uppercase; white-space:nowrap; }
-    .data-table td { padding:.65rem .5rem; border-bottom:1px solid #f1f5f9; }
-    .clickable { cursor:pointer; transition:background .15s; }
-    .clickable:hover { background:#f8fafc; }
-    .td-num { text-align:center; color:#64748b; }
-    .td-date { white-space:nowrap; color:#64748b; font-size:.8rem; }
-    .td-org { max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .td-sections { font-size:.75rem; color:#64748b; }
-    .td-action { text-align:center; }
-    .arrow { font-size:1.2rem; color:#94a3b8; }
-    .status-badge { display:inline-block; padding:.2rem .6rem; border-radius:4px; font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.03em; }
-    [data-status="new"] { background:#dbeafe; color:#1e40af; }
-    [data-status="in_review"] { background:#fef3c7; color:#92400e; }
-    [data-status="approved"] { background:#d1fae5; color:#065f46; }
-    [data-status="rejected"] { background:#fee2e2; color:#991b1b; }
-    [data-status="in_progress"] { background:#e0e7ff; color:#3730a3; }
-    [data-status="completed"] { background:#d1fae5; color:#065f46; }
-    .pagination { display:flex; justify-content:center; align-items:center; gap:1rem; margin-top:1.25rem; }
-    .page-info { font-size:.85rem; color:#64748b; }
-    .btn-sm { padding:.4rem 1rem; border:1px solid #cbd5e0; background:#fff; border-radius:6px; font-size:.8rem; cursor:pointer; }
-    .btn-sm:disabled { opacity:.4; cursor:not-allowed; }
-    .btn-sm:not(:disabled):hover { background:#f8fafc; }
-    .loading,.empty { text-align:center; padding:3rem; color:#64748b; font-size:.95rem; }
-    @media (max-width:768px) {
-      .filters { flex-direction:column; }
-      .filter-search { min-width:auto; }
-    }
-  `],
+  styles: [
+    `
+      .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+      }
+      .list-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin: 0;
+      }
+      .count {
+        color: #64748b;
+        font-weight: 400;
+      }
+      .btn-export {
+        background: #2b6cb0;
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .btn-export:hover {
+        background: #2c5282;
+      }
+      .filters {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+      }
+      .filter-input {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.85rem;
+      }
+      .filter-search {
+        flex: 1;
+        min-width: 200px;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+      .data-table th {
+        text-align: left;
+        padding: 0.65rem 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .data-table td {
+        padding: 0.65rem 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .clickable {
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .clickable:hover {
+        background: #f8fafc;
+      }
+      .td-num {
+        text-align: center;
+        color: #64748b;
+      }
+      .td-date {
+        white-space: nowrap;
+        color: #64748b;
+        font-size: 0.8rem;
+      }
+      .td-org {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .td-sections {
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+      .td-action {
+        text-align: center;
+      }
+      .arrow {
+        font-size: 1.2rem;
+        color: #94a3b8;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      [data-status='new'] {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      [data-status='in_review'] {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      [data-status='approved'] {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      [data-status='rejected'] {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      [data-status='in_progress'] {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+      [data-status='completed'] {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.25rem;
+      }
+      .page-info {
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+      .btn-sm {
+        padding: 0.4rem 1rem;
+        border: 1px solid #cbd5e0;
+        background: #fff;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+      }
+      .btn-sm:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-sm:not(:disabled):hover {
+        background: #f8fafc;
+      }
+      .loading,
+      .empty {
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
+        font-size: 0.95rem;
+      }
+      @media (max-width: 768px) {
+        .filters {
+          flex-direction: column;
+        }
+        .filter-search {
+          min-width: auto;
+        }
+      }
+    `,
+  ],
 })
 export class WashFormsListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
-  get isUa(): boolean { return (this.translate.currentLang || 'ua') === 'ua'; }
+  get isUa(): boolean {
+    return (this.translate.currentLang || 'ua') === 'ua';
+  }
 
   forms = signal<WashFormSummary[]>([]);
   total = signal(0);
@@ -182,7 +340,9 @@ export class WashFormsListComponent implements OnInit {
   regionFilter = '';
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  ngOnInit(): void { this.loadForms(); }
+  ngOnInit(): void {
+    this.loadForms();
+  }
 
   loadForms(): void {
     this.loading.set(true);
@@ -244,9 +404,12 @@ export class WashFormsListComponent implements OnInit {
 
   getStatusLabel(status: string): string {
     const map: Record<string, [string, string]> = {
-      new: ['Нова', 'New'], in_review: ['На розгляді', 'In review'],
-      approved: ['Затверджено', 'Approved'], rejected: ['Відхилено', 'Rejected'],
-      in_progress: ['В роботі', 'In progress'], completed: ['Завершено', 'Completed'],
+      new: ['Нова', 'New'],
+      in_review: ['На розгляді', 'In review'],
+      approved: ['Затверджено', 'Approved'],
+      rejected: ['Відхилено', 'Rejected'],
+      in_progress: ['В роботі', 'In progress'],
+      completed: ['Завершено', 'Completed'],
     };
     const v = map[status];
     return v ? (this.isUa ? v[0] : v[1]) : status;

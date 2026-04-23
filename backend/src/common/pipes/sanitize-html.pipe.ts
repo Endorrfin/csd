@@ -19,10 +19,20 @@ import sanitizeHtml from 'sanitize-html';
 export class SanitizeHtmlPipe implements PipeTransform {
   private static readonly OPTIONS: sanitizeHtml.IOptions = {
     allowedTags: [
-      'p', 'br', 'span',
-      'strong', 'b', 'em', 'i', 'u',
-      'ol', 'ul', 'li',
-      'h1', 'h2', 'h3',
+      'p',
+      'br',
+      'span',
+      'strong',
+      'b',
+      'em',
+      'i',
+      'u',
+      'ol',
+      'ul',
+      'li',
+      'h1',
+      'h2',
+      'h3',
       'a',
     ],
     allowedAttributes: {

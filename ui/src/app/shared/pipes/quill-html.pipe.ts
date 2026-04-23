@@ -39,7 +39,7 @@ export class QuillHtmlPipe implements PipeTransform {
   private normalizeNbsp(root: HTMLElement): void {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     let node: Text | null;
-    // eslint-disable-next-line no-cond-assign
+
     while ((node = walker.nextNode() as Text | null)) {
       if (node.nodeValue?.includes('\u00A0')) {
         node.nodeValue = node.nodeValue.replace(/\u00A0/g, ' ');
@@ -76,7 +76,7 @@ export class QuillHtmlPipe implements PipeTransform {
 
   private normalizeSsr(html: string): string {
     return html
-      .replace(/&nbsp;/g, ' ')  // [ADDED] same fix for SSR path
+      .replace(/&nbsp;/g, ' ') // [ADDED] same fix for SSR path
       .replace(/<li data-list="bullet">/g, '<li>')
       .replace(/<li data-list="ordered">/g, '<li>');
   }

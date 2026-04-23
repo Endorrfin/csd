@@ -8,16 +8,35 @@ import { TranslateService } from '@ngx-translate/core';
   template: `
     <div class="placeholder">
       <h2>{{ isUa ? 'Скарги' : 'Complaints' }}</h2>
-      <p>{{ isUa ? 'Розділ у розробці (Крок 7 Roadmap)' : 'Section under development (Roadmap Step 7)' }}</p>
+      <p>
+        {{
+          isUa ? 'Розділ у розробці (Крок 7 Roadmap)' : 'Section under development (Roadmap Step 7)'
+        }}
+      </p>
     </div>
   `,
-  styles: [`
-    .placeholder { padding: 3rem 1rem; text-align: center; color: #64748b; }
-    .placeholder h2 { font-size: 1.35rem; color: #1a365d; margin: 0 0 .5rem; }
-    .placeholder p { font-size: .9rem; margin: 0; }
-  `],
+  styles: [
+    `
+      .placeholder {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: #64748b;
+      }
+      .placeholder h2 {
+        font-size: 1.35rem;
+        color: #1a365d;
+        margin: 0 0 0.5rem;
+      }
+      .placeholder p {
+        font-size: 0.9rem;
+        margin: 0;
+      }
+    `,
+  ],
 })
 export class AdminComplaintsListComponent {
   private readonly translate = inject(TranslateService);
-  get isUa(): boolean { return (this.translate.currentLang || 'ua') === 'ua'; }
+  get isUa(): boolean {
+    return (this.translate.currentLang || 'ua') === 'ua';
+  }
 }
