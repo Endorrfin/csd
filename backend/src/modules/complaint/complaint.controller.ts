@@ -1,3 +1,4 @@
+// backend/src/modules/complaint/complaint.controller.ts
 import {
   Controller,
   Get,
@@ -8,7 +9,10 @@ import {
   Body,
   UseGuards,
   ParseUUIDPipe,
+  Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ComplaintService } from './complaint.service';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { UpdateComplaintDto } from './dto/update-complaint.dto';
@@ -17,19 +21,47 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { UpdateComplaintStatusDto } from './dto/update-status.dto';
+import { AdminComplaintQueryDto } from './dto/admin-query.dto';
+import { ExportComplaintsQueryDto } from './dto/export-query.dto';
 
 @Controller('complaints')
 export class ComplaintController {
   constructor(private readonly service: ComplaintService) {}
 
-  // No public GET list — complaints are private
-
-  // Manager+: all complaints
+  // Legacy unfiltered list — kept for backward compat
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   findAll() {
     return this.service.findAll();
+  }
+
+  // paginated + filtered admin endpoint
+  @Get('admin/list')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  findAllForAdmin(@Query() query: AdminComplaintQueryDto) {
+    return this.service.findAllForAdmin(query);
+  }
+
+  // CSV export endpoint — streams file with UTF-8 BOM for Excel compatibility
+  @Get('admin/export')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  async exportCsv(
+    @Query() query: ExportComplaintsQueryDto,
+    @Res() res: Response,
+  ) {
+    const csv = await this.service.exportCsv(query);
+    const date = new Date().toISOString().slice(0, 10);
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="complaints-${date}.csv"`,
+    );
+    // BOM makes Excel read Cyrillic correctly
+    res.send('\ufeff' + csv);
   }
 
   @Get(':id')
@@ -39,7 +71,6 @@ export class ComplaintController {
     return this.service.findById(id);
   }
 
-  // Public: anonymous complaint submission (no auth required)
   @Post()
   create(@Body() dto: CreateComplaintDto) {
     return this.service.create(dto);
@@ -55,7 +86,6 @@ export class ComplaintController {
     return this.service.update(id, dto);
   }
 
-  // ── dedicated status update endpoint ──
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
@@ -66,9 +96,10 @@ export class ComplaintController {
     return this.service.updateStatus(id, dto.status, dto.managerNotes);
   }
 
+  // DELETE lowered from ADMIN+ to MANAGER+ (closed-only rule in service)
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.remove(id);
   }
