@@ -100,7 +100,7 @@ export interface Procurement extends ProcurementListItem {
   evaluationMethod: string | null;
   evaluationCriteria: EvaluationCriteriaItem[] | null;
   eligibilityRequirements: string[] | null;
-  complianceChecks: Array<{ labelUa: string; labelEn: string }> | null;
+  complianceChecks: { labelUa: string; labelEn: string }[] | null;
   attachments: AttachmentItem[] | null;
   updatedAt: string;
 }

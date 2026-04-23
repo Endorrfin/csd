@@ -1,8 +1,12 @@
 // backend/src/modules/procurement/procurement.service.ts
 // added BadRequestException import
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Not } from 'typeorm';
 import { Procurement, ProcurementStatus } from './entities/procurement.entity';
 import { CreateProcurementDto } from './dto/create-procurement.dto';
 import { UpdateProcurementDto } from './dto/update-procurement.dto';
@@ -22,16 +26,18 @@ export class ProcurementService {
     private readonly repo: Repository<Procurement>,
   ) {}
 
-  // Public endpoint: only published records, sorted by publicationDate DESC
-  findAllPublished(): Promise<Procurement[]> {
+  // Returns every non-draft record so users see full history (cancelled, completed, etc.)
+  findAllPublic(): Promise<Procurement[]> {
     return this.repo.find({
-      where: { status: ProcurementStatus.PUBLISHED },
+      where: { status: Not(ProcurementStatus.DRAFT) },
       order: { publicationDate: 'DESC', createdAt: 'DESC' },
     });
   }
 
   // replaces findAll() — paginated + filtered for admin grid
-  async findAllForAdmin(query: AdminProcurementQueryDto): Promise<PaginatedProcurements> {
+  async findAllForAdmin(
+    query: AdminProcurementQueryDto,
+  ): Promise<PaginatedProcurements> {
     const qb = this.repo
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.createdBy', 'createdBy')
@@ -41,7 +47,9 @@ export class ProcurementService {
       qb.andWhere('p.status = :status', { status: query.status });
     }
     if (query.category) {
-      qb.andWhere('p.procurementCategory = :category', { category: query.category });
+      qb.andWhere('p.procurementCategory = :category', {
+        category: query.category,
+      });
     }
     if (query.method) {
       qb.andWhere('p.procurementMethod = :method', { method: query.method });
@@ -123,7 +131,10 @@ export class ProcurementService {
     return this.repo.save(item);
   }
 
-  async updateStatus(id: string, status: ProcurementStatus): Promise<Procurement> {
+  async updateStatus(
+    id: string,
+    status: ProcurementStatus,
+  ): Promise<Procurement> {
     const item = await this.findById(id);
 
     const isFirstPublication =

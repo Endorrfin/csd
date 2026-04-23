@@ -1,12 +1,4 @@
-import {
-  Component,
-  inject,
-  Input,
-  OnInit,
-  OnDestroy,
-  signal,
-  forwardRef,
-} from '@angular/core';
+import { Component, inject, Input, OnInit, OnDestroy, signal, forwardRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   ControlValueAccessor,
@@ -52,9 +44,15 @@ import {
         <div class="loc-field">
           <label>
             {{ isUa ? 'Область' : 'Region' }}
-            @if (required) { <span class="loc-req">*</span> }
+            @if (required) {
+              <span class="loc-req">*</span>
+            }
           </label>
-          <select [value]="selectedRegionIdx()" (change)="onRegionChange($event)" [disabled]="isDisabled">
+          <select
+            [value]="selectedRegionIdx()"
+            (change)="onRegionChange($event)"
+            [disabled]="isDisabled"
+          >
             <option value="-1">{{ isUa ? '-- Оберіть область --' : '-- Select region --' }}</option>
             @for (r of regions(); track r.ua; let i = $index) {
               <option [value]="i">{{ isUa ? r.ua : r.en }}</option>
@@ -65,9 +63,11 @@ import {
         <!-- District -->
         <div class="loc-field">
           <label>{{ isUa ? 'Район' : 'District' }}</label>
-          <select [value]="selectedDistrictIdx()"
-                  (change)="onDistrictChange($event)"
-                  [disabled]="isDisabled || selectedRegionIdx() < 0">
+          <select
+            [value]="selectedDistrictIdx()"
+            (change)="onDistrictChange($event)"
+            [disabled]="isDisabled || selectedRegionIdx() < 0"
+          >
             <option value="-1">{{ isUa ? '-- Оберіть район --' : '-- Select district --' }}</option>
             @for (d of districts(); track d.ua; let i = $index) {
               <option [value]="i">{{ isUa ? d.ua : d.en }}</option>
@@ -78,10 +78,14 @@ import {
         <!-- Community -->
         <div class="loc-field">
           <label>{{ isUa ? 'Громада' : 'Community' }}</label>
-          <select [value]="selectedCommunityIdx()"
-                  (change)="onCommunityChange($event)"
-                  [disabled]="isDisabled || selectedDistrictIdx() < 0">
-            <option value="-1">{{ isUa ? '-- Оберіть громаду --' : '-- Select community --' }}</option>
+          <select
+            [value]="selectedCommunityIdx()"
+            (change)="onCommunityChange($event)"
+            [disabled]="isDisabled || selectedDistrictIdx() < 0"
+          >
+            <option value="-1">
+              {{ isUa ? '-- Оберіть громаду --' : '-- Select community --' }}
+            </option>
             @for (cm of communities(); track cm.c; let i = $index) {
               <option [value]="i">{{ isUa ? cm.ua : cm.en }}</option>
             }
@@ -91,10 +95,14 @@ import {
         <!-- Settlement -->
         <div class="loc-field">
           <label>{{ isUa ? 'Населений пункт' : 'Settlement' }}</label>
-          <select [value]="selectedSettlementIdx()"
-                  (change)="onSettlementChange($event)"
-                  [disabled]="isDisabled || selectedCommunityIdx() < 0">
-            <option value="-1">{{ isUa ? '-- Оберіть населений пункт --' : '-- Select settlement --' }}</option>
+          <select
+            [value]="selectedSettlementIdx()"
+            (change)="onSettlementChange($event)"
+            [disabled]="isDisabled || selectedCommunityIdx() < 0"
+          >
+            <option value="-1">
+              {{ isUa ? '-- Оберіть населений пункт --' : '-- Select settlement --' }}
+            </option>
             @for (s of settlements(); track s.c; let i = $index) {
               <option [value]="i">{{ isUa ? s.ua : s.en }}</option>
             }
@@ -103,22 +111,61 @@ import {
       </div>
     }
   `,
-  styles: [`
-    .loc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .loc-field { display: flex; flex-direction: column; gap: .3rem; }
-    .loc-field label { font-size: .85rem; font-weight: 500; color: #334155; }
-    .loc-req { color: #e53e3e; }
-    .loc-field select {
-      padding: .55rem .75rem; border: 1px solid #cbd5e0; border-radius: 6px;
-      font-size: .9rem; background: #fff; transition: border-color .15s;
-    }
-    .loc-field select:focus { outline: none; border-color: #2b6cb0; box-shadow: 0 0 0 3px rgba(43,108,176,.1); }
-    .loc-field select:disabled { background: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
-    .loc-loading { text-align: center; padding: 1rem; color: #64748b; font-size: .9rem; }
-    @media (max-width: 640px) { .loc-grid { grid-template-columns: 1fr; } }
-  `],
+  styles: [
+    `
+      .loc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      .loc-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+      }
+      .loc-field label {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #334155;
+      }
+      .loc-req {
+        color: #e53e3e;
+      }
+      .loc-field select {
+        padding: 0.55rem 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        background: #fff;
+        transition: border-color 0.15s;
+      }
+      .loc-field select:focus {
+        outline: none;
+        border-color: #2b6cb0;
+        box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+      }
+      .loc-field select:disabled {
+        background: #f1f5f9;
+        color: #94a3b8;
+        cursor: not-allowed;
+      }
+      .loc-loading {
+        text-align: center;
+        padding: 1rem;
+        color: #64748b;
+        font-size: 0.9rem;
+      }
+      @media (max-width: 640px) {
+        .loc-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    `,
+  ],
 })
-export class LocationSelectorComponent implements OnInit, OnDestroy, ControlValueAccessor, Validator {
+export class LocationSelectorComponent
+  implements OnInit, OnDestroy, ControlValueAccessor, Validator
+{
   private readonly locationService = inject(LocationService);
   private sub?: Subscription;
 
@@ -277,9 +324,15 @@ export class LocationSelectorComponent implements OnInit, OnDestroy, ControlValu
     waitForData();
   }
 
-  registerOnChange(fn: (val: LocationValue | null) => void): void { this.onChange = fn; }
-  registerOnTouched(fn: () => void): void { this.onTouched = fn; }
-  setDisabledState(disabled: boolean): void { this.isDisabled = disabled; }
+  registerOnChange(fn: (val: LocationValue | null) => void): void {
+    this.onChange = fn;
+  }
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+  setDisabledState(disabled: boolean): void {
+    this.isDisabled = disabled;
+  }
 
   /* ── Validator ── */
 
@@ -302,7 +355,10 @@ export class LocationSelectorComponent implements OnInit, OnDestroy, ControlValu
 
   private restoreFromValue(val: LocationValue, regs: RegionRaw[]): void {
     const ri = regs.findIndex((r) => r.ua === val.regionUa);
-    if (ri < 0) { this.resetSelections(); return; }
+    if (ri < 0) {
+      this.resetSelections();
+      return;
+    }
 
     this.selectedRegionIdx.set(ri);
     this.districts.set(regs[ri].d);

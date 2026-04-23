@@ -1,18 +1,6 @@
-import {
-  Component,
-  inject,
-  signal,
-  PLATFORM_ID,
-  OnInit,
-} from '@angular/core';
+import { Component, inject, signal, PLATFORM_ID, OnInit } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import {
-  FormGroup,
-  FormControl,
-  FormArray,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { FormGroup, FormControl, FormArray, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { QuillModule } from 'ngx-quill';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -41,21 +29,21 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
       <!-- ─── Stepper ─── -->
       <div class="stepper">
         @for (step of steps; track step.n) {
-          <div class="stepper__item"
-               [class.stepper__item--active]="currentStep() === step.n"
-               [class.stepper__item--completed]="currentStep() > step.n">
+          <div
+            class="stepper__item"
+            [class.stepper__item--active]="currentStep() === step.n"
+            [class.stepper__item--completed]="currentStep() > step.n"
+          >
             <div class="stepper__circle">{{ step.n }}</div>
             <span class="stepper__label">{{ step.labelKey | translate }}</span>
           </div>
           @if (step.n < totalSteps) {
-            <div class="stepper__line"
-                 [class.stepper__line--done]="currentStep() > step.n"></div>
+            <div class="stepper__line" [class.stepper__line--done]="currentStep() > step.n"></div>
           }
         }
       </div>
 
       <form [formGroup]="form" class="pf__body">
-
         <!-- ─── Step 1: Basic Information ─── -->
         @if (currentStep() === 1) {
           <section class="fs">
@@ -64,16 +52,20 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             <div class="form-row">
               <div class="fg fg--required">
                 <label>{{ 'procurement.form.tenderTitleUa' | translate }}</label>
-                <input formControlName="tenderTitleUa"
-                       placeholder="{{ 'procurement.form.tenderTitleUaPlaceholder' | translate }}" />
+                <input
+                  formControlName="tenderTitleUa"
+                  placeholder="{{ 'procurement.form.tenderTitleUaPlaceholder' | translate }}"
+                />
                 @if (f['tenderTitleUa'].invalid && f['tenderTitleUa'].touched) {
                   <span class="fe">{{ 'validation.required' | translate }}</span>
                 }
               </div>
               <div class="fg fg--required">
                 <label>{{ 'procurement.form.tenderTitleEn' | translate }}</label>
-                <input formControlName="tenderTitleEn"
-                       placeholder="Supply and Installation of Water Treatment Units" />
+                <input
+                  formControlName="tenderTitleEn"
+                  placeholder="Supply and Installation of Water Treatment Units"
+                />
                 @if (f['tenderTitleEn'].invalid && f['tenderTitleEn'].touched) {
                   <span class="fe">{{ 'validation.required' | translate }}</span>
                 }
@@ -99,8 +91,7 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             <div class="form-row">
               <div class="fg">
                 <label>{{ 'procurement.form.projectName' | translate }}</label>
-                <input formControlName="projectName"
-                       placeholder="Emergency WASH Response 2026" />
+                <input formControlName="projectName" placeholder="Emergency WASH Response 2026" />
               </div>
               <div class="fg">
                 <label>{{ 'procurement.form.projectCode' | translate }}</label>
@@ -110,8 +101,10 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <div class="fg">
               <label>{{ 'procurement.form.implementingOrganization' | translate }}</label>
-              <input formControlName="implementingOrganization"
-                     placeholder='{{ "procurement.form.implementingOrgPlaceholder" | translate }}' />
+              <input
+                formControlName="implementingOrganization"
+                placeholder="{{ 'procurement.form.implementingOrgPlaceholder' | translate }}"
+              />
             </div>
           </section>
         }
@@ -126,7 +119,9 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
                 <label>{{ 'procurement.form.procurementMethod' | translate }}</label>
                 <select formControlName="procurementMethod">
                   <option value="">—</option>
-                  <option value="open_tender">{{ 'procurement.method.open_tender' | translate }}</option>
+                  <option value="open_tender">
+                    {{ 'procurement.method.open_tender' | translate }}
+                  </option>
                   <option value="rfq">{{ 'procurement.method.rfq' | translate }}</option>
                   <option value="rfp">{{ 'procurement.method.rfp' | translate }}</option>
                 </select>
@@ -137,7 +132,9 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
                   <option value="">—</option>
                   <option value="goods">{{ 'procurement.category.goods' | translate }}</option>
                   <option value="works">{{ 'procurement.category.works' | translate }}</option>
-                  <option value="services">{{ 'procurement.category.services' | translate }}</option>
+                  <option value="services">
+                    {{ 'procurement.category.services' | translate }}
+                  </option>
                 </select>
               </div>
             </div>
@@ -162,22 +159,26 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
         @if (currentStep() === 3) {
           <section class="fs">
             <h3>{{ 'procurement.steps.technical' | translate }}</h3>
-            
+
             <!-- ── textarea → quill-editor for short descriptions ── -->
             @if (isBrowser) {
               <div class="form-row">
                 <div class="fg">
                   <label>{{ 'procurement.form.shortDescriptionUa' | translate }}</label>
-                  <quill-editor formControlName="shortDescriptionUa"
-                                [modules]="quillModules"
-                                [placeholder]="'procurement.form.shortDescUaPlaceholder' | translate">
+                  <quill-editor
+                    formControlName="shortDescriptionUa"
+                    [modules]="quillModules"
+                    [placeholder]="'procurement.form.shortDescUaPlaceholder' | translate"
+                  >
                   </quill-editor>
                 </div>
                 <div class="fg">
                   <label>{{ 'procurement.form.shortDescriptionEn' | translate }}</label>
-                  <quill-editor formControlName="shortDescriptionEn"
-                                [modules]="quillModules"
-                                placeholder="Installation of modular water purification systems">
+                  <quill-editor
+                    formControlName="shortDescriptionEn"
+                    [modules]="quillModules"
+                    placeholder="Installation of modular water purification systems"
+                  >
                   </quill-editor>
                 </div>
               </div>
@@ -186,31 +187,41 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
               <div class="form-row">
                 <div class="fg">
                   <label>{{ 'procurement.form.shortDescriptionUa' | translate }}</label>
-                  <textarea formControlName="shortDescriptionUa" rows="3"
-                            placeholder="{{ 'procurement.form.shortDescUaPlaceholder' | translate }}"></textarea>
+                  <textarea
+                    formControlName="shortDescriptionUa"
+                    rows="3"
+                    placeholder="{{ 'procurement.form.shortDescUaPlaceholder' | translate }}"
+                  ></textarea>
                 </div>
                 <div class="fg">
                   <label>{{ 'procurement.form.shortDescriptionEn' | translate }}</label>
-                  <textarea formControlName="shortDescriptionEn" rows="3"
-                            placeholder="Installation of modular water purification systems"></textarea>
+                  <textarea
+                    formControlName="shortDescriptionEn"
+                    rows="3"
+                    placeholder="Installation of modular water purification systems"
+                  ></textarea>
                 </div>
               </div>
             }
-            
+
             <!-- Quill rendered only in browser — SSR unsafe -->
             @if (isBrowser) {
               <div class="fg">
                 <label>{{ 'procurement.form.detailedDescriptionUa' | translate }}</label>
-                <quill-editor formControlName="detailedDescriptionUa"
-                              [modules]="quillModules"
-                              [placeholder]="'procurement.form.detailedDescUaPlaceholder' | translate">
+                <quill-editor
+                  formControlName="detailedDescriptionUa"
+                  [modules]="quillModules"
+                  [placeholder]="'procurement.form.detailedDescUaPlaceholder' | translate"
+                >
                 </quill-editor>
               </div>
               <div class="fg">
                 <label>{{ 'procurement.form.detailedDescriptionEn' | translate }}</label>
-                <quill-editor formControlName="detailedDescriptionEn"
-                              [modules]="quillModules"
-                              placeholder="TOR / Scope of Work (English)">
+                <quill-editor
+                  formControlName="detailedDescriptionEn"
+                  [modules]="quillModules"
+                  placeholder="TOR / Scope of Work (English)"
+                >
                 </quill-editor>
               </div>
             }
@@ -218,13 +229,19 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             <div class="form-row">
               <div class="fg">
                 <label>{{ 'procurement.form.region' | translate }}</label>
-                <input formControlName="region"
-                       placeholder="{{ 'procurement.form.regionPlaceholder' | translate }}" />
+                <input
+                  formControlName="region"
+                  placeholder="{{ 'procurement.form.regionPlaceholder' | translate }}"
+                />
               </div>
               <div class="fg">
                 <label>{{ 'procurement.form.implementationPeriodDays' | translate }}</label>
-                <input type="number" formControlName="implementationPeriodDays"
-                       min="1" placeholder="60" />
+                <input
+                  type="number"
+                  formControlName="implementationPeriodDays"
+                  min="1"
+                  placeholder="60"
+                />
               </div>
             </div>
           </section>
@@ -280,8 +297,11 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             <div class="form-row">
               <div class="fg">
                 <label>{{ 'procurement.form.submissionEmail' | translate }}</label>
-                <input type="email" formControlName="submissionEmail"
-                       placeholder="tender.csd@gmail.com" />
+                <input
+                  type="email"
+                  formControlName="submissionEmail"
+                  placeholder="tender.csd@gmail.com"
+                />
               </div>
               <div class="fg">
                 <label>{{ 'procurement.form.fileRequirements' | translate }}</label>
@@ -298,8 +318,10 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <div class="fg">
               <label>{{ 'procurement.form.evaluationMethod' | translate }}</label>
-              <input formControlName="evaluationMethod"
-                     placeholder="{{ 'procurement.form.evaluationMethodPlaceholder' | translate }}" />
+              <input
+                formControlName="evaluationMethod"
+                placeholder="{{ 'procurement.form.evaluationMethodPlaceholder' | translate }}"
+              />
             </div>
 
             <!-- Dynamic evaluation criteria table -->
@@ -321,7 +343,9 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
                       <td><input formControlName="criteriaEn" /></td>
                       <td><input type="number" formControlName="weight" min="0" max="100" /></td>
                       <td>
-                        <button type="button" class="btn-icon" (click)="removeCriterion(i)">✕</button>
+                        <button type="button" class="btn-icon" (click)="removeCriterion(i)">
+                          ✕
+                        </button>
                       </td>
                     </tr>
                   }
@@ -337,8 +361,11 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
               <label>{{ 'procurement.form.eligibilityRequirements' | translate }}</label>
               @for (ctrl of eligibilityRequirements.controls; track $index; let i = $index) {
                 <div class="input-row">
-                  <input type="text" [formControlName]="i"
-                         placeholder="{{ 'procurement.form.requirementPlaceholder' | translate }}" />
+                  <input
+                    type="text"
+                    [formControlName]="i"
+                    placeholder="{{ 'procurement.form.requirementPlaceholder' | translate }}"
+                  />
                   <button type="button" class="btn-icon" (click)="removeRequirement(i)">✕</button>
                 </div>
               }
@@ -358,8 +385,10 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             <div formArrayName="attachments">
               @for (ctrl of attachments.controls; track $index; let i = $index) {
                 <div class="attachment-row" [formGroupName]="i">
-                  <input formControlName="name"
-                         [placeholder]="'procurement.form.attachmentName' | translate" />
+                  <input
+                    formControlName="name"
+                    [placeholder]="'procurement.form.attachmentName' | translate"
+                  />
                   <input formControlName="url" placeholder="https://..." />
                   <input formControlName="fileType" placeholder="PDF / Excel" />
                   <button type="button" class="btn-icon" (click)="removeAttachment(i)">✕</button>
@@ -387,13 +416,10 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             </div>
 
             @if (!f['tenderTitleUa'].value || !f['tenderTitleEn'].value) {
-              <div class="form-warning">
-                ⚠️ {{ 'procurement.form.publishWarning' | translate }}
-              </div>
+              <div class="form-warning">⚠️ {{ 'procurement.form.publishWarning' | translate }}</div>
             }
           </section>
         }
-
       </form>
 
       <!-- ─── Navigation ─── -->
@@ -404,8 +430,12 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
           </button>
         }
         <div class="pf__nav-right">
-          <button type="button" class="btn btn--ghost"
-                  [disabled]="isLoading()" (click)="saveDraft()">
+          <button
+            type="button"
+            class="btn btn--ghost"
+            [disabled]="isLoading()"
+            (click)="saveDraft()"
+          >
             {{ 'procurement.form.saveDraft' | translate }}
           </button>
           @if (currentStep() < totalSteps) {
@@ -413,260 +443,378 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
               {{ 'common.next' | translate }} →
             </button>
           } @else {
-            <button type="button" class="btn btn--publish"
-                    [disabled]="isLoading()" (click)="publish()">
-              {{ isLoading() ? ('common.saving' | translate) : ('procurement.form.publish' | translate) }}
+            <button
+              type="button"
+              class="btn btn--publish"
+              [disabled]="isLoading()"
+              (click)="publish()"
+            >
+              {{
+                isLoading()
+                  ? ('common.saving' | translate)
+                  : ('procurement.form.publish' | translate)
+              }}
             </button>
           }
         </div>
       </div>
     </div>
   `,
-  styles: [`
-    .pf {
-      max-width: 900px;
-      margin: 2rem auto;
-      padding: 0 1rem;
+  styles: [
+    `
+      .pf {
+        max-width: 900px;
+        margin: 2rem auto;
+        padding: 0 1rem;
 
-      &__title { font-size: 1.75rem; color: #1a365d; margin-bottom: 2rem; }
-      &__body { margin-bottom: 1.5rem; }
+        &__title {
+          font-size: 1.75rem;
+          color: #1a365d;
+          margin-bottom: 2rem;
+        }
+        &__body {
+          margin-bottom: 1.5rem;
+        }
 
-      &__nav {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 1.5rem;
-        border-top: 1px solid #e2e8f0;
-        margin-top: 1.5rem;
+        &__nav {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-top: 1.5rem;
+          border-top: 1px solid #e2e8f0;
+          margin-top: 1.5rem;
+        }
+
+        &__nav-right {
+          display: flex;
+          gap: 0.75rem;
+          margin-left: auto;
+        }
       }
 
-      &__nav-right { display: flex; gap: 0.75rem; margin-left: auto; }
-    }
+      /* Stepper */
+      .stepper {
+        display: flex;
+        align-items: center;
+        margin-bottom: 2.5rem;
+        overflow-x: auto;
+        padding-bottom: 0.25rem;
 
-    /* Stepper */
-    .stepper {
-      display: flex;
-      align-items: center;
-      margin-bottom: 2.5rem;
-      overflow-x: auto;
-      padding-bottom: 0.25rem;
+        &__item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.375rem;
+          flex-shrink: 0;
 
-      &__item {
+          &--active .stepper__circle {
+            background: #2b6cb0;
+            color: white;
+            border-color: #2b6cb0;
+          }
+          &--completed .stepper__circle {
+            background: #48bb78;
+            color: white;
+            border-color: #48bb78;
+          }
+        }
+
+        &__circle {
+          width: 2rem;
+          height: 2rem;
+          border-radius: 50%;
+          border: 2px solid #cbd5e0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.875rem;
+          font-weight: 600;
+          color: #718096;
+          background: white;
+        }
+
+        &__label {
+          font-size: 0.675rem;
+          color: #718096;
+          text-align: center;
+          max-width: 4.5rem;
+        }
+
+        &__line {
+          flex: 1;
+          height: 2px;
+          background: #cbd5e0;
+          margin-bottom: 1.375rem;
+          min-width: 1.5rem;
+
+          &--done {
+            background: #48bb78;
+          }
+        }
+      }
+
+      /* Form section */
+      .fs h3 {
+        font-size: 1.125rem;
+        color: #1a365d;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #ebf8ff;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.25rem;
+        margin-bottom: 1.25rem;
+
+        @media (max-width: 600px) {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .fg {
         display: flex;
         flex-direction: column;
-        align-items: center;
         gap: 0.375rem;
-        flex-shrink: 0;
+        margin-bottom: 1.25rem;
 
-        &--active .stepper__circle { background: #2b6cb0; color: white; border-color: #2b6cb0; }
-        &--completed .stepper__circle { background: #48bb78; color: white; border-color: #48bb78; }
+        &--required label::after {
+          content: ' *';
+          color: #e53e3e;
+        }
+
+        label {
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #4a5568;
+        }
+
+        input,
+        select,
+        textarea {
+          padding: 0.625rem 0.875rem;
+          border: 1px solid #cbd5e0;
+          border-radius: 6px;
+          font-size: 0.9375rem;
+          color: #2d3748;
+          width: 100%;
+          box-sizing: border-box;
+          transition: border-color 0.15s;
+          font-family: inherit;
+
+          &:focus {
+            outline: none;
+            border-color: #4299e1;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+          }
+        }
+
+        textarea {
+          resize: vertical;
+        }
       }
 
-      &__circle {
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        border: 2px solid #cbd5e0;
+      .fe {
+        font-size: 0.8125rem;
+        color: #e53e3e;
+      }
+
+      .form-warning {
+        padding: 0.75rem 1rem;
+        background: #fffbeb;
+        border: 1px solid #f6e05e;
+        border-radius: 6px;
+        color: #744210;
+        font-size: 0.875rem;
+        margin-top: 1rem;
+      }
+
+      .radio-group,
+      .checkbox-group {
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .radio-label,
+      .checkbox-label {
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: 0.875rem;
-        font-weight: 600;
-        color: #718096;
-        background: white;
-      }
-
-      &__label { font-size: 0.675rem; color: #718096; text-align: center; max-width: 4.5rem; }
-
-      &__line {
-        flex: 1;
-        height: 2px;
-        background: #cbd5e0;
-        margin-bottom: 1.375rem;
-        min-width: 1.5rem;
-
-        &--done { background: #48bb78; }
-      }
-    }
-
-    /* Form section */
-    .fs h3 {
-      font-size: 1.125rem;
-      color: #1a365d;
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid #ebf8ff;
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.25rem;
-      margin-bottom: 1.25rem;
-
-      @media (max-width: 600px) { grid-template-columns: 1fr; }
-    }
-
-    .fg {
-      display: flex;
-      flex-direction: column;
-      gap: 0.375rem;
-      margin-bottom: 1.25rem;
-
-      &--required label::after { content: ' *'; color: #e53e3e; }
-
-      label { font-size: 0.875rem; font-weight: 500; color: #4a5568; }
-
-      input, select, textarea {
-        padding: 0.625rem 0.875rem;
-        border: 1px solid #cbd5e0;
-        border-radius: 6px;
+        gap: 0.5rem;
+        cursor: pointer;
         font-size: 0.9375rem;
         color: #2d3748;
+      }
+
+      /* Criteria table */
+      .criteria-table {
         width: 100%;
-        box-sizing: border-box;
-        transition: border-color 0.15s;
-        font-family: inherit;
+        border-collapse: collapse;
+        margin-bottom: 0.75rem;
 
-        &:focus { outline: none; border-color: #4299e1; box-shadow: 0 0 0 3px rgba(66,153,225,.15); }
+        th {
+          text-align: left;
+          padding: 0.5rem 0.5rem;
+          font-size: 0.8125rem;
+          color: #718096;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        td {
+          padding: 0.3rem 0.25rem;
+          input {
+            width: 100%;
+            padding: 0.4rem 0.5rem;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+          }
+        }
       }
 
-      textarea { resize: vertical; }
-    }
+      .input-row {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
 
-    .fe { font-size: 0.8125rem; color: #e53e3e; }
+        input {
+          flex: 1;
+          padding: 0.5rem 0.75rem;
+          border: 1px solid #cbd5e0;
+          border-radius: 6px;
+          font-size: 0.9375rem;
+          &:focus {
+            outline: none;
+            border-color: #4299e1;
+          }
+        }
+      }
 
-    .form-warning {
-      padding: 0.75rem 1rem;
-      background: #fffbeb;
-      border: 1px solid #f6e05e;
-      border-radius: 6px;
-      color: #744210;
-      font-size: 0.875rem;
-      margin-top: 1rem;
-    }
+      .attachment-row {
+        display: grid;
+        grid-template-columns: 2fr 3fr 1.5fr auto;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        align-items: center;
 
-    .radio-group, .checkbox-group { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+        input {
+          padding: 0.5rem 0.75rem;
+          border: 1px solid #cbd5e0;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          &:focus {
+            outline: none;
+            border-color: #4299e1;
+          }
+        }
 
-    .radio-label, .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      font-size: 0.9375rem;
-      color: #2d3748;
-    }
+        @media (max-width: 600px) {
+          grid-template-columns: 1fr;
+        }
+      }
 
-    /* Criteria table */
-    .criteria-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 0.75rem;
-
-      th {
-        text-align: left;
-        padding: 0.5rem 0.5rem;
-        font-size: 0.8125rem;
+      .section-hint {
+        font-size: 0.875rem;
         color: #718096;
-        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 1rem;
       }
 
-      td {
-        padding: 0.3rem 0.25rem;
-        input { width: 100%; padding: 0.4rem 0.5rem; border: 1px solid #cbd5e0; border-radius: 4px; }
+      /* Review */
+      .review-card {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        overflow: hidden;
       }
-    }
 
-    .input-row {
-      display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
+      .review-row {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #f7fafc;
+        &:last-child {
+          border-bottom: none;
+        }
+      }
 
-      input {
-        flex: 1;
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #cbd5e0;
+      .review-label {
+        font-size: 0.875rem;
+        color: #718096;
+        font-weight: 500;
+      }
+
+      /* Buttons */
+      .btn {
+        padding: 0.625rem 1.5rem;
         border-radius: 6px;
         font-size: 0.9375rem;
-        &:focus { outline: none; border-color: #4299e1; }
+        font-weight: 500;
+        cursor: pointer;
+        border: none;
+        transition:
+          background 0.15s,
+          opacity 0.15s;
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        &--primary {
+          background: #2b6cb0;
+          color: white;
+          &:hover:not(:disabled) {
+            background: #2c5282;
+          }
+        }
+        &--secondary {
+          background: #e2e8f0;
+          color: #4a5568;
+          &:hover {
+            background: #cbd5e0;
+          }
+        }
+        &--ghost {
+          background: transparent;
+          color: #4a5568;
+          border: 1px solid #cbd5e0;
+          &:hover {
+            background: #f7fafc;
+          }
+        }
+        &--publish {
+          background: #276749;
+          color: white;
+          &:hover:not(:disabled) {
+            background: #22543d;
+          }
+        }
       }
-    }
 
-    .attachment-row {
-      display: grid;
-      grid-template-columns: 2fr 3fr 1.5fr auto;
-      gap: 0.5rem;
-      margin-bottom: 0.5rem;
-      align-items: center;
+      .btn-icon {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        color: #a0aec0;
+        transition: color 0.15s;
+        &:hover {
+          color: #e53e3e;
+        }
+      }
 
-      input {
-        padding: 0.5rem 0.75rem;
-        border: 1px solid #cbd5e0;
-        border-radius: 6px;
+      .btn-text {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #4299e1;
         font-size: 0.875rem;
-        &:focus { outline: none; border-color: #4299e1; }
+        padding: 0;
+        margin-top: 0.5rem;
+        &:hover {
+          text-decoration: underline;
+        }
       }
-
-      @media (max-width: 600px) { grid-template-columns: 1fr; }
-    }
-
-    .section-hint { font-size: 0.875rem; color: #718096; margin-bottom: 1rem; }
-
-    /* Review */
-    .review-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    .review-row {
-      display: grid;
-      grid-template-columns: 220px 1fr;
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid #f7fafc;
-      &:last-child { border-bottom: none; }
-    }
-
-    .review-label { font-size: 0.875rem; color: #718096; font-weight: 500; }
-
-    /* Buttons */
-    .btn {
-      padding: 0.625rem 1.5rem;
-      border-radius: 6px;
-      font-size: 0.9375rem;
-      font-weight: 500;
-      cursor: pointer;
-      border: none;
-      transition: background 0.15s, opacity 0.15s;
-
-      &:disabled { opacity: 0.6; cursor: not-allowed; }
-      &--primary { background: #2b6cb0; color: white; &:hover:not(:disabled) { background: #2c5282; } }
-      &--secondary { background: #e2e8f0; color: #4a5568; &:hover { background: #cbd5e0; } }
-      &--ghost { background: transparent; color: #4a5568; border: 1px solid #cbd5e0; &:hover { background: #f7fafc; } }
-      &--publish { background: #276749; color: white; &:hover:not(:disabled) { background: #22543d; } }
-    }
-
-    .btn-icon {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 0.25rem 0.5rem;
-      color: #a0aec0;
-      transition: color 0.15s;
-      &:hover { color: #e53e3e; }
-    }
-
-    .btn-text {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: #4299e1;
-      font-size: 0.875rem;
-      padding: 0;
-      margin-top: 0.5rem;
-      &:hover { text-decoration: underline; }
-    }
-  `],
+    `,
+  ],
 })
 export class ProcurementFormComponent implements OnInit {
   private readonly api = inject(ApiService);
@@ -772,11 +920,13 @@ export class ProcurementFormComponent implements OnInit {
   }
 
   addCriterion(): void {
-    this.evaluationCriteria.push(new FormGroup({
-      criteriaUa: new FormControl(''),
-      criteriaEn: new FormControl(''),
-      weight: new FormControl<number>(0),
-    }));
+    this.evaluationCriteria.push(
+      new FormGroup({
+        criteriaUa: new FormControl(''),
+        criteriaEn: new FormControl(''),
+        weight: new FormControl<number>(0),
+      }),
+    );
   }
 
   removeCriterion(index: number): void {
@@ -792,11 +942,13 @@ export class ProcurementFormComponent implements OnInit {
   }
 
   addAttachment(): void {
-    this.attachments.push(new FormGroup({
-      name: new FormControl(''),
-      url: new FormControl(''),
-      fileType: new FormControl(''),
-    }));
+    this.attachments.push(
+      new FormGroup({
+        name: new FormControl(''),
+        url: new FormControl(''),
+        fileType: new FormControl(''),
+      }),
+    );
   }
 
   removeAttachment(index: number): void {
@@ -884,9 +1036,7 @@ export class ProcurementFormComponent implements OnInit {
         (c: { criteriaUa: string; criteriaEn: string }) => c.criteriaUa || c.criteriaEn,
       ),
       eligibilityRequirements: this.eligibilityRequirements.value.filter(Boolean),
-      attachments: this.attachments.value.filter(
-        (a: { url: string }) => !!a.url,
-      ),
+      attachments: this.attachments.value.filter((a: { url: string }) => !!a.url),
       status,
     };
   }
@@ -917,8 +1067,10 @@ export class ProcurementFormComponent implements OnInit {
         expectedStartDate: data.expectedStartDate?.substring(0, 10) ?? '',
         submissionEmail: data.submissionEmail ?? '',
         submissionMethodEmail: data.submissionMethods?.includes(SubmissionMethod.EMAIL) ?? false,
-        submissionMethodCourier: data.submissionMethods?.includes(SubmissionMethod.COURIER) ?? false,
-        submissionMethodEplatform: data.submissionMethods?.includes(SubmissionMethod.EPLATFORM) ?? false,
+        submissionMethodCourier:
+          data.submissionMethods?.includes(SubmissionMethod.COURIER) ?? false,
+        submissionMethodEplatform:
+          data.submissionMethods?.includes(SubmissionMethod.EPLATFORM) ?? false,
         fileRequirements: data.fileRequirements ?? '',
         evaluationMethod: data.evaluationMethod ?? '',
       });
@@ -926,11 +1078,13 @@ export class ProcurementFormComponent implements OnInit {
       // Restore FormArrays
       this.evaluationCriteria.clear();
       (data.evaluationCriteria ?? []).forEach((c) => {
-        this.evaluationCriteria.push(new FormGroup({
-          criteriaUa: new FormControl(c.criteriaUa),
-          criteriaEn: new FormControl(c.criteriaEn),
-          weight: new FormControl(c.weight),
-        }));
+        this.evaluationCriteria.push(
+          new FormGroup({
+            criteriaUa: new FormControl(c.criteriaUa),
+            criteriaEn: new FormControl(c.criteriaEn),
+            weight: new FormControl(c.weight),
+          }),
+        );
       });
       if (this.evaluationCriteria.length === 0) this.addCriterion();
 
@@ -941,11 +1095,13 @@ export class ProcurementFormComponent implements OnInit {
 
       this.attachments.clear();
       (data.attachments ?? []).forEach((a) => {
-        this.attachments.push(new FormGroup({
-          name: new FormControl(a.name),
-          url: new FormControl(a.url),
-          fileType: new FormControl(a.fileType ?? ''),
-        }));
+        this.attachments.push(
+          new FormGroup({
+            name: new FormControl(a.name),
+            url: new FormControl(a.url),
+            fileType: new FormControl(a.fileType ?? ''),
+          }),
+        );
       });
     });
   }

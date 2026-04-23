@@ -56,11 +56,11 @@ export interface CreateWashFormPayload {
   boreholeDrilling?: BoreholeDrillingPayload;
   waterTower?: WaterTowerPayload;
   purificationSystem?: PurificationSystemPayload;
-  items?: Array<{
+  items?: {
     equipmentItemId: string;
     quantity: number;
     notes?: string;
-  }>;
+  }[];
 }
 
 // ── WASH Activities ──

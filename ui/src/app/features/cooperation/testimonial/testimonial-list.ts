@@ -53,7 +53,9 @@ interface TestimonialItem {
               <p class="testimonial-card__text">{{ t.text }}</p>
               <div class="testimonial-card__author">
                 <strong>{{ t.authorName }}</strong>
-                @if (t.organization) { <span>· {{ t.organization }}</span> }
+                @if (t.organization) {
+                  <span>· {{ t.organization }}</span>
+                }
                 @if (t.isVerified) {
                   <span class="verified-badge">
                     ✓ {{ 'testimonial.list.verified' | translate }}
@@ -69,65 +71,79 @@ interface TestimonialItem {
       }
     </div>
   `,
-  styles: [`
-    .testimonial-list {
-      &__header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        h2 { font-size: 1.375rem; color: #1a365d; margin: 0; }
+  styles: [
+    `
+      .testimonial-list {
+        &__header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+          h2 {
+            font-size: 1.375rem;
+            color: #1a365d;
+            margin: 0;
+          }
+        }
       }
-    }
-    .testimonial-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1rem;
-    }
-    .testimonial-card {
-      padding: 1.25rem;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      background: #fff;
-      &__stars {
-        font-size: 1.125rem;
-        color: #f6ad55;
-        margin-bottom: 0.5rem;
-        .empty { color: #e2e8f0; }
+      .testimonial-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
       }
-      &__text {
-        font-size: 0.9375rem;
-        color: #2d3748;
-        margin: 0 0 0.75rem;
-        line-height: 1.6;
+      .testimonial-card {
+        padding: 1.25rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fff;
+        &__stars {
+          font-size: 1.125rem;
+          color: #f6ad55;
+          margin-bottom: 0.5rem;
+          .empty {
+            color: #e2e8f0;
+          }
+        }
+        &__text {
+          font-size: 0.9375rem;
+          color: #2d3748;
+          margin: 0 0 0.75rem;
+          line-height: 1.6;
+        }
+        &__author {
+          font-size: 0.875rem;
+          color: #4a5568;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.375rem;
+          align-items: center;
+        }
+        &__location {
+          font-size: 0.8125rem;
+          color: #a0aec0;
+          margin: 0.375rem 0 0;
+        }
       }
-      &__author {
+      .verified-badge {
+        font-size: 0.75rem;
+        background: #f0fff4;
+        color: #276749;
+        padding: 0.125rem 0.375rem;
+        border-radius: 9999px;
+      }
+      .btn-primary {
+        padding: 0.5rem 1rem;
+        background: #2b6cb0;
+        color: #fff;
+        border-radius: 6px;
+        text-decoration: none;
         font-size: 0.875rem;
-        color: #4a5568;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.375rem;
-        align-items: center;
       }
-      &__location { font-size: 0.8125rem; color: #a0aec0; margin: 0.375rem 0 0; }
-    }
-    .verified-badge {
-      font-size: 0.75rem;
-      background: #f0fff4;
-      color: #276749;
-      padding: 0.125rem 0.375rem;
-      border-radius: 9999px;
-    }
-    .btn-primary {
-      padding: 0.5rem 1rem;
-      background: #2b6cb0;
-      color: #fff;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 0.875rem;
-    }
-    .state-msg { color: #718096; }
-  `],
+      .state-msg {
+        color: #718096;
+      }
+    `,
+  ],
 })
 export class TestimonialListComponent implements OnInit {
   private api = inject(ApiService);
@@ -150,10 +166,11 @@ export class TestimonialListComponent implements OnInit {
     //   error: () => this.loading.set(false),
     // });
 
-    this.api
-      .get<TestimonialItem[]>(`testimonials`)
-      .subscribe({
-      next: (data) => { this.items.set(data); this.loading.set(false); },
+    this.api.get<TestimonialItem[]>(`testimonials`).subscribe({
+      next: (data) => {
+        this.items.set(data);
+        this.loading.set(false);
+      },
       error: () => this.loading.set(false),
     });
   }

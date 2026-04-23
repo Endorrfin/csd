@@ -33,7 +33,9 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
     <div class="list-header">
       <h2>
         {{ isUa ? 'Закупки' : 'Procurements' }}
-        @if (total() > 0) { <span class="count">({{ total() }})</span> }
+        @if (total() > 0) {
+          <span class="count">({{ total() }})</span>
+        }
       </h2>
       <a routerLink="/cooperation/procurement/new" class="btn btn-primary">
         + {{ isUa ? 'Новий тендер' : 'New tender' }}
@@ -43,7 +45,11 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
     <!-- Filters -->
     <div class="filters">
       <input
-        [placeholder]="isUa ? 'Пошук за назвою, реф. номером, донором...' : 'Search by title, reference, donor...'"
+        [placeholder]="
+          isUa
+            ? 'Пошук за назвою, реф. номером, донором...'
+            : 'Search by title, reference, donor...'
+        "
         [(ngModel)]="searchQuery"
         (input)="onSearchChange()"
         class="filter-input filter-search"
@@ -69,8 +75,12 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
     </div>
 
     <!-- Banners -->
-    @if (successMessage()) { <div class="banner banner-success">{{ successMessage() }}</div> }
-    @if (errorMessage()) { <div class="banner banner-error">{{ errorMessage() }}</div> }
+    @if (successMessage()) {
+      <div class="banner banner-success">{{ successMessage() }}</div>
+    }
+    @if (errorMessage()) {
+      <div class="banner banner-error">{{ errorMessage() }}</div>
+    }
 
     @if (loading()) {
       <div class="loading">{{ isUa ? 'Завантаження...' : 'Loading...' }}</div>
@@ -96,7 +106,7 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
             @for (item of items(); track item.id; let i = $index) {
               <tr>
                 <td class="td-num">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
-                <td class="td-date">{{ item.createdAt | date:'dd.MM.yyyy' }}</td>
+                <td class="td-date">{{ item.createdAt | date: 'dd.MM.yyyy' }}</td>
 
                 <!-- Status: badge + inline dropdown -->
                 <td>
@@ -105,7 +115,8 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
                     (ngModelChange)="onStatusChange(item, $event)"
                     [disabled]="savingId() === item.id"
                     class="status-select"
-                    [attr.data-status]="item.status">
+                    [attr.data-status]="item.status"
+                  >
                     @for (s of activeStatuses; track s) {
                       <option [value]="s">{{ 'procurement.status.' + s | translate }}</option>
                     }
@@ -124,23 +135,33 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
                 <td class="td-meta">
                   @if (item.procurementMethod) {
                     {{ 'procurement.method.' + item.procurementMethod | translate }}
-                  } @else { — }
+                  } @else {
+                    —
+                  }
                 </td>
                 <td class="td-meta">
                   @if (item.procurementCategory) {
                     {{ 'procurement.category.' + item.procurementCategory | translate }}
-                  } @else { — }
+                  } @else {
+                    —
+                  }
                 </td>
                 <td class="td-meta">{{ item.donor || '—' }}</td>
                 <td class="td-date">
-                  {{ item.bidSubmissionDeadline ? (item.bidSubmissionDeadline | date:'dd.MM.yyyy') : '—' }}
+                  {{
+                    item.bidSubmissionDeadline
+                      ? (item.bidSubmissionDeadline | date: 'dd.MM.yyyy')
+                      : '—'
+                  }}
                 </td>
 
                 <!-- Actions -->
                 <td class="td-actions">
-                  <a [routerLink]="['/cooperation/procurement', item.id, 'edit']"
-                     class="action-btn action-edit"
-                     [title]="isUa ? 'Редагувати' : 'Edit'">
+                  <a
+                    [routerLink]="['/cooperation/procurement', item.id, 'edit']"
+                    class="action-btn action-edit"
+                    [title]="isUa ? 'Редагувати' : 'Edit'"
+                  >
                     ✎
                   </a>
                   @if (item.status === 'draft') {
@@ -149,7 +170,8 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
                       class="action-btn action-delete"
                       [disabled]="savingId() === item.id"
                       (click)="onDelete(item)"
-                      [title]="isUa ? 'Видалити чернетку' : 'Delete draft'">
+                      [title]="isUa ? 'Видалити чернетку' : 'Delete draft'"
+                    >
                       ✕
                     </button>
                   }
@@ -167,104 +189,302 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
             {{ isUa ? 'Попередня' : 'Previous' }}
           </button>
           <span class="page-info">{{ currentPage }} / {{ totalPages() }}</span>
-          <button class="btn-sm" [disabled]="currentPage >= totalPages()" (click)="goPage(currentPage + 1)">
+          <button
+            class="btn-sm"
+            [disabled]="currentPage >= totalPages()"
+            (click)="goPage(currentPage + 1)"
+          >
             {{ isUa ? 'Наступна' : 'Next' }}
           </button>
         </div>
       }
     }
   `,
-  styles: [`
-    .list-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; gap:1rem; flex-wrap:wrap; }
-    .list-header h2 { font-size:1.2rem; font-weight:600; color:#1a365d; margin:0; }
-    .count { color:#64748b; font-weight:400; }
-    .btn-primary { background:#2b6cb0; color:#fff; padding:.5rem 1rem; border:none; border-radius:6px; font-size:.85rem; font-weight:500; cursor:pointer; text-decoration:none; }
-    .btn-primary:hover { background:#2c5282; }
+  styles: [
+    `
+      .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .list-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin: 0;
+      }
+      .count {
+        color: #64748b;
+        font-weight: 400;
+      }
+      .btn-primary {
+        background: #2b6cb0;
+        color: #fff;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+      }
+      .btn-primary:hover {
+        background: #2c5282;
+      }
 
-    .filters { display:flex; gap:.75rem; margin-bottom:1.25rem; flex-wrap:wrap; }
-    .filter-input { padding:.5rem .75rem; border:1px solid #cbd5e0; border-radius:6px; font-size:.85rem; background:#fff; }
-    .filter-search { flex:1; min-width:240px; }
+      .filters {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+      }
+      .filter-input {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        background: #fff;
+      }
+      .filter-search {
+        flex: 1;
+        min-width: 240px;
+      }
 
-    .banner { padding:.6rem 1rem; border-radius:6px; font-size:.85rem; margin-bottom:1rem; border:1px solid; }
-    .banner-success { background:#f0fff4; color:#276749; border-color:#c6f6d5; }
-    .banner-error { background:#fff5f5; color:#c53030; border-color:#fed7d7; }
+      .banner {
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        border: 1px solid;
+      }
+      .banner-success {
+        background: #f0fff4;
+        color: #276749;
+        border-color: #c6f6d5;
+      }
+      .banner-error {
+        background: #fff5f5;
+        color: #c53030;
+        border-color: #fed7d7;
+      }
 
-    .table-wrap { overflow-x:auto; }
-    .data-table { width:100%; border-collapse:collapse; font-size:.85rem; }
-    .data-table th { text-align:left; padding:.65rem .5rem; border-bottom:2px solid #e2e8f0; color:#64748b; font-weight:600; font-size:.72rem; text-transform:uppercase; white-space:nowrap; }
-    .data-table td { padding:.65rem .5rem; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
-    .th-actions { text-align:center; }
-    .td-num { text-align:center; color:#64748b; }
-    .td-date { white-space:nowrap; color:#64748b; font-size:.8rem; }
-    .td-meta { color:#475569; }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+      .data-table th {
+        text-align: left;
+        padding: 0.65rem 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .data-table td {
+        padding: 0.65rem 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+      }
+      .th-actions {
+        text-align: center;
+      }
+      .td-num {
+        text-align: center;
+        color: #64748b;
+      }
+      .td-date {
+        white-space: nowrap;
+        color: #64748b;
+        font-size: 0.8rem;
+      }
+      .td-meta {
+        color: #475569;
+      }
 
-    .td-title { max-width:280px; }
-    .title-link { color:#1a365d; font-weight:500; text-decoration:none; }
-    .title-link:hover { color:#2b6cb0; text-decoration:underline; }
-    .ref-num { font-size:.7rem; color:#94a3b8; margin-top:.15rem; font-family:monospace; }
+      .td-title {
+        max-width: 280px;
+      }
+      .title-link {
+        color: #1a365d;
+        font-weight: 500;
+        text-decoration: none;
+      }
+      .title-link:hover {
+        color: #2b6cb0;
+        text-decoration: underline;
+      }
+      .ref-num {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        margin-top: 0.15rem;
+        font-family: monospace;
+      }
 
-    /* Status select styled as colored badge — uses data-status to pick colors */
-    .status-select {
-      padding:.25rem .5rem; border:1px solid transparent; border-radius:4px;
-      font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.02em;
-      cursor:pointer; min-width:115px;
-    }
-    .status-select:disabled { opacity:.5; cursor:wait; }
-/* Status colors — each of 8 active statuses has a unique palette */
+      /* Status select styled as colored badge — uses data-status to pick colors */
+      .status-select {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        min-width: 115px;
+      }
+      .status-select:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      /* Status colors — each of 8 active statuses has a unique palette */
 
-    /* Draft — amber/yellow (неопубліковано, потребує уваги) */
-    .status-select[data-status="draft"]      { background:#fef3c7; color:#92400e; }
+      /* Draft — amber/yellow (неопубліковано, потребує уваги) */
+      .status-select[data-status='draft'] {
+        background: #fef3c7;
+        color: #92400e;
+      }
 
-    /* Published — green (активний тендер) */
-    .status-select[data-status="published"]  { background:#d1fae5; color:#065f46; }
+      /* Published — green (активний тендер) */
+      .status-select[data-status='published'] {
+        background: #d1fae5;
+        color: #065f46;
+      }
 
-    /* Extended — lime (подовжений, відрізняється від published) */
-    .status-select[data-status="extended"]   { background:#ecfccb; color:#3f6212; }
+      /* Extended — lime (подовжений, відрізняється від published) */
+      .status-select[data-status='extended'] {
+        background: #ecfccb;
+        color: #3f6212;
+      }
 
-    /* Evaluation — blue (на розгляді) */
-    .status-select[data-status="evaluation"] { background:#dbeafe; color:#1e40af; }
+      /* Evaluation — blue (на розгляді) */
+      .status-select[data-status='evaluation'] {
+        background: #dbeafe;
+        color: #1e40af;
+      }
 
-    /* Awarded — purple (обрано переможця) */
-    .status-select[data-status="awarded"]    { background:#e9d5ff; color:#6b21a8; }
+      /* Awarded — purple (обрано переможця) */
+      .status-select[data-status='awarded'] {
+        background: #e9d5ff;
+        color: #6b21a8;
+      }
 
-    /* Suspended — slate gray (призупинено) */
-    .status-select[data-status="suspended"]  { background:#e2e8f0; color:#475569; }
+      /* Suspended — slate gray (призупинено) */
+      .status-select[data-status='suspended'] {
+        background: #e2e8f0;
+        color: #475569;
+      }
 
-    /* Cancelled — red (скасовано) */
-    .status-select[data-status="cancelled"]  { background:#fee2e2; color:#991b1b; }
+      /* Cancelled — red (скасовано) */
+      .status-select[data-status='cancelled'] {
+        background: #fee2e2;
+        color: #991b1b;
+      }
 
-    /* Completed — teal (успішно завершено, відрізняється від published green) */
-    .status-select[data-status="completed"]  { background:#628141; color:#ffffff; }
+      /* Completed — teal (успішно завершено, відрізняється від published green) */
+      .status-select[data-status='completed'] {
+        background: #628141;
+        color: #ffffff;
+      }
 
-    /* Closed — neutral (legacy, hidden from dropdown but may render on old rows) */
-    .status-select[data-status="closed"]     { background:#f1f5f9; color:#64748b; }
+      /* Closed — neutral (legacy, hidden from dropdown but may render on old rows) */
+      .status-select[data-status='closed'] {
+        background: #f1f5f9;
+        color: #64748b;
+      }
 
-    .td-actions { text-align:center; white-space:nowrap; }
-    .action-btn {
-      display:inline-flex; align-items:center; justify-content:center;
-      width:28px; height:28px; margin:0 2px; padding:0;
-      border-radius:4px; font-size:.85rem; cursor:pointer; text-decoration:none;
-      border:1px solid transparent; background:transparent; transition:all .15s;
-    }
-    .action-edit { color:#2b6cb0; }
-    .action-edit:hover { background:#ebf8ff; border-color:#bee3f8; }
-    .action-delete { color:#c53030; }
-    .action-delete:hover { background:#fff5f5; border-color:#fed7d7; }
-    .action-delete:disabled { opacity:.4; cursor:not-allowed; }
+      .td-actions {
+        text-align: center;
+        white-space: nowrap;
+      }
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        margin: 0 2px;
+        padding: 0;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-decoration: none;
+        border: 1px solid transparent;
+        background: transparent;
+        transition: all 0.15s;
+      }
+      .action-edit {
+        color: #2b6cb0;
+      }
+      .action-edit:hover {
+        background: #ebf8ff;
+        border-color: #bee3f8;
+      }
+      .action-delete {
+        color: #c53030;
+      }
+      .action-delete:hover {
+        background: #fff5f5;
+        border-color: #fed7d7;
+      }
+      .action-delete:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
 
-    .pagination { display:flex; justify-content:center; align-items:center; gap:1rem; margin-top:1.25rem; }
-    .page-info { font-size:.85rem; color:#64748b; }
-    .btn-sm { padding:.4rem 1rem; border:1px solid #cbd5e0; background:#fff; border-radius:6px; font-size:.8rem; cursor:pointer; }
-    .btn-sm:disabled { opacity:.4; cursor:not-allowed; }
-    .btn-sm:not(:disabled):hover { background:#f8fafc; }
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.25rem;
+      }
+      .page-info {
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+      .btn-sm {
+        padding: 0.4rem 1rem;
+        border: 1px solid #cbd5e0;
+        background: #fff;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+      }
+      .btn-sm:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-sm:not(:disabled):hover {
+        background: #f8fafc;
+      }
 
-    .loading,.empty { text-align:center; padding:3rem; color:#64748b; font-size:.95rem; }
+      .loading,
+      .empty {
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
+        font-size: 0.95rem;
+      }
 
-    @media (max-width:768px) {
-      .filters { flex-direction:column; }
-      .filter-search { min-width:auto; }
-    }
-  `],
+      @media (max-width: 768px) {
+        .filters {
+          flex-direction: column;
+        }
+        .filter-search {
+          min-width: auto;
+        }
+      }
+    `,
+  ],
 })
 export class AdminProcurementsListComponent implements OnInit {
   private readonly api = inject(ApiService);

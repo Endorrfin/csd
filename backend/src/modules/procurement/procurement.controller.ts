@@ -31,7 +31,7 @@ export class ProcurementController {
   // Public: published procurements only
   @Get()
   findAll() {
-    return this.service.findAllPublished();
+    return this.service.findAllPublic();
   }
 
   // CHANGED: paginated + filtered admin endpoint (replaces /admin/all)
