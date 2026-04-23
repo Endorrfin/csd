@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
+import { UpdateComplaintStatusDto } from './dto/update-status.dto';
 
 @Controller('complaints')
 export class ComplaintController {
@@ -52,6 +53,17 @@ export class ComplaintController {
     @Body() dto: UpdateComplaintDto,
   ) {
     return this.service.update(id, dto);
+  }
+
+  // ── dedicated status update endpoint ──
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateComplaintStatusDto,
+  ) {
+    return this.service.updateStatus(id, dto.status, dto.managerNotes);
   }
 
   @Delete(':id')

@@ -17,6 +17,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { TestimonialStatus } from './entities/testimonial.entity';
+import { UpdateTestimonialStatusDto } from './dto/update-status.dto';
 
 @Controller('testimonials')
 export class TestimonialController {
@@ -83,6 +84,17 @@ export class TestimonialController {
       ...dto,
       status: TestimonialStatus.REJECTED,
     });
+  }
+
+  // ── universal status update with optional managerNotes ──
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateTestimonialStatusDto,
+  ) {
+    return this.service.updateStatus(id, dto.status, dto.managerNotes);
   }
 
   @Delete(':id')

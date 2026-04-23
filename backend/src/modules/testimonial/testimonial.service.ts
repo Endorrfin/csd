@@ -60,6 +60,33 @@ export class TestimonialService {
     return this.findById(id);
   }
 
+  // ── dedicated status transition with side effects ──
+  async updateStatus(
+    id: string,
+    status: TestimonialStatus,
+    managerNotes?: string,
+  ): Promise<Testimonial> {
+    const existing = await this.findById(id);
+
+    const updates: Partial<Testimonial> = { status };
+
+    // Set publishedAt only when transitioning into APPROVED for the first time
+    if (
+      status === TestimonialStatus.APPROVED &&
+      existing.status !== TestimonialStatus.APPROVED &&
+      !existing.publishedAt
+    ) {
+      updates.publishedAt = new Date();
+    }
+
+    if (managerNotes !== undefined) {
+      updates.managerNotes = managerNotes;
+    }
+
+    await this.repo.update(id, updates);
+    return this.findById(id);
+  }
+
   async remove(id: string): Promise<void> {
     await this.findById(id);
     await this.repo.delete(id);

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Complaint } from './entities/complaint.entity';
+import { Complaint, ComplaintStatus } from './entities/complaint.entity';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { UpdateComplaintDto } from './dto/update-complaint.dto';
 
@@ -35,6 +35,23 @@ export class ComplaintService {
   async update(id: string, dto: UpdateComplaintDto): Promise<Complaint> {
     await this.findById(id);
     await this.repo.update(id, dto);
+    return this.findById(id);
+  }
+
+  // ── dedicated status transition with optional manager notes ──
+  async updateStatus(
+    id: string,
+    status: ComplaintStatus,
+    managerNotes?: string,
+  ): Promise<Complaint> {
+    await this.findById(id);
+
+    const updates: Partial<Complaint> = { status };
+    if (managerNotes !== undefined) {
+      updates.managerNotes = managerNotes;
+    }
+
+    await this.repo.update(id, updates);
     return this.findById(id);
   }
 

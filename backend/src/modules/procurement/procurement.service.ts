@@ -91,6 +91,24 @@ export class ProcurementService {
     return this.repo.save(item);
   }
 
+  // ── dedicated status transition with side effects ──
+  async updateStatus(id: string, status: ProcurementStatus): Promise<Procurement> {
+    const item = await this.findById(id);
+
+    // Auto-set publicationDate on first transition out of DRAFT
+    const isFirstPublication =
+      item.status === ProcurementStatus.DRAFT &&
+      status !== ProcurementStatus.DRAFT &&
+      !item.publicationDate;
+
+    item.status = status;
+    if (isFirstPublication) {
+      item.publicationDate = new Date();
+    }
+
+    return this.repo.save(item);
+  }
+
   async remove(id: string): Promise<void> {
     const item = await this.findById(id);
     await this.repo.remove(item);

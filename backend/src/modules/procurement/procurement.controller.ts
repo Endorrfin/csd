@@ -19,6 +19,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { UsePipes } from '@nestjs/common';
 import { SanitizeHtmlPipe } from '../../common/pipes/sanitize-html.pipe';
+import { UpdateProcurementStatusDto } from './dto/update-status.dto';
 
 @Controller('procurement')
 export class ProcurementController {
@@ -60,6 +61,17 @@ export class ProcurementController {
     @Body() dto: UpdateProcurementDto,
   ) {
     return this.service.update(id, dto);
+  }
+
+  // ── dedicated status update endpoint ──
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateProcurementStatusDto,
+  ) {
+    return this.service.updateStatus(id, dto.status);
   }
 
   // Dedicated publish endpoint — sets status to PUBLISHED
