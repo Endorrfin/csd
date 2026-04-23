@@ -72,6 +72,26 @@ export class VacancyService {
     return this.findById(id);
   }
 
+  // ── dedicated status transition with side effects ──
+  async updateStatus(id: string, status: VacancyStatus): Promise<Vacancy> {
+    const existing = await this.findById(id);
+
+    const updates: Partial<Vacancy> = { status };
+
+    // Auto-set publishedAt on first transition out of DRAFT
+    const isFirstPublication =
+      existing.status === VacancyStatus.DRAFT &&
+      status !== VacancyStatus.DRAFT &&
+      !existing.publishedAt;
+
+    if (isFirstPublication) {
+      updates.publishedAt = new Date();
+    }
+
+    await this.repo.update(id, updates);
+    return this.findById(id);
+  }
+
   async remove(id: string): Promise<void> {
     await this.findById(id);
     await this.repo.delete(id);

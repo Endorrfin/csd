@@ -20,6 +20,7 @@ import { UserRole } from '../users/entities/user.entity';
 import { VacancyStatus } from './entities/vacancy.entity';
 import { UsePipes } from '@nestjs/common';
 import { SanitizeHtmlPipe } from '../../common/pipes/sanitize-html.pipe';
+import { UpdateVacancyStatusDto } from './dto/update-status.dto';
 
 @Controller('vacancies')
 export class VacancyController {
@@ -76,6 +77,17 @@ export class VacancyController {
       ...dto,
       status: VacancyStatus.PUBLISHED,
     });
+  }
+
+// ── dedicated status update endpoint, supersedes /publish ──
+  @Patch(':id/status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  updateStatus(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateVacancyStatusDto,
+  ) {
+    return this.service.updateStatus(id, dto.status);
   }
 
   @Delete(':id')
