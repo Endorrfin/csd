@@ -26,6 +26,7 @@
     "@ngx-translate/core": "^17.0.0",
     "@ngx-translate/http-loader": "^17.0.0",
     "express": "^5.1.0",
+    "lucide-angular": "^1.0.0",
     "ngx-quill": "^30.0.1",
     "ngx-translate": "^0.0.1-security",
     "quill": "^2.0.3",

@@ -1,13 +1,17 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { FormStatus } from '../entities/wash-form.entity';
 
-/** Used by manager/admin to update status and notes */
+/**
+ * Manager/Admin — quick update of status and manager notes.
+ * Used by inline status change in admin list; for full edits see
+ * UpdateWashFormFullDto.
+ */
 export class UpdateWashFormDto {
-  @IsEnum(FormStatus)
   @IsOptional()
+  @IsEnum(FormStatus)
   status?: FormStatus;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   managerNotes?: string;
 }

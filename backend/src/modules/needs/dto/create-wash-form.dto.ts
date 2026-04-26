@@ -1,142 +1,41 @@
 import { Type } from 'class-transformer';
 import {
-  IsString,
+  IsArray,
   IsEmail,
   IsInt,
   IsOptional,
-  IsArray,
-  IsUUID,
-  IsNumber,
-  IsBoolean,
-  IsIn,
+  IsString,
+  Matches,
   Min,
-  Max,
   MinLength,
   ValidateNested,
-  ArrayMinSize,
 } from 'class-validator';
+import { CreateBoreholeDto } from './wash-form-borehole.dto';
+import { CreateTowerDto } from './wash-form-tower.dto';
+import { CreatePurificationDto } from './wash-form-purification.dto';
+import { CreatePumpDto } from './wash-form-pump.dto';
+import { CreateWashFormItemDto } from './wash-form-item.dto';
 
-export class CreateWashFormItemDto {
-  @IsUUID()
-  equipmentItemId: string;
-
-  @IsNumber()
-  @Min(0.01)
-  quantity: number;
-
-  @IsString()
-  @IsOptional()
-  notes?: string;
-}
-
-// ── WASH Activities DTOs ──
-
-export class BoreholeDrillingDto {
-  @IsIn(['new_drilling', 'repair_cleaning', 'new_near_existing'])
-  workType: 'new_drilling' | 'repair_cleaning' | 'new_near_existing';
-
-  @IsBoolean()
-  @IsOptional()
-  hasAquiferInfo?: boolean;
-
-  @IsNumber()
-  @IsOptional()
-  @Min(1)
-  @Max(280)
-  existingDepth?: number;
-
-  @IsNumber()
-  @IsOptional()
-  @Min(1)
-  @Max(30)
-  existingDebit?: number;
-
-  @IsBoolean()
-  @IsOptional()
-  hasDesignInfo?: boolean;
-
-  @IsBoolean()
-  @IsOptional()
-  hasPassport?: boolean;
-
-  @IsString()
-  @IsOptional()
-  oldLocation?: string;
-
-  @IsNumber()
-  @Min(1)
-  @Max(50)
-  expectedFlowRate: number;
-
-  @IsString()
-  @IsOptional()
-  notes?: string;
-}
-
-export class WaterTowerDto {
-  @IsIn(['vbr_15', 'vbr_25', 'vbr_50', 'vbr_over_50'])
-  towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
-
-  @IsIn(['8', '10', '12', '15', '18', '20', '25', 'over_25'])
-  towerHeight: '8' | '10' | '12' | '15' | '18' | '20' | '25' | 'over_25';
-
-  @IsNumber()
-  @IsOptional()
-  @Min(26)
-  customHeight?: number;
-
-  @IsBoolean()
-  hasFoundation: boolean;
-
-  @IsBoolean()
-  isFoundationSuitable: boolean;
-
-  @IsBoolean()
-  needsFoundationReconstruction: boolean;
-
-  @IsBoolean()
-  canSelfReconstruct: boolean;
-
-  @IsBoolean()
-  canProvideCrane: boolean;
-
-  @IsString()
-  @IsOptional()
-  notes?: string;
-}
-
-export class PurificationSystemDto {
-  @IsBoolean()
-  hasRoom: boolean;
-
-  @IsBoolean()
-  hasTemperatureControl: boolean;
-
-  @IsBoolean()
-  hasWaterInletDrainage: boolean;
-
-  @IsBoolean()
-  hasPowerSupply: boolean;
-
-  @IsBoolean()
-  canMaintainSystem: boolean;
-
-  @IsBoolean()
-  willingToProvideWater: boolean;
-
-  @IsString()
-  @IsOptional()
-  notes?: string;
-}
-
+/**
+ * Payload for public WASH needs submission.
+ *
+ * CHANGED in Task 2:
+ *  - Single jsonb sections replaced by arrays: boreholes[], towers[],
+ *    purifications[], pumps[].
+ *  - headPhone now enforced as +380XXXXXXXXX (matches complaint form).
+ *  - Validation ranges aligned with business rules.
+ *
+ * Note: this DTO does NOT enforce "at least one section filled".
+ * That check lives in the service (Task 3) because it depends on the
+ * presence of items[] too, which is handled separately.
+ */
 export class CreateWashFormDto {
-  // ── Загальна інформація ──
+  // ── Location ──
 
   @IsString()
   @MinLength(2)
   region: string;
 
-  // ── LOCATION FIELDS ──
   @IsString()
   regionEn: string;
 
@@ -167,6 +66,8 @@ export class CreateWashFormDto {
   @IsString()
   settlementCode?: string;
 
+  // ── Organization & contact ──
+
   @IsString()
   @MinLength(2)
   organizationName: string;
@@ -175,14 +76,18 @@ export class CreateWashFormDto {
   @MinLength(2)
   headName: string;
 
+  /** CHANGED: strict +380XXXXXXXXX, aligned with complaint form. */
   @IsString()
-  @MinLength(6)
+  @Matches(/^\+380\d{9}$/, {
+    message: 'headPhone must be in format +380XXXXXXXXX',
+  })
   headPhone: string;
 
   @IsEmail()
   email: string;
 
-  // ── Інформація про об'єкт ──
+  // ── Object info ──
+
   @IsString()
   @MinLength(2)
   objectName: string;
@@ -191,36 +96,43 @@ export class CreateWashFormDto {
   @Min(1)
   dependentPopulation: number;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   socialFacilities?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   installationDeadline?: string;
 
   @IsString()
   @MinLength(10)
   replacementReason: string;
 
-  // ── WASH Activities (опціональні) ──
+  // ── WASH activities (all arrays are optional; service enforces "≥1 section") ──
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => BoreholeDrillingDto)
-  boreholeDrilling?: BoreholeDrillingDto;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateBoreholeDto)
+  boreholes?: CreateBoreholeDto[];
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => WaterTowerDto)
-  waterTower?: WaterTowerDto;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateTowerDto)
+  towers?: CreateTowerDto[];
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => PurificationSystemDto)
-  purificationSystem?: PurificationSystemDto;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePurificationDto)
+  purifications?: CreatePurificationDto[];
 
-  // ── Позиції заявки (опціонально) ──
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePumpDto)
+  pumps?: CreatePumpDto[];
 
   @IsOptional()
   @IsArray()
