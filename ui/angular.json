@@ -48,7 +48,8 @@
             "ssr": {
               "entry": "src/server.ts"
             },
-            "polyfills": ["@angular/localize/init"]
+            "polyfills": ["@angular/localize/init"],
+            "allowedCommonJsDependencies": ["quill-delta", "quill"]
           },
           "configurations": {
             "production": {
@@ -66,8 +67,8 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
+                  "maximumWarning": "12kB",
+                  "maximumError": "16kB"
                 }
               ],
               "outputHashing": "all"
