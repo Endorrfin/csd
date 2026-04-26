@@ -245,5 +245,8 @@
       "resolved": "Resolved",
       "closed": "Closed"
     }
-  }
+  },
+  "wash_form_pumps_title": "Pumps",
+  "wash_form_pumps_hint": "Specify pump needs — submersible, surface, drainage or other.",
+  "wash_form_pumps_coming_soon": "This step will be activated in the next update."
 }

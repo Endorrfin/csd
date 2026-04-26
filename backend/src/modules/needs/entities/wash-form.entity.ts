@@ -7,6 +7,12 @@ import {
   OneToMany,
 } from 'typeorm';
 import { WashFormItem } from './wash-form-item.entity';
+// CHANGED: new child-entity imports.
+import { WashFormBorehole } from './wash-form-borehole.entity';
+import { WashFormTower } from './wash-form-tower.entity';
+import { WashFormPurification } from './wash-form-purification.entity';
+import { WashFormPump } from './wash-form-pump.entity';
+import { WashFormAuditLog } from './wash-form-audit-log.entity';
 
 export enum FormStatus {
   NEW = 'new',
@@ -22,13 +28,11 @@ export class WashForm {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  // ── Загальна інформація (з Excel-анкети) ──
+  // ── Location (single settlement per form) ──
 
-  /** Область */
   @Column()
   region: string;
 
-  // ── LOCATION FIELDS ──
   @Column({ default: '' })
   regionEn: string;
 
@@ -56,87 +60,63 @@ export class WashForm {
   @Column({ nullable: true })
   settlementCode: string;
 
-  /** Назва організації (громада, водоканал, медичний заклад, школа тощо) */
+  // ── Organization & contact ──
+
   @Column()
   organizationName: string;
 
-  /** ПІБ керівника */
   @Column()
   headName: string;
 
-  /** Телефон керівника */
+  /** Phone in format +380XXXXXXXXX (enforced by DTO regex in Task 2). */
   @Column()
   headPhone: string;
 
-  /** Email для зв'язку (обов'язковий) */
   @Column()
   email: string;
 
-  // ── Інформація про об'єкт ──
+  // ── Object info ──
 
-  /** Назва об'єкту (або вулиці з уточненням: вода, каналізація, КНС, ВНС тощо) */
   @Column()
   objectName: string;
 
-  /** Кількість людей, які залежать від об'єкту */
   @Column({ type: 'int' })
   dependentPopulation: number;
 
-  /** Соціальні установи, залежні від об'єкту (лікарня, школа, садочок тощо) */
   @Column({ type: 'text', nullable: true })
   socialFacilities: string;
 
-  /** Орієнтовний термін монтажу наданих матеріалів */
   @Column({ nullable: true })
   installationDeadline: string;
 
-  /** Короткий опис причин заміни */
   @Column({ type: 'text' })
   replacementReason: string;
 
-  // ── WASH Activities (опціональні, JSONB) ──
+  // ── CHANGED: jsonb fields replaced with OneToMany relations. ──
 
-  /** Розділ III: Буріння свердловин */
-  @Column({ type: 'jsonb', nullable: true })
-  boreholeDrilling: {
-    workType: 'new_drilling' | 'repair_cleaning' | 'new_near_existing';
-    hasAquiferInfo?: boolean;
-    existingDepth?: number;
-    existingDebit?: number;
-    hasDesignInfo?: boolean;
-    hasPassport?: boolean;
-    oldLocation?: string;
-    expectedFlowRate: number;
-    notes?: string;
-  } | null;
+  @OneToMany(() => WashFormBorehole, (b) => b.washForm, {
+    cascade: true,
+    eager: true,
+  })
+  boreholes: WashFormBorehole[];
 
-  /** Розділ IV: Водонапірні башти */
-  @Column({ type: 'jsonb', nullable: true })
-  waterTower: {
-    towerType: 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
-    towerHeight: '8' | '10' | '12' | '15' | '18' | '20' | '25' | 'over_25';
-    customHeight?: number;
-    hasFoundation: boolean;
-    isFoundationSuitable: boolean;
-    needsFoundationReconstruction: boolean;
-    canSelfReconstruct: boolean;
-    canProvideCrane: boolean;
-    notes?: string;
-  } | null;
+  @OneToMany(() => WashFormTower, (t) => t.washForm, {
+    cascade: true,
+    eager: true,
+  })
+  towers: WashFormTower[];
 
-  /** Розділ V: Системи очищення води */
-  @Column({ type: 'jsonb', nullable: true })
-  purificationSystem: {
-    hasRoom: boolean;
-    hasTemperatureControl: boolean;
-    hasWaterInletDrainage: boolean;
-    hasPowerSupply: boolean;
-    canMaintainSystem: boolean;
-    willingToProvideWater: boolean;
-    notes?: string;
-  } | null;
+  @OneToMany(() => WashFormPurification, (p) => p.washForm, {
+    cascade: true,
+    eager: true,
+  })
+  purifications: WashFormPurification[];
 
-  // ── Позиції заявки (обладнання та матеріали) ──
+  @OneToMany(() => WashFormPump, (p) => p.washForm, {
+    cascade: true,
+    eager: true,
+  })
+  pumps: WashFormPump[];
 
   @OneToMany(() => WashFormItem, (item) => item.washForm, {
     cascade: true,
@@ -144,7 +124,14 @@ export class WashForm {
   })
   items: WashFormItem[];
 
-  // ── Службові поля ──
+  /** Audit log — loaded on demand via explicit relations query (not eager). */
+  @OneToMany(() => WashFormAuditLog, (a) => a.washForm, {
+    cascade: false,
+    eager: false,
+  })
+  auditLog: WashFormAuditLog[];
+
+  // ── Service fields ──
 
   @Column({ type: 'enum', enum: FormStatus, default: FormStatus.NEW })
   status: FormStatus;

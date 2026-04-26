@@ -4,6 +4,7 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  Index, // CHANGED: added for washFormId index.
 } from 'typeorm';
 import { WashForm } from './wash-form.entity';
 import { EquipmentItem } from '../../equipment-catalog/entities/equipment-item.entity';
@@ -17,6 +18,7 @@ export class WashFormItem {
   @JoinColumn({ name: 'washFormId' })
   washForm: WashForm;
 
+  @Index() // CHANGED
   @Column()
   washFormId: string;
 
@@ -27,11 +29,14 @@ export class WashFormItem {
   @Column()
   equipmentItemId: string;
 
-  /** Кількість (штуки, метри, кг — залежно від unit обладнання) */
+  /** Quantity in the item's unit (pcs / m / kg). */
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   quantity: number;
 
-  /** Додаткові примітки до позиції */
   @Column({ type: 'text', nullable: true })
   notes: string;
+
+  /** CHANGED: display order within the form. */
+  @Column({ type: 'int', default: 0 })
+  sortOrder: number;
 }

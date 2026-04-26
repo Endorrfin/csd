@@ -39,6 +39,7 @@ import {
     @if (loading()) {
       <div class="loc-loading">{{ isUa ? 'Завантаження...' : 'Loading...' }}</div>
     } @else {
+      
       <div class="loc-grid">
         <!-- Region -->
         <div class="loc-field">
@@ -49,62 +50,70 @@ import {
             }
           </label>
           <select
-            [value]="selectedRegionIdx()"
             (change)="onRegionChange($event)"
             [disabled]="isDisabled"
           >
-            <option value="-1">{{ isUa ? '-- Оберіть область --' : '-- Select region --' }}</option>
+            <option value="-1" [selected]="selectedRegionIdx() === -1">
+              {{ isUa ? '-- Оберіть область --' : '-- Select region --' }}
+            </option>
             @for (r of regions(); track r.ua; let i = $index) {
-              <option [value]="i">{{ isUa ? r.ua : r.en }}</option>
+              <option [value]="i" [selected]="selectedRegionIdx() === i">
+                {{ isUa ? r.ua : r.en }}
+              </option>
             }
           </select>
         </div>
-
+      
         <!-- District -->
         <div class="loc-field">
           <label>{{ isUa ? 'Район' : 'District' }}</label>
           <select
-            [value]="selectedDistrictIdx()"
             (change)="onDistrictChange($event)"
             [disabled]="isDisabled || selectedRegionIdx() < 0"
           >
-            <option value="-1">{{ isUa ? '-- Оберіть район --' : '-- Select district --' }}</option>
+            <option value="-1" [selected]="selectedDistrictIdx() === -1">
+              {{ isUa ? '-- Оберіть район --' : '-- Select district --' }}
+            </option>
             @for (d of districts(); track d.ua; let i = $index) {
-              <option [value]="i">{{ isUa ? d.ua : d.en }}</option>
+              <option [value]="i" [selected]="selectedDistrictIdx() === i">
+                {{ isUa ? d.ua : d.en }}
+              </option>
             }
           </select>
         </div>
-
+      
         <!-- Community -->
         <div class="loc-field">
           <label>{{ isUa ? 'Громада' : 'Community' }}</label>
           <select
-            [value]="selectedCommunityIdx()"
             (change)="onCommunityChange($event)"
             [disabled]="isDisabled || selectedDistrictIdx() < 0"
           >
-            <option value="-1">
+            <option value="-1" [selected]="selectedCommunityIdx() === -1">
               {{ isUa ? '-- Оберіть громаду --' : '-- Select community --' }}
             </option>
             @for (cm of communities(); track cm.c; let i = $index) {
-              <option [value]="i">{{ isUa ? cm.ua : cm.en }}</option>
+              <option [value]="i" [selected]="selectedCommunityIdx() === i">
+                {{ isUa ? cm.ua : cm.en }}
+              </option>
             }
           </select>
         </div>
-
+      
         <!-- Settlement -->
         <div class="loc-field">
           <label>{{ isUa ? 'Населений пункт' : 'Settlement' }}</label>
           <select
-            [value]="selectedSettlementIdx()"
             (change)="onSettlementChange($event)"
             [disabled]="isDisabled || selectedCommunityIdx() < 0"
           >
-            <option value="-1">
+            <option value="-1" [selected]="selectedSettlementIdx() === -1">
               {{ isUa ? '-- Оберіть населений пункт --' : '-- Select settlement --' }}
             </option>
             @for (s of settlements(); track s.c; let i = $index) {
-              <option [value]="i">{{ isUa ? s.ua : s.en }}</option>
+              <option [value]="i" [selected]="selectedSettlementIdx() === i">
+                {{ isUa ? s.ua : s.en }}
+              </option>
             }
           </select>
         </div>
@@ -192,12 +201,17 @@ export class LocationSelectorComponent
   /* ── CVA callbacks ── */
   private onChange: (val: LocationValue | null) => void = () => {};
   private onTouched: () => void = () => {};
+  private pendingValue: LocationValue | null = null;
 
   ngOnInit(): void {
     this.sub = this.locationService.getRegions().subscribe({
       next: (data) => {
         this.regions.set(data);
         this.loading.set(false);
+        if (this.pendingValue) {
+          this.restoreFromValue(this.pendingValue, data);
+          this.pendingValue = null;
+        }
       },
       error: () => this.loading.set(false),
     });
@@ -303,25 +317,19 @@ export class LocationSelectorComponent
 
   writeValue(val: LocationValue | null): void {
     if (!val || !val.regionUa) {
+      this.pendingValue = null;
       this.resetSelections();
       return;
     }
-    // Restore selections from value (after data is loaded)
-    const waitForData = (): void => {
-      const regs = this.regions();
-      if (!regs.length) {
-        // Data not loaded yet — retry once after load
-        const s = this.locationService.getRegions().subscribe((data) => {
-          this.regions.set(data);
-          this.loading.set(false);
-          this.restoreFromValue(val, data);
-          s.unsubscribe();
-        });
-        return;
-      }
+
+    const regs = this.regions();
+    if (regs.length) {
+      // Data already loaded — restore immediately
       this.restoreFromValue(val, regs);
-    };
-    waitForData();
+    } else {
+      // Data not yet loaded — defer; ngOnInit will apply once regions arrive
+      this.pendingValue = val;
+    }
   }
 
   registerOnChange(fn: (val: LocationValue | null) => void): void {
