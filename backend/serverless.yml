@@ -1,6 +1,7 @@
 # backend/serverless.yml
 org: csd2019
 service: csd-api
+useDotenv: true
 
 provider:
   name: aws
