@@ -2,7 +2,6 @@ node_modules/
 dist/
 coverage/
 .env
-.env.production
 .env.prod
 .env.example
 .env.* # keep .env.example committed, ignore actual env files
