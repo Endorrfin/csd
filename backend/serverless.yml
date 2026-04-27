@@ -11,6 +11,7 @@ provider:
   timeout: 29
   apiGateway:
     binaryMediaTypes:
+      - '*/*' # catches all requests regardless of Accept header
       - 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       - 'application/octet-stream'
 
