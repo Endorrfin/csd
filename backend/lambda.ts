@@ -28,7 +28,16 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   await app.init();
-  return serverlessExpress({ app: expressApp });
+  // tell the adapter which response content types to base64-encode
+  return serverlessExpress({
+    app: expressApp,
+    binarySettings: {
+      contentTypes: [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/octet-stream',
+      ],
+    },
+  });
 }
 
 export const handler = async (event: any, context: any, callback: any) => {
