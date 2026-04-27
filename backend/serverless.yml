@@ -9,6 +9,10 @@ provider:
   stage: ${opt:stage, 'dev'}
   memorySize: 512
   timeout: 29
+  apiGateway:
+    binaryMediaTypes:
+      - 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      - 'application/octet-stream'
 
   # IAM permissions for Lambda execution role
   iam:
