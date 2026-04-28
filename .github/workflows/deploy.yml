@@ -52,7 +52,8 @@ jobs:
           set -euo pipefail
           echo "📋 Migration status BEFORE deploy:"
           npm run migration:show 2>&1 | tee /tmp/migrations-before.txt
-          PENDING=$(grep -c '\[ \]' /tmp/migrations-before.txt || echo "0")
+          PENDING=$(grep -c '\[ \]' /tmp/migrations-before.txt 2>/dev/null || true)
+          PENDING="${PENDING:-0}"
           echo "pending=$PENDING" >> "$GITHUB_OUTPUT"
           echo "Pending migrations: $PENDING"
       # =======================================================
