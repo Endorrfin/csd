@@ -4,7 +4,6 @@ coverage/
 .env
 .env.prod
 .env.example
-.env.production
 .env.* # keep .env.example committed, ignore actual env files
 *.env.local
 *.env.test
