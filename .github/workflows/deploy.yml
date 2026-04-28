@@ -10,6 +10,7 @@ on:
   # allow manual trigger using main branch
   workflow_dispatch:
 
+# === prevent overlapping deploys to the same stack ===
 concurrency:
   group: deploy-prod
   cancel-in-progress: false
