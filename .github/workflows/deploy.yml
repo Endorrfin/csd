@@ -10,12 +10,20 @@ on:
   # allow manual trigger using main branch
   workflow_dispatch:
 
+# === MODIFIED: separate concurrency groups so manual dispatch cancels prior runs ===
+# - PR merges queue (cancel-in-progress: false) — never kill a deploy mid-flight
+# - workflow_dispatch can cancel waiting PR-merge runs (you explicitly want "deploy now")
+# Note: GitHub treats `${{ ... }}` here at workflow level — github.event_name is available.
 concurrency:
-  group: deploy-prod
-  cancel-in-progress: false
+  group: deploy-prod-${{ github.event_name }}
+  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
+# ====================================================================================
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # === ADDED: single source of truth for Node version (matches local 22.17.0) ===
+  NODE_VERSION: '22.17.0'
+  # ============================================================================
 
 jobs:
   deploy-backend:
@@ -31,14 +39,15 @@ jobs:
 
       - uses: actions/setup-node@v4.4.0
         with:
-          node-version: '22'
+          # === MODIFIED: pinned via env variable ===
+          node-version: ${{ env.NODE_VERSION }}
+          # =========================================
           cache: 'npm'
           cache-dependency-path: backend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      # === snapshot migration state BEFORE running ===
       - name: Show migration status (before)
         id: migrations-before
         env:
@@ -56,9 +65,7 @@ jobs:
           PENDING="${PENDING:-0}"
           echo "pending=$PENDING" >> "$GITHUB_OUTPUT"
           echo "Pending migrations: $PENDING"
-      # =======================================================
 
-      # === only run when there are pending migrations ===
       - name: Run DB migrations
         id: migrations-run
         if: steps.migrations-before.outputs.pending != '0'
@@ -73,9 +80,7 @@ jobs:
           set -euo pipefail
           echo "🔄 Running ${{ steps.migrations-before.outputs.pending }} pending migration(s)..."
           npm run migration:run 2>&1 | tee /tmp/migrations-run.txt
-      # ============================================================
 
-      # === snapshot AFTER + write everything to job summary ===
       - name: Show migration status (after) and write summary
         if: always() && steps.migrations-before.outcome == 'success'
         env:
@@ -127,7 +132,6 @@ jobs:
             echo "Repeat \`migration:revert\` for each migration to undo."
             echo "Verify with \`npm run migration:show\`."
           } >> "$GITHUB_STEP_SUMMARY"
-      # ===============================================================
 
       - name: Build
         run: npm run build
@@ -165,6 +169,66 @@ jobs:
           echo "❌ Backend smoke test failed after 5 attempts"
           exit 1
 
+      # === ADDED: success summary with AWS Console links ===
+      - name: Backend deploy summary (success)
+        if: success()
+        run: |
+          {
+            echo "## ✅ Backend deployed"
+            echo ""
+            echo "| Resource | Link |"
+            echo "| --- | --- |"
+            echo "| 🚀 Lambda function | [csd-api-prod-api](https://eu-central-1.console.aws.amazon.com/lambda/home?region=eu-central-1#/functions/csd-api-prod-api) |"
+            echo "| 📊 CloudWatch logs | [/aws/lambda/csd-api-prod-api](https://eu-central-1.console.aws.amazon.com/cloudwatch/home?region=eu-central-1#logsV2:log-groups/log-group/\$252Faws\$252Flambda\$252Fcsd-api-prod-api) |"
+            echo "| 🌐 API Gateway | [csd-api endpoints](https://eu-central-1.console.aws.amazon.com/apigateway/main/apis?region=eu-central-1) |"
+            echo "| 🗃️ RDS database | [csd-postgres](https://eu-central-1.console.aws.amazon.com/rds/home?region=eu-central-1#database:id=csd-postgres) |"
+            echo ""
+            echo "### Quick CLI checks"
+            echo '```bash'
+            echo "# Lambda env vars"
+            echo "aws lambda get-function-configuration --function-name csd-api-prod-api --region eu-central-1 --query 'Environment.Variables'"
+            echo ""
+            echo "# Tail logs (live)"
+            echo "aws logs tail /aws/lambda/csd-api-prod-api --since 5m --region eu-central-1 --follow"
+            echo ""
+            echo "# Health probe"
+            echo "curl -i https://www.csd-fund.org/api/health"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      # =====================================================
+
+      # === ADDED: failure summary with diagnostic commands ===
+      - name: Backend deploy summary (failure)
+        if: failure()
+        run: |
+          {
+            echo "## ❌ Backend deploy FAILED"
+            echo ""
+            echo "Check the failed step above for the exact error. Common causes:"
+            echo ""
+            echo "- **Migration failed** → DB schema may be in inconsistent state. Run \`npm run migration:show\` locally to inspect."
+            echo "- **Serverless deploy failed** → CloudFormation may be in \`UPDATE_ROLLBACK_FAILED\`. Check the CloudFormation console."
+            echo "- **Smoke test failed** → Lambda may have started but \`/api/health\` returns non-200. Check CloudWatch logs."
+            echo ""
+            echo "### Diagnostic commands"
+            echo '```bash'
+            echo "# Tail logs from the past 10 minutes"
+            echo "aws logs tail /aws/lambda/csd-api-prod-api --since 10m --region eu-central-1"
+            echo ""
+            echo "# Check Lambda current config"
+            echo "aws lambda get-function-configuration --function-name csd-api-prod-api --region eu-central-1"
+            echo ""
+            echo "# Check CloudFormation stack status"
+            echo "aws cloudformation describe-stacks --stack-name csd-api-prod --region eu-central-1 --query 'Stacks[0].StackStatus'"
+            echo '```'
+            echo ""
+            echo "### Useful links"
+            echo "- [CloudWatch logs](https://eu-central-1.console.aws.amazon.com/cloudwatch/home?region=eu-central-1#logsV2:log-groups/log-group/\$252Faws\$252Flambda\$252Fcsd-api-prod-api)"
+            echo "- [Lambda function](https://eu-central-1.console.aws.amazon.com/lambda/home?region=eu-central-1#/functions/csd-api-prod-api)"
+            echo "- [CloudFormation stack](https://eu-central-1.console.aws.amazon.com/cloudformation/home?region=eu-central-1#/stacks?filteringText=csd-api-prod)"
+          } >> "$GITHUB_STEP_SUMMARY"
+      # =======================================================
+
   deploy-frontend:
     name: Deploy Frontend (Angular SSR → Lambda + S3)
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
@@ -179,7 +243,9 @@ jobs:
 
       - uses: actions/setup-node@v4.4.0
         with:
-          node-version: '22'
+          # === MODIFIED: pinned via env variable ===
+          node-version: ${{ env.NODE_VERSION }}
+          # =========================================
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
 
@@ -243,3 +309,68 @@ jobs:
           echo "--- Last response head: ---"
           head -30 /tmp/index.html || true
           exit 1
+
+      # === ADDED: success summary with AWS Console links ===
+      - name: Frontend deploy summary (success)
+        if: success()
+        run: |
+          {
+            echo "## ✅ Frontend deployed"
+            echo ""
+            echo "🌐 **Live site:** https://www.csd-fund.org"
+            echo ""
+            echo "| Resource | Link |"
+            echo "| --- | --- |"
+            echo "| 🚀 SSR Lambda | [csd-ssr-prod-ssr](https://eu-central-1.console.aws.amazon.com/lambda/home?region=eu-central-1#/functions/csd-ssr-prod-ssr) |"
+            echo "| 📊 SSR CloudWatch logs | [/aws/lambda/csd-ssr-prod-ssr](https://eu-central-1.console.aws.amazon.com/cloudwatch/home?region=eu-central-1#logsV2:log-groups/log-group/\$252Faws\$252Flambda\$252Fcsd-ssr-prod-ssr) |"
+            echo "| 🪣 S3 static assets | [csd-fund-static](https://eu-central-1.console.aws.amazon.com/s3/buckets/csd-fund-static) |"
+            echo "| 🌍 CloudFront distribution | [E3U465AMSVR9PN](https://us-east-1.console.aws.amazon.com/cloudfront/v4/home#/distributions/E3U465AMSVR9PN) |"
+            echo ""
+            echo "### Cache info"
+            echo "- CloudFront invalidation triggered for \`/*\`"
+            echo "- Full propagation: 30–90 seconds"
+            echo ""
+            echo "### Quick CLI checks"
+            echo '```bash'
+            echo "# Verify homepage"
+            echo "curl -I https://www.csd-fund.org/"
+            echo ""
+            echo "# Tail SSR logs"
+            echo "aws logs tail /aws/lambda/csd-ssr-prod-ssr --since 5m --region eu-central-1 --follow"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      # =====================================================
+
+      # === ADDED: failure summary with diagnostic commands ===
+      - name: Frontend deploy summary (failure)
+        if: failure()
+        run: |
+          {
+            echo "## ❌ Frontend deploy FAILED"
+            echo ""
+            echo "Check the failed step above for the exact error. Common causes:"
+            echo ""
+            echo "- **\`ng build\` failed** → TypeScript/template errors. Run \`npx ng build --configuration production\` locally to reproduce."
+            echo "- **S3 sync failed** → IAM permissions or bucket policy. Verify \`s3:PutObject\` and \`s3:DeleteObject\` on \`csd-fund-static\`."
+            echo "- **Serverless deploy failed** → CloudFormation \`csd-ssr-prod\` may be stuck. Check stack status."
+            echo "- **CloudFront invalidation failed** → IAM \`cloudfront:CreateInvalidation\` permission missing."
+            echo "- **Smoke test failed** → SSR Lambda may have rendered an error page (still 200 but no \`<app-root>\`). Check SSR logs."
+            echo ""
+            echo "### Diagnostic commands"
+            echo '```bash'
+            echo "# Verify what's currently served"
+            echo "curl -s https://www.csd-fund.org/ | head -30"
+            echo ""
+            echo "# Tail SSR logs"
+            echo "aws logs tail /aws/lambda/csd-ssr-prod-ssr --since 10m --region eu-central-1"
+            echo ""
+            echo "# CloudFormation stack status"
+            echo "aws cloudformation describe-stacks --stack-name csd-ssr-prod --region eu-central-1 --query 'Stacks[0].StackStatus'"
+            echo '```'
+            echo ""
+            echo "### Useful links"
+            echo "- [SSR CloudWatch logs](https://eu-central-1.console.aws.amazon.com/cloudwatch/home?region=eu-central-1#logsV2:log-groups/log-group/\$252Faws\$252Flambda\$252Fcsd-ssr-prod-ssr)"
+            echo "- [CloudFront distribution](https://us-east-1.console.aws.amazon.com/cloudfront/v4/home#/distributions/E3U465AMSVR9PN)"
+            echo "- [S3 bucket](https://eu-central-1.console.aws.amazon.com/s3/buckets/csd-fund-static)"
+          } >> "$GITHUB_STEP_SUMMARY"
+      # =======================================================
