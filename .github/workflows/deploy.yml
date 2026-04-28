@@ -10,7 +10,6 @@ on:
   # allow manual trigger using main branch
   workflow_dispatch:
 
-# === prevent overlapping deploys to the same stack ===
 concurrency:
   group: deploy-prod
   cancel-in-progress: false
@@ -39,8 +38,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run DB migrations
-        # run migrations before build on every deploy
+      # === snapshot migration state BEFORE running ===
+      - name: Show migration status (before)
+        id: migrations-before
         env:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_PORT: ${{ secrets.DB_PORT }}
@@ -48,7 +48,116 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           DB_NAME: ${{ secrets.DB_NAME }}
           NODE_ENV: production
-        run: npm run migration:run
+        run: |
+          set -euo pipefail
+          echo "📋 Migration status BEFORE deploy:"
+          npm run migration:show 2>&1 | tee /tmp/migrations-before.txt
+          PENDING=$(grep -c '\[ \]' /tmp/migrations-before.txt || echo "0")
+          echo "pending=$PENDING" >> "$GITHUB_OUTPUT"
+          echo "Pending migrations: $PENDING"
+      # =======================================================
+
+      # === scan migrations for dangerous SQL patterns ===
+      # Non-blocking — surfaces warnings in job summary, doesn't fail the deploy
+      - name: Scan migrations for destructive operations
+        id: dangerous-check
+        run: |
+          set -euo pipefail
+          DANGEROUS=$(grep -rEn 'DROP TABLE|DROP COLUMN|ALTER COLUMN.*NOT NULL|TRUNCATE' \
+            src/database/migrations/ 2>/dev/null || echo "")
+          if [ -n "$DANGEROUS" ]; then
+            echo "⚠️  Destructive operations found in migrations:"
+            echo "$DANGEROUS"
+            {
+              echo "found=true"
+              echo "details<<DANGEROUS_EOF"
+              echo "$DANGEROUS"
+              echo "DANGEROUS_EOF"
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo "✅ No obvious destructive operations detected"
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+      # =========================================================
+
+      # === only run when there are pending migrations ===
+      - name: Run DB migrations
+        id: migrations-run
+        if: steps.migrations-before.outputs.pending != '0'
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          NODE_ENV: production
+        run: |
+          set -euo pipefail
+          echo "🔄 Running ${{ steps.migrations-before.outputs.pending }} pending migration(s)..."
+          npm run migration:run 2>&1 | tee /tmp/migrations-run.txt
+      # ============================================================
+
+      # === snapshot AFTER + write everything to job summary ===
+      - name: Show migration status (after) and write summary
+        if: always() && steps.migrations-before.outcome == 'success'
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          NODE_ENV: production
+        run: |
+          set -euo pipefail
+          if [ "${{ steps.migrations-run.outcome }}" = "skipped" ]; then
+            echo "ℹ️  Migration step was skipped (no pending migrations)" \
+              | tee /tmp/migrations-after.txt
+          else
+            echo "📋 Migration status AFTER deploy:"
+            npm run migration:show 2>&1 | tee /tmp/migrations-after.txt
+          fi
+
+          {
+            echo "## 🗄️ Database Migrations"
+            echo ""
+            echo "**Pending before deploy:** ${{ steps.migrations-before.outputs.pending }}"
+            echo ""
+            if [ "${{ steps.dangerous-check.outputs.found }}" = "true" ]; then
+              echo "### ⚠️ Destructive Operations Detected"
+              echo ""
+              echo '```'
+              echo "${{ steps.dangerous-check.outputs.details }}"
+              echo '```'
+              echo ""
+            fi
+            echo "<details><summary>Migration status (before)</summary>"
+            echo ""
+            echo '```'
+            cat /tmp/migrations-before.txt
+            echo '```'
+            echo ""
+            echo "</details>"
+            echo ""
+            echo "<details><summary>Migration status (after)</summary>"
+            echo ""
+            echo '```'
+            cat /tmp/migrations-after.txt
+            echo '```'
+            echo ""
+            echo "</details>"
+            echo ""
+            echo "### 🔙 Rollback (if needed)"
+            echo ""
+            echo "Run locally with prod credentials:"
+            echo '```bash'
+            echo "cd backend"
+            echo "npm run migration:revert  # reverts the LAST migration only"
+            echo '```'
+            echo ""
+            echo "Repeat \`migration:revert\` for each migration to undo."
+            echo "Verify with \`npm run migration:show\`."
+          } >> "$GITHUB_STEP_SUMMARY"
+      # ===============================================================
 
       - name: Build
         run: npm run build
