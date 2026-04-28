@@ -58,29 +58,6 @@ jobs:
           echo "Pending migrations: $PENDING"
       # =======================================================
 
-      # === scan migrations for dangerous SQL patterns ===
-      # Non-blocking — surfaces warnings in job summary, doesn't fail the deploy
-      - name: Scan migrations for destructive operations
-        id: dangerous-check
-        run: |
-          set -euo pipefail
-          DANGEROUS=$(grep -rEn 'DROP TABLE|DROP COLUMN|ALTER COLUMN.*NOT NULL|TRUNCATE' \
-            src/database/migrations/ 2>/dev/null || echo "")
-          if [ -n "$DANGEROUS" ]; then
-            echo "⚠️  Destructive operations found in migrations:"
-            echo "$DANGEROUS"
-            {
-              echo "found=true"
-              echo "details<<DANGEROUS_EOF"
-              echo "$DANGEROUS"
-              echo "DANGEROUS_EOF"
-            } >> "$GITHUB_OUTPUT"
-          else
-            echo "✅ No obvious destructive operations detected"
-            echo "found=false" >> "$GITHUB_OUTPUT"
-          fi
-      # =========================================================
-
       # === only run when there are pending migrations ===
       - name: Run DB migrations
         id: migrations-run
@@ -123,14 +100,6 @@ jobs:
             echo ""
             echo "**Pending before deploy:** ${{ steps.migrations-before.outputs.pending }}"
             echo ""
-            if [ "${{ steps.dangerous-check.outputs.found }}" = "true" ]; then
-              echo "### ⚠️ Destructive Operations Detected"
-              echo ""
-              echo '```'
-              echo "${{ steps.dangerous-check.outputs.details }}"
-              echo '```'
-              echo ""
-            fi
             echo "<details><summary>Migration status (before)</summary>"
             echo ""
             echo '```'
