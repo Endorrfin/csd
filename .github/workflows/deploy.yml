@@ -66,9 +66,29 @@ jobs:
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
         run: npx serverless deploy --stage prod
 
+      - name: Smoke test backend
+        env:
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i: GET ${BACKEND_URL}/api/health"
+            HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" "${BACKEND_URL}/api/health" || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Backend healthy:"
+              cat /tmp/health.json
+              exit 0
+            fi
+            echo "⚠️  Got HTTP $HTTP_CODE, retrying in 10s..."
+            sleep 10
+          done
+          echo "❌ Backend smoke test failed after 5 attempts"
+          exit 1
+
   deploy-frontend:
     name: Deploy Frontend (Angular SSR → Lambda + S3)
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    needs: deploy-backend
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -123,3 +143,23 @@ jobs:
           aws cloudfront create-invalidation \
             --distribution-id E3U465AMSVR9PN \
             --paths "/*"
+
+      - name: Smoke test frontend
+        env:
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5 6; do
+            echo "Attempt $i: GET ${FRONTEND_URL}/"
+            HTTP_CODE=$(curl -s -o /tmp/index.html -w "%{http_code}" "${FRONTEND_URL}/" || echo "000")
+            if [ "$HTTP_CODE" = "200" ] && grep -q "<app-root>" /tmp/index.html; then
+              echo "✅ Frontend healthy: HTTP 200 + <app-root> present"
+              exit 0
+            fi
+            echo "⚠️  HTTP $HTTP_CODE, app-root present: $(grep -c "<app-root>" /tmp/index.html || echo 0). Retrying in 15s..."
+            sleep 15
+          done
+          echo "❌ Frontend smoke test failed after 6 attempts"
+          echo "--- Last response head: ---"
+          head -30 /tmp/index.html || true
+          exit 1
