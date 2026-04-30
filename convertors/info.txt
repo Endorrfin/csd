@@ -1,0 +1,22 @@
+pwd
+/Users/vk/i-data/src/csd/convertors
+(base) ~/i-data/src/csd/convertors git:[feat/activity-map]
+ls
+convert-activities.py   csd_activity_map.csv    info.txt
+(base) ~/i-data/src/csd/convertors git:[feat/activity-map]
+python3 convert-activities.py csd_activity_map.csv ../ui/src/assets/data/activities.json
+
+=== Conversion summary ===
+Total activities: 100
+Rows with warnings: 0
+
+By type:
+  pumps                           41
+  water_tower                     13
+  water_purification              13
+  pipes                           10
+  wash_facility_rehab              9
+  water_tanks                      8
+  windows_doors_replacement        3
+  windows_replacement              2
+  roof_replacement                 1
