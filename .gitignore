@@ -14,6 +14,7 @@ lerna-debug.log*
 
 #privat data, sensetive information
 csd-aws-deployment-guide*
+csd_activity_map.csv
 
 .npm/
 .pnpm-store/

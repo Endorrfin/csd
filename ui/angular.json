@@ -1,3 +1,4 @@
+
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
@@ -49,7 +50,7 @@
               "entry": "src/server.ts"
             },
             "polyfills": ["@angular/localize/init"],
-            "allowedCommonJsDependencies": ["quill-delta", "quill"]
+            "allowedCommonJsDependencies": ["quill-delta", "quill", "leaflet", "leaflet.markercluster"]
           },
           "configurations": {
             "production": {

@@ -3,6 +3,7 @@
     "HOME": "Home",
     "ABOUT": "About",
     "BLOG": "Blog",
+    "ACTIVITY_MAP": "Activity Map",
     "PARTNERS": "Partners",
     "COOPERATION": "Cooperation",
     "NEEDS": "Needs",
@@ -12,6 +13,21 @@
   "HOME": {
     "TITLE": "«Charitable Fund «Centre for Support and Development»»",
     "SUBTITLE": "WASH · Repair & Recovery · Shelters"
+  },
+  "ACTIVITY_MAP": {
+    "TITLE": "Activity Map",
+    "SUBTITLE": "Where, what, and for whom we delivered help",
+    "LOADED": "Loaded {{count}} activities",
+    "VISIBLE": "Showing {{count}} of {{total}} activities",
+    "SELECTED": "Selected",
+    "UPDATED_AT": "Updated",
+    "LOAD_ERROR": "Failed to load activities",
+    "MAP_COMING_SOON": "Map coming in next step",
+    "SIDEBAR": {
+      "TITLE": "Filters",
+      "NO_COORDS": "No coordinates available"
+    },
+    "MAP_LOAD_ERROR": "Failed to load map"
   },
   "FOOTER": {
     "TITLE": "«Charitable Fund «Centre for Support and Development»»",

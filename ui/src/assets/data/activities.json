@@ -1,0 +1,3882 @@
+{
+  "version": "1.0",
+  "updatedAt": "2026-04-30",
+  "categories": [
+    {
+      "id": "wash",
+      "label": {
+        "uk": "WASH",
+        "en": "WASH"
+      }
+    },
+    {
+      "id": "recovery",
+      "label": {
+        "uk": "Відновлення",
+        "en": "Recovery"
+      }
+    }
+  ],
+  "types": {
+    "water_tower": {
+      "categoryId": "wash",
+      "label": {
+        "uk": "Водонапірна башта",
+        "en": "Water tower"
+      },
+      "icon": "water-tower.svg",
+      "unit": "pcs"
+    },
+    "water_purification": {
+      "categoryId": "wash",
+      "label": {
+        "uk": "Системи очищення води",
+        "en": "Water purification"
+      },
+      "icon": "purification-system.svg",
+      "unit": "pcs"
+    },
+    "wash_facility_rehab": {
+      "categoryId": "wash",
+      "label": {
+        "uk": "Реабілітація WASH-приміщень",
+        "en": "WASH facility rehabilitation"
+      },
+      "icon": "wash-facility.svg",
+      "unit": "facilities"
+    },
+    "pumps": {
+      "categoryId": "wash",
+      "label": {
+        "uk": "Насоси та обладнання",
+        "en": "Pumps & equipment"
+      },
+      "icon": "pumps.svg",
+      "unit": "pcs"
+    },
+    "pipes": {
+      "categoryId": "wash",
+      "label": {
+        "uk": "Труби",
+        "en": "Pipes"
+      },
+      "icon": "pipes.svg",
+      "unit": "m"
+    },
+    "water_tanks": {
+      "categoryId": "wash",
+      "label": {
+        "uk": "Резервуари для води",
+        "en": "Water tanks"
+      },
+      "icon": "water-tank.svg",
+      "unit": "pcs"
+    },
+    "borehole_drilling": {
+      "categoryId": "wash",
+      "label": {
+        "uk": "Буріння свердловин",
+        "en": "Borehole drilling"
+      },
+      "icon": "borehole.svg",
+      "unit": "pcs"
+    },
+    "roof_replacement": {
+      "categoryId": "recovery",
+      "label": {
+        "uk": "Заміна даху",
+        "en": "Roof replacement"
+      },
+      "icon": "roof.svg",
+      "unit": "facilities"
+    },
+    "windows_doors_replacement": {
+      "categoryId": "recovery",
+      "label": {
+        "uk": "Заміна вікон та дверей",
+        "en": "Windows & doors replacement"
+      },
+      "icon": "windows_and_doors.svg",
+      "unit": "facilities"
+    },
+    "windows_replacement": {
+      "categoryId": "recovery",
+      "label": {
+        "uk": "Заміна вікон",
+        "en": "Windows replacement"
+      },
+      "icon": "windows.svg",
+      "unit": "facilities"
+    }
+  },
+  "activities": [
+    {
+      "id": "water_tower-001",
+      "typeId": "water_tower",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Pisochynska",
+          "en": "Pisochynska"
+        },
+        "settlement": {
+          "uk": "Korotych",
+          "en": "Korotych"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.946607,
+          "lng": 36.049286
+        }
+      },
+      "details": {
+        "uk": "Replacement of a water tower with a volume of 25 m³ and a height of 15 m, quantity of 1 unit.",
+        "en": "Replacement of a water tower with a volume of 25 m³ and a height of 15 m, quantity of 1 unit."
+      },
+      "beneficiaries": 580,
+      "residents": 600,
+      "evidenceUrl": "http://surl.li/sgzdt"
+    },
+    {
+      "id": "water_tower-002",
+      "typeId": "water_tower",
+      "donor": "UNICEF",
+      "completedAt": "2024-05",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Kehychivska",
+          "en": "Kehychivska"
+        },
+        "settlement": {
+          "uk": "Oleksandrivske",
+          "en": "Oleksandrivske"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.384068,
+          "lng": 35.899594
+        }
+      },
+      "details": {
+        "uk": "Replacement of the Rozhnovsky tower with a volume of 25 m³ and a height of 18 m.",
+        "en": "Replacement of the Rozhnovsky tower with a volume of 25 m³ and a height of 18 m."
+      },
+      "beneficiaries": 520,
+      "residents": 600,
+      "evidenceUrl": "http://surl.li/sszqw"
+    },
+    {
+      "id": "water_tower-003",
+      "typeId": "water_tower",
+      "donor": "UNICEF",
+      "completedAt": "2024-07",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Kehychivska",
+          "en": "Kehychivska"
+        },
+        "settlement": {
+          "uk": "Kehychivka",
+          "en": "Kehychivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.292075,
+          "lng": 35.783249
+        }
+      },
+      "details": {
+        "uk": "Replacement of the Rozhnovsky tower with a volume of 50 m³ and a height of 25 m.",
+        "en": "Replacement of the Rozhnovsky tower with a volume of 50 m³ and a height of 25 m."
+      },
+      "beneficiaries": 960,
+      "residents": 1200,
+      "evidenceUrl": "http://surl.li/sszqq"
+    },
+    {
+      "id": "water_tower-004",
+      "typeId": "water_tower",
+      "donor": "UNICEF",
+      "completedAt": "2024-05",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Krasnohradska",
+          "en": "Krasnohradska"
+        },
+        "settlement": {
+          "uk": "Zoriane",
+          "en": "Zoriane"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.443,
+          "lng": 35.429694
+        }
+      },
+      "details": {
+        "uk": "Replacement of the Rozhnovsky tower.",
+        "en": "Replacement of the Rozhnovsky tower."
+      },
+      "beneficiaries": 280,
+      "residents": 280,
+      "evidenceUrl": "http://surl.li/sszrz"
+    },
+    {
+      "id": "water_tower-005",
+      "typeId": "water_tower",
+      "donor": "UNICEF",
+      "completedAt": "2024-10",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Chuhuivskyi",
+          "en": "Chuhuivskyi"
+        },
+        "community": {
+          "uk": "Chuhuivska",
+          "en": "Chuhuivska"
+        },
+        "settlement": {
+          "uk": "Zarozhne",
+          "en": "Zarozhne"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.942417,
+          "lng": 36.686931
+        }
+      },
+      "details": {
+        "uk": "Replacement of a 25 m³ water tower with a quantity of 1 unit.",
+        "en": "Replacement of a 25 m³ water tower with a quantity of 1 unit."
+      },
+      "beneficiaries": 490,
+      "residents": 700,
+      "evidenceUrl": "http://surl.li/sszpn"
+    },
+    {
+      "id": "water_tower-006",
+      "typeId": "water_tower",
+      "donor": "UNICEF",
+      "completedAt": "2024-10",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Chuhuivskyi",
+          "en": "Chuhuivskyi"
+        },
+        "community": {
+          "uk": "Chuhuivska",
+          "en": "Chuhuivska"
+        },
+        "settlement": {
+          "uk": "Velyka Babka",
+          "en": "Velyka Babka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.981583,
+          "lng": 36.730361
+        }
+      },
+      "details": {
+        "uk": "Replacement of a 25 m³ water tower, quantity 1 unit.",
+        "en": "Replacement of a 25 m³ water tower, quantity 1 unit."
+      },
+      "beneficiaries": 470,
+      "residents": 700,
+      "evidenceUrl": "http://surl.li/sszqc"
+    },
+    {
+      "id": "water_tower-007",
+      "typeId": "water_tower",
+      "donor": "UNICEF",
+      "completedAt": "2024-09",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Iziumskyi",
+          "en": "Iziumskyi"
+        },
+        "community": {
+          "uk": "Balakliiska",
+          "en": "Balakliiska"
+        },
+        "settlement": {
+          "uk": "Petrivske",
+          "en": "Petrivske"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.113681,
+          "lng": 36.922095
+        }
+      },
+      "details": {
+        "uk": "Installation of a 25 m³ water tower with a height of 15 m, quantity of 1 unit.",
+        "en": "Installation of a 25 m³ water tower with a height of 15 m, quantity of 1 unit."
+      },
+      "beneficiaries": 920,
+      "residents": 1350,
+      "evidenceUrl": "http://surl.li/stbjt"
+    },
+    {
+      "id": "water_tower-008",
+      "typeId": "water_tower",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Oleksandrivka",
+          "en": "Oleksandrivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.011806,
+          "lng": 36.463333
+        }
+      },
+      "details": {
+        "uk": "Replacement of the Rozhnovsky tower. 15 m³",
+        "en": "Replacement of the Rozhnovsky tower. 15 m³"
+      },
+      "beneficiaries": 150,
+      "residents": 150,
+      "evidenceUrl": "http://surl.li/sszrk"
+    },
+    {
+      "id": "water_tower-009",
+      "typeId": "water_tower",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Berestynska",
+          "en": "Berestynska"
+        },
+        "settlement": {
+          "uk": "Pershotravneve",
+          "en": "Pershotravneve"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.703015,
+          "lng": 35.360825
+        }
+      },
+      "details": {
+        "uk": "Replacement of the Rozhnovsky tower with a volume of 15 m³ and a height of 15 m.",
+        "en": "Replacement of the Rozhnovsky tower with a volume of 15 m³ and a height of 15 m."
+      },
+      "beneficiaries": 113,
+      "residents": 113,
+      "evidenceUrl": "http://surl.li/sszte"
+    },
+    {
+      "id": "water_tower-010",
+      "typeId": "water_tower",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Oleksiivska",
+          "en": "Oleksiivska"
+        },
+        "settlement": {
+          "uk": "Oleksiivka",
+          "en": "Oleksiivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.39872,
+          "lng": 36.2785
+        }
+      },
+      "details": {
+        "uk": "Water tower | ≤ v28m³ | ht 19.3m",
+        "en": "Water tower | ≤ v28m³ | ht 19.3m"
+      },
+      "beneficiaries": 700,
+      "residents": 1448,
+      "evidenceUrl": "https://surl.li/hyhvmu"
+    },
+    {
+      "id": "water_tower-011",
+      "typeId": "water_tower",
+      "donor": "LDS",
+      "completedAt": "2025-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Sakhnovshchynska",
+          "en": "Sakhnovshchynska"
+        },
+        "settlement": {
+          "uk": "Suharivske",
+          "en": "Suharivske"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.105444,
+          "lng": 35.880111
+        }
+      },
+      "details": {
+        "uk": "Water tower | ≤ v22m³ | ht 12m",
+        "en": "Water tower | ≤ v22m³ | ht 12m"
+      },
+      "beneficiaries": 400,
+      "residents": 275,
+      "evidenceUrl": "https://surl.li/jdsnhx"
+    },
+    {
+      "id": "water_tower-012",
+      "typeId": "water_tower",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Shchaslyve",
+          "en": "Shchaslyve"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.09185,
+          "lng": 35.78152
+        }
+      },
+      "details": {
+        "uk": "Water tower | ≤ v28m³ | ht 19m",
+        "en": "Water tower | ≤ v28m³ | ht 19m"
+      },
+      "beneficiaries": 900,
+      "residents": 1896,
+      "evidenceUrl": "https://surl.li/azyzrz"
+    },
+    {
+      "id": "water_tower-013",
+      "typeId": "water_tower",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Huty",
+          "en": "Huty"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.09185,
+          "lng": 35.78152
+        }
+      },
+      "details": {
+        "uk": "Water tower | ≤ v28m³ | ht 19m",
+        "en": "Water tower | ≤ v28m³ | ht 19m"
+      },
+      "beneficiaries": 900,
+      "residents": 780,
+      "evidenceUrl": "https://surl.li/mtloyg"
+    },
+    {
+      "id": "water_purification-001",
+      "typeId": "water_purification",
+      "donor": "UNICEF",
+      "completedAt": "2024-05",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Chuhuivskyi",
+          "en": "Chuhuivskyi"
+        },
+        "community": {
+          "uk": "Zmiivska",
+          "en": "Zmiivska"
+        },
+        "settlement": {
+          "uk": "Zmiiv",
+          "en": "Zmiiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Zmiiv Central District Hospital",
+            "en": "Zmiiv Central District Hospital"
+          },
+          "type": "medical"
+        },
+        "coordinates": {
+          "lat": 49.679361,
+          "lng": 36.336389
+        }
+      },
+      "details": {
+        "uk": "Installation of reverse osmosis water purification systems",
+        "en": "Installation of reverse osmosis water purification systems"
+      },
+      "beneficiaries": 6900,
+      "residents": 17000,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1vxk8KepkuEStw9oKWICtkgkGEODImXKu"
+    },
+    {
+      "id": "water_purification-002",
+      "typeId": "water_purification",
+      "donor": "UNICEF",
+      "completedAt": "2024-05",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Iziumskyi",
+          "en": "Iziumskyi"
+        },
+        "community": {
+          "uk": "Balakliiska",
+          "en": "Balakliiska"
+        },
+        "settlement": {
+          "uk": "Borshchivka",
+          "en": "Borshchivka"
+        },
+        "institution": {
+          "name": {
+            "uk": "Borshchiv Starostynsky District",
+            "en": "Borshchiv Starostynsky District"
+          },
+          "type": "community"
+        },
+        "coordinates": {
+          "lat": 49.49983,
+          "lng": 36.9632
+        }
+      },
+      "details": {
+        "uk": "Installation of reverse osmosis water purification systems",
+        "en": "Installation of reverse osmosis water purification systems"
+      },
+      "beneficiaries": 389,
+      "residents": 669,
+      "evidenceUrl": "http://surl.li/stcls"
+    },
+    {
+      "id": "water_purification-003",
+      "typeId": "water_purification",
+      "donor": "UNICEF",
+      "completedAt": "2024-05",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Iziumskyi",
+          "en": "Iziumskyi"
+        },
+        "community": {
+          "uk": "Balakliiska",
+          "en": "Balakliiska"
+        },
+        "settlement": {
+          "uk": "Balakliia",
+          "en": "Balakliia"
+        },
+        "institution": {
+          "name": {
+            "uk": "Cultural Center in Balakliya",
+            "en": "Cultural Center in Balakliya"
+          },
+          "type": "cultural"
+        },
+        "coordinates": {
+          "lat": 49.458659,
+          "lng": 36.859176
+        }
+      },
+      "details": {
+        "uk": "Installation of reverse osmosis water purification systems",
+        "en": "Installation of reverse osmosis water purification systems"
+      },
+      "beneficiaries": 9200,
+      "residents": 26921,
+      "evidenceUrl": "http://surl.li/stclf"
+    },
+    {
+      "id": "water_purification-004",
+      "typeId": "water_purification",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Paniutyne",
+          "en": "Paniutyne"
+        },
+        "institution": {
+          "name": {
+            "uk": "Panyutyn Lyceum",
+            "en": "Panyutyn Lyceum"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 48.940083,
+          "lng": 36.273007
+        }
+      },
+      "details": {
+        "uk": "Installation and arrangement of a water purification system",
+        "en": "Installation and arrangement of a water purification system"
+      },
+      "beneficiaries": 2300,
+      "residents": 6869,
+      "evidenceUrl": "http://surl.li/rduwjj"
+    },
+    {
+      "id": "water_purification-005",
+      "typeId": "water_purification",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Orilka",
+          "en": "Orilka"
+        },
+        "institution": {
+          "name": {
+            "uk": "Orilsky Lyceum",
+            "en": "Orilsky Lyceum"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 48.980665,
+          "lng": 35.99602
+        }
+      },
+      "details": {
+        "uk": "Installation and arrangement of a water purification system",
+        "en": "Installation and arrangement of a water purification system"
+      },
+      "beneficiaries": 1400,
+      "residents": 3909,
+      "evidenceUrl": "http://surl.li/qojisl"
+    },
+    {
+      "id": "water_purification-006",
+      "typeId": "water_purification",
+      "donor": "UNICEF",
+      "completedAt": "2024-08",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Pervomaiska",
+          "en": "Pervomaiska"
+        },
+        "settlement": {
+          "uk": "Pervomaiskyi",
+          "en": "Pervomaiskyi"
+        },
+        "institution": {
+          "name": {
+            "uk": "Pervomaisky Lyceum No. 5",
+            "en": "Pervomaisky Lyceum No. 5"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 49.399389,
+          "lng": 36.218944
+        }
+      },
+      "details": {
+        "uk": "Installation of reverse osmosis water purification systems",
+        "en": "Installation of reverse osmosis water purification systems"
+      },
+      "beneficiaries": 880,
+      "residents": 1600,
+      "evidenceUrl": "http://surl.li/yyyfft"
+    },
+    {
+      "id": "water_purification-007",
+      "typeId": "water_purification",
+      "donor": "UNICEF",
+      "completedAt": "2024-08",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Pervomaiska",
+          "en": "Pervomaiska"
+        },
+        "settlement": {
+          "uk": "Pervomaiskyi",
+          "en": "Pervomaiskyi"
+        },
+        "institution": {
+          "name": {
+            "uk": "Pervomaisky Lyceum No. 7",
+            "en": "Pervomaisky Lyceum No. 7"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 49.401275,
+          "lng": 36.207695
+        }
+      },
+      "details": {
+        "uk": "Installation of reverse osmosis water purification systems",
+        "en": "Installation of reverse osmosis water purification systems"
+      },
+      "beneficiaries": 890,
+      "residents": 1700,
+      "evidenceUrl": "http://surl.li/hvxvgp"
+    },
+    {
+      "id": "water_purification-008",
+      "typeId": "water_purification",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Vysochanska",
+          "en": "Vysochanska"
+        },
+        "settlement": {
+          "uk": "Pokotylivka",
+          "en": "Pokotylivka"
+        },
+        "institution": {
+          "name": {
+            "uk": "General practice clinic of family medicine",
+            "en": "General practice clinic of family medicine"
+          },
+          "type": "medical"
+        },
+        "coordinates": {
+          "lat": 49.911444,
+          "lng": 36.172972
+        }
+      },
+      "details": {
+        "uk": "Water purification system | up to 2-3 m³/day",
+        "en": "Water purification system | up to 2-3 m³/day"
+      },
+      "beneficiaries": 7200,
+      "residents": 24000,
+      "evidenceUrl": "https://surl.li/wzsxjg"
+    },
+    {
+      "id": "water_purification-009",
+      "typeId": "water_purification",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Sakhnovshchynska",
+          "en": "Sakhnovshchynska"
+        },
+        "settlement": {
+          "uk": "Sakhnovshchyna",
+          "en": "Sakhnovshchyna"
+        },
+        "institution": {
+          "name": {
+            "uk": "Sakhnovshchyna Lyceum No. 1",
+            "en": "Sakhnovshchyna Lyceum No. 1"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 49.152139,
+          "lng": 35.8735
+        }
+      },
+      "details": {
+        "uk": "Water purification system | up to 2-3 m³/day",
+        "en": "Water purification system | up to 2-3 m³/day"
+      },
+      "beneficiaries": 550,
+      "residents": 550,
+      "evidenceUrl": "https://surl.li/wpkclt"
+    },
+    {
+      "id": "water_purification-010",
+      "typeId": "water_purification",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Sakhnovshchynska",
+          "en": "Sakhnovshchynska"
+        },
+        "settlement": {
+          "uk": "Sakhnovshchyna",
+          "en": "Sakhnovshchyna"
+        },
+        "institution": {
+          "name": {
+            "uk": "Sakhnovshchyna Lyceum No. 2",
+            "en": "Sakhnovshchyna Lyceum No. 2"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 49.138833,
+          "lng": 35.867889
+        }
+      },
+      "details": {
+        "uk": "Water purification system | up to 2-3 m³/day",
+        "en": "Water purification system | up to 2-3 m³/day"
+      },
+      "beneficiaries": 450,
+      "residents": 450,
+      "evidenceUrl": "https://surl.li/dqmcko"
+    },
+    {
+      "id": "water_purification-011",
+      "typeId": "water_purification",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Merefianska",
+          "en": "Merefianska"
+        },
+        "settlement": {
+          "uk": "Merefa",
+          "en": "Merefa"
+        },
+        "institution": {
+          "name": {
+            "uk": "Merefyansk Gymnasium No. 4",
+            "en": "Merefyansk Gymnasium No. 4"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 49.8235,
+          "lng": 36.036222
+        }
+      },
+      "details": {
+        "uk": "Water purification system | up to 2-3 m³/day",
+        "en": "Water purification system | up to 2-3 m³/day"
+      },
+      "beneficiaries": 2160,
+      "residents": 14850,
+      "evidenceUrl": "https://surl.li/frydql"
+    },
+    {
+      "id": "water_purification-012",
+      "typeId": "water_purification",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Merefianska",
+          "en": "Merefianska"
+        },
+        "settlement": {
+          "uk": "Merefa",
+          "en": "Merefa"
+        },
+        "institution": {
+          "name": {
+            "uk": "Merefyansk Gymnasium No. 3",
+            "en": "Merefyansk Gymnasium No. 3"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 49.775972,
+          "lng": 36.023278
+        }
+      },
+      "details": {
+        "uk": "Water purification system | up to 2-3 m³/day",
+        "en": "Water purification system | up to 2-3 m³/day"
+      },
+      "beneficiaries": 1370,
+      "residents": 3000,
+      "evidenceUrl": "https://surl.lt/phfgsv"
+    },
+    {
+      "id": "water_purification-013",
+      "typeId": "water_purification",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Chuhuivskyi",
+          "en": "Chuhuivskyi"
+        },
+        "community": {
+          "uk": "Zmiivska",
+          "en": "Zmiivska"
+        },
+        "settlement": {
+          "uk": "Chemuzhivka",
+          "en": "Chemuzhivka"
+        },
+        "institution": {
+          "name": {
+            "uk": "Chemuzhiv Lyceum",
+            "en": "Chemuzhiv Lyceum"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 49.707139,
+          "lng": 36.322278
+        }
+      },
+      "details": {
+        "uk": "Water purification system | up to 2-3 m³/day",
+        "en": "Water purification system | up to 2-3 m³/day"
+      },
+      "beneficiaries": 515,
+      "residents": 515,
+      "evidenceUrl": "https://surl.lt/sylwmk"
+    },
+    {
+      "id": "wash_facility_rehab-001",
+      "typeId": "wash_facility_rehab",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Chuhuivskyi",
+          "en": "Chuhuivskyi"
+        },
+        "community": {
+          "uk": "Chuhuivska",
+          "en": "Chuhuivska"
+        },
+        "settlement": {
+          "uk": "Chuhuiv",
+          "en": "Chuhuiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Chuguyiv District Primary Health Care Center",
+            "en": "Chuguyiv District Primary Health Care Center"
+          },
+          "type": "community"
+        },
+        "coordinates": {
+          "lat": 49.830346,
+          "lng": 36.694793
+        }
+      },
+      "details": {
+        "uk": "Repair work of bathrooms. showers. inclusion of the maternity ward. 4000 people every month. 120 people need an inclusive bathroom every month",
+        "en": "Repair work of bathrooms. showers. inclusion of the maternity ward. 4000 people every month. 120 people need an inclusive bathroom every month"
+      },
+      "beneficiaries": 4023,
+      "residents": 4000,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1dXpsHInCyLAvjxBqK0p2EkkXXTnYmq5g"
+    },
+    {
+      "id": "wash_facility_rehab-002",
+      "typeId": "wash_facility_rehab",
+      "donor": "UNICEF",
+      "completedAt": "2024-09",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Lozova",
+          "en": "Lozova"
+        },
+        "institution": {
+          "name": {
+            "uk": "Lozivskyi Lyceum No. 7",
+            "en": "Lozivskyi Lyceum No. 7"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 48.88325,
+          "lng": 36.274833
+        }
+      },
+      "details": {
+        "uk": "Repair of an inclusive bathroom. 8 children need an inclusive bathroom.",
+        "en": "Repair of an inclusive bathroom. 8 children need an inclusive bathroom."
+      },
+      "beneficiaries": 706,
+      "residents": 677,
+      "evidenceUrl": "http://surl.li/sszkv"
+    },
+    {
+      "id": "wash_facility_rehab-003",
+      "typeId": "wash_facility_rehab",
+      "donor": "UNICEF",
+      "completedAt": "2024-11",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Lymanivka",
+          "en": "Lymanivka"
+        },
+        "institution": {
+          "name": {
+            "uk": "Panyutyn Primary Health Care Center (Outpatient Clinic)",
+            "en": "Panyutyn Primary Health Care Center (Outpatient Clinic)"
+          },
+          "type": "medical"
+        },
+        "coordinates": {
+          "lat": 48.854352,
+          "lng": 36.205483
+        }
+      },
+      "details": {
+        "uk": "Repair of an inclusive bathroom. 1760 people every month. 128 people need an inclusive bathroom.",
+        "en": "Repair of an inclusive bathroom. 1760 people every month. 128 people need an inclusive bathroom."
+      },
+      "beneficiaries": 929,
+      "residents": 1760,
+      "evidenceUrl": "http://surl.li/sszll"
+    },
+    {
+      "id": "wash_facility_rehab-004",
+      "typeId": "wash_facility_rehab",
+      "donor": "UNICEF",
+      "completedAt": "2024-09",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Lymanivka",
+          "en": "Lymanivka"
+        },
+        "institution": {
+          "name": {
+            "uk": "Panyutyn Lyceum",
+            "en": "Panyutyn Lyceum"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 48.940083,
+          "lng": 36.273
+        }
+      },
+      "details": {
+        "uk": "Repair of an inclusive bathroom. 22 children need an inclusive bathroom.",
+        "en": "Repair of an inclusive bathroom. 22 children need an inclusive bathroom."
+      },
+      "beneficiaries": 2498,
+      "residents": 868,
+      "evidenceUrl": "http://surl.li/sszmf"
+    },
+    {
+      "id": "wash_facility_rehab-005",
+      "typeId": "wash_facility_rehab",
+      "donor": "UNICEF",
+      "completedAt": "2024-09",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Orilka",
+          "en": "Orilka"
+        },
+        "institution": {
+          "name": {
+            "uk": "Orylkivskyi Lyceum",
+            "en": "Orylkivskyi Lyceum"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 48.982475,
+          "lng": 35.996601
+        }
+      },
+      "details": {
+        "uk": "Repair of an inclusive bathroom. 9 children need an inclusive bathroom.",
+        "en": "Repair of an inclusive bathroom. 9 children need an inclusive bathroom."
+      },
+      "beneficiaries": 240,
+      "residents": 202,
+      "evidenceUrl": "http://surl.li/sszmv"
+    },
+    {
+      "id": "wash_facility_rehab-006",
+      "typeId": "wash_facility_rehab",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Chuhuivskyi",
+          "en": "Chuhuivskyi"
+        },
+        "community": {
+          "uk": "Zmiivska",
+          "en": "Zmiivska"
+        },
+        "settlement": {
+          "uk": "Zmiiv",
+          "en": "Zmiiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Zmiiv Central District Hospital",
+            "en": "Zmiiv Central District Hospital"
+          },
+          "type": "medical"
+        },
+        "coordinates": {
+          "lat": 49.679361,
+          "lng": 36.336389
+        }
+      },
+      "details": {
+        "uk": "Repair of an inclusive bathroom in the palliative care ward. 392 people every month. 35 people need an inclusive bathroom every month",
+        "en": "Repair of an inclusive bathroom in the palliative care ward. 392 people every month. 35 people need an inclusive bathroom every month"
+      },
+      "beneficiaries": 3367,
+      "residents": 392,
+      "evidenceUrl": "http://surl.li/sszng"
+    },
+    {
+      "id": "wash_facility_rehab-007",
+      "typeId": "wash_facility_rehab",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Chuhuivskyi",
+          "en": "Chuhuivskyi"
+        },
+        "community": {
+          "uk": "Zmiivska",
+          "en": "Zmiivska"
+        },
+        "settlement": {
+          "uk": "Zmiiv",
+          "en": "Zmiiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Polyclinic Department Zmiiv Central District Hospital",
+            "en": "Polyclinic Department Zmiiv Central District Hospital"
+          },
+          "type": "medical"
+        },
+        "coordinates": {
+          "lat": 49.677864,
+          "lng": 36.355127
+        }
+      },
+      "details": {
+        "uk": "10755 people every month. 40 people need an inclusive bathroom every month",
+        "en": "10755 people every month. 40 people need an inclusive bathroom every month"
+      },
+      "beneficiaries": null,
+      "residents": 10755,
+      "evidenceUrl": "http://surl.li/buxlqp"
+    },
+    {
+      "id": "wash_facility_rehab-008",
+      "typeId": "wash_facility_rehab",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Lozova",
+          "en": "Lozova"
+        },
+        "institution": {
+          "name": {
+            "uk": "Lozivskyi Lyceum No. 4",
+            "en": "Lozivskyi Lyceum No. 4"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 48.87686,
+          "lng": 36.292766
+        }
+      },
+      "details": {
+        "uk": "Provision of building materials. The repair work will be carried out by our own forces.",
+        "en": "Provision of building materials. The repair work will be carried out by our own forces."
+      },
+      "beneficiaries": 730,
+      "residents": 1157,
+      "evidenceUrl": "http://surl.li/vxzxui"
+    },
+    {
+      "id": "wash_facility_rehab-009",
+      "typeId": "wash_facility_rehab",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Lozova",
+          "en": "Lozova"
+        },
+        "institution": {
+          "name": {
+            "uk": "Lozivskyi Lyceum No. 12",
+            "en": "Lozivskyi Lyceum No. 12"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 48.88145,
+          "lng": 36.29151
+        }
+      },
+      "details": {
+        "uk": "Provision of building materials. Repair work will be carried out by our own forces.",
+        "en": "Provision of building materials. Repair work will be carried out by our own forces."
+      },
+      "beneficiaries": 434,
+      "residents": 452,
+      "evidenceUrl": "http://surl.li/cgncsz"
+    },
+    {
+      "id": "pumps-001",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Hubarivka",
+          "en": "Hubarivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.165567,
+          "lng": 35.362603
+        }
+      },
+      "details": {
+        "uk": "Borehole pump 4 inches. VINAR VSRT 200-32. Engine 5.5 kWt 3 PCS",
+        "en": "Borehole pump 4 inches. VINAR VSRT 200-32. Engine 5.5 kWt 3 PCS"
+      },
+      "beneficiaries": 1382,
+      "residents": 1382,
+      "evidenceUrl": "http://surl.li/sgzcg"
+    },
+    {
+      "id": "pumps-002",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Polkova Mykytivka",
+          "en": "Polkova Mykytivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.151111,
+          "lng": 35.3175
+        }
+      },
+      "details": {
+        "uk": "Borehole pump 4 inches. VINAR VSRT 200-32. Engine 5.5 kWt 1 PCS",
+        "en": "Borehole pump 4 inches. VINAR VSRT 200-32. Engine 5.5 kWt 1 PCS"
+      },
+      "beneficiaries": 703,
+      "residents": 703,
+      "evidenceUrl": "http://surl.li/sgzcg"
+    },
+    {
+      "id": "pumps-003",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Pisochynska",
+          "en": "Pisochynska"
+        },
+        "settlement": {
+          "uk": "Pisochyn",
+          "en": "Pisochyn"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.954757,
+          "lng": 36.114017
+        }
+      },
+      "details": {
+        "uk": "Borehole pump MNP 612-25 7.5 kWt -6 inches. 10 m3/hour. head 146 m",
+        "en": "Borehole pump MNP 612-25 7.5 kWt -6 inches. 10 m3/hour. head 146 m"
+      },
+      "beneficiaries": 267,
+      "residents": 267,
+      "evidenceUrl": "http://surl.li/stctw"
+    },
+    {
+      "id": "pumps-004",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Pisochynska",
+          "en": "Pisochynska"
+        },
+        "settlement": {
+          "uk": "Berezivka",
+          "en": "Berezivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.954757,
+          "lng": 36.114017
+        }
+      },
+      "details": {
+        "uk": "Borehole pump Wilo TWU4.08-29-DM-C",
+        "en": "Borehole pump Wilo TWU4.08-29-DM-C"
+      },
+      "beneficiaries": 499,
+      "residents": 499,
+      "evidenceUrl": "http://surl.li/stctw"
+    },
+    {
+      "id": "pumps-005",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Pisochynska",
+          "en": "Pisochynska"
+        },
+        "settlement": {
+          "uk": "Korotych",
+          "en": "Korotych"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.954757,
+          "lng": 36.114017
+        }
+      },
+      "details": {
+        "uk": "Borehole pump MNP402-27.2.4 m3 at 113 N.2.2 kW",
+        "en": "Borehole pump MNP402-27.2.4 m3 at 113 N.2.2 kW"
+      },
+      "beneficiaries": 30,
+      "residents": 30,
+      "evidenceUrl": "http://surl.li/stctw"
+    },
+    {
+      "id": "pumps-006",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Pisochynska",
+          "en": "Pisochynska"
+        },
+        "settlement": {
+          "uk": "Korotych",
+          "en": "Korotych"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.954757,
+          "lng": 36.114017
+        }
+      },
+      "details": {
+        "uk": "Borehole pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA",
+        "en": "Borehole pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA"
+      },
+      "beneficiaries": 162,
+      "residents": 162,
+      "evidenceUrl": "http://surl.li/stctw"
+    },
+    {
+      "id": "pumps-007",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Pisochynska",
+          "en": "Pisochynska"
+        },
+        "settlement": {
+          "uk": "Novyi Korotych",
+          "en": "Novyi Korotych"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.954757,
+          "lng": 36.114017
+        }
+      },
+      "details": {
+        "uk": "Borehole pump MNP404-18. 3.3m³ at 93N. 1.5 kW",
+        "en": "Borehole pump MNP404-18. 3.3m³ at 93N. 1.5 kW"
+      },
+      "beneficiaries": 297,
+      "residents": 297,
+      "evidenceUrl": "http://surl.li/stctw"
+    },
+    {
+      "id": "pumps-008",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Kehychivska",
+          "en": "Kehychivska"
+        },
+        "settlement": {
+          "uk": "Mazharka",
+          "en": "Mazharka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.167045,
+          "lng": 35.598119
+        }
+      },
+      "details": {
+        "uk": "Well pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA 1 PCS",
+        "en": "Well pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA 1 PCS"
+      },
+      "beneficiaries": 670,
+      "residents": 670,
+      "evidenceUrl": "http://surl.li/sgyze"
+    },
+    {
+      "id": "pumps-009",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Kehychivska",
+          "en": "Kehychivska"
+        },
+        "settlement": {
+          "uk": "Vovkivka",
+          "en": "Vovkivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.12416,
+          "lng": 35.58163
+        }
+      },
+      "details": {
+        "uk": "Well pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA 2 PCS",
+        "en": "Well pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA 2 PCS"
+      },
+      "beneficiaries": 913,
+      "residents": 913,
+      "evidenceUrl": "http://surl.li/sgyze"
+    },
+    {
+      "id": "pumps-010",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Kehychivska",
+          "en": "Kehychivska"
+        },
+        "settlement": {
+          "uk": "Kalynivka",
+          "en": "Kalynivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.09824,
+          "lng": 35.60617
+        }
+      },
+      "details": {
+        "uk": "Well pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA 1 PCS",
+        "en": "Well pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA 1 PCS"
+      },
+      "beneficiaries": 359,
+      "residents": 359,
+      "evidenceUrl": "http://surl.li/sgyze"
+    },
+    {
+      "id": "pumps-011",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Kehychivska",
+          "en": "Kehychivska"
+        },
+        "settlement": {
+          "uk": "Krasne",
+          "en": "Krasne"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.88359,
+          "lng": 37.21258
+        }
+      },
+      "details": {
+        "uk": "Well pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA 1 PCS",
+        "en": "Well pump Pedrollo 4SR 6/17 S-PD 3HP 400V 50Hz 49480617WLA 1 PCS"
+      },
+      "beneficiaries": 745,
+      "residents": 745,
+      "evidenceUrl": "http://surl.li/sgyze"
+    },
+    {
+      "id": "pumps-012",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Kehychivska",
+          "en": "Kehychivska"
+        },
+        "settlement": {
+          "uk": "Paraskoviia",
+          "en": "Paraskoviia"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.366389,
+          "lng": 35.961111
+        }
+      },
+      "details": {
+        "uk": "Well pump Pedrollo 4SR 8/43 (7.5 kW) 1 PCS",
+        "en": "Well pump Pedrollo 4SR 8/43 (7.5 kW) 1 PCS"
+      },
+      "beneficiaries": 479,
+      "residents": 479,
+      "evidenceUrl": "http://surl.li/sgyze"
+    },
+    {
+      "id": "pumps-013",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Kehychivska",
+          "en": "Kehychivska"
+        },
+        "settlement": {
+          "uk": "Oleksandrivske",
+          "en": "Oleksandrivske"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.384068,
+          "lng": 35.899594
+        }
+      },
+      "details": {
+        "uk": "Well pump Pedrollo 4SR 8/43 (7.5 kW) 1 PCS",
+        "en": "Well pump Pedrollo 4SR 8/43 (7.5 kW) 1 PCS"
+      },
+      "beneficiaries": 594,
+      "residents": 594,
+      "evidenceUrl": "http://surl.li/sgyze"
+    },
+    {
+      "id": "pumps-014",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Iziumskyi",
+          "en": "Iziumskyi"
+        },
+        "community": {
+          "uk": "Balakliiska",
+          "en": "Balakliiska"
+        },
+        "settlement": {
+          "uk": "Petrivske",
+          "en": "Petrivske"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.113681,
+          "lng": 36.922095
+        }
+      },
+      "details": {
+        "uk": "Well pump MNP 618-14 7.5 kW - 6 inches. 15 m3 / h. head 110 m 1 PCS",
+        "en": "Well pump MNP 618-14 7.5 kW - 6 inches. 15 m3 / h. head 110 m 1 PCS"
+      },
+      "beneficiaries": 1893,
+      "residents": 1893,
+      "evidenceUrl": "http://surl.li/sgzat"
+    },
+    {
+      "id": "pumps-015",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-04",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Iziumskyi",
+          "en": "Iziumskyi"
+        },
+        "community": {
+          "uk": "Balakliiska",
+          "en": "Balakliiska"
+        },
+        "settlement": {
+          "uk": "Zavhorodnie",
+          "en": "Zavhorodnie"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.591667,
+          "lng": 36.347778
+        }
+      },
+      "details": {
+        "uk": "Well pump MNP 618-14 7.5 kW - 6 inches. 15 m3 / h. head 110 m 1 PCS",
+        "en": "Well pump MNP 618-14 7.5 kW - 6 inches. 15 m3 / h. head 110 m 1 PCS"
+      },
+      "beneficiaries": 321,
+      "residents": 321,
+      "evidenceUrl": "http://surl.li/sgzba"
+    },
+    {
+      "id": "pumps-016",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-07",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Bunakove",
+          "en": "Bunakove"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.23866,
+          "lng": 36.52164
+        }
+      },
+      "details": {
+        "uk": "Pump borehole 4SRm 6/13 F-PD Pedrollo (8413702900). 1.5 kW 1 PCS",
+        "en": "Pump borehole 4SRm 6/13 F-PD Pedrollo (8413702900). 1.5 kW 1 PCS"
+      },
+      "beneficiaries": 160,
+      "residents": 160,
+      "evidenceUrl": "http://surl.li/ssojkj"
+    },
+    {
+      "id": "pumps-017",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-07",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Maltsivske",
+          "en": "Maltsivske"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 48.84436,
+          "lng": 36.18948
+        }
+      },
+      "details": {
+        "uk": "Pump borehole 4SRm 6/13 F-PD Pedrollo (8413702900). 1.5 kW 1 PCS",
+        "en": "Pump borehole 4SRm 6/13 F-PD Pedrollo (8413702900). 1.5 kW 1 PCS"
+      },
+      "beneficiaries": 272,
+      "residents": 272,
+      "evidenceUrl": "http://surl.li/ssojkj"
+    },
+    {
+      "id": "pumps-018",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-07",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Orilka",
+          "en": "Orilka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 48.97482,
+          "lng": 36.02983
+        }
+      },
+      "details": {
+        "uk": "Well pump 4SRm 8/13 F-PD Pedrollo (8413702900)-2.2 kW 1 PCS",
+        "en": "Well pump 4SRm 8/13 F-PD Pedrollo (8413702900)-2.2 kW 1 PCS"
+      },
+      "beneficiaries": 1225,
+      "residents": 1225,
+      "evidenceUrl": "http://surl.li/ssojkj"
+    },
+    {
+      "id": "pumps-019",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-07",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Smyrnivka",
+          "en": "Smyrnivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 48.9885,
+          "lng": 36.4256
+        }
+      },
+      "details": {
+        "uk": "Well pump 4SRm 4/8 F-PD Pedrollo (8413702900) - 0.75 kW 1 PCS",
+        "en": "Well pump 4SRm 4/8 F-PD Pedrollo (8413702900) - 0.75 kW 1 PCS"
+      },
+      "beneficiaries": 55,
+      "residents": 55,
+      "evidenceUrl": "http://surl.li/ssojkj"
+    },
+    {
+      "id": "pumps-020",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-07",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Smyrnivka",
+          "en": "Smyrnivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 48.9885,
+          "lng": 36.4256
+        }
+      },
+      "details": {
+        "uk": "Well pump 4SRm 6/24 F-PD Pedrollo (8413702900) - 3 kW 1 PCS",
+        "en": "Well pump 4SRm 6/24 F-PD Pedrollo (8413702900) - 3 kW 1 PCS"
+      },
+      "beneficiaries": 264,
+      "residents": 264,
+      "evidenceUrl": "http://surl.li/ssojkj"
+    },
+    {
+      "id": "pumps-021",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-07",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Bunakove",
+          "en": "Bunakove"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.23866,
+          "lng": 36.52164
+        }
+      },
+      "details": {
+        "uk": "Well pump 4SRm 4/12 F-PD Pedrollo (8413702900)-1.1 kW 2 PCS",
+        "en": "Well pump 4SRm 4/12 F-PD Pedrollo (8413702900)-1.1 kW 2 PCS"
+      },
+      "beneficiaries": 48,
+      "residents": 48,
+      "evidenceUrl": "http://surl.li/ssojkj"
+    },
+    {
+      "id": "pumps-022",
+      "typeId": "pumps",
+      "donor": "UNICEF",
+      "completedAt": "2024-07",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Nova Ivanivka",
+          "en": "Nova Ivanivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 48.8859,
+          "lng": 36.20682
+        }
+      },
+      "details": {
+        "uk": "Well pump 4SRm 4/12 F-PD Pedrollo (8413702900)-1.1 kW 1 PCS",
+        "en": "Well pump 4SRm 4/12 F-PD Pedrollo (8413702900)-1.1 kW 1 PCS"
+      },
+      "beneficiaries": 212,
+      "residents": 212,
+      "evidenceUrl": "http://surl.li/ssojkj"
+    },
+    {
+      "id": "pumps-023",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Vysochanska",
+          "en": "Vysochanska"
+        },
+        "settlement": {
+          "uk": "Babai",
+          "en": "Babai"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.896944,
+          "lng": 36.195833
+        }
+      },
+      "details": {
+        "uk": "Circulation pump BSM 80-125/75 (90/23), 7.5kW, 2900 2 PCS\nATV610D45N4 FREQUENCY CONVERTER ATV610 45kW 380V IP20 complete with Motor choke OCL2-045-4 INVT and control cabinet 2 PCS",
+        "en": "Circulation pump BSM 80-125/75 (90/23), 7.5kW, 2900 2 PCS\nATV610D45N4 FREQUENCY CONVERTER ATV610 45kW 380V IP20 complete with Motor choke OCL2-045-4 INVT and control cabinet 2 PCS"
+      },
+      "beneficiaries": 6850,
+      "residents": 6850,
+      "evidenceUrl": "https://surl.li/kpjhuy"
+    },
+    {
+      "id": "pumps-024",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Sakhnovshchynska",
+          "en": "Sakhnovshchynska"
+        },
+        "settlement": {
+          "uk": "Novooleksandrivka",
+          "en": "Novooleksandrivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.15739,
+          "lng": 37.24777
+        }
+      },
+      "details": {
+        "uk": "MNP408 pump -32 with 5.5 kW motor 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS",
+        "en": "MNP408 pump -32 with 5.5 kW motor 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS"
+      },
+      "beneficiaries": 400,
+      "residents": 2442,
+      "evidenceUrl": "https://surl.lt/nxtktf"
+    },
+    {
+      "id": "pumps-025",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Sakhnovshchynska",
+          "en": "Sakhnovshchynska"
+        },
+        "settlement": {
+          "uk": "Suharivske",
+          "en": "Suharivske"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.105444,
+          "lng": 35.880111
+        }
+      },
+      "details": {
+        "uk": "MNP408 pump -32 with 5.5 kW motor 2 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 2 PCS",
+        "en": "MNP408 pump -32 with 5.5 kW motor 2 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 2 PCS"
+      },
+      "beneficiaries": 570,
+      "residents": 2442,
+      "evidenceUrl": "https://surl.lt/nxtktf"
+    },
+    {
+      "id": "pumps-026",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Sakhnovshchynska",
+          "en": "Sakhnovshchynska"
+        },
+        "settlement": {
+          "uk": "Hryshivka",
+          "en": "Hryshivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.11901,
+          "lng": 35.84221
+        }
+      },
+      "details": {
+        "uk": "MNP408 pump -32 with 5.5 kW motor 2 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 2 PCS",
+        "en": "MNP408 pump -32 with 5.5 kW motor 2 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 2 PCS"
+      },
+      "beneficiaries": 210,
+      "residents": 2442,
+      "evidenceUrl": "https://surl.lt/nxtktf"
+    },
+    {
+      "id": "pumps-027",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Sakhnovshchynska",
+          "en": "Sakhnovshchynska"
+        },
+        "settlement": {
+          "uk": "Sakhnovshchyna",
+          "en": "Sakhnovshchyna"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.15352,
+          "lng": 35.86676
+        }
+      },
+      "details": {
+        "uk": "SD pump unit 80/18A with electric motor AIR132S4 (7.5/1500) 2 PCS",
+        "en": "SD pump unit 80/18A with electric motor AIR132S4 (7.5/1500) 2 PCS"
+      },
+      "beneficiaries": 805,
+      "residents": 3500,
+      "evidenceUrl": "https://surl.lt/nxtktf"
+    },
+    {
+      "id": "pumps-028",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Oleksiivska",
+          "en": "Oleksiivska"
+        },
+        "settlement": {
+          "uk": "Oleksiivka",
+          "en": "Oleksiivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.39872,
+          "lng": 36.2785
+        }
+      },
+      "details": {
+        "uk": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS",
+        "en": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS"
+      },
+      "beneficiaries": 249,
+      "residents": 2070,
+      "evidenceUrl": "https://surl.li/kmpwun"
+    },
+    {
+      "id": "pumps-029",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Oleksiivska",
+          "en": "Oleksiivska"
+        },
+        "settlement": {
+          "uk": "Kartamysh",
+          "en": "Kartamysh"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.279,
+          "lng": 36.53744
+        }
+      },
+      "details": {
+        "uk": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS",
+        "en": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS"
+      },
+      "beneficiaries": 137,
+      "residents": 2070,
+      "evidenceUrl": "https://surl.li/kmpwun"
+    },
+    {
+      "id": "pumps-030",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Oleksiivska",
+          "en": "Oleksiivska"
+        },
+        "settlement": {
+          "uk": "Yefremivka",
+          "en": "Yefremivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.45118,
+          "lng": 36.05455
+        }
+      },
+      "details": {
+        "uk": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS",
+        "en": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS"
+      },
+      "beneficiaries": 111,
+      "residents": 2070,
+      "evidenceUrl": "https://surl.li/kmpwun"
+    },
+    {
+      "id": "pumps-031",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Oleksiivska",
+          "en": "Oleksiivska"
+        },
+        "settlement": {
+          "uk": "Troitske",
+          "en": "Troitske"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.68505,
+          "lng": 37.277771
+        }
+      },
+      "details": {
+        "uk": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS",
+        "en": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS"
+      },
+      "beneficiaries": 198,
+      "residents": 2070,
+      "evidenceUrl": "https://surl.li/kmpwun"
+    },
+    {
+      "id": "pumps-032",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Oleksiivska",
+          "en": "Oleksiivska"
+        },
+        "settlement": {
+          "uk": "Triichate",
+          "en": "Triichate"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.303333,
+          "lng": 36.866389
+        }
+      },
+      "details": {
+        "uk": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS",
+        "en": "Pedrollo 4SR8/43 F-PD 10HP 400V 50Hz 3F / Electric motor power: 7.5 kW. (Borehole pump) 1 PCS\nSPACIAL CRN ATS01 control cabinet / Complete based on Schneider Electric 1 PCS"
+      },
+      "beneficiaries": 172,
+      "residents": 2070,
+      "evidenceUrl": "https://surl.li/kmpwun"
+    },
+    {
+      "id": "pumps-033",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Bohodukhiv",
+          "en": "Bohodukhiv"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.182175,
+          "lng": 35.516052
+        }
+      },
+      "details": {
+        "uk": "Pump MNP409-28 with 5.5kW motor 4 PCS",
+        "en": "Pump MNP409-28 with 5.5kW motor 4 PCS"
+      },
+      "beneficiaries": 230,
+      "residents": 14500,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1lLLY3oU4w-bP5VKHLMKCtZhTz-WHg7pc"
+    },
+    {
+      "id": "pumps-034",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Verbivka",
+          "en": "Verbivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.488333,
+          "lng": 36.829722
+        }
+      },
+      "details": {
+        "uk": "Pump MNP404-27 with 2.2kW 220V motor 1 PCS",
+        "en": "Pump MNP404-27 with 2.2kW 220V motor 1 PCS"
+      },
+      "beneficiaries": 190,
+      "residents": 200,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1lLLY3oU4w-bP5VKHLMKCtZhTz-WHg7pc"
+    },
+    {
+      "id": "pumps-035",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Pervukhynka",
+          "en": "Pervukhynka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.104642,
+          "lng": 35.360914
+        }
+      },
+      "details": {
+        "uk": "Pump MNP404-27 with 2.2kW 220V motor 1 PCS",
+        "en": "Pump MNP404-27 with 2.2kW 220V motor 1 PCS"
+      },
+      "beneficiaries": 160,
+      "residents": 200,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1lLLY3oU4w-bP5VKHLMKCtZhTz-WHg7pc"
+    },
+    {
+      "id": "pumps-036",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Zariabynka",
+          "en": "Zariabynka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.223333,
+          "lng": 35.5525
+        }
+      },
+      "details": {
+        "uk": "Pump MNP404-27 with 2.2kW 220V motor 1 PCS",
+        "en": "Pump MNP404-27 with 2.2kW 220V motor 1 PCS"
+      },
+      "beneficiaries": 213,
+      "residents": 420,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1lLLY3oU4w-bP5VKHLMKCtZhTz-WHg7pc"
+    },
+    {
+      "id": "pumps-037",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Viktorivka",
+          "en": "Viktorivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.023056,
+          "lng": 35.640833
+        }
+      },
+      "details": {
+        "uk": "Pump MNP404-27 with 2.2kW 220V motor 1 PCS",
+        "en": "Pump MNP404-27 with 2.2kW 220V motor 1 PCS"
+      },
+      "beneficiaries": 260,
+      "residents": 600,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1lLLY3oU4w-bP5VKHLMKCtZhTz-WHg7pc"
+    },
+    {
+      "id": "pumps-038",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Huty",
+          "en": "Huty"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.09185,
+          "lng": 35.78152
+        }
+      },
+      "details": {
+        "uk": "Pump MNP404-27 with 2.2kW 380V motor 1 PCS",
+        "en": "Pump MNP404-27 with 2.2kW 380V motor 1 PCS"
+      },
+      "beneficiaries": 840,
+      "residents": 1800,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1lLLY3oU4w-bP5VKHLMKCtZhTz-WHg7pc"
+    },
+    {
+      "id": "pumps-039",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Krysyne",
+          "en": "Krysyne"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.115278,
+          "lng": 35.622222
+        }
+      },
+      "details": {
+        "uk": "Pump MNP404-27 with 2.2kW 380V motor 1 PCS",
+        "en": "Pump MNP404-27 with 2.2kW 380V motor 1 PCS"
+      },
+      "beneficiaries": 620,
+      "residents": 1000,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1lLLY3oU4w-bP5VKHLMKCtZhTz-WHg7pc"
+    },
+    {
+      "id": "pumps-040",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Maksymivka",
+          "en": "Maksymivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.09,
+          "lng": 35.700278
+        }
+      },
+      "details": {
+        "uk": "Pump MNP404-27 with 2.2kW 380V motor 1 PCS",
+        "en": "Pump MNP404-27 with 2.2kW 380V motor 1 PCS"
+      },
+      "beneficiaries": 720,
+      "residents": 1000,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1lLLY3oU4w-bP5VKHLMKCtZhTz-WHg7pc"
+    },
+    {
+      "id": "pumps-041",
+      "typeId": "pumps",
+      "donor": "LDS",
+      "completedAt": "2026-03",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Hubarivka",
+          "en": "Hubarivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.165556,
+          "lng": 35.361111
+        }
+      },
+      "details": {
+        "uk": "Pump MNP404-27 with 2.2kW 380V motor 1 PCS",
+        "en": "Pump MNP404-27 with 2.2kW 380V motor 1 PCS"
+      },
+      "beneficiaries": 53,
+      "residents": 1000,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1lLLY3oU4w-bP5VKHLMKCtZhTz-WHg7pc"
+    },
+    {
+      "id": "pipes-001",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Iziumskyi",
+          "en": "Iziumskyi"
+        },
+        "community": {
+          "uk": "Balakliiska",
+          "en": "Balakliiska"
+        },
+        "settlement": {
+          "uk": "Husarivka",
+          "en": "Husarivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.35848,
+          "lng": 36.81467
+        }
+      },
+      "details": {
+        "uk": "Plastic pipes. diameter 110. - 18 coils x 100 m ( 1800 m)\n(Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "Plastic pipes. diameter 110. - 18 coils x 100 m ( 1800 m)\n(Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": 800,
+      "residents": 1119,
+      "evidenceUrl": "http://surl.li/tvxbdo"
+    },
+    {
+      "id": "pipes-002",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Iziumskyi",
+          "en": "Iziumskyi"
+        },
+        "community": {
+          "uk": "Balakliiska",
+          "en": "Balakliiska"
+        },
+        "settlement": {
+          "uk": "Lozovenka",
+          "en": "Lozovenka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.26287,
+          "lng": 36.64009
+        }
+      },
+      "details": {
+        "uk": "Plastic pipes. diameter 110. - 18 coils x 100 m ( 1800 m)\n(Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "Plastic pipes. diameter 110. - 18 coils x 100 m ( 1800 m)\n(Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": 654,
+      "residents": 980,
+      "evidenceUrl": "http://surl.li/tvxbdo"
+    },
+    {
+      "id": "pipes-003",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Iziumskyi",
+          "en": "Iziumskyi"
+        },
+        "community": {
+          "uk": "Balakliiska",
+          "en": "Balakliiska"
+        },
+        "settlement": {
+          "uk": "Mylova",
+          "en": "Mylova"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.45089,
+          "lng": 36.70849
+        }
+      },
+      "details": {
+        "uk": "Plastic pipes. diameter 110. - 18 coils x 100 m ( 1800 m)\n(Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "Plastic pipes. diameter 110. - 18 coils x 100 m ( 1800 m)\n(Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": 224,
+      "residents": 840,
+      "evidenceUrl": "http://surl.li/tvxbdo"
+    },
+    {
+      "id": "pipes-004",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Kehychivska",
+          "en": "Kehychivska"
+        },
+        "settlement": {
+          "uk": "Kehychivka",
+          "en": "Kehychivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.292075,
+          "lng": 35.783249
+        }
+      },
+      "details": {
+        "uk": "polyethylene pipes - d-110-1000 m.. shut-off valves (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "polyethylene pipes - d-110-1000 m.. shut-off valves (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": 320,
+      "residents": 1200,
+      "evidenceUrl": null
+    },
+    {
+      "id": "pipes-005",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Bohodukhiv",
+          "en": "Bohodukhiv"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.161667,
+          "lng": 35.525556
+        }
+      },
+      "details": {
+        "uk": "Supply of plastic pipes DN 50-1000m (Polyethylene pipe\nPE 100 SDR 17 (1.0 MPa). D50x3. GOST B V.2.7-151:2008.in coils 100m)\nDN 63-2500m (Polyethylene pipe PE 100 SDR 17 (1.0 MPa). D63x3. GOST B V.2.7-151:2008.in coils 100m)\nDN 110-3000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "Supply of plastic pipes DN 50-1000m (Polyethylene pipe\nPE 100 SDR 17 (1.0 MPa). D50x3. GOST B V.2.7-151:2008.in coils 100m)\nDN 63-2500m (Polyethylene pipe PE 100 SDR 17 (1.0 MPa). D63x3. GOST B V.2.7-151:2008.in coils 100m)\nDN 110-3000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": 2800,
+      "residents": 15000,
+      "evidenceUrl": "http://surl.li/azdjhj"
+    },
+    {
+      "id": "pipes-006",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Bunakove",
+          "en": "Bunakove"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.23866,
+          "lng": 36.52164
+        }
+      },
+      "details": {
+        "uk": "Du 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "Du 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": null,
+      "residents": null,
+      "evidenceUrl": "http://surl.li/drdyck"
+    },
+    {
+      "id": "pipes-007",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Krasnopavlivka",
+          "en": "Krasnopavlivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.140278,
+          "lng": 36.323611
+        }
+      },
+      "details": {
+        "uk": "Du 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "Du 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": null,
+      "residents": null,
+      "evidenceUrl": "http://surl.li/drdyck"
+    },
+    {
+      "id": "pipes-008",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Oleksandrivka",
+          "en": "Oleksandrivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.011806,
+          "lng": 36.463333
+        }
+      },
+      "details": {
+        "uk": "Du 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "Du 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": null,
+      "residents": null,
+      "evidenceUrl": "http://surl.li/drdyck"
+    },
+    {
+      "id": "pipes-009",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Lozivskyi",
+          "en": "Lozivskyi"
+        },
+        "community": {
+          "uk": "Lozivska",
+          "en": "Lozivska"
+        },
+        "settlement": {
+          "uk": "Yelyzavetivka",
+          "en": "Yelyzavetivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.156417,
+          "lng": 36.341028
+        }
+      },
+      "details": {
+        "uk": "Du 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "Du 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa). D110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": null,
+      "residents": null,
+      "evidenceUrl": "http://surl.li/drdyck"
+    },
+    {
+      "id": "pipes-010",
+      "typeId": "pipes",
+      "donor": "UNICEF",
+      "completedAt": "2024-06",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Iziumskyi",
+          "en": "Iziumskyi"
+        },
+        "community": {
+          "uk": "Iziumska",
+          "en": "Iziumska"
+        },
+        "settlement": {
+          "uk": "Izium",
+          "en": "Izium"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.206972,
+          "lng": 37.276783
+        }
+      },
+      "details": {
+        "uk": "Provision of plastic pipes DN 63-2000m. (Polyethylene pipe\nPE 100 SDR 17 (1.0 MPa)D63x3. GOST B V.2.7-151:2008.in coils 100m)\nDN 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa)\nD110x6.6. GOST BV.2.7-151:2008. in coils 100m)",
+        "en": "Provision of plastic pipes DN 63-2000m. (Polyethylene pipe\nPE 100 SDR 17 (1.0 MPa)D63x3. GOST B V.2.7-151:2008.in coils 100m)\nDN 110-2000m; (Polyethylene pipe PE100 SDR 17 (1.0 MPa)\nD110x6.6. GOST BV.2.7-151:2008. in coils 100m)"
+      },
+      "beneficiaries": null,
+      "residents": null,
+      "evidenceUrl": "http://surl.li/zqpkpm"
+    },
+    {
+      "id": "water_tanks-001",
+      "typeId": "water_tanks",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Sinne",
+          "en": "Sinne"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.218056,
+          "lng": 35.634444
+        }
+      },
+      "details": {
+        "uk": "Water Tank 500 L 1 PCS",
+        "en": "Water Tank 500 L 1 PCS"
+      },
+      "beneficiaries": 5012,
+      "residents": 5012,
+      "evidenceUrl": "http://surl.li/yempsr"
+    },
+    {
+      "id": "water_tanks-002",
+      "typeId": "water_tanks",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Shchaslyve",
+          "en": "Shchaslyve"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.09185,
+          "lng": 35.78152
+        }
+      },
+      "details": {
+        "uk": "Water Tank 500 L 1 PCS",
+        "en": "Water Tank 500 L 1 PCS"
+      },
+      "beneficiaries": null,
+      "residents": null,
+      "evidenceUrl": "http://surl.li/yempsr"
+    },
+    {
+      "id": "water_tanks-003",
+      "typeId": "water_tanks",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Sazono-Balanivka",
+          "en": "Sazono-Balanivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.065556,
+          "lng": 35.813056
+        }
+      },
+      "details": {
+        "uk": "Water Tank 500 L 1 PCS",
+        "en": "Water Tank 500 L 1 PCS"
+      },
+      "beneficiaries": 153,
+      "residents": 153,
+      "evidenceUrl": "http://surl.li/yempsr"
+    },
+    {
+      "id": "water_tanks-004",
+      "typeId": "water_tanks",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Bohodukhivskyi",
+          "en": "Bohodukhivskyi"
+        },
+        "community": {
+          "uk": "Bohodukhivska",
+          "en": "Bohodukhivska"
+        },
+        "settlement": {
+          "uk": "Polkova Mykytivka",
+          "en": "Polkova Mykytivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 50.151111,
+          "lng": 35.314722
+        }
+      },
+      "details": {
+        "uk": "Water Tank 1000 L",
+        "en": "Water Tank 1000 L"
+      },
+      "beneficiaries": 730,
+      "residents": 730,
+      "evidenceUrl": "http://surl.li/yempsr"
+    },
+    {
+      "id": "water_tanks-005",
+      "typeId": "water_tanks",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Krasnohradskyi",
+          "en": "Krasnohradskyi"
+        },
+        "community": {
+          "uk": "Krasnohradska",
+          "en": "Krasnohradska"
+        },
+        "settlement": {
+          "uk": "Krasnohrad",
+          "en": "Krasnohrad"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.371667,
+          "lng": 35.456667
+        }
+      },
+      "details": {
+        "uk": "Water Tank 500 L",
+        "en": "Water Tank 500 L"
+      },
+      "beneficiaries": 434,
+      "residents": 434,
+      "evidenceUrl": "http://surl.li/yempsr"
+    },
+    {
+      "id": "water_tanks-006",
+      "typeId": "water_tanks",
+      "donor": "UNICEF",
+      "completedAt": "2024-12",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Krasnohradskyi",
+          "en": "Krasnohradskyi"
+        },
+        "community": {
+          "uk": "Krasnohradska",
+          "en": "Krasnohradska"
+        },
+        "settlement": {
+          "uk": "Krasnohrad",
+          "en": "Krasnohrad"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.371667,
+          "lng": 35.456667
+        }
+      },
+      "details": {
+        "uk": "Water Tank 1000 L",
+        "en": "Water Tank 1000 L"
+      },
+      "beneficiaries": 0,
+      "residents": 0,
+      "evidenceUrl": "http://surl.li/yempsr"
+    },
+    {
+      "id": "water_tanks-007",
+      "typeId": "water_tanks",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Kharkivskyi",
+          "en": "Kharkivskyi"
+        },
+        "community": {
+          "uk": "Vysochanska",
+          "en": "Vysochanska"
+        },
+        "settlement": {
+          "uk": "Pokotylivka",
+          "en": "Pokotylivka"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.9126,
+          "lng": 36.19326
+        }
+      },
+      "details": {
+        "uk": "Plastic container, double-layer, volume: 500 l., height: 110 cm., diameter: 85 cm., neck diameter: 32 cm., connection thread: 1⁄2 , shape: cylindrical, position: vertical; liquid type: drinking water, 6 pcs",
+        "en": "Plastic container, double-layer, volume: 500 l., height: 110 cm., diameter: 85 cm., neck diameter: 32 cm., connection thread: 1⁄2 , shape: cylindrical, position: vertical; liquid type: drinking water, 6 pcs"
+      },
+      "beneficiaries": 620,
+      "residents": 2000,
+      "evidenceUrl": "https://surl.lt/vipaab"
+    },
+    {
+      "id": "water_tanks-008",
+      "typeId": "water_tanks",
+      "donor": "LDS",
+      "completedAt": "2026-02",
+      "location": {
+        "region": {
+          "uk": "Kharkivska",
+          "en": "Kharkivska"
+        },
+        "district": {
+          "uk": "Berestynskyi",
+          "en": "Berestynskyi"
+        },
+        "community": {
+          "uk": "Sakhnovshchynska",
+          "en": "Sakhnovshchynska"
+        },
+        "settlement": {
+          "uk": "Sakhnovshchyna",
+          "en": "Sakhnovshchyna"
+        },
+        "institution": null,
+        "coordinates": {
+          "lat": 49.15352,
+          "lng": 35.86676
+        }
+      },
+      "details": {
+        "uk": "Plastic container, double-layer, volume: 1000 l., height: 103 cm., diameter: 37 cm., neck diameter: 37 cm., connection thread: 1⁄2 , length: 124 cm., width: 104 cm., shape: cylindrical, position: vertical; liquid type: drinking water, 4 pcs",
+        "en": "Plastic container, double-layer, volume: 1000 l., height: 103 cm., diameter: 37 cm., neck diameter: 37 cm., connection thread: 1⁄2 , length: 124 cm., width: 104 cm., shape: cylindrical, position: vertical; liquid type: drinking water, 4 pcs"
+      },
+      "beneficiaries": 550,
+      "residents": 2000,
+      "evidenceUrl": "https://surl.lu/tnyvsq"
+    },
+    {
+      "id": "windows_doors_replacement-001",
+      "typeId": "windows_doors_replacement",
+      "donor": "Nadacia Pontis",
+      "completedAt": "2024-08",
+      "location": {
+        "region": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "district": {
+          "uk": "Chernihivskyi",
+          "en": "Chernihivskyi"
+        },
+        "community": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "settlement": {
+          "uk": "Chernihiv",
+          "en": "Chernihiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Preschool education institution No. 35 \"Barvinok",
+            "en": "Preschool education institution No. 35 \"Barvinok"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 51.502167,
+          "lng": 31.287111
+        }
+      },
+      "details": {
+        "uk": "As part of the infrastructure restoration project, 69 windows (totaling 179.06 m²) were replaced. The scope of work included demolition, the application of water-repellent sealing tape at joints, the installation of external sills and internal windowsills, and the finishing of both internal and external reveals.",
+        "en": "As part of the infrastructure restoration project, 69 windows (totaling 179.06 m²) were replaced. The scope of work included demolition, the application of water-repellent sealing tape at joints, the installation of external sills and internal windowsills, and the finishing of both internal and external reveals."
+      },
+      "beneficiaries": 114,
+      "residents": 114,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1UlcB5LIiWyP8sB1g71MvMYhExSV-4w-U"
+    },
+    {
+      "id": "windows_doors_replacement-002",
+      "typeId": "windows_doors_replacement",
+      "donor": "Nadacia Pontis",
+      "completedAt": "2024-08",
+      "location": {
+        "region": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "district": {
+          "uk": "Chernihivskyi",
+          "en": "Chernihivskyi"
+        },
+        "community": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "settlement": {
+          "uk": "Chernihiv",
+          "en": "Chernihiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Preschool educational institution No. 59 \"Bilochka",
+            "en": "Preschool educational institution No. 59 \"Bilochka"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 51.522917,
+          "lng": 31.274111
+        }
+      },
+      "details": {
+        "uk": "As part of the infrastructure restoration initiative, 76 windows (totaling 210.65 m²) were replaced. The scope of work included demolition, the application of water-repellent sealing tape at joints, the installation of external drip caps and internal windowsills, as well as the finishing of both internal and external reveals.",
+        "en": "As part of the infrastructure restoration initiative, 76 windows (totaling 210.65 m²) were replaced. The scope of work included demolition, the application of water-repellent sealing tape at joints, the installation of external drip caps and internal windowsills, as well as the finishing of both internal and external reveals."
+      },
+      "beneficiaries": 138,
+      "residents": 138,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1ecU4d8m0131GWa8PREvrKn_QvqwZaBhk"
+    },
+    {
+      "id": "windows_doors_replacement-003",
+      "typeId": "windows_doors_replacement",
+      "donor": "Nadacia Pontis",
+      "completedAt": "2024-08",
+      "location": {
+        "region": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "district": {
+          "uk": "Chernihivskyi",
+          "en": "Chernihivskyi"
+        },
+        "community": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "settlement": {
+          "uk": "Chernihiv",
+          "en": "Chernihiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Chernihiv preschool educational institution No. 69 \"Strumochok",
+            "en": "Chernihiv preschool educational institution No. 69 \"Strumochok"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 51.512778,
+          "lng": 31.335222
+        }
+      },
+      "details": {
+        "uk": "A total of 111 windows, with a collective area of 361.96 m², were replaced. The installation process included fitting water-resistant strips at joints, new window sills, and both internal and external slopes, accompanied by necessary demolition work.",
+        "en": "A total of 111 windows, with a collective area of 361.96 m², were replaced. The installation process included fitting water-resistant strips at joints, new window sills, and both internal and external slopes, accompanied by necessary demolition work."
+      },
+      "beneficiaries": 156,
+      "residents": 156,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1BKh7K9JfRPqU1IDCBkn99deQDJ77f6zI"
+    },
+    {
+      "id": "windows_replacement-001",
+      "typeId": "windows_replacement",
+      "donor": "Nadacia Pontis",
+      "completedAt": "2024-08",
+      "location": {
+        "region": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "district": {
+          "uk": "Chernihivskyi",
+          "en": "Chernihivskyi"
+        },
+        "community": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "settlement": {
+          "uk": "Chernihiv",
+          "en": "Chernihiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Chernihiv Lyceum of Railway Transport",
+            "en": "Chernihiv Lyceum of Railway Transport"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 51.493556,
+          "lng": 31.285167
+        }
+      },
+      "details": {
+        "uk": "37 windows were replaced, totaling 106.13 m2, with the installation of water-repellent tape at the joints, the installation of window drains and window sills, the installation of internal and external slopes, and dismantling work was performed.",
+        "en": "37 windows were replaced, totaling 106.13 m2, with the installation of water-repellent tape at the joints, the installation of window drains and window sills, the installation of internal and external slopes, and dismantling work was performed."
+      },
+      "beneficiaries": 88,
+      "residents": 88,
+      "evidenceUrl": "https://drive.google.com/drive/folders/12UnkoOCRpCgtdfGVsZ23a3rc3lsazxBv"
+    },
+    {
+      "id": "windows_replacement-002",
+      "typeId": "windows_replacement",
+      "donor": "Nadacia Pontis",
+      "completedAt": "2024-08",
+      "location": {
+        "region": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "district": {
+          "uk": "Chernihivskyi",
+          "en": "Chernihivskyi"
+        },
+        "community": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "settlement": {
+          "uk": "Chernihiv",
+          "en": "Chernihiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Vocational School of Consumer Services",
+            "en": "Vocational School of Consumer Services"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 51.511639,
+          "lng": 31.272472
+        }
+      },
+      "details": {
+        "uk": "37 windows were replaced, which is 153.22 m2, with the installation of water-repellent tape at the joints, with the installation of window drains and window sills, with the installation of internal and external slopes, and dismantling work was performed.",
+        "en": "37 windows were replaced, which is 153.22 m2, with the installation of water-repellent tape at the joints, with the installation of window drains and window sills, with the installation of internal and external slopes, and dismantling work was performed."
+      },
+      "beneficiaries": 698,
+      "residents": 698,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1vYJOGie-ZKCPFC9mXe6Brynb65FKv-TH"
+    },
+    {
+      "id": "roof_replacement-001",
+      "typeId": "roof_replacement",
+      "donor": "Nadacia Pontis",
+      "completedAt": "2024-08",
+      "location": {
+        "region": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "district": {
+          "uk": "Chernihivskyi",
+          "en": "Chernihivskyi"
+        },
+        "community": {
+          "uk": "Chernihivska",
+          "en": "Chernihivska"
+        },
+        "settlement": {
+          "uk": "Chernihiv",
+          "en": "Chernihiv"
+        },
+        "institution": {
+          "name": {
+            "uk": "Vocational School of Consumer Services",
+            "en": "Vocational School of Consumer Services"
+          },
+          "type": "educational"
+        },
+        "coordinates": {
+          "lat": 51.511639,
+          "lng": 31.272472
+        }
+      },
+      "details": {
+        "uk": "The rehabilitation of the school’s roof, covering a total area of 1,046 m².The project involved the installation of a high-performance PVC (polyvinyl chloride) membrane system, dry-laid with hot-air welding at the seams and flashing points.",
+        "en": "The rehabilitation of the school’s roof, covering a total area of 1,046 m².The project involved the installation of a high-performance PVC (polyvinyl chloride) membrane system, dry-laid with hot-air welding at the seams and flashing points."
+      },
+      "beneficiaries": 698,
+      "residents": 698,
+      "evidenceUrl": "https://drive.google.com/drive/folders/1vYJOGie-ZKCPFC9mXe6Brynb65FKv-TH"
+    }
+  ]
+}
