@@ -25,15 +25,35 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             <app-carousel [images]="post().images" />
           </div>
         }
+        
         @if (post().videoUrl) {
           <div class="post__video-wrap">
-            <iframe
-              [src]="getEmbedUrl(post().videoUrl)"
-              width="100%"
-              height="630"
-              frameborder="0"
-              allowfullscreen
-            ></iframe>
+            @if (showVideo()) {
+              <iframe
+                [src]="getEmbedUrl(post().videoUrl)"
+                width="100%"
+                height="630"
+                frameborder="0"
+                allowfullscreen
+                loading="lazy"
+              ></iframe>
+            } @else {
+              <button
+                type="button"
+                class="post__video-placeholder"
+                (click)="showVideo.set(true)"
+                [attr.aria-label]="'Play video'"
+              >
+                <img
+                  [src]="getYouTubeThumbnail(post().videoUrl)"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                  class="post__video-thumb"
+                />
+                <span class="post__video-play">▶</span>
+              </button>
+            }
           </div>
         }
       </article>
@@ -77,6 +97,43 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         color: #4a5568;
         line-height: 1.6;
       }
+      
+      .post__video-placeholder {
+        position: relative;
+        width: 100%;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        background: #000;
+        overflow: hidden;
+        display: block;
+        border-radius: 4px;
+      }
+      .post__video-thumb {
+        width: 100%;
+        height: auto;
+        display: block;
+        opacity: 0.85;
+        transition: opacity 0.2s;
+      }
+      .post__video-placeholder:hover .post__video-thumb {
+        opacity: 1;
+      }
+      .post__video-play {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        color: white;
+        background: rgba(0, 0, 0, 0.7);
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
     `,
   ],
 })
@@ -87,6 +144,7 @@ export class BlogPostComponent implements OnInit {
   private readonly sanitizer = inject(DomSanitizer);
 
   post = signal<any>(null);
+  showVideo = signal(false);
 
   ngOnInit(): void {
     // read from resolver data — available synchronously during SSR
@@ -123,5 +181,16 @@ export class BlogPostComponent implements OnInit {
     return this.sanitizer.bypassSecurityTrustResourceUrl(
       `https://www.youtube.com/embed/${videoId}`,
     );
+  }
+
+  getVideoId(url: string): string {
+    if (url.includes('watch?v=')) return url.split('watch?v=')[1]?.split('&')[0] || '';
+    if (url.includes('youtu.be/')) return url.split('youtu.be/')[1]?.split('?')[0] || '';
+    return '';
+  }
+
+  getYouTubeThumbnail(url: string): string {
+    const id = this.getVideoId(url);
+    return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : '';
   }
 }

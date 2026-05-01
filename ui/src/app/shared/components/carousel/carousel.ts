@@ -11,7 +11,7 @@ const AUTOPLAY_INTERVAL_MS = 5000; // 5s autoplay
       <div class="carousel__track" [style.transform]="'translateX(-' + currentIndex() * 100 + '%)'">
         @for (img of images; track img; let i = $index) {
           <div class="carousel__slide">
-            <img [src]="img" [alt]="'Image ' + (i + 1)" />
+            <img [src]="img" [alt]="'Image ' + (i + 1)" loading="lazy" decoding="async" />
           </div>
         }
       </div>
