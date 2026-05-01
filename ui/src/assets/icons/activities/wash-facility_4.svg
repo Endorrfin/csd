@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+     stroke="currentColor" stroke-width="1.75" stroke-linecap="round"
+     stroke-linejoin="round" aria-hidden="true">
+    <!-- Кран (faucet): вертикальна труба з горизонтальним вильотом -->
+    <path d="M12 4v6"/>
+    <path d="M9 4h6"/>
+    <path d="M15 7h2.5a1 1 0 0 1 1 1V11"/>
+
+    <!-- Крапля води з вильоту крана -->
+    <path d="M18.5 13c.55.65.85 1.35.85 2 0 1.1-.83 2-1.85 2s-1.85-.9-1.85-2c0-.65.3-1.35.85-2 .25-.3.5-.55.5-.55s.25.25.5.55z"/>
+
+    <!-- Умивальник: трапеція з овальним отвором -->
+    <path d="M4 13h16l-2 6H6z"/>
+    <ellipse cx="12" cy="15.5" rx="3.5" ry="1"/>
+</svg>

@@ -44,8 +44,8 @@ import { Router } from '@angular/router';
           <a routerLink="/about" routerLinkActive="active" (click)="closeMenu()">{{
             'NAV.ABOUT' | translate
           }}</a>
-          <a routerLink="/blog" routerLinkActive="active" (click)="closeMenu()">{{
-            'NAV.BLOG' | translate
+          <a routerLink="/activity-map" routerLinkActive="active" (click)="closeMenu()">{{
+            'NAV.ACTIVITY_MAP' | translate
           }}</a>
           <a routerLink="/partners" routerLinkActive="active" (click)="closeMenu()">{{
             'NAV.PARTNERS' | translate
@@ -118,7 +118,7 @@ import { Router } from '@angular/router';
         padding: 0 1rem;
         flex-shrink: 0;
         position: relative;
-        z-index: 100; // above overlay
+        z-index: 1200;
       }
       .header__container {
         max-width: 1200px;
@@ -244,7 +244,7 @@ import { Router } from '@angular/router';
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.4);
-        z-index: 99;
+        z-index: 1199;
       }
 
       /* ── Mobile breakpoint ── */
@@ -253,17 +253,14 @@ import { Router } from '@angular/router';
           gap: 1rem;
         }
 
-        // hamburger видимий
         .header__burger {
           display: flex;
         }
 
-        // десктопні actions приховані
         .header__actions--desktop {
           display: none;
         }
 
-        // nav стає вертикальним drawer зліва
         .header__nav {
           position: fixed;
           top: 0;
@@ -275,12 +272,12 @@ import { Router } from '@angular/router';
           align-items: flex-start;
           padding: 80px 1.5rem 2rem;
           gap: 0.25rem;
-          z-index: 100;
+          z-index: 1200;
           transition: right 0.3s ease;
           overflow-y: auto;
         }
         .header__nav--open {
-          right: 0; // slide-in
+          right: 0;
         }
         .header__nav a {
           width: 100%;
@@ -289,7 +286,6 @@ import { Router } from '@angular/router';
           border-radius: 6px;
         }
 
-        // actions всередині nav на мобільному
         .header__nav-actions {
           display: flex;
           flex-direction: column;

@@ -25,6 +25,15 @@ export const routes: Routes = [
     path: 'partners',
     loadComponent: () => import('./features/partners/partners').then((m) => m.PartnersComponent),
   },
+
+  {
+    path: 'activity-map',
+    loadChildren: () =>
+      import('./features/activity-map/activity-map.routes').then(
+        (m) => m.ACTIVITY_MAP_ROUTES,
+      ),
+  },
+
   // added procurement vacancy, testimonial, complaint children route of cooperation + default redirect
   {
     path: 'cooperation',
