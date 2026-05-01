@@ -1,5 +1,5 @@
 // path: ui/src/app/features/home/home.ts
-import { Component, inject, OnInit, signal, PLATFORM_ID } from '@angular/core';
+import { Component, inject, OnInit, signal, computed, PLATFORM_ID } from '@angular/core'; // + computed
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { QuillModule } from 'ngx-quill';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
@@ -12,6 +12,15 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
 import { QUILL_MODULES } from '../../shared/config/quill.config';
+
+// response envelope from paginated /blog endpoint
+interface PaginatedPosts {
+  items: any[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
 
 @Component({
   selector: 'app-home',
@@ -32,6 +41,20 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
         }
       </div>
 
+      <!-- skeleton placeholder while initial fetch is in flight -->
+      @if (loading() && posts().length === 0) {
+        <div class="news-skeleton" aria-hidden="true">
+          @for (i of skeletonItems; track $index) {
+            <div class="skeleton-card">
+              <div class="skeleton-line skeleton-line--short"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line"></div>
+              <div class="skeleton-line skeleton-line--medium"></div>
+            </div>
+          }
+        </div>
+      }
+
       @if (showForm()) {
         <div class="news-form">
           <div class="news-form__header">
@@ -46,7 +69,14 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
                     : 'New post'
               }}
             </h3>
-            <button class="news-form__close" (click)="showForm.set(false)">✕</button>
+            <!-- disable close while submitting to prevent state desync -->
+            <button
+              class="news-form__close"
+              (click)="showForm.set(false)"
+              [disabled]="submitting()"
+            >
+              ✕
+            </button>
           </div>
 
           <label
@@ -94,7 +124,7 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
             >{{ isUa ? 'Детальний опис (UA)' : 'Content (UA)' }} *
             @if (isBrowser) {
               <quill-editor
-                class="custom-quill"
+                class="news-form__quill"
                 [ngModel]="form().contentUa"
                 (ngModelChange)="updateFormField('contentUa', $event)"
                 [modules]="quillModules"
@@ -109,7 +139,6 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
             }
           </label>
 
-          <!-- replaced textarea with Quill rich text editor (browser only) -->
           <label
             >{{ isUa ? 'Детальний опис (EN)' : 'Content (EN)' }} *
             @if (isBrowser) {
@@ -117,7 +146,7 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
                 [ngModel]="form().contentEn"
                 (ngModelChange)="updateFormField('contentEn', $event)"
                 [modules]="quillModules"
-                [placeholder]="isUa ? 'Вводити детальний опис..' : 'Enter content...'"
+                [placeholder]="isUa ? 'Вводити детальний опис...' : 'Enter content...'"
                 class="news-form__quill"
               >
               </quill-editor>
@@ -130,12 +159,10 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
             }
           </label>
 
-          <!-- file upload instead of URL inputs -->
           <div class="news-form__images">
             <label>{{ isUa ? 'Зображення (до 5 фото)' : 'Images (up to 5 photos)' }}</label>
             @for (img of form().images; track $index; let i = $index) {
               <div class="news-form__image-row">
-                <!-- Hidden native file input, triggered by label -->
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -143,7 +170,6 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
                   class="news-form__file-native"
                   (change)="onImageFileSelected(i, $event)"
                 />
-                <!-- Custom upload button -->
                 <label
                   [for]="'img-file-' + i"
                   class="news-form__upload-btn"
@@ -158,7 +184,6 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
                     📎 {{ isUa ? 'Обрати фото' : 'Choose photo' }}
                   }
                 </label>
-                <!-- Thumbnail preview -->
                 @if (form().images[i] && !uploadingImages()[i]) {
                   <img [src]="form().images[i]" class="news-form__thumb" alt="preview" />
                 }
@@ -225,29 +250,39 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
           }
 
           <div class="news-form__actions">
+            <!-- disabled gate via computed; spinner + label swap during submit -->
             <button
               class="btn btn--primary"
-              [disabled]="isAnyImageUploading()"
+              [disabled]="isSubmitDisabled()"
               (click)="editingPostId() ? updatePost() : publish()"
             >
-              {{
-                editingPostId()
-                  ? isUa
-                    ? 'Зберегти зміни'
-                    : 'Save changes'
-                  : isUa
-                    ? 'Опублікувати'
-                    : 'Publish'
-              }}
+              @if (submitting()) {
+                <span class="btn-spinner"></span>
+                {{ isUa ? 'Збереження...' : 'Saving...' }}
+              } @else {
+                {{
+                  editingPostId()
+                    ? isUa
+                      ? 'Зберегти зміни'
+                      : 'Save changes'
+                    : isUa
+                      ? 'Опублікувати'
+                      : 'Publish'
+                }}
+              }
             </button>
-            <button class="btn btn--secondary" (click)="showForm.set(false)">
+            <!-- disable cancel during submit -->
+            <button
+              class="btn btn--secondary"
+              (click)="showForm.set(false)"
+              [disabled]="submitting()"
+            >
               {{ isUa ? 'Скасувати' : 'Cancel' }}
             </button>
           </div>
         </div>
       }
 
-      <!-- added [id] for anchor-based share URL -->
       @for (post of posts(); track post.id) {
         <article class="news-card" [id]="'post-' + post.slug">
           <div class="news-card__body">
@@ -278,7 +313,6 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
               [innerHTML]="(isUa ? post.contentUa : post.contentEn) | quillHtml"
             ></div>
 
-            <!-- social share buttons -->
             <div class="news-card__share">
               <span class="news-card__share-label">{{ isUa ? 'Поділитись:' : 'Share:' }}</span>
               <a
@@ -323,7 +357,7 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
             </div>
           </div>
 
-          <!-- carousel moved below text (unchanged logic) -->
+          <!-- lazy on cover image to defer offscreen network -->
           @if (post.images?.length) {
             <app-carousel [images]="post.images" />
           } @else if (post.coverImage) {
@@ -331,26 +365,67 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
               [src]="post.coverImage"
               [alt]="isUa ? post.titleUa : post.titleEn"
               class="news-card__image"
+              loading="lazy"
+              decoding="async"
             />
           }
 
+          <!-- render iframe only after click; thumbnail placeholder by default
+               saves ~500 KB of YouTube JS per video on initial page load -->
           @if (post.videoUrl) {
-            <!-- height 315 → 630 (2x) -->
             <div class="news-card__video-wrap">
-              <iframe
-                [src]="getEmbedUrl(post.videoUrl)"
-                width="100%"
-                height="630"
-                frameborder="0"
-                allowfullscreen
-                class="news-card__video"
-              ></iframe>
+              @if (isVideoShown(post.id)) {
+                <iframe
+                  [src]="getEmbedUrl(post.videoUrl)"
+                  width="100%"
+                  height="630"
+                  frameborder="0"
+                  allowfullscreen
+                  class="news-card__video"
+                  loading="lazy"
+                ></iframe>
+              } @else {
+                <button
+                  type="button"
+                  class="news-card__video-placeholder"
+                  (click)="showVideo(post.id)"
+                  [attr.aria-label]="isUa ? 'Відтворити відео' : 'Play video'"
+                >
+                  <img
+                    [src]="getYouTubeThumbnail(post.videoUrl)"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    class="news-card__video-thumb"
+                  />
+                  <span class="news-card__video-play">▶</span>
+                </button>
+              }
             </div>
           }
         </article>
       }
 
-      @if (posts().length === 0) {
+      <!-- load-more button replaces "fetch all on init" pattern -->
+      @if (hasMore()) {
+        <div class="news__load-more">
+          <button
+            class="btn btn--secondary"
+            (click)="loadMore()"
+            [disabled]="loading()"
+          >
+            @if (loading()) {
+              <span class="btn-spinner"></span>
+              {{ isUa ? 'Завантаження...' : 'Loading...' }}
+            } @else {
+              {{ isUa ? 'Показати більше' : 'Load more' }}
+            }
+          </button>
+        </div>
+      }
+
+      <!-- empty state guarded by !loading to avoid flash on first load -->
+      @if (!loading() && posts().length === 0) {
         <p class="news__empty">{{ isUa ? 'Новин поки немає' : 'No news yet' }}</p>
       }
     </section>
@@ -385,6 +460,14 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
         color: white;
       }
 
+      /* skeleton wrapper layout (skeleton-card / skeleton-line are global in styles.scss) */
+      .news-skeleton {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+      }
+
       /* FORM */
       .news-form {
         background: #f7fafc;
@@ -409,6 +492,10 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
         font-size: 1.25rem;
         cursor: pointer;
         color: #718096;
+      }
+      .news-form__close:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
       }
       .news-form label {
         display: block;
@@ -442,7 +529,7 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
         margin-bottom: 0.5rem;
       }
       .news-form__file-native {
-        display: none !important; /* hidden — triggered by label */
+        display: none !important;
       }
       .news-form__upload-btn {
         display: inline-flex;
@@ -534,7 +621,6 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
         padding: 0 1.5rem 1.5rem;
       }
 
-      /* Increase card 300px → 600px */
       .news-card__image {
         width: 100%;
         height: 600px;
@@ -592,7 +678,7 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
         line-height: 1.6;
       }
 
-      .custom-quill .ql-container .ql-editor {
+      .ql-container .ql-editor {
         word-break: break-word;
         overflow-wrap: anywhere;
       }
@@ -603,6 +689,52 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
         color: #a0aec0;
         text-align: center;
         padding: 2rem;
+      }
+
+      /* lazy YouTube placeholder — clickable thumbnail before iframe loads */
+      .news-card__video-placeholder {
+        position: relative;
+        width: 100%;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        background: #000;
+        overflow: hidden;
+        display: block;
+        border-radius: 4px;
+      }
+      .news-card__video-thumb {
+        width: 100%;
+        height: auto;
+        display: block;
+        opacity: 0.85;
+        transition: opacity 0.2s;
+      }
+      .news-card__video-placeholder:hover .news-card__video-thumb {
+        opacity: 1;
+      }
+      .news-card__video-play {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 3rem;
+        color: white;
+        background: rgba(0, 0, 0, 0.7);
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      }
+
+      /* load-more container */
+      .news__load-more {
+        display: flex;
+        justify-content: center;
+        margin: 2rem 0;
       }
 
       /* SOCIAL SHARE */
@@ -644,19 +776,25 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
       .news-card__share-btn--x {
         background: #000;
       }
-
-      /* Quill editor sizing inside form */
+      
       .news-form__quill {
         display: block;
         margin-top: 0.25rem;
-
+      
         :host ::ng-deep .ql-container {
           min-height: 260px;
           font-size: 0.9375rem;
           border-radius: 0 0 4px 4px;
           border-color: #cbd5e0;
         }
-
+      
+        /* word-break now reaches Quill internals via ::ng-deep
+           (the old .custom-quill rule was a no-op due to Angular encapsulation) */
+        :host ::ng-deep .ql-editor {
+          word-break: break-word;
+          overflow-wrap: anywhere;
+        }
+      
         :host ::ng-deep .ql-toolbar {
           border-radius: 4px 4px 0 0;
           border-color: #cbd5e0;
@@ -674,8 +812,13 @@ export class HomeComponent implements OnInit {
   readonly auth = inject(AuthService);
   readonly isBrowser = isPlatformBrowser(this.platformId);
 
-  // Quill (rich text)  toolbar config for news content
   readonly quillModules = QUILL_MODULES;
+
+  // page size lives in one place
+  private readonly PAGE_SIZE = 10;
+
+  // skeleton placeholder count
+  readonly skeletonItems = [1, 2, 3];
 
   posts = signal<any[]>([]);
   showForm = signal(false);
@@ -683,24 +826,54 @@ export class HomeComponent implements OnInit {
   editingPostId = signal<string | null>(null);
   form = signal(this.emptyForm());
 
-  // per-slot upload state (max 5 slots)
   uploadingImages = signal<boolean[]>(Array(5).fill(false));
+
+  // pagination + loading state
+  page = signal(1);
+  hasMore = signal(false);
+  total = signal(0);
+  loading = signal(false); // initial fetch + load-more
+  submitting = signal(false); // create / update in flight
+
+  // which post videos the user has explicitly opened (avoids global iframe load)
+  shownVideos = signal<Set<string>>(new Set());
+
+  // single computed gate for the publish/save button
+  isSubmitDisabled = computed(() => this.submitting() || this.isAnyImageUploading());
 
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
   }
 
-  // block publish if any image is still uploading
   isAnyImageUploading(): boolean {
     return this.uploadingImages().some(Boolean);
   }
 
   ngOnInit(): void {
-    this.loadPosts();
+    this.loadPosts(1);
   }
 
-  loadPosts(): void {
-    this.api.get<any[]>('blog').subscribe((data) => this.posts.set(data));
+  // paginated; appends on page > 1, replaces on page === 1
+  loadPosts(page: number): void {
+    this.loading.set(true);
+    this.api
+      .get<PaginatedPosts>(`blog?page=${page}&limit=${this.PAGE_SIZE}`)
+      .subscribe({
+        next: (res) => {
+          this.posts.set(page === 1 ? res.items : [...this.posts(), ...res.items]);
+          this.page.set(res.page);
+          this.hasMore.set(res.hasMore);
+          this.total.set(res.total);
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
+  }
+
+  // load-more handler
+  loadMore(): void {
+    if (!this.hasMore() || this.loading()) return;
+    this.loadPosts(this.page() + 1);
   }
 
   openCreateForm(): void {
@@ -710,24 +883,30 @@ export class HomeComponent implements OnInit {
     this.showForm.set(true);
   }
 
+  // submitting state lifecycle (set on next AND error to handle both paths)
   publish(): void {
     if (!this.validateForm()) return;
     const body = this.cleanBody();
+    this.submitting.set(true);
     this.api.post('blog', body).subscribe({
       next: () => {
         this.showForm.set(false);
         this.form.set(this.emptyForm());
-        this.loadPosts();
+        this.loadPosts(1); // reset to first page so the new post is visible at top
+        this.submitting.set(false);
       },
-      error: (err) => this.formError.set(err.error?.message || 'Error'),
+      error: (err) => {
+        this.formError.set(err.error?.message || 'Error');
+        this.submitting.set(false);
+      },
     });
   }
 
   getPostDate(post: any): Date {
-    // use publishedAt if set, fallback to createdAt
     return post.publishedAt ? new Date(post.publishedAt) : new Date(post.createdAt);
   }
 
+  // prefill publishedAt as YYYY-MM-DD (not raw ISO) so <input type="date"> shows it
   openEditForm(post: any): void {
     this.editingPostId.set(post.slug);
     this.form.set({
@@ -741,34 +920,43 @@ export class HomeComponent implements OnInit {
       images: post.images?.length ? [...post.images] : [],
       videoUrl: post.videoUrl || '',
       category: post.category || 'news',
-      publishedAt: post.publishedAt || '',
+      publishedAt: this.toDateInputValue(post.publishedAt),
     });
     this.formError.set('');
     this.showForm.set(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // SSR guard for window access
+    if (this.isBrowser) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   }
 
   deletePost(post: any): void {
     const message = this.isUa ? `Видалити "${post.titleUa}"?` : `Delete "${post.titleEn}"?`;
     if (confirm(message)) {
       this.api.delete(`blog/${post.slug}`).subscribe({
-        next: () => this.loadPosts(),
+        next: () => this.loadPosts(1), // refresh first page
         error: (err) => this.formError.set(err.error?.message || 'Error deleting post'),
       });
     }
   }
 
+  // same submitting state lifecycle as publish()
   updatePost(): void {
     if (!this.validateForm()) return;
     const body = this.cleanBody();
+    this.submitting.set(true);
     this.api.patch(`blog/${this.editingPostId()}`, body).subscribe({
       next: () => {
         this.showForm.set(false);
         this.editingPostId.set(null);
         this.form.set(this.emptyForm());
-        this.loadPosts();
+        this.loadPosts(1);
+        this.submitting.set(false);
       },
-      error: (err) => this.formError.set(err.error?.message || 'Error'),
+      error: (err) => {
+        this.formError.set(err.error?.message || 'Error');
+        this.submitting.set(false);
+      },
     });
   }
 
@@ -787,19 +975,16 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  // handle file selection → get presigned URL → upload to S3
   async onImageFileSelected(index: number, event: Event): Promise<void> {
     const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
 
-    // Set uploading state for this slot
     const states = [...this.uploadingImages()];
     states[index] = true;
     this.uploadingImages.set(states);
     this.formError.set('');
 
     try {
-      // Step 1: request presigned URL from backend
       const { uploadUrl, publicUrl } = await firstValueFrom(
         this.api.post<{ uploadUrl: string; publicUrl: string }>('upload/presigned-url', {
           filename: file.name,
@@ -807,7 +992,6 @@ export class HomeComponent implements OnInit {
         }),
       );
 
-      // Step 2: upload file directly to S3 (no auth header — presigned URL handles auth)
       const res = await fetch(uploadUrl, {
         method: 'PUT',
         body: file,
@@ -818,7 +1002,6 @@ export class HomeComponent implements OnInit {
         throw new Error(`S3 upload failed: ${res.status}`);
       }
 
-      // Step 3: store public URL in form
       const images = [...this.form().images];
       images[index] = publicUrl;
       this.form.set({ ...this.form(), images });
@@ -835,20 +1018,37 @@ export class HomeComponent implements OnInit {
     this.form.set({ ...this.form(), [field]: value });
   }
 
+  // extracted videoId helper (used by embed + thumbnail)
+  getVideoId(url: string): string {
+    if (url.includes('watch?v=')) return url.split('watch?v=')[1]?.split('&')[0] || '';
+    if (url.includes('youtu.be/')) return url.split('youtu.be/')[1]?.split('?')[0] || '';
+    return '';
+  }
+
   getEmbedUrl(url: string): SafeResourceUrl {
-    let videoId = '';
-    if (url.includes('watch?v=')) {
-      videoId = url.split('watch?v=')[1]?.split('&')[0];
-    } else if (url.includes('youtu.be/')) {
-      videoId = url.split('youtu.be/')[1]?.split('?')[0];
-    }
+    const videoId = this.getVideoId(url); // reuse helper
     return this.sanitizer.bypassSecurityTrustResourceUrl(
       `https://www.youtube.com/embed/${videoId}`,
     );
   }
 
-  // build per-article anchor URL for sharing
-  // use DOCUMENT instead of window, guard for SSR
+  // hqdefault is ~30 KB vs ~500 KB iframe payload
+  getYouTubeThumbnail(url: string): string {
+    const id = this.getVideoId(url);
+    return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : '';
+  }
+
+  // lazy iframe — render only after explicit click
+  showVideo(postId: string): void {
+    const next = new Set(this.shownVideos());
+    next.add(postId);
+    this.shownVideos.set(next);
+  }
+
+  isVideoShown(postId: string): boolean {
+    return this.shownVideos().has(postId);
+  }
+
   private getArticleUrl(post: any): string {
     if (!isPlatformBrowser(this.platformId)) {
       return `https://www.csd-fund.org/blog/${post.slug}`;
@@ -856,7 +1056,6 @@ export class HomeComponent implements OnInit {
     return `${this.document.location.origin}/blog/${post.slug}`;
   }
 
-  // NEW: social share URL builders
   getFacebookShareUrl(post: any): string {
     return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(this.getArticleUrl(post))}`;
   }
@@ -868,6 +1067,18 @@ export class HomeComponent implements OnInit {
   getXShareUrl(post: any): string {
     const title = this.isUa ? post.titleUa : post.titleEn;
     return `https://x.com/intent/tweet?url=${encodeURIComponent(this.getArticleUrl(post))}&text=${encodeURIComponent(title)}`;
+  }
+
+  // ISO timestamp -> YYYY-MM-DD for native date input.
+  // Use UTC parts to avoid the displayed date shifting by a day in negative-offset timezones.
+  private toDateInputValue(iso: string | Date | null | undefined): string {
+    if (!iso) return '';
+    const d = iso instanceof Date ? iso : new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const yyyy = d.getUTCFullYear();
+    const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
   }
 
   private validateForm(): boolean {

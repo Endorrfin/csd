@@ -6,8 +6,11 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
   Request,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { BlogService } from './blog.service';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -21,9 +24,16 @@ import { UserRole } from '../users/entities/user.entity';
 export class BlogController {
   constructor(private readonly blogService: BlogService) {}
 
+  // CHANGED: paginated response { items, total, page, limit, hasMore }
   @Get()
-  findAll() {
-    return this.blogService.findAllPublished();
+  findAll(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ) {
+    // hard cap to prevent abuse
+    const safeLimit = Math.min(Math.max(limit, 1), 50);
+    const safePage = Math.max(page, 1);
+    return this.blogService.findAllPublished(safePage, safeLimit);
   }
 
   @Get(':slug')

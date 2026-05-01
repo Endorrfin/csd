@@ -17,14 +17,32 @@ export class BlogService {
     private readonly postRepository: Repository<Post>,
   ) {}
 
-  findAllPublished(): Promise<Post[]> {
-    // sort by publishedAt if set, fallback to createdAt
-    return this.postRepository
+  async findAllPublished(
+    page: number,
+    limit: number,
+  ): Promise<{
+    items: Post[];
+    total: number;
+    page: number;
+    limit: number;
+    hasMore: boolean;
+  }> {
+    const [items, total] = await this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .where('post.isPublished = :isPublished', { isPublished: true })
       .orderBy('COALESCE(post."publishedAt", post."createdAt")', 'DESC')
-      .getMany();
+      .offset((page - 1) * limit)  // CHANGED: was skip()
+      .limit(limit)                 // CHANGED: was take()
+      .getManyAndCount();
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      hasMore: page * limit < total,
+    };
   }
 
   findAll(): Promise<Post[]> {
