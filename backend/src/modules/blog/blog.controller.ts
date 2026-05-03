@@ -24,7 +24,7 @@ import { UserRole } from '../users/entities/user.entity';
 export class BlogController {
   constructor(private readonly blogService: BlogService) {}
 
-  // CHANGED: paginated response { items, total, page, limit, hasMore }
+  // paginated response { items, total, page, limit, hasMore }
   @Get()
   findAll(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
@@ -34,6 +34,11 @@ export class BlogController {
     const safeLimit = Math.min(Math.max(limit, 1), 50);
     const safePage = Math.max(page, 1);
     return this.blogService.findAllPublished(safePage, safeLimit);
+  }
+
+  @Get('featured')
+  findFeatured() {
+    return this.blogService.findFeatured();
   }
 
   @Get(':slug')

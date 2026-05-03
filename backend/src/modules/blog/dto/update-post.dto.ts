@@ -65,4 +65,8 @@ export class UpdatePostDto {
   @IsDateString()
   @IsOptional()
   publishedAt?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isFeatured?: boolean;
 }

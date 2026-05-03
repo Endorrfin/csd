@@ -64,4 +64,8 @@ export class CreatePostDto {
   @IsDateString()
   @IsOptional()
   publishedAt?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isFeatured?: boolean;
 }

@@ -53,7 +53,7 @@ a {
   }
 }
 
-/* CHANGED: shared spinner/skeleton primitives */
+/* shared spinner/skeleton primitives */
 .btn-spinner {
   display: inline-block;
   width: 14px;
@@ -90,7 +90,28 @@ a {
 .skeleton-line--short { width: 30%; }
 .skeleton-line--medium { width: 70%; }
 
+.fade-in-init {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+          opacity 0.6s ease-out,
+          transform 0.6s ease-out;
+}
+
+.fade-in-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
 @keyframes skeleton-shimmer {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-init {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }

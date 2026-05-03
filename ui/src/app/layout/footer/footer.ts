@@ -17,7 +17,7 @@ import { TranslateModule } from '@ngx-translate/core';
       .footer {
         background: #1a365d;
         color: rgba(255, 255, 255, 0.7);
-        padding: 1.5rem 1rem;
+        padding: 0.5rem 1rem;
         text-align: center;
         font-size: 0.875rem;
         flex-shrink: 0;

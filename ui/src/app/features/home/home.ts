@@ -7,11 +7,14 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
 import { CarouselComponent } from '../../shared/components/carousel/carousel';
+import { StickyCtaComponent } from '../../shared/components/sticky-cta/sticky-cta';
+import { FadeInOnScrollDirective } from '../../shared/directives/fade-in-on-scroll.directive';
 import { DatePipe, isPlatformBrowser } from '@angular/common';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
 import { QUILL_MODULES } from '../../shared/config/quill.config';
+
 
 // response envelope from paginated /blog endpoint
 interface PaginatedPosts {
@@ -25,7 +28,16 @@ interface PaginatedPosts {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [TranslateModule, FormsModule, DatePipe, CarouselComponent, QuillModule, QuillHtmlPipe],
+  imports: [
+    TranslateModule,
+    FormsModule,
+    DatePipe,
+    CarouselComponent,
+    QuillModule,
+    QuillHtmlPipe,
+    StickyCtaComponent,
+    FadeInOnScrollDirective,
+  ],
   template: `
     <section class="news">
       <div class="news__header">
@@ -283,8 +295,13 @@ interface PaginatedPosts {
         </div>
       }
 
-      @for (post of posts(); track post.id) {
-        <article class="news-card" [id]="'post-' + post.slug">
+      @for (post of posts(); track post.id; let i = $index) {
+        <article
+          class="news-card"
+          [id]="'post-' + post.slug"
+          appFadeInOnScroll
+          [fadeDelay]="i * 80"
+        >
           <div class="news-card__body">
             <div class="news-card__top">
               <span class="news-card__category">{{ post.category }}</span>
@@ -428,6 +445,7 @@ interface PaginatedPosts {
       @if (!loading() && posts().length === 0) {
         <p class="news__empty">{{ isUa ? 'Новин поки немає' : 'No news yet' }}</p>
       }
+      <app-sticky-cta />
     </section>
   `,
   styles: [
