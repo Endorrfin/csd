@@ -52,7 +52,10 @@ export class Post {
   @Column({ default: true })
   isPublished: boolean;
 
-  // Author of the post
+  // CHANGED: hero featured flag — single-featured enforced in service layer
+  @Column({ default: false })
+  isFeatured: boolean;
+
   @ManyToOne(() => User, { eager: true })
   author: User;
 

@@ -112,13 +112,18 @@ import { Router } from '@angular/router';
   `,
   styles: [
     `
+    
+       :host {
+        position: sticky;
+        top: 0;
+        z-index: 1200;
+        display: block;
+      }
       .header {
         background: #1a365d;
         color: white;
         padding: 0 1rem;
         flex-shrink: 0;
-        position: relative;
-        z-index: 1200;
       }
       .header__container {
         max-width: 1200px;

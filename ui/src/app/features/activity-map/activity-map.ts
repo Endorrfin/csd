@@ -51,7 +51,8 @@ import { ActivityFilterService } from './services/activity-filter.service';
     `
       :host {
         display: block;
-        height: calc(100dvh - 64px);
+        height: calc(100dvh - 64px - 64px - 50px);
+        min-height: 600px;
       }
       .page {
         display: flex;

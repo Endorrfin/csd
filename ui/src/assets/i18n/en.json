@@ -12,7 +12,10 @@
   },
   "HOME": {
     "TITLE": "«Charitable Fund «Centre for Support and Development»»",
-    "SUBTITLE": "WASH · Repair & Recovery · Shelters"
+    "SUBTITLE": "WASH · Repair & Recovery · Shelters",
+    "CTA": {
+      "LABEL": "Cooperation"
+    }
   },
   "ACTIVITY_MAP": {
     "TITLE": "Activity Map",

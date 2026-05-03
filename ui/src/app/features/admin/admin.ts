@@ -120,7 +120,6 @@ import { AuthService } from '../../core/services/auth.service';
         grid-template-columns: 240px 1fr;
         max-width: 1400px;
         margin: 0 auto;
-        min-height: calc(100vh - 64px);
         position: relative;
       }
 
