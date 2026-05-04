@@ -6,6 +6,7 @@ import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ImpactStatsService } from './services/impact-stats.service';
 import { CarouselComponent } from '../../shared/components/carousel/carousel';
 import { StickyCtaComponent } from '../../shared/components/sticky-cta/sticky-cta';
 import { FadeInOnScrollDirective } from '../../shared/directives/fade-in-on-scroll.directive';
@@ -14,6 +15,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { firstValueFrom } from 'rxjs';
 import { DOCUMENT } from '@angular/common';
 import { QUILL_MODULES } from '../../shared/config/quill.config';
+import { ImpactStatsComponent } from './components/impact-stats/impact-stats';
+import { HeroFeaturedComponent } from './components/hero-featured/hero-featured';
+
 
 
 // response envelope from paginated /blog endpoint
@@ -37,9 +41,18 @@ interface PaginatedPosts {
     QuillHtmlPipe,
     StickyCtaComponent,
     FadeInOnScrollDirective,
+    ImpactStatsComponent,
+    HeroFeaturedComponent,
   ],
   template: `
     <section class="news">
+    
+      <app-hero-featured
+        [post]="featuredPost()"
+        [loading]="featuredLoading()"
+      />
+
+      <app-impact-stats />
       <div class="news__header">
         <h2>{{ isUa ? 'Новини' : 'News' }}</h2>
         @if (auth.isManager) {
@@ -236,6 +249,17 @@ interface PaginatedPosts {
               <option value="update">{{ isUa ? 'Оновлення' : 'Update' }}</option>
             </select>
           </label>
+          
+          <!-- featured flag (single-featured enforced server-side) -->
+          <label class="news-form__checkbox">
+            <input
+              type="checkbox"
+              [ngModel]="form().isFeatured"
+              (ngModelChange)="updateFormField('isFeatured', $event)"
+            />
+            <span>{{ 'HOME.FEATURED.LABEL' | translate }}</span>
+          </label>
+          <small class="news-form__hint">{{ 'HOME.FEATURED.HINT' | translate }}</small>
 
           <label
             >{{
@@ -588,6 +612,25 @@ interface PaginatedPosts {
         cursor: pointer;
         flex-shrink: 0;
       }
+      
+      .news-form__checkbox {
+        display: flex !important;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 1rem 0 0.25rem !important;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .news-form__checkbox input {
+        width: auto !important;
+        margin: 0 !important;
+      }
+      .news-form__hint {
+        display: block;
+        color: #718096;
+        font-size: 0.75rem;
+        margin: 0 0 0.75rem;
+      }
 
       .news-form__error {
         color: #e53e3e;
@@ -827,6 +870,7 @@ export class HomeComponent implements OnInit {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
+  private readonly impactStats = inject(ImpactStatsService);
   readonly auth = inject(AuthService);
   readonly isBrowser = isPlatformBrowser(this.platformId);
 
@@ -843,6 +887,8 @@ export class HomeComponent implements OnInit {
   formError = signal('');
   editingPostId = signal<string | null>(null);
   form = signal(this.emptyForm());
+  featuredPost = signal<any | null>(null);
+  featuredLoading = signal(true);
 
   uploadingImages = signal<boolean[]>(Array(5).fill(false));
 
@@ -868,7 +914,24 @@ export class HomeComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.impactStats.ensureLoaded();
+    this.loadFeatured();
     this.loadPosts(1);
+  }
+
+  private loadFeatured(): void {
+    this.featuredLoading.set(true);
+    this.api.get<any | null>('blog/featured').subscribe({
+      next: (post) => {
+        this.featuredPost.set(post);
+        this.featuredLoading.set(false);
+      },
+      error: () => {
+        // Hero falls back to gradient + static title on any error
+        this.featuredPost.set(null);
+        this.featuredLoading.set(false);
+      },
+    });
   }
 
   // paginated; appends on page > 1, replaces on page === 1
@@ -911,6 +974,7 @@ export class HomeComponent implements OnInit {
         this.showForm.set(false);
         this.form.set(this.emptyForm());
         this.loadPosts(1); // reset to first page so the new post is visible at top
+        this.loadFeatured();
         this.submitting.set(false);
       },
       error: (err) => {
@@ -939,6 +1003,7 @@ export class HomeComponent implements OnInit {
       videoUrl: post.videoUrl || '',
       category: post.category || 'news',
       publishedAt: this.toDateInputValue(post.publishedAt),
+      isFeatured: !!post.isFeatured,
     });
     this.formError.set('');
     this.showForm.set(true);
@@ -952,7 +1017,10 @@ export class HomeComponent implements OnInit {
     const message = this.isUa ? `Видалити "${post.titleUa}"?` : `Delete "${post.titleEn}"?`;
     if (confirm(message)) {
       this.api.delete(`blog/${post.slug}`).subscribe({
-        next: () => this.loadPosts(1), // refresh first page
+        next: () => {
+          this.loadPosts(1);
+          this.loadFeatured();
+        },
         error: (err) => this.formError.set(err.error?.message || 'Error deleting post'),
       });
     }
@@ -969,6 +1037,7 @@ export class HomeComponent implements OnInit {
         this.editingPostId.set(null);
         this.form.set(this.emptyForm());
         this.loadPosts(1);
+        this.loadFeatured();
         this.submitting.set(false);
       },
       error: (err) => {
@@ -1032,7 +1101,7 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  updateFormField(field: string, value: string): void {
+  updateFormField(field: string, value: string | boolean): void {
     this.form.set({ ...this.form(), [field]: value });
   }
 
@@ -1120,6 +1189,8 @@ export class HomeComponent implements OnInit {
     if (!body.excerptEn) delete body.excerptEn;
     if (body.images.length === 0) delete body.images;
     if (!body.publishedAt) delete body.publishedAt;
+    // isFeatured intentionally always sent (true OR false) so that
+    // unchecking the box on edit propagates to the backend.
     return body;
   }
 
@@ -1136,6 +1207,7 @@ export class HomeComponent implements OnInit {
       videoUrl: '',
       category: 'news',
       publishedAt: '',
+      isFeatured: false,
     };
   }
 }

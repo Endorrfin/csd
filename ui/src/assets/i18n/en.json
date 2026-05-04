@@ -15,6 +15,21 @@
     "SUBTITLE": "WASH · Repair & Recovery · Shelters",
     "CTA": {
       "LABEL": "Cooperation"
+    },
+    "HERO": {
+      "READ_MORE": "Read more",
+      "FALLBACK_TITLE": "Charitable Fund \"Centre for Support and Development\""
+    },
+    "STATS": {
+      "ARIA": "Impact metrics",
+      "WORKS": "Works completed",
+      "LOCATIONS": "Locations reached",
+      "REGIONS": "Regions",
+      "DONORS": "Donor partners"
+    },
+    "FEATURED": {
+      "LABEL": "Make this post featured (hero)",
+      "HINT": "Only one post can be featured. Setting it here automatically unsets the previous one."
     }
   },
   "ACTIVITY_MAP": {
