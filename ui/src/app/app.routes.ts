@@ -21,10 +21,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/blog/blog-post').then((m) => m.BlogPostComponent),
     resolve: { post: blogPostResolver }, // resolve before render
   },
-  {
-    path: 'partners',
-    loadComponent: () => import('./features/partners/partners').then((m) => m.PartnersComponent),
-  },
+  // {
+  //   path: 'partners',
+  //   loadComponent: () => import('./features/partners/partners').then((m) => m.PartnersComponent),
+  // },
 
   {
     path: 'activity-map',

@@ -47,9 +47,10 @@ import { Router } from '@angular/router';
           <a routerLink="/activity-map" routerLinkActive="active" (click)="closeMenu()">{{
             'NAV.ACTIVITY_MAP' | translate
           }}</a>
-          <a routerLink="/partners" routerLinkActive="active" (click)="closeMenu()">{{
-            'NAV.PARTNERS' | translate
-          }}</a>
+          <!-- 🤔 FROZEN  -->
+          <!-- <a routerLink="/partners" routerLinkActive="active" (click)="closeMenu()">{{  -->
+            <!-- 'NAV.PARTNERS' | translate  -->
+          <!-- }}</a>  -->
           <a routerLink="/cooperation" routerLinkActive="active" (click)="closeMenu()">{{
             'NAV.COOPERATION' | translate
           }}</a>

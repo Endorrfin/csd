@@ -60,13 +60,27 @@ import {
           [attr.data-group]="s.group"
           (click)="goToStep(i)"
         >
+
+          
           <div class="step-circle">
             @if (currentStep() > i) {
+              <!-- completed state always shows the check, regardless of icon source -->
               <lucide-icon [img]="icons.check" [size]="16"></lucide-icon>
+            } @else if (s.iconSrc) {
+              <!-- CHANGED: SVG icon for infra steps (visual parity with Activity Map sidebar) -->
+              <img
+                [src]="s.iconSrc"
+                [alt]="''"
+                aria-hidden="true"
+                class="step-icon-svg"
+              />
             } @else {
-              <lucide-icon [img]="icons[s.iconKey]" [size]="16"></lucide-icon>
+              <lucide-icon [img]="icons[s.iconKey!]" [size]="16"></lucide-icon>
             }
           </div>
+          
+          
+          
           <span class="step-label">{{ isUa ? s.labelUa : s.labelEn }}</span>
         </div>
         @if (i < steps.length - 1) {
@@ -109,8 +123,8 @@ import {
                   }}</span>
                 }
               </div>
-
-              <div class="form-field">
+              
+              <div class="form-field full-width">
                 <label
                   >{{
                     isUa
@@ -132,7 +146,7 @@ import {
                 }
               </div>
               
-              <div class="form-field">
+              <div class="form-field full-width">
                 <label>{{ isUa ? 'ПІБ керівника' : 'Head name' }} <span class="req">*</span></label>
                 <input
                   formControlName="headName"
@@ -1742,7 +1756,7 @@ import {
         color: #64748b;
       }
 
-      /* CHANGED: align + icon with button label. */
+      /* align + icon with button label. */
       .btn-add {
         display: inline-flex;
         align-items: center;
@@ -1753,6 +1767,17 @@ import {
         display: inline-flex;
         align-items: center;
         justify-content: center;
+      }
+      
+      /* SVG icon inside step-circle — same size as lucide-icon (16px). */
+      .step-icon-svg {
+        width: 16px;
+        height: 16px;
+        object-fit: contain;
+        /* Inherit color from parent .step-circle so completed/active states
+           stay consistent if SVG uses currentColor. If your SVGs are full-color
+           (look at the screenshot — they are), no filter is applied. */
+        display: block;
       }
       
       /* ══════ Equipment accordion (Task 5c) ══════ */
@@ -2024,25 +2049,35 @@ export class WashFormComponent implements OnInit {
   /**
    * 8 steps with semantic group colour and icon.
    * Groups: 'primary' (blue) | 'infra' (teal) | 'equipment' (amber) | 'review' (gray).
-   * added Pumps step between Purification and Equipment.
+   * 4 infra steps use SVG icons from /assets/icons/activities/
+   * (visual consistency with the public Activity Map sidebar).
+   * Other steps keep lucide icons via `iconKey`.
    */
   steps = [
     { key: 'general', labelUa: 'Інфо', labelEn: 'Info',
-      optional: false, group: 'primary', iconKey: 'info' as const },
+      optional: false, group: 'primary',
+      iconKey: 'info' as const, iconSrc: null },
     { key: 'object', labelUa: 'Обʼєкт', labelEn: 'Object',
-      optional: false, group: 'primary', iconKey: 'object' as const },
+      optional: false, group: 'primary',
+      iconKey: 'object' as const, iconSrc: null },
     { key: 'borehole', labelUa: 'Буріння', labelEn: 'Borehole',
-      optional: true, group: 'infra', iconKey: 'borehole' as const },
+      optional: true, group: 'infra',
+      iconKey: null, iconSrc: '/assets/icons/activities/borehole.svg' },
     { key: 'tower', labelUa: 'Башти', labelEn: 'Towers',
-      optional: true, group: 'infra', iconKey: 'tower' as const },
+      optional: true, group: 'infra',
+      iconKey: null, iconSrc: '/assets/icons/activities/water-tower.svg' },
     { key: 'purification', labelUa: 'Очищення', labelEn: 'Purify',
-      optional: true, group: 'infra', iconKey: 'purification' as const },
+      optional: true, group: 'infra',
+      iconKey: null, iconSrc: '/assets/icons/activities/purification-system.svg' },
     { key: 'pumps', labelUa: 'Насоси', labelEn: 'Pumps',
-      optional: true, group: 'infra', iconKey: 'pump' as const },
+      optional: true, group: 'infra',
+      iconKey: null, iconSrc: '/assets/icons/activities/pumps.svg' },
     { key: 'equipment', labelUa: 'Обладнання', labelEn: 'Equipment',
-      optional: true, group: 'equipment', iconKey: 'equipment' as const },
+      optional: true, group: 'equipment',
+      iconKey: 'equipment' as const, iconSrc: null },
     { key: 'review', labelUa: 'Перевірка', labelEn: 'Review',
-      optional: false, group: 'review', iconKey: 'review' as const },
+      optional: false, group: 'review',
+      iconKey: 'review' as const, iconSrc: null },
   ] as const;
 
   /**
