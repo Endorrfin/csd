@@ -166,7 +166,7 @@ export function getUnitLabel(unit: EquipmentUnit, isUa: boolean): string {
 }
 
 // ══════════════════════════════════════════════════════════════
-// NEW: types for admin detail/edit (Task 7)
+// types for admin detail/edit (Task 7)
 // ══════════════════════════════════════════════════════════════
 
 export type WashFormStatus =
