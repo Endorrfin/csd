@@ -1,0 +1,1144 @@
+<!-- stepper with lucide icons and semantic group colors. -->
+<div class="stepper">
+  @for (s of steps; track s.key; let i = $index) {
+  <div
+    class="step"
+    [class.active]="currentStep() === i"
+    [class.completed]="currentStep() > i"
+    [class.optional]="s.optional"
+    [attr.data-group]="s.group"
+    (click)="goToStep(i)"
+  >
+
+
+    <div class="step-circle">
+      @if (currentStep() > i) {
+      <!-- completed state always shows the check, regardless of icon source -->
+      <lucide-icon [img]="icons.check" [size]="16"></lucide-icon>
+      } @else if (s.iconSrc) {
+      <!-- SVG icon for infra steps (visual parity with Activity Map sidebar) -->
+      <img
+        [src]="s.iconSrc"
+        [alt]="''"
+        aria-hidden="true"
+        class="step-icon-svg"
+      />
+      } @else {
+      <lucide-icon [img]="icons[s.iconKey!]" [size]="16"></lucide-icon>
+      }
+    </div>
+
+
+
+    <span class="step-label">{{ isUa ? s.labelUa : s.labelEn }}</span>
+  </div>
+  @if (i < steps.length - 1) {
+  <div
+    class="step-line"
+    [class.completed]="currentStep() > i"
+    [attr.data-group]="s.group"
+  ></div>
+  }
+  }
+</div>
+
+@if (submitted() && mode === 'create') {
+<div class="success-card">
+  <div class="success-icon">&#9989;</div>
+  <h2>{{ isUa ? 'Заявку успішно подано!' : 'Form submitted successfully!' }}</h2>
+  <p>
+    {{ isUa ? 'Ми звʼяжемось з вами найближчим часом.' : 'We will contact you shortly.' }}
+  </p>
+  <button class="btn btn-primary" (click)="resetForm()">
+    {{ isUa ? 'Подати нову заявку' : 'Submit another form' }}
+  </button>
+</div>
+
+} @else {
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="wash-form">
+  <!-- STEP 0: General Info -->
+  @if (currentStep() === 0) {
+  <div class="form-section">
+    <h2 class="section-title">
+      {{ isUa ? 'I. Загальна інформація' : 'I. General Information' }}
+    </h2>
+    <div class="form-grid">
+      <div class="location-block">
+        <app-location-selector formControlName="location" [isUa]="isUa" [required]="true">
+        </app-location-selector>
+        @if (showError('location')) {
+        <span class="error">{{
+                isUa ? 'Оберіть хоча б область' : 'Select at least a region'
+              }}</span>
+        }
+      </div>
+
+      <div class="form-field full-width">
+        <label
+        >{{
+          isUa
+          ? 'Назва організації / установи / закладу'
+          : 'Name of organization / institution / facility'
+          }}
+          <span class="req">*</span></label
+        >
+        <input
+          formControlName="organizationName"
+          [placeholder]="
+                isUa
+                  ? 'Громада, школа, лікарня, водоканал...'
+                  : 'Community, school, hospital, water utility...'
+              "
+        />
+        @if (showError('organizationName')) {
+        <span class="error">{{ isUa ? 'Обовʼязкове поле' : 'Required' }}</span>
+        }
+      </div>
+
+      <div class="form-field full-width">
+        <label>{{ isUa ? 'ПІБ керівника' : 'Head name' }} <span class="req">*</span></label>
+        <input
+          formControlName="headName"
+          [placeholder]="isUa ? 'Прізвище Імʼя По-батькові' : 'Full name'"
+        />
+        @if (showError('headName')) {
+        <span class="error">{{ isUa ? 'Обовʼязкове поле' : 'Required' }}</span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label>
+          {{ isUa ? 'Телефон керівника' : 'Head phone' }}
+          <span class="req">*</span>
+        </label>
+        <!-- '+38' prefix + digits-only input, 10 chars. -->
+        <div class="phone-input">
+          <span class="phone-prefix">+38</span>
+          <input
+            type="tel"
+            inputmode="numeric"
+            [value]="form.get('headPhoneDigits')?.value"
+            (input)="onPhoneInput($event)"
+            maxlength="10"
+            placeholder="0501234567"
+          />
+        </div>
+        <span class="hint">
+              {{ isUa ? 'Формат: +380XXXXXXXXX (10 цифр після +38)' : 'Format: +380XXXXXXXXX (10 digits after +38)' }}
+            </span>
+        @if (showError('headPhoneDigits')) {
+        <span class="error">{{ isUa ? 'Введіть 10 цифр' : 'Enter 10 digits' }}</span>
+        }
+      </div>
+
+      <div class="form-field">
+        <label>Email <span class="req">*</span></label>
+        <input formControlName="email" type="email" placeholder="email&#64;example.com" />
+        @if (showError('email')) {
+        <span class="error">{{
+                isUa ? 'Введіть коректний email' : 'Enter valid email'
+              }}</span>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- STEP 1: Object -->
+  @if (currentStep() === 1) {
+  <div class="form-section">
+    <h2 class="section-title">
+      {{ isUa ? 'II. Інформація про обʼєкт' : 'II. Object Information' }}
+    </h2>
+    <div class="form-grid">
+      <div class="form-field full-width">
+        <label
+        >{{ isUa ? 'Назва обʼєкту' : 'Object name' }} <span class="req">*</span></label
+        >
+        <input
+          formControlName="objectName"
+          [placeholder]="
+                isUa ? 'Вода, каналізація, КНС, ВНС тощо' : 'Water, sewage, pumping station'
+              "
+        />
+        @if (showError('objectName')) {
+        <span class="error">{{ isUa ? 'Обовʼязкове поле' : 'Required' }}</span>
+        }
+      </div>
+      <div class="form-field">
+        <label
+        >{{ isUa ? 'Кількість залежних людей' : 'Dependent population' }}
+          <span class="req">*</span></label
+        >
+        <input formControlName="dependentPopulation" type="number" min="1" />
+        @if (showError('dependentPopulation')) {
+        <span class="error">{{ isUa ? 'Число більше 0' : 'Number > 0' }}</span>
+        }
+      </div>
+      <div class="form-field">
+        <label>{{ isUa ? 'Орієнтовний термін монтажу' : 'Installation deadline' }}</label>
+        <input
+          formControlName="installationDeadline"
+          [placeholder]="isUa ? 'напр. 30 днів' : 'e.g. 30 days'"
+        />
+      </div>
+      <div class="form-field full-width">
+        <label>{{
+          isUa ? 'Залежні соціальні установи' : 'Dependent social facilities'
+          }}</label>
+        <textarea
+          formControlName="socialFacilities"
+          rows="2"
+          [placeholder]="isUa ? 'Лікарня, школа, садочок...' : 'Hospital, school...'"
+        ></textarea>
+      </div>
+      <div class="form-field full-width">
+        <label
+        >{{ isUa ? 'Причини заміни / опис проблеми' : 'Replacement reason' }}
+          <span class="req">*</span></label
+        >
+        <textarea
+          formControlName="replacementReason"
+          rows="3"
+          [placeholder]="
+                isUa
+                  ? 'Опишіть причини необхідності заміни (пошкодження, фізичний знос, тощо)'
+                  : 'Describe replacement reasons (damage, physical wear, etc.)'
+              "
+        ></textarea>
+        @if (showError('replacementReason')) {
+        <span class="error">{{ isUa ? 'Мінімум 10 символів' : 'Min 10 chars' }}</span>
+        }
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- STEP 2: Borehole Drilling (repeatable) -->
+  @if (currentStep() === 2) {
+  <div class="form-section">
+    <div class="section-header-optional">
+      <div>
+        <h2 class="section-title">
+          {{ isUa ? 'III. Буріння свердловин' : 'III. Borehole Drilling' }}
+        </h2>
+        <p class="section-hint">
+          {{
+          isUa
+          ? 'Додайте одну або кілька свердловин, якщо потрібне буріння.'
+          : 'Add one or more boreholes if drilling is needed.'
+          }}
+        </p>
+      </div>
+      <span class="badge-optional">{{ isUa ? 'опціонально' : 'optional' }}</span>
+    </div>
+
+    <div class="repeat-list" formArrayName="boreholes">
+      @for (bh of boreholesArray.controls; track bh; let i = $index) {
+      <div class="repeat-card" [formGroupName]="i">
+        <div class="repeat-card-header">
+          <span class="row-number">{{ i + 1 }}</span>
+          <button type="button" class="btn-remove" (click)="removeBorehole(i)">
+            <lucide-icon [img]="icons.remove" [size]="14"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field full-width">
+            <label>
+              {{ isUa ? 'Виберіть необхідний варіант' : 'Select the required option' }}
+              <span class="req">*</span>
+            </label>
+            <select formControlName="workType">
+              <option value="">{{ isUa ? '-- Оберіть --' : '-- Select --' }}</option>
+              <option value="new_drilling">
+                {{ isUa ? 'Буріння нової свердловини' : 'Drilling a new borehole' }}
+              </option>
+              <option value="repair_cleaning">
+                {{
+                isUa
+                ? 'Ремонт (чистка) існуючої свердловини'
+                : 'Repair (cleaning) of an existing borehole'
+                }}
+              </option>
+              <option value="new_near_existing">
+                {{ isUa ? 'Буріння нової поруч із існуючою' : 'Drilling new next to existing' }}
+              </option>
+            </select>
+            @if (showControlError(bh.get('workType'))) {
+            <span class="error">{{ isUa ? 'Оберіть варіант' : 'Select an option' }}</span>
+            }
+          </div>
+
+          @if (bh.get('workType')?.value === 'new_near_existing') {
+          <div class="form-field">
+            <label>{{ isUa ? 'Чи є відомості про водоносний горизонт?' : 'Aquifer info available?' }}</label>
+            <select formControlName="hasAquiferInfo">
+              <option [ngValue]="false">{{ isUa ? 'Ні' : 'No' }}</option>
+              <option [ngValue]="true">{{ isUa ? 'Так' : 'Yes' }}</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Глибина існуючої свердловини, м' : 'Existing borehole depth, m' }}</label>
+            <input type="number" formControlName="existingDepth" min="1" max="800" placeholder="1 – 800" />
+            @if (showControlError(bh.get('existingDepth'))) {
+            <span class="error">{{ isUa ? 'Діапазон: 1–800 м' : 'Range: 1–800 m' }}</span>
+            }
+            <span class="hint">
+                      {{ isUa ? 'Діапазон: 1–800 м' : 'Range: 1–800 m' }}
+                    </span>
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Дебіт існуючої свердловини, м³/год' : 'Existing borehole debit, m³/h' }}</label>
+            <input type="number" formControlName="existingDebit" min="1" max="30" placeholder="1 – 30" />
+            @if (showControlError(bh.get('existingDebit'))) {
+            <span class="error">{{ isUa ? 'Діапазон: 1–30 м³/год' : 'Range: 1–30 m³/h' }}</span>
+            }
+            <span class="hint">
+                      {{ isUa ? 'Діапазон: 1–30 м³/год' : 'Range: 1–30 m³/h' }}
+                    </span>
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Чи є інформація про конструкцію?' : 'Design info available?' }}</label>
+            <select formControlName="hasDesignInfo">
+              <option [ngValue]="false">{{ isUa ? 'Ні' : 'No' }}</option>
+              <option [ngValue]="true">{{ isUa ? 'Так' : 'Yes' }}</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Чи є паспорт на існуючу свердловину?' : 'Passport available?' }}</label>
+            <select formControlName="hasPassport">
+              <option [ngValue]="false">{{ isUa ? 'Ні' : 'No' }}</option>
+              <option [ngValue]="true">{{ isUa ? 'Так' : 'Yes' }}</option>
+            </select>
+          </div>
+          <div class="form-field full-width">
+            <label>{{ isUa ? 'Де розташована стара свердловина?' : 'Where is the old borehole located?' }}</label>
+            <input formControlName="oldLocation" [placeholder]="isUa ? 'Опишіть розташування' : 'Describe location'" />
+          </div>
+          }
+
+          <div class="form-field">
+            <label>
+              {{ isUa ? 'Очікуваний дебіт після виконання робіт, м³/год' : 'Expected flow rate after work, m³/h' }}
+              <span class="req">*</span>
+            </label>
+            <input type="number" formControlName="expectedFlowRate" min="7" max="50" placeholder="7 – 50" />
+            @if (showControlError(bh.get('expectedFlowRate'))) {
+            <span class="error">
+                      @if (bh.get('expectedFlowRate')?.errors?.['required']) {
+                        {{ isUa ? 'Обовʼязкове поле' : 'Required' }}
+                      } @else {
+                        {{ isUa ? 'Діапазон: 7–50 м³/год' : 'Range: 7–50 m³/h' }}
+                      }
+                    </span>
+            }
+            <span class="hint">
+                    {{ isUa ? 'Діапазон: 7–50 м³/год' : 'Range: 7–50 m³/h' }}
+                  </span>
+          </div>
+          <div class="form-field full-width">
+            <label>{{ isUa ? 'Примітки' : 'Notes' }}</label>
+            <textarea formControlName="notes" rows="2" [placeholder]="isUa ? 'Додаткова інформація' : 'Additional information'"></textarea>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <button type="button" class="btn btn-add" (click)="addBorehole()">
+      <lucide-icon [img]="icons.plus" [size]="16"></lucide-icon>
+      {{ isUa ? 'Додати свердловину' : 'Add borehole' }}
+    </button>
+  </div>
+  }
+
+  <!-- STEP 3: Water Towers (repeatable) -->
+  @if (currentStep() === 3) {
+  <div class="form-section">
+    <div class="section-header-optional">
+      <div>
+        <h2 class="section-title">
+          {{ isUa ? 'IV. Водонапірні башти' : 'IV. Water Towers' }}
+        </h2>
+        <p class="section-hint">
+          {{
+          isUa
+          ? 'Додайте одну або кілька башт. ВБР класифікуються за обʼємом бака та висотою опори.'
+          : 'Add one or more towers. VBRs are classified by tank volume and support height.'
+          }}
+        </p>
+      </div>
+      <span class="badge-optional">{{ isUa ? 'опціонально' : 'optional' }}</span>
+    </div>
+
+    <div class="repeat-list" formArrayName="towers">
+      @for (tw of towersArray.controls; track tw; let i = $index) {
+      <div class="repeat-card" [formGroupName]="i">
+        <div class="repeat-card-header">
+          <span class="row-number">{{ i + 1 }}</span>
+          <button type="button" class="btn-remove" (click)="removeTower(i)">
+            <lucide-icon [img]="icons.remove" [size]="14"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label>{{ isUa ? 'Тип башти' : 'Tower type' }} <span class="req">*</span></label>
+            <select formControlName="towerType">
+              <option value="">{{ isUa ? '-- Оберіть --' : '-- Select --' }}</option>
+              <option value="vbr_15">{{ isUa ? 'ВБР-15 (15 м³)' : 'VBR-15 (15 m³)' }}</option>
+              <option value="vbr_25">{{ isUa ? 'ВБР-25 (25 м³)' : 'VBR-25 (25 m³)' }}</option>
+              <option value="vbr_50">{{ isUa ? 'ВБР-50 (50 м³)' : 'VBR-50 (50 m³)' }}</option>
+              <option value="vbr_over_50">{{ isUa ? 'ВБР понад 50 м³' : 'VBR over 50 m³' }}</option>
+            </select>
+            @if (showControlError(tw.get('towerType'))) {
+            <span class="error">{{ isUa ? 'Оберіть тип' : 'Select type' }}</span>
+            }
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Висота башти' : 'Tower height' }} <span class="req">*</span></label>
+            <select formControlName="towerHeight">
+              <option value="">{{ isUa ? '-- Оберіть --' : '-- Select --' }}</option>
+              <option value="8">8 {{ isUa ? 'м (низька)' : 'm (low)' }}</option>
+              <option value="10">10 {{ isUa ? 'м (низька)' : 'm (low)' }}</option>
+              <option value="12">12 {{ isUa ? 'м (низька)' : 'm (low)' }}</option>
+              <option value="15">15 {{ isUa ? 'м (середня)' : 'm (average)' }}</option>
+              <option value="18">18 {{ isUa ? 'м (середня)' : 'm (average)' }}</option>
+              <option value="20">20 {{ isUa ? 'м (висока)' : 'm (high)' }}</option>
+              <option value="25">25 {{ isUa ? 'м (висока)' : 'm (high)' }}</option>
+              <option value="over_25">{{ isUa ? 'Понад 25 м' : 'Over 25 m' }}</option>
+            </select>
+            @if (showControlError(tw.get('towerHeight'))) {
+            <span class="error">{{ isUa ? 'Оберіть висоту' : 'Select height' }}</span>
+            }
+          </div>
+          @if (tw.get('towerHeight')?.value === 'over_25') {
+          <div class="form-field">
+            <label>{{ isUa ? 'Вкажіть висоту, м' : 'Enter height, m' }}</label>
+            <input type="number" formControlName="customHeight" min="26" placeholder="26+" />
+            @if (showControlError(tw.get('customHeight'))) {
+            <span class="error">{{ isUa ? 'Мінімум 26 м' : 'Min 26 m' }}</span>
+            }
+          </div>
+          }
+        </div>
+
+        <div class="checklist" style="margin-top: 1rem">
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="hasFoundation" />
+            <span class="checklist-text">{{ isUa ? 'Чи є фундамент?' : 'Is there a foundation?' }}</span>
+          </label>
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="isFoundationSuitable" />
+            <span class="checklist-text">{{ isUa ? 'Чи придатний фундамент? (візуальна оцінка)' : 'Is the foundation suitable? (visual assessment)' }}</span>
+          </label>
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="needsFoundationReconstruction" />
+            <span class="checklist-text">{{ isUa ? 'Чи є потреба в реконструкції фундаменту?' : 'Need for foundation reconstruction?' }}</span>
+          </label>
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="canSelfReconstruct" />
+            <span class="checklist-text">{{ isUa ? 'Чи є можливість виконати роботи власними силами?' : 'Can carry out works on your own?' }}</span>
+          </label>
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="canProvideCrane" />
+            <span class="checklist-text">{{ isUa ? 'Чи є можливість надати кран?' : 'Can you provide a crane?' }}</span>
+          </label>
+        </div>
+
+        <div class="form-grid" style="margin-top: 1rem">
+          <div class="form-field full-width">
+            <label>{{ isUa ? 'Примітки' : 'Notes' }}</label>
+            <textarea formControlName="notes" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <button type="button" class="btn btn-add" (click)="addTower()">
+      <lucide-icon [img]="icons.plus" [size]="16"></lucide-icon>
+      {{ isUa ? 'Додати башту' : 'Add tower' }}
+    </button>
+  </div>
+  }
+
+
+  <!-- STEP 4: Purification (repeatable) -->
+  @if (currentStep() === 4) {
+  <div class="form-section">
+    <div class="section-header-optional">
+      <div>
+        <h2 class="section-title">
+          {{ isUa ? 'V. Системи очищення води' : 'V. Water Purification Systems' }}
+        </h2>
+        <p class="section-hint">
+          {{
+          isUa
+          ? 'Додайте одну або кілька систем очищення. Вкажіть наявність необхідних умов.'
+          : 'Add one or more purification systems. Indicate availability of required conditions.'
+          }}
+        </p>
+      </div>
+      <span class="badge-optional">{{ isUa ? 'опціонально' : 'optional' }}</span>
+    </div>
+
+    <div class="repeat-list" formArrayName="purifications">
+      @for (ps of purificationsArray.controls; track ps; let i = $index) {
+      <div class="repeat-card" [formGroupName]="i">
+        <div class="repeat-card-header">
+          <span class="row-number">{{ i + 1 }}</span>
+          <button type="button" class="btn-remove" (click)="removePurification(i)">
+            <lucide-icon [img]="icons.remove" [size]="14"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="checklist">
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="hasRoom" />
+            <span class="checklist-text">{{ isUa ? 'Наявність приміщення (8–10 м², висота ≥ 2.7 м)' : 'Room available (8–10 m², height ≥ 2.7 m)' }}</span>
+          </label>
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="hasTemperatureControl" />
+            <span class="checklist-text">{{ isUa ? 'Температура +5 °C … +30 °C' : 'Temperature +5 °C … +30 °C' }}</span>
+          </label>
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="hasWaterInletDrainage" />
+            <span class="checklist-text">{{ isUa ? 'Вхідне водопостачання та дренаж' : 'Water inlet and drainage' }}</span>
+          </label>
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="hasPowerSupply" />
+            <span class="checklist-text">{{ isUa ? 'Електроживлення 220 В' : '220 V power supply' }}</span>
+          </label>
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="canMaintainSystem" />
+            <span class="checklist-text">{{ isUa ? 'Спроможність обслуговування' : 'Ability to maintain system' }}</span>
+          </label>
+          <label class="checklist-item">
+            <input type="checkbox" formControlName="willingToProvideWater" />
+            <span class="checklist-text">{{ isUa ? 'Готовність надавати очищену воду жителям' : 'Willingness to provide purified water to residents' }}</span>
+          </label>
+        </div>
+
+        <div class="form-grid" style="margin-top: 1rem">
+          <div class="form-field full-width">
+            <label>{{ isUa ? 'Примітки' : 'Notes' }}</label>
+            <textarea formControlName="notes" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <button type="button" class="btn btn-add" (click)="addPurification()">
+      <lucide-icon [img]="icons.plus" [size]="16"></lucide-icon>
+      {{ isUa ? 'Додати систему очищення' : 'Add purification system' }}
+    </button>
+  </div>
+  }
+
+  <!-- STEP 5: Pumps (real repeatable form) -->
+  @if (currentStep() === 5) {
+  <div class="form-section">
+    <div class="section-header-optional">
+      <div>
+        <h2 class="section-title">
+          {{ isUa ? 'VI. Насоси' : 'VI. Pumps' }}
+        </h2>
+        <p class="section-hint">
+          {{
+          isUa
+          ? 'Додайте насоси. Обовʼязкові поля — призначення та кількість. Решта — опціонально.'
+          : 'Add pumps. Required: purpose and quantity. Everything else is optional.'
+          }}
+        </p>
+      </div>
+      <span class="badge-optional">{{ isUa ? 'опціонально' : 'optional' }}</span>
+    </div>
+
+    <div class="repeat-list" formArrayName="pumps">
+      @for (pu of pumpsArray.controls; track pu; let i = $index) {
+      <div class="repeat-card" [formGroupName]="i">
+        <div class="repeat-card-header">
+          <span class="row-number">{{ i + 1 }}</span>
+          <button type="button" class="btn-remove" (click)="removePump(i)">
+            <lucide-icon [img]="icons.remove" [size]="14"></lucide-icon>
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label>{{ isUa ? 'Призначення' : 'Purpose' }} <span class="req">*</span></label>
+            <select formControlName="purpose">
+              <option value="">{{ isUa ? '-- Оберіть --' : '-- Select --' }}</option>
+              @for (p of pumpPurposes; track p) {
+              <option [value]="p">
+                {{ isUa ? PUMP_PURPOSE_LABELS[p].ua : PUMP_PURPOSE_LABELS[p].en }}
+              </option>
+              }
+            </select>
+          </div>
+
+          @if (pu.get('purpose')?.value === 'other') {
+          <div class="form-field">
+            <label>{{ isUa ? 'Уточніть призначення' : 'Specify purpose' }} <span class="req">*</span></label>
+            <input formControlName="purposeOther" [placeholder]="isUa ? 'Опишіть' : 'Describe'" />
+            <!-- live validation for conditionally-required field -->
+            @if (showControlError(pu.get('purposeOther'))) {
+            <span class="error">{{ isUa ? 'Мінімум 2 символи' : 'Min 2 chars' }}</span>
+            }
+          </div>
+          }
+
+          <div class="form-field">
+            <label>{{ isUa ? 'Бренд' : 'Brand' }}</label>
+            <input formControlName="brand" placeholder="Pedrollo, Wilo, MNP..." />
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Модель' : 'Model' }}</label>
+            <input formControlName="model" placeholder="4SR 8/43, TWU4.08-29-DM-C..." />
+          </div>
+
+          <div class="form-field">
+            <label>{{ isUa ? 'Потужність, кВт' : 'Power, kW' }}</label>
+            <input type="number" step="0.1" formControlName="powerKw" placeholder="7.5" />
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Продуктивність, м³/год' : 'Flow rate, m³/h' }}</label>
+            <input type="number" step="0.1" formControlName="flowRateM3h" placeholder="10" />
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Напір, м' : 'Head, m' }}</label>
+            <input type="number" step="0.1" formControlName="headM" placeholder="113" />
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Діаметр, дюйм' : 'Diameter, inch' }}</label>
+            <input type="number" step="0.5" formControlName="diameterInches" placeholder="4" />
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Напруга' : 'Voltage' }}</label>
+            <input formControlName="voltage" placeholder="380V" />
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Фази' : 'Phases' }}</label>
+            <select formControlName="phases">
+              <option [ngValue]="null">{{ isUa ? '—' : '—' }}</option>
+              <option [ngValue]="1">1</option>
+              <option [ngValue]="3">3</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>{{ isUa ? 'Кількість' : 'Quantity' }} <span class="req">*</span></label>
+            <input type="number" formControlName="quantity" min="1" placeholder="1" />
+            @if (showControlError(pu.get('quantity'))) {
+            <span class="error">
+                      @if (pu.get('quantity')?.errors?.['required']) {
+                        {{ isUa ? 'Обовʼязкове поле' : 'Required' }}
+                      } @else {
+                        {{ isUa ? 'Мін. 1' : 'Min 1' }}
+                      }
+                    </span>
+            }
+          </div>
+          <div class="form-field full-width">
+            <label>{{ isUa ? 'Примітки' : 'Notes' }}</label>
+            <textarea formControlName="notes" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+
+    <button type="button" class="btn btn-add" (click)="addPump()">
+      <lucide-icon [img]="icons.plus" [size]="16"></lucide-icon>
+      {{ isUa ? 'Додати насос' : 'Add pump' }}
+    </button>
+  </div>
+  }
+
+  <!-- STEP 6: Equipment (accordion multi-select) -->
+  @if (currentStep() === 6) {
+  <div class="form-section">
+    <div class="section-header-optional">
+      <div>
+        <h2 class="section-title">
+          {{ isUa ? 'VII. Обладнання та матеріали' : 'VII. Equipment & Materials' }}
+        </h2>
+        <p class="section-hint">
+          {{
+          isUa
+          ? 'Розкрийте категорію, оберіть потрібні позиції та вкажіть кількість.'
+          : 'Expand a category, select the items you need and enter quantities.'
+          }}
+        </p>
+      </div>
+      <span class="badge-optional">{{ isUa ? 'опціонально' : 'optional' }}</span>
+    </div>
+
+    @if (catalogLoading()) {
+    <div class="loading">
+      {{ isUa ? 'Завантаження каталогу...' : 'Loading catalog...' }}
+    </div>
+    } @else {
+    <!-- Sticky header: search + selection counter -->
+    <div class="equip-toolbar">
+      <div class="equip-search">
+        <lucide-icon [img]="icons.search" [size]="16" class="equip-search-icon"></lucide-icon>
+        <input
+          type="text"
+          [value]="equipmentSearch()"
+          (input)="onEquipmentSearchInput($event)"
+          [placeholder]="isUa ? 'Пошук по всіх категоріях...' : 'Search across all categories...'"
+        />
+      </div>
+      <div class="equip-counter">
+        @if (totalSelectedCount() > 0) {
+        <span class="equip-counter-badge">
+                  {{
+                    isUa
+                      ? totalSelectedCount() + ' обрано'
+                      : totalSelectedCount() + ' selected'
+                  }}
+                </span>
+        }
+      </div>
+    </div>
+
+    <!-- Accordion -->
+    <div class="equip-accordion">
+      @for (cat of categories(); track cat.id) {
+      @if (!equipmentSearch() || categoryMatchCount(cat) > 0) {
+      <div class="equip-cat" [class.open]="isCategoryExpanded(cat.id)">
+        <button
+          type="button"
+          class="equip-cat-header"
+          (click)="toggleCategory(cat.id)"
+        >
+          <lucide-icon
+            [img]="icons.chevron"
+            [size]="16"
+            class="equip-chevron"
+          ></lucide-icon>
+          <span class="equip-cat-name">
+                      {{ isUa ? cat.nameUa : cat.nameEn }}
+                    </span>
+          <span class="equip-cat-counts">
+                      @if (categorySelectedCount(cat) > 0) {
+                        <span class="equip-cat-selected">
+                          {{ categorySelectedCount(cat) }}
+                        </span>
+                      }
+                      <span class="equip-cat-total">
+                        / {{ cat.items.length }}
+                      </span>
+                    </span>
+        </button>
+
+        @if (isCategoryExpanded(cat.id)) {
+        <div class="equip-cat-body">
+          <div class="equip-cat-actions">
+            <button
+              type="button"
+              class="btn-mini"
+              (click)="selectAllInCategory(cat)"
+            >
+              {{ isUa ? 'Обрати всі' : 'Select all' }}
+            </button>
+            <button
+              type="button"
+              class="btn-mini btn-mini-ghost"
+              (click)="clearCategory(cat)"
+            >
+              {{ isUa ? 'Скинути' : 'Clear' }}
+            </button>
+          </div>
+
+          @for (it of filterCategoryItems(cat); track it.id) {
+          <div
+            class="equip-item"
+            [class.selected]="isItemSelected(it.id)"
+          >
+            <label class="equip-item-checkbox">
+              <input
+                type="checkbox"
+                [checked]="isItemSelected(it.id)"
+                (change)="toggleItem(it.id)"
+              />
+              <span class="equip-item-name">
+                              {{ isUa ? it.nameUa : it.nameEn }}
+                            </span>
+            </label>
+
+            @if (isItemSelected(it.id)) {
+            <div class="equip-item-details">
+              <div class="form-field form-field-sm">
+                <label>
+                  {{ isUa ? 'К-сть' : 'Qty' }}
+                  <span class="unit-hint">
+                                    ({{ getUnitLabel(it.unit, isUa) }})
+                                  </span>
+                </label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="any"
+                  [value]="getItemQuantity(it.id) ?? ''"
+                  (input)="setItemQuantity(it.id, $any($event.target).value)"
+                />
+              </div>
+              <div class="form-field">
+                <label>{{ isUa ? 'Примітки' : 'Notes' }}</label>
+                <input
+                  type="text"
+                  [value]="getItemNotes(it.id)"
+                  (input)="setItemNotes(it.id, $any($event.target).value)"
+                  [placeholder]="isUa ? 'Додатково' : 'Additional'"
+                />
+              </div>
+            </div>
+            }
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+      }
+    </div>
+    }
+  </div>
+  }
+
+  <!-- STEP 7: Review -->
+  @if (currentStep() === 7) {
+  <div class="form-section">
+    <h2 class="section-title">{{ isUa ? 'Перевірка та подання' : 'Review & Submit' }}</h2>
+
+    <div class="review-block">
+      <h3>{{ isUa ? 'I. Загальна інформація' : 'I. General Information' }}</h3>
+      <div class="review-grid">
+        @if (form.value.location?.districtUa) {
+        <div class="review-item">
+          <span class="review-label">{{ isUa ? 'Район' : 'District' }}</span>
+          <span class="review-value">{{
+                  isUa ? form.value.location?.districtUa : form.value.location?.districtEn
+                }}</span>
+        </div>
+        }
+        @if (form.value.location?.communityUa) {
+        <div class="review-item">
+          <span class="review-label">{{ isUa ? 'Громада' : 'Community' }}</span>
+          <span class="review-value">{{
+                  isUa ? form.value.location?.communityUa : form.value.location?.communityEn
+                }}</span>
+        </div>
+        }
+        @if (form.value.location?.settlementUa) {
+        <div class="review-item">
+          <span class="review-label">{{ isUa ? 'Населений пункт' : 'Settlement' }}</span>
+          <span class="review-value">{{
+                  isUa ? form.value.location?.settlementUa : form.value.location?.settlementEn
+                }}</span>
+        </div>
+        }
+
+        <div class="review-item">
+              <span class="review-label">{{ isUa ? 'Організація' : 'Organization' }}</span
+              ><span class="review-value">{{ form.value.organizationName }}</span>
+        </div>
+        <div class="review-item">
+              <span class="review-label">{{ isUa ? 'ПІБ керівника' : 'Head' }}</span
+              ><span class="review-value">{{ form.value.headName }}</span>
+        </div>
+        <div class="review-item">
+              <span class="review-label">{{ isUa ? 'Телефон' : 'Phone' }}</span
+              ><span class="review-value">{{ form.value.headPhone }}</span>
+        </div>
+        <div class="review-item">
+              <span class="review-label">Email</span
+              ><span class="review-value">{{ form.value.email }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="review-block">
+      <h3>{{ isUa ? 'II. Обʼєкт' : 'II. Object' }}</h3>
+      <div class="review-grid">
+        <div class="review-item">
+              <span class="review-label">{{ isUa ? 'Назва' : 'Name' }}</span
+              ><span class="review-value">{{ form.value.objectName }}</span>
+        </div>
+        <div class="review-item">
+              <span class="review-label">{{ isUa ? 'Залежних людей' : 'People' }}</span
+              ><span class="review-value">{{ form.value.dependentPopulation }}</span>
+        </div>
+        @if (form.value.socialFacilities) {
+        <div class="review-item full-width">
+                <span class="review-label">{{ isUa ? 'Соц. установи' : 'Facilities' }}</span
+                ><span class="review-value">{{ form.value.socialFacilities }}</span>
+        </div>
+        }
+        <div class="review-item full-width">
+              <span class="review-label">{{ isUa ? 'Причини' : 'Reason' }}</span
+              ><span class="review-value">{{ form.value.replacementReason }}</span>
+        </div>
+      </div>
+    </div>
+
+    @if (boreholesArray.length) {
+    <div class="review-block">
+      <h3>
+        {{ isUa ? 'III. Буріння свердловин' : 'III. Borehole Drilling' }}
+        ({{ boreholesArray.length }})
+      </h3>
+      @for (bh of boreholesArray.controls; track bh; let i = $index) {
+      <div class="review-subblock">
+        <h4>{{ (isUa ? 'Свердловина #' : 'Borehole #') + (i + 1) }}</h4>
+        <div class="review-grid">
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Варіант робіт' : 'Work type' }}</span>
+            <span class="review-value">{{ getBoreholeWorkTypeLabel(bh.get('workType')?.value) }}</span>
+          </div>
+          @if (bh.get('expectedFlowRate')?.value) {
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Очікуваний дебіт' : 'Expected flow' }}</span>
+            <span class="review-value">{{ bh.get('expectedFlowRate')?.value }} m³/h</span>
+          </div>
+          }
+          @if (bh.get('workType')?.value === 'new_near_existing') {
+          @if (bh.get('existingDepth')?.value) {
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Глибина існуючої' : 'Existing depth' }}</span>
+            <span class="review-value">{{ bh.get('existingDepth')?.value }} m</span>
+          </div>
+          }
+          @if (bh.get('existingDebit')?.value) {
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Дебіт існуючої' : 'Existing debit' }}</span>
+            <span class="review-value">{{ bh.get('existingDebit')?.value }} m³/h</span>
+          </div>
+          }
+          }
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    @if (towersArray.length) {
+    <div class="review-block">
+      <h3>
+        {{ isUa ? 'IV. Водонапірні башти' : 'IV. Water Towers' }}
+        ({{ towersArray.length }})
+      </h3>
+      @for (tw of towersArray.controls; track tw; let i = $index) {
+      <div class="review-subblock">
+        <h4>{{ (isUa ? 'Башта #' : 'Tower #') + (i + 1) }}</h4>
+        <div class="review-grid">
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Тип' : 'Type' }}</span>
+            <span class="review-value">{{ getTowerTypeLabel(tw.get('towerType')?.value) }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Висота' : 'Height' }}</span>
+            <span class="review-value">{{ getTowerHeightLabel(tw.get('towerHeight')?.value, tw.get('customHeight')?.value) }}</span>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    @if (purificationsArray.length) {
+    <div class="review-block">
+      <h3>
+        {{ isUa ? 'V. Системи очищення' : 'V. Purification' }}
+        ({{ purificationsArray.length }})
+      </h3>
+      @for (ps of purificationsArray.controls; track ps; let i = $index) {
+      <div class="review-subblock">
+        <h4>{{ (isUa ? 'Система #' : 'System #') + (i + 1) }}</h4>
+        <div class="review-grid">
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Приміщення' : 'Room' }}</span>
+            <span class="review-value">{{ ps.get('hasRoom')?.value ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Електрика' : 'Power' }}</span>
+            <span class="review-value">{{ ps.get('hasPowerSupply')?.value ? (isUa ? 'Так' : 'Yes') : (isUa ? 'Ні' : 'No') }}</span>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    @if (pumpsArray.length) {
+    <div class="review-block">
+      <h3>
+        {{ isUa ? 'VI. Насоси' : 'VI. Pumps' }}
+        ({{ pumpsArray.length }})
+      </h3>
+      @for (pu of pumpsArray.controls; track pu; let i = $index) {
+      <div class="review-subblock">
+        <h4>{{ (isUa ? 'Насос #' : 'Pump #') + (i + 1) }}</h4>
+        <div class="review-grid">
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Призначення' : 'Purpose' }}</span>
+            <span class="review-value">{{ getPumpPurposeLabel(pu.get('purpose')?.value) }}</span>
+          </div>
+          @if (pu.get('brand')?.value) {
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Бренд / модель' : 'Brand / model' }}</span>
+            <span class="review-value">{{ pu.get('brand')?.value }} {{ pu.get('model')?.value }}</span>
+          </div>
+          }
+          @if (pu.get('powerKw')?.value) {
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Потужність' : 'Power' }}</span>
+            <span class="review-value">{{ pu.get('powerKw')?.value }} kW</span>
+          </div>
+          }
+          <div class="review-item">
+            <span class="review-label">{{ isUa ? 'Кількість' : 'Quantity' }}</span>
+            <span class="review-value">{{ pu.get('quantity')?.value }}</span>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- review uses selectedEquipment map. -->
+    @if (hasEquipmentItems()) {
+    <div class="review-block">
+      <h3>
+        {{ isUa ? 'VII. Обладнання' : 'VII. Equipment' }}
+        ({{ getFilledEquipmentEntries().length }}
+        {{ isUa ? 'поз.' : 'items' }})
+      </h3>
+      <div class="review-table-wrap">
+        <table class="review-table">
+          <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ isUa ? 'Позиція' : 'Item' }}</th>
+            <th>{{ isUa ? 'К-сть' : 'Qty' }}</th>
+            <th>{{ isUa ? 'Од.' : 'Unit' }}</th>
+            <th>{{ isUa ? 'Примітки' : 'Notes' }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          @for (e of getFilledEquipmentEntries(); track e.itemId; let i = $index) {
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td>
+              {{ isUa
+              ? (getEquipmentItem(e.itemId)?.nameUa ?? '---')
+              : (getEquipmentItem(e.itemId)?.nameEn ?? '---') }}
+            </td>
+            <td>{{ e.quantity }}</td>
+            <td>
+              @if (getEquipmentItem(e.itemId); as item) {
+              {{ getUnitLabel(item.unit, isUa) }}
+              }
+            </td>
+            <td>{{ e.notes || '---' }}</td>
+          </tr>
+          }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    }
+
+    @if (!hasAnySectionFilled()) {
+    <div class="warning-banner">
+      {{
+      isUa
+      ? 'Увага: жоден розділ III-VI не заповнений. Заповніть хоча б один.'
+      : 'Warning: no sections III-VI filled. Please fill at least one.'
+      }}
+    </div>
+    }
+  </div>
+  }
+
+  <!-- Navigation -->
+  <div class="form-nav">
+    @if (currentStep() > 0) {
+    <button type="button" class="btn btn-secondary" (click)="prevStep()">
+      {{ isUa ? 'Назад' : 'Back' }}
+    </button>
+    } @else {
+    <div></div>
+    }
+    <div class="form-nav-right">
+      @if (isOptionalStep()) {
+      <button type="button" class="btn btn-skip" (click)="skipStep()">
+        {{ isUa ? 'Пропустити' : 'Skip' }}
+      </button>
+      }
+
+      @if (currentStep() < steps.length - 1) {
+      <button type="button" class="btn btn-primary" (click)="nextStep()">
+        {{ isUa ? 'Далі' : 'Next' }}
+      </button>
+      } @else {
+      <!-- edit mode shows Cancel + Save changes; create mode keeps Submit -->
+      @if (mode === 'edit') {
+      <button type="button" class="btn btn-secondary" (click)="onCancel()">
+        {{ isUa ? 'Скасувати' : 'Cancel' }}
+      </button>
+      <button
+        type="submit"
+        class="btn btn-submit"
+        [disabled]="externalSaving || !hasAnySectionFilled()"
+      >
+        {{
+        externalSaving
+        ? (isUa ? 'Збереження...' : 'Saving...')
+        : (isUa ? 'Зберегти зміни' : 'Save changes')
+        }}
+      </button>
+      } @else {
+      <button
+        type="submit"
+        class="btn btn-submit"
+        [disabled]="submitting() || !hasAnySectionFilled()"
+      >
+        {{
+        submitting()
+        ? (isUa ? 'Відправлення...' : 'Submitting...')
+        : (isUa ? 'Подати заявку' : 'Submit')
+        }}
+      </button>
+      }
+      }
+
+    </div>
+  </div>
+
+  @if (submitError()) {
+  <div class="error-banner">
+    {{
+    isUa
+    ? 'Помилка при відправленні. Спробуйте ще раз.'
+    : 'Submit error. Please try again.'
+    }}
+  </div>
+  }
+
+  <!-- visible banner when Next is blocked by invalid fields. -->
+  @if (stepInvalid()) {
+  <div class="error-banner">
+    {{
+    isUa
+    ? 'Заповніть усі обовʼязкові поля (позначені *) перед тим як перейти далі.'
+    : 'Please fill in all required fields (marked with *) before continuing.'
+    }}
+  </div>
+  }
+</form>
+}
