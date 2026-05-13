@@ -32,6 +32,104 @@
       "HINT": "Only one post can be featured. Setting it here automatically unsets the previous one."
     }
   },
+  "about": {
+    "admin": {
+      "nav": {
+        "sections": "Sections",
+        "documents": "Documents"
+      },
+      "sections": {
+        "listTitle": "About page sections",
+        "createNew": "New section",
+        "createTitle": "New section",
+        "editTitle": "Edit section",
+        "emptyState": "No sections yet",
+        "allKeysUsed": "All section types have been created",
+        "key": "Key",
+        "keyLabel": "Section type",
+        "keyHint": "Section type cannot be changed after creation",
+        "title": "Title",
+        "titleUa": "Title (UA)",
+        "titleEn": "Title (EN)",
+        "contentUa": "Content (UA)",
+        "contentEn": "Content (EN)",
+        "sortOrder": "Order",
+        "isPublished": "Published",
+        "statusPublished": "Published",
+        "statusDraft": "Draft",
+        "actions": "Actions",
+        "metadataTitle": "Key facts",
+        "metadataAdd": "+ Add fact",
+        "factLabelUa": "Label (UA)",
+        "factLabelEn": "Label (EN)",
+        "factValue": "Value"
+      },
+      "documents": {
+        "listTitle": "About documents",
+        "createNew": "New document",
+        "createTitle": "New document",
+        "editTitle": "Edit document",
+        "emptyState": "No documents yet",
+        "title": "Title",
+        "titleUa": "Title (UA)",
+        "titleEn": "Title (EN)",
+        "descriptionUa": "Short description (UA)",
+        "descriptionEn": "Short description (EN)",
+        "type": "Type",
+        "typeLabel": "Document type",
+        "fileUrl": "File",
+        "fileUrlLabel": "File URL",
+        "fileUrlHint": "S3, Google Drive or any public link",
+        "version": "Version",
+        "versionLabel": "Document version",
+        "lastReviewDate": "Last review",
+        "lastReviewDateLabel": "Last review date",
+        "isPublished": "Published",
+        "actions": "Actions"
+      },
+      "common": {
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "back": "Back",
+        "publish": "Publish",
+        "unpublish": "Unpublish"
+      },
+      "documentType": {
+        "POLICY": "Policy",
+        "PROCEDURE": "Procedure",
+        "REGULATION": "Regulation",
+        "CODE": "Code",
+        "REPORT": "Report"
+      },
+      "sectionKey": {
+        "INTRO": "Introduction",
+        "MISSION": "Mission",
+        "VISION": "Vision",
+        "VALUES": "Values",
+        "DIRECTIONS": "Areas of activity",
+        "KEY_FACTS": "Key facts",
+        "RESULTS": "Results & cases",
+        "TEAM_INTRO": "Team (intro)",
+        "CONTACTS_INTRO": "Contacts (intro)",
+        "DOCUMENTS_INTRO": "Documents (intro)"
+      }
+    },
+    "page": {
+      "title": "About us",
+      "documentsHeading": "Document registry",
+      "documentTypes": {
+        "POLICY": "Policies",
+        "PROCEDURE": "Procedures",
+        "REGULATION": "Regulations",
+        "CODE": "Codes",
+        "REPORT": "Reports"
+      },
+      "empty": "Information will be available soon",
+      "viewFile": "View",
+      "lastReview": "Last review"
+    }
+  },
   "ACTIVITY_MAP": {
     "TITLE": "Activity Map",
     "SUBTITLE": "Where, what, and for whom we delivered help",
