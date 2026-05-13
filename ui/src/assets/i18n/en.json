@@ -380,5 +380,56 @@
   },
   "wash_form_pumps_title": "Pumps",
   "wash_form_pumps_hint": "Specify pump needs — submersible, surface, drainage or other.",
-  "wash_form_pumps_coming_soon": "This step will be activated in the next update."
+  "wash_form_pumps_coming_soon": "This step will be activated in the next update.",
+  "CONTACT": {
+    "PAGE": {
+      "TITLE": "Contacts",
+      "INTRO": "Reach out to us through the channel that works best for you. All inquiries are handled with respect for your privacy."
+    },
+    "PRIMARY": {
+      "HEADING": "Primary contacts",
+      "EMAIL_LABEL": "Email",
+      "DIRECTOR_LABEL": "Director",
+      "DIRECTOR_NAME": "Roman Pleshkun",
+      "ADDRESS_LABEL": "Address",
+      "ADDRESS_VALUE": "Ukraine"
+    },
+    "CHANNELS": {
+      "HEADING": "Ways to engage",
+      "INTRO": "Pick the channel that matches your inquiry:",
+      "PROCUREMENT": {
+        "TITLE": "Procurement",
+        "DESC": "Tenders and requests for quotation"
+      },
+      "VACANCY": {
+        "TITLE": "Vacancies",
+        "DESC": "Open positions in the organization"
+      },
+      "TESTIMONIAL": {
+        "TITLE": "Testimonials",
+        "DESC": "Share your experience working with us"
+      },
+      "COMPLAINT": {
+        "TITLE": "Complaints",
+        "DESC": "Confidential channel (PSEA, fraud, other)"
+      }
+    },
+    "SOCIAL": {
+      "HEADING": "Social media",
+      "FACEBOOK": "Facebook"
+    },
+    "GUIDE": {
+      "HEADING": "How to reach us",
+      "INTRO": "Depending on the nature of your inquiry, pick the most suitable channel:",
+      "GENERAL": "General inquiries and partnerships — send us an email.",
+      "TESTIMONIAL": "To share feedback about our work — use the «Testimonials» page.",
+      "COMPLAINT": "For confidential complaints (PSEA, fraud, misconduct) — fill in the «Complaints» form. All reports are reviewed privately.",
+      "VACANCY": "For employment inquiries — see the «Vacancies» section.",
+      "PROCUREMENT": "For tender and procurement questions — see the «Procurement» section."
+    },
+    "PRIVACY": {
+      "HEADING": "Privacy notice",
+      "BODY": "We process your communications in accordance with our privacy policy. Confidential reports are stored and reviewed with personal data protection principles in mind."
+    }
+  }
 }
