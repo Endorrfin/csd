@@ -1,4 +1,3 @@
-// ui/src/app/features/admin/admin.ts
 import { Component, HostListener, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -81,10 +80,24 @@ import { AuthService } from '../../core/services/auth.service';
             </a>
           }
         </nav>
+        
+        <!-- admin & super admin only section -->
+        @if (auth.isSuperAdmin || auth.isAdmin) {
+          <p class="admin-group-label">{{ isUa ? 'Адміністрування' : 'Administration' }}</p>
+          <nav class="admin-nav">
+            <a
+              routerLink="about"
+              routerLinkActive="active"
+              class="admin-nav-item"
+              (click)="closeSidebar()"
+            >
+              {{ isUa ? 'Про нас' : 'About' }}
+            </a>
+          </nav>
+        }
 
         <!-- Super admin only section -->
         @if (auth.isSuperAdmin) {
-          <p class="admin-group-label">{{ isUa ? 'Адміністрування' : 'Administration' }}</p>
           <nav class="admin-nav">
             <a
               routerLink="users"

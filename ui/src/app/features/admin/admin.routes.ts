@@ -46,6 +46,12 @@ export const adminRoutes: Routes = [
     canActivate: [adminGuard],
   },
 
+  {
+    path: 'about',
+    loadChildren: () => import('./about/about.routes').then((m) => m.aboutRoutes),
+  },
+
+
   // Users management (super_admin only)
   {
     path: 'users',

@@ -32,6 +32,104 @@
       "HINT": "Тільки один пост може бути головним. Установка тут автоматично знімає прапор з попереднього."
     }
   },
+  "about": {
+    "admin": {
+      "nav": {
+        "sections": "Секції",
+        "documents": "Документи"
+      },
+      "sections": {
+        "listTitle": "Секції сторінки «Про нас»",
+        "createNew": "Нова секція",
+        "createTitle": "Нова секція",
+        "editTitle": "Редагування секції",
+        "emptyState": "Секцій ще немає",
+        "allKeysUsed": "Всі типи секцій вже створено",
+        "key": "Ключ",
+        "keyLabel": "Тип секції",
+        "keyHint": "Тип секції не можна змінити після створення",
+        "title": "Заголовок",
+        "titleUa": "Заголовок (UA)",
+        "titleEn": "Заголовок (EN)",
+        "contentUa": "Контент (UA)",
+        "contentEn": "Контент (EN)",
+        "sortOrder": "Порядок",
+        "isPublished": "Опубліковано",
+        "statusPublished": "Опубліковано",
+        "statusDraft": "Чернетка",
+        "actions": "Дії",
+        "metadataTitle": "Ключові факти",
+        "metadataAdd": "+ Додати факт",
+        "factLabelUa": "Назва (UA)",
+        "factLabelEn": "Назва (EN)",
+        "factValue": "Значення"
+      },
+      "documents": {
+        "listTitle": "Документи «Про нас»",
+        "createNew": "Новий документ",
+        "createTitle": "Новий документ",
+        "editTitle": "Редагування документа",
+        "emptyState": "Документів ще немає",
+        "title": "Назва",
+        "titleUa": "Назва (UA)",
+        "titleEn": "Назва (EN)",
+        "descriptionUa": "Короткий опис (UA)",
+        "descriptionEn": "Короткий опис (EN)",
+        "type": "Тип",
+        "typeLabel": "Тип документа",
+        "fileUrl": "Файл",
+        "fileUrlLabel": "Посилання на файл",
+        "fileUrlHint": "S3, Google Drive або будь-яке публічне посилання",
+        "version": "Версія",
+        "versionLabel": "Версія документа",
+        "lastReviewDate": "Останній перегляд",
+        "lastReviewDateLabel": "Дата останнього перегляду",
+        "isPublished": "Опубліковано",
+        "actions": "Дії"
+      },
+      "common": {
+        "save": "Зберегти",
+        "cancel": "Скасувати",
+        "delete": "Видалити",
+        "back": "Назад",
+        "publish": "Опублікувати",
+        "unpublish": "Приховати"
+      },
+      "documentType": {
+        "POLICY": "Політика",
+        "PROCEDURE": "Процедура",
+        "REGULATION": "Положення",
+        "CODE": "Кодекс",
+        "REPORT": "Звіт"
+      },
+      "sectionKey": {
+        "INTRO": "Вступ",
+        "MISSION": "Місія",
+        "VISION": "Бачення",
+        "VALUES": "Цінності",
+        "DIRECTIONS": "Напрямки діяльності",
+        "KEY_FACTS": "Ключові факти",
+        "RESULTS": "Результати та кейси",
+        "TEAM_INTRO": "Команда (вступ)",
+        "CONTACTS_INTRO": "Контакти (вступ)",
+        "DOCUMENTS_INTRO": "Документи (вступ)"
+      }
+    },
+    "page": {
+      "title": "Про нас",
+      "documentsHeading": "Реєстр документів",
+      "documentTypes": {
+        "POLICY": "Політики",
+        "PROCEDURE": "Процедури",
+        "REGULATION": "Положення",
+        "CODE": "Кодекси",
+        "REPORT": "Звіти"
+      },
+      "empty": "Інформація скоро буде доступна",
+      "viewFile": "Переглянути",
+      "lastReview": "Останній перегляд"
+    }
+  },
   "ACTIVITY_MAP": {
     "TITLE": "Карта активностей",
     "SUBTITLE": "Де, що та для кого було надано допомогу",

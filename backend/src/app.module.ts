@@ -16,6 +16,7 @@ import { ProcurementModule } from './modules/procurement/procurement.module';
 import { VacancyModule } from './modules/vacancy/vacancy.module';
 import { TestimonialModule } from './modules/testimonial/testimonial.module';
 import { ComplaintModule } from './modules/complaint/complaint.module';
+import { AboutModule } from './modules/about/about.module';
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { ComplaintModule } from './modules/complaint/complaint.module';
     VacancyModule,
     TestimonialModule,
     ComplaintModule,
+    AboutModule,
   ],
   controllers: [AppController],
   providers: [AppService],
