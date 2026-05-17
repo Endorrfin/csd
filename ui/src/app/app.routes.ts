@@ -21,6 +21,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/blog/blog-post').then((m) => m.BlogPostComponent),
     resolve: { post: blogPostResolver }, // resolve before render
   },
+  // === FROZEN: partners route disabled until the fund provides partner logos & data ===
+  // Re-enable: uncomment the block below + the matching nav link in
+  // ui/src/app/layout/header/header.ts (search "🤔 FROZEN").
+  // Component (features/partners/partners.ts) and backend GET /api/partners are ready.
   // {
   //   path: 'partners',
   //   loadComponent: () => import('./features/partners/partners').then((m) => m.PartnersComponent),
