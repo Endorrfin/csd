@@ -2,7 +2,7 @@
 
 > **Location:** `docs/ARCHITECTURE.md`
 > **Audience:** Primarily developers joining the project. Also useful for CSD fund management, donor compliance reviewers (GIZ, UNICEF), and future open-source contributors.
-> **Last updated:** April 2026
+> **Last updated:** May 2026 (sync pass against actual code; see CLAUDE.md for ongoing drift policy)
 
 ---
 
@@ -122,29 +122,36 @@ graph TB
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Runtime | Node.js | 22.x |
+| Runtime | Node.js | 22.x (CI pins `22.17.0`) |
+| Language | TypeScript | 5.7.x |
 | Framework | NestJS | 11.x |
 | Database | PostgreSQL (RDS) | 16.x |
-| Local DB | PostgreSQL (Homebrew) | 14.x |
-| ORM | TypeORM | latest |
-| Auth | Passport + JWT (jsonwebtoken) | — |
-| Validation | class-validator + class-transformer | — |
-| Sanitization | sanitize-html | — |
-| Packaging | @vendia/serverless-express | — |
-| Deployment | Serverless Framework | v3 |
-| Testing | Jest | — |
+| Local DB | PostgreSQL (Homebrew `postgresql@14` on 5432, or Docker `postgres:16` mapped to host 5433) | 14.x / 16.x |
+| ORM | TypeORM | 0.3.28 |
+| Auth | `@nestjs/jwt` + `passport` + `passport-jwt` + `passport-local` | 11.x / 0.7.x / 4.x / 1.x |
+| Validation | `class-validator` + `class-transformer` | 0.15.x / 0.5.x |
+| Sanitization | `sanitize-html` | 2.17.x |
+| Lambda adapter | `@codegenie/serverless-express` | 4.17.x |
+| Reports | `exceljs` (XLSX), manual CSV with UTF-8 BOM | 4.x |
+| Deployment | Serverless Framework | v4 |
+| Testing | Jest | 30.x |
 | Linting | ESLint (flat config) + Prettier | ESLint 9 |
 
 ### Frontend (`ui/`)
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Framework | Angular (standalone + signals) | 21.x |
-| SSR | Angular Universal | 21.x |
-| Rich text | ngx-quill | — |
-| i18n | ngx-translate | — |
-| Build | esbuild (default Angular 21) | — |
-| Linting | Angular ESLint (flat config) + Prettier | ESLint 9 |
+| Framework | Angular (standalone + signals) | 21.2.x |
+| Language | TypeScript | 5.9.x |
+| SSR | `@angular/ssr` (with `provideClientHydration(withEventReplay())`) | 21.2.x |
+| HTTP entry (Lambda) | `serverless-http` wrapping the SSR Express app (`ui/lambda.mjs`) | 4.x |
+| Rich text | `ngx-quill` + Quill 2 | 30.0.x / 2.0.x |
+| i18n | `@ngx-translate/core` + `@ngx-translate/http-loader` (fallback `ua`) | 17.x |
+| Maps | Leaflet + `leaflet.markercluster` (Activity map) | — |
+| Icons | `lucide-angular` | 1.x |
+| Builder | `@angular/build:application` (esbuild-based) | 21.2.x |
+| Test runner | Vitest (via `ng test` → `@angular/build:unit-test`) | 4.x |
+| Linting | `angular-eslint` + `typescript-eslint` + Prettier | ESLint 10 / angular-eslint 21.3.x |
 
 ### Infrastructure
 
@@ -163,83 +170,95 @@ graph TB
 ## 5. Repository Structure
 
 ```
-csd-portal/
+csd-fund/
 ├── README.md                    # High-level intro + link to this doc
+├── CLAUDE.md                    # Repo-wide rules for AI-assisted work
 ├── docs/
 │   └── ARCHITECTURE.md          # This file
+├── .github/
+│   ├── CODEOWNERS               # @Kirnadz is default reviewer
+│   └── workflows/
+│       └── deploy.yml           # GitHub Actions workflow (the live one)
 ├── backend/
-│   ├── src/
-│   │   ├── app.module.ts        # Root module
-│   │   ├── main.ts              # Standard Nest bootstrap (dev only)
-│   │   ├── common/pipes/        # Shared pipes (SanitizeHtmlPipe)
-│   │   ├── database/
-│   │   │   ├── data-source.ts   # TypeORM datasource (migrations + runtime)
-│   │   │   ├── migrations/      # All TypeORM migration files
-│   │   │   ├── run-seeds.ts     # Entry for seeding
-│   │   │   ├── seed-equipment.ts
-│   │   │   └── seed-super-admin.ts
-│   │   └── modules/             # Feature modules
-│   │       ├── auth/            # Login, register, password reset
-│   │       ├── blog/            # Blog posts
-│   │       ├── complaint/       # Complaint submissions + admin
-│   │       ├── content/         # Static pages CMS
-│   │       ├── cooperation/     # Umbrella metadata for cooperation section
-│   │       ├── equipment-catalog/   # WASH equipment reference (UNICEF LTA)
-│   │       ├── needs/           # WASH needs assessment forms
-│   │       ├── partners/        # Partner organisations
-│   │       ├── procurement/     # Tenders
-│   │       ├── testimonial/     # User testimonials
-│   │       ├── upload/          # S3 signed URLs for file uploads
-│   │       ├── users/           # User CRUD + role management
-│   │       └── vacancy/         # Job vacancies
-│   ├── lambda.ts                # AWS Lambda entrypoint
-│   ├── serverless.yml           # Serverless Framework config
+│   ├── lambda.ts                # ⚠ AWS Lambda handler (sits at backend ROOT, not in src/)
+│   ├── serverless.yml           # Serverless Framework v4 config
+│   ├── CLAUDE.md
 │   ├── eslint.config.mjs
 │   ├── nest-cli.json
 │   ├── package.json
-│   └── tsconfig.json
+│   ├── tsconfig.json
+│   ├── tsconfig.build.json
+│   └── src/
+│       ├── app.module.ts        # Root module (TypeOrmModule.forRootAsync + all feature modules)
+│       ├── app.controller.ts    # GET / and GET /health (smoke-tested by CI)
+│       ├── main.ts              # Local bootstrap; also calls runSeeds() on startup
+│       ├── common/pipes/        # Shared pipes (SanitizeHtmlPipe)
+│       ├── database/
+│       │   ├── data-source.ts            # TypeORM CLI datasource (standalone for migrations)
+│       │   ├── migrations/               # All TypeORM migration files
+│       │   ├── run-seeds.ts              # Bootstrap chain — currently only equipment catalog
+│       │   ├── run-seeds-standalone.ts   # Same equipment seed runnable outside Nest
+│       │   ├── seed-equipment.ts
+│       │   └── seed-super-admin.ts       # MANUAL one-shot script; not in bootstrap chain
+│       └── modules/             # Feature modules (mount in parens where ≠ folder name)
+│           ├── auth/            # /api/auth
+│           ├── about/           # /api/about — bilingual sections + documents
+│           ├── blog/            # /api/blog
+│           ├── complaint/       # /api/complaints (plural)
+│           ├── content/         # /api/pages
+│           ├── cooperation/     # /api/cooperation — umbrella metadata
+│           ├── equipment-catalog/   # /api/equipment-catalog
+│           ├── needs/           # /api/needs-forms — WASH assessment
+│           ├── partners/        # /api/partners
+│           ├── procurement/     # /api/procurement
+│           ├── testimonial/     # /api/testimonials (plural)
+│           ├── upload/          # /api/upload — S3 presigned PUT URLs
+│           ├── users/           # /api/users
+│           └── vacancy/         # /api/vacancies (plural)
 ├── ui/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── app.ts
-│   │   │   ├── app.routes.ts    # Root routes
-│   │   │   ├── app.routes.server.ts  # SSR-specific routes
-│   │   │   ├── core/
-│   │   │   │   ├── guards/      # managerGuard, adminGuard, superAdminGuard, authGuard
-│   │   │   │   ├── interceptors/ # auth.interceptor (JWT injection)
-│   │   │   │   └── services/    # api.service, auth.service
-│   │   │   ├── features/        # Feature components (lazy-loaded)
-│   │   │   │   ├── admin/
-│   │   │   │   ├── blog/
-│   │   │   │   ├── cooperation/
-│   │   │   │   │   ├── complaint/
-│   │   │   │   │   ├── procurement/
-│   │   │   │   │   ├── testimonial/
-│   │   │   │   │   └── vacancy/
-│   │   │   │   ├── home/
-│   │   │   │   ├── login/
-│   │   │   │   ├── needs/
-│   │   │   │   │   └── wash-form/
-│   │   │   │   └── ...
-│   │   │   ├── layout/          # Header, footer
-│   │   │   └── shared/          # Shared components (carousel, location-selector), pipes, services
-│   │   ├── assets/
-│   │   │   ├── data/locations.json  # 29,708 Ukrainian settlements
-│   │   │   ├── i18n/{en,ua}.json
-│   │   │   └── images/
-│   │   ├── environments/
-│   │   ├── server.ts            # SSR server entry
-│   │   ├── main.ts              # Browser entry
-│   │   └── styles.scss
-│   ├── lambda.mjs               # SSR Lambda entrypoint
-│   ├── ssr-lambda.mjs           # Alternative SSR entry
-│   ├── angular.json
-│   ├── eslint.config.mjs
+│   ├── lambda.mjs               # SSR Lambda entry — serverless-http wrapping app from server.ts
+│   ├── ssr-lambda.mjs           # Legacy alt entry — not referenced by serverless.yml (orphaned)
 │   ├── serverless.yml
-│   └── package.json
-├── convert-locations.py         # Python utility to rebuild locations.json from source data
-├── csd-aws-deployment-guide.md  # AWS setup notes
-└── deploy.yml                   # GitHub Actions workflow
+│   ├── angular.json
+│   ├── CLAUDE.md
+│   ├── eslint.config.mjs
+│   ├── package.json
+│   └── src/
+│       ├── main.ts              # Browser entry
+│       ├── main.server.ts       # SSR bootstrap
+│       ├── server.ts            # Express app for SSR; exports { app, reqHandler }
+│       ├── styles.scss
+│       ├── environments/{environment,environment.prod}.ts
+│       ├── app/
+│       │   ├── app.ts
+│       │   ├── app.config.ts            # Browser providers (router, http+interceptor, hydration, i18n)
+│       │   ├── app.config.server.ts     # SSR providers (mergeApplicationConfig + withRoutes)
+│       │   ├── app.routes.ts            # Public routes
+│       │   ├── app.routes.server.ts     # Per-route render mode (blog/:slug=Server, activity-map=Client)
+│       │   ├── core/
+│       │   │   ├── guards/      # managerGuard, adminGuard, superAdminGuard, authGuard
+│       │   │   ├── interceptors/  # auth.interceptor (JWT injection, SSR-safe)
+│       │   │   └── services/    # api.service (prepends /api), auth.service (signal-based)
+│       │   ├── features/        # Lazy-loaded feature components
+│       │   │   ├── home/
+│       │   │   ├── about/
+│       │   │   ├── blog/
+│       │   │   ├── activity-map/        # Leaflet + marker clustering, signal-driven filters
+│       │   │   ├── cooperation/{procurement,vacancy,testimonial,complaint}/
+│       │   │   ├── needs/wash-form/
+│       │   │   ├── admin/               # managerGuard at root; sub-routes use adminGuard / superAdminGuard
+│       │   │   ├── partners/            # ⚠ FROZEN — route commented out in app.routes.ts
+│       │   │   ├── login/ register/ forgot-password/ reset-password/
+│       │   │   └── contact/
+│       │   ├── layout/          # header, footer
+│       │   └── shared/          # carousel, location-selector, sticky-cta, quill-html pipe, etc.
+│       └── assets/
+│           ├── data/locations.json  # 29,708 Ukrainian settlements (frontend asset, not DB-seeded)
+│           ├── data/activities.json # Activity-map data
+│           ├── i18n/{en,ua}.json
+│           └── images/
+└── convertors/
+    └── convert-locations.py     # Python utility to rebuild locations.json from source data
 ```
 
 ---
@@ -312,7 +331,7 @@ erDiagram
         jsonb attachments
         timestamptz publicationDate
         timestamptz bidSubmissionDeadline
-        enum status "draft|published|extended|evaluation|awarded|suspended|cancelled|completed"
+        enum status "draft|published|extended|evaluation|awarded|suspended|cancelled|completed|closed[deprecated]"
         uuid createdById FK
     }
 
@@ -328,7 +347,7 @@ erDiagram
         string region
         timestamptz applicationDeadline
         string salary
-        enum status "draft|published|extended|on_hold|suspended|cancelled|hired"
+        enum status "draft|published|extended|on_hold|suspended|cancelled|hired|closed[deprecated]"
         timestamptz publishedAt
         uuid createdById FK
     }
@@ -431,10 +450,11 @@ erDiagram
 
 ### 7.1 Public Website
 
-- Landing page (`/`) with hero, mission statement, programs summary, partner logos carousel, featured blog posts.
-- Blog (`/blog`, `/blog/:slug`) with Quill-formatted posts in UA/EN.
-- Partners listing (`/partners`).
-- About page (`/about`) — CMS-driven.
+- Landing page (`/`) with hero, mission statement, featured blog posts, impact stats (signal-driven service).
+- About page (`/about`) — CMS-driven sections + downloadable documents.
+- Blog (`/blog`, `/blog/:slug`) with Quill-formatted posts in UA/EN; post detail uses a route resolver.
+- Activity map (`/activity-map`) — Leaflet map with marker clustering, category sidebar, signal-based filtering; data sourced from `ui/src/assets/data/activities.json`.
+- Partners (`/partners`) — ⚠ **FROZEN**: route and header link are commented out until the fund provides partner logos & data. `PartnersComponent` and backend `GET /api/partners` are ready; to re-enable, uncomment the block in `ui/src/app/app.routes.ts` (search "FROZEN") and the matching nav link in `ui/src/app/layout/header/header.ts`.
 - Contact page (`/contact`).
 - Public Cooperation pages:
     - Procurement tenders (`/cooperation/procurement`)
@@ -470,7 +490,7 @@ On the backend, `JwtAuthGuard + RolesGuard + @Roles(...)` decorator enforces acc
 
 ### 7.3 WASH Needs Assessment
 
-A structured 7-step form (`/needs/wash-form`) for communities to submit infrastructure needs. Fields include:
+A structured 8-step form (`/needs/wash-form`, steps indexed 0–7 in `wash-form.ts`) for communities to submit infrastructure needs. Fields include:
 
 - Organization & contact details.
 - Object being restored.
@@ -489,7 +509,7 @@ Four sibling modules, all accessible under `/cooperation/*` publicly and `/admin
 | Module | Public list | Status lifecycle | Special features |
 |--------|-------------|------------------|------------------|
 | Procurement | `/cooperation/procurement` | draft → published → extended → evaluation → awarded → completed (or suspended/cancelled) | 7-step creation form, Quill rich text, evaluation criteria, attachments |
-| Vacancy | `/cooperation/vacancy` | draft → published → extended → on_hold → hired (or suspended/cancelled) | Employment types, application deadline tracking |
+| Vacancy | `/cooperation/vacancy` | draft → published → extended → on_hold → hired (or suspended/cancelled). Legacy `closed` still exists in the PG enum but is `@deprecated` — use `hired`. | Employment types, application deadline tracking |
 | Testimonial | `/cooperation/testimonial` | pending → approved (or rejected) | Rating 1-5, verification toggle, moderation flow |
 | Complaint | — (private) | new → in_review → resolved → closed | Confidential, anonymous submission, PII toggle in admin, CSV export with UTF-8 BOM |
 
@@ -524,7 +544,8 @@ graph TB
         end
 
         subgraph Static["S3 Buckets"]
-            S3CSS[csd-fund-static<br/>user images, assets]
+            S3Static[csd-fund-static<br/>Angular browser bundle<br/>hashed assets, 1y cache]
+            S3Media[csd-media<br/>user-uploaded images<br/>presigned PUT from backend]
         end
 
         subgraph Compute["Lambda + API Gateway"]
@@ -541,20 +562,22 @@ graph TB
     end
 
     Browser --> CF
-    CF -->|"/* static"| S3CSS
+    CF -->|"/* static"| S3Static
     CF -->|"/api/*"| APIGW
-    CF -->|"HTML fallback"| APIGW
+    CF -->|"HTML fallback (SSR)"| APIGW
+    CF -->|"media/*"| S3Media
     APIGW --> LambdaBE
     APIGW --> LambdaUI
     LambdaUI -.->|"internal fetch"| APIGW
     LambdaBE --> RDS
-    LambdaBE --> S3CSS
+    LambdaBE -->|"presigned PUT"| S3Media
     LambdaBE --> Monitoring
     LambdaUI --> Monitoring
 
     style Browser fill:#EEEDFE
     style CF fill:#E6F1FB
-    style S3CSS fill:#E1F5EE
+    style S3Static fill:#E1F5EE
+    style S3Media fill:#E1F5EE
     style APIGW fill:#E1F5EE
     style LambdaBE fill:#E1F5EE
     style LambdaUI fill:#E1F5EE
@@ -567,10 +590,14 @@ graph TB
 |----------|-----------|-------|
 | Region | `eu-central-1` | Frankfurt — GDPR-friendly, close to Ukrainian users |
 | CloudFront distribution | `E3U465AMSVR9PN` | Handles TLS, caching, SPA fallback |
-| RDS endpoint | `********` | See env vars; PostgreSQL 16 |
-| S3 bucket (assets) | `csd-fund-static` | Public read, signed PUT for uploads |
-| API Gateway base (prod) | `https://********.execute-api.eu-central-1.amazonaws.com/prod/api` | Behind CloudFront |
 | Domain | `www.csd-fund.org` | CNAME → CloudFront |
+| Backend Lambda | `csd-api-prod-api` | CloudFormation stack `csd-api-prod`; 512 MB / 29 s timeout |
+| SSR Lambda | `csd-ssr-prod-ssr` | CloudFormation stack `csd-ssr-prod`; 512 MB / 29 s timeout |
+| API Gateway base (prod) | `https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com/prod` | Direct URL behind CloudFront; embedded in `ui/src/environments/environment.prod.ts` |
+| S3 bucket (browser bundle) | `csd-fund-static` | Public read via CloudFront; hashed assets 1y immutable, HTML no-cache |
+| S3 bucket (user media) | `csd-media` | Signed PUT from backend; backend Lambda has `s3:PutObject` on `csd-media/*` only |
+| RDS endpoint | `csd-postgres.cfgy4a0e2bo6.eu-central-1.rds.amazonaws.com` | PostgreSQL 16, `db.t4g.micro`, SSL required (`rejectUnauthorized: false`) |
+| CloudWatch log groups | `/aws/lambda/csd-api-prod-api` · `/aws/lambda/csd-ssr-prod-ssr` | 30-day retention by default |
 
 ### Cost profile (monthly)
 
@@ -584,49 +611,64 @@ graph TB
 
 ## 9. Environment Variables Reference
 
-### Backend (`backend/.env`)
+### Backend (`backend/.env` — runtime; see `.env.example` for the canonical list)
 
 ```
-# Database
-DATABASE_HOST=********
-DATABASE_PORT=5432
-DATABASE_NAME=csd
-DATABASE_USER=********
-DATABASE_PASSWORD=********
-DATABASE_SSL=true           # true on prod, false locally
+# Database (consumed by AppModule TypeOrmModule.forRootAsync and CLI data-source)
+DB_HOST=localhost
+DB_PORT=5432            # Homebrew postgres@14 default; Docker users override to 5433
+DB_USERNAME=csd_user
+DB_PASSWORD=csd_password
+DB_NAME=csd_db
 
-# JWT
-JWT_SECRET=********         # 256-bit random string
-JWT_EXPIRES_IN=7d
+# JWT (signing only — expiry is hardcoded in code as '7d' in auth.module.ts)
+JWT_SECRET=********     # 256-bit random; openssl rand -hex 32
 
-# Email (password reset)
-EMAIL_HOST=********
-EMAIL_PORT=587
-EMAIL_USER=********
-EMAIL_PASSWORD=********
-EMAIL_FROM=no-reply@csd-fund.org
+# CORS / email links
+FRONTEND_URL=http://localhost:4200
 
-# AWS (for signed S3 upload URLs)
-AWS_REGION=eu-central-1
-AWS_S3_BUCKET=csd-fund-static
-AWS_ACCESS_KEY_ID=********  # only for local dev; Lambda uses IAM role
-AWS_SECRET_ACCESS_KEY=********
-
-# Frontend URL (for email links)
-FRONTEND_URL=https://www.csd-fund.org
+# Optional flag — when 'production', enables SSL to RDS (rejectUnauthorized: false)
+NODE_ENV=development
 ```
 
-### Frontend (`ui/src/environments/environment.ts`)
+**Production-only (set by Serverless from GitHub Secrets, see `backend/serverless.yml`):**
+
+```
+NODE_ENV=production
+AWS_S3_MEDIA_BUCKET=csd-media     # hardcoded in serverless.yml, not in .env
+```
+
+**Bootstrap-only (used by `npm run seed:super-admin` — do NOT commit, do NOT keep in `.env*`):**
+
+```
+SUPER_ADMIN_EMAIL=...
+SUPER_ADMIN_PASSWORD=...          # ≥16 chars, upper+lower+digit+symbol
+```
+
+**What is NOT in env:**
+
+- No `EMAIL_*` vars — there is no SMTP integration yet. Password-reset tokens are generated and stored in the DB; email delivery is not wired (the controller returns `200` regardless to avoid email-enumeration). Plan to add when SES/SMTP provider is selected.
+- No `DATABASE_SSL` flag — SSL is controlled implicitly by `NODE_ENV === 'production'`.
+- No `JWT_EXPIRES_IN` — value is hardcoded `'7d'` in `auth.module.ts`.
+- No `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` at runtime — Lambda uses its IAM role (S3:PutObject on `csd-media/*` granted in `serverless.yml`).
+
+### Frontend (`ui/src/environments/`)
 
 ```ts
+// environment.ts — dev
 export const environment = {
   production: false,
-  apiUrl: 'http://localhost:3000',  // dev
-  // apiUrl: 'https://www.csd-fund.org'  // prod (goes through CloudFront)
+  apiUrl: 'http://localhost:3000',
+};
+
+// environment.prod.ts — swapped via angular.json fileReplacements
+export const environment = {
+  production: true,
+  apiUrl: 'https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com/prod',
 };
 ```
 
-> **Never commit real values.** Production values are injected via GitHub Actions secrets and Serverless Framework's `${env:VAR}` interpolation.
+> **Never commit real values.** Production values for backend are injected via GitHub Actions secrets and Serverless Framework's `${env:VAR}` interpolation. The frontend's prod `apiUrl` is checked in only because it's the direct API Gateway URL (not a secret — anyone hitting <https://www.csd-fund.org> sees the same).
 
 ---
 
@@ -636,26 +678,28 @@ export const environment = {
 
 - **Node.js 22.x** (matches Lambda runtime) — use `nvm install 22` if needed
 - **npm 10.x** (ships with Node 22)
-- **PostgreSQL 14** via Homebrew: `brew install postgresql@14 && brew services start postgresql@14`
+- **PostgreSQL** — pick one:
+    - **Homebrew** `postgresql@14` on host port **5432** (the README walkthrough and `.env.example` default): `brew install postgresql@14 && brew services start postgresql@14`
+    - **Docker** `postgres:16` mapped to host port **5433** to avoid collision with a system postgres: `docker run -d --name csd-pg -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:16`
 - **macOS / Linux** (Windows via WSL2 not tested but likely works)
 
-> We intentionally removed `docker-compose.yml` — see Section 15, Incident #1, for the reason.
+> Historically `docker-compose.yml` was removed after a port-collision incident (see Section 15, Incident #1). Today both Homebrew and Docker (via `docker run`, not compose) are in use by different developers. The lesson from that incident still applies: never run both at the same time on the same port.
 
 ### First-time setup
 
 ```bash
 # 1. Clone the repo
-git clone https://github.com/********/csd-portal.git
-cd csd-portal
+git clone git@github.com:Kirnadz/csd-fund.git   # adjust to your remote
+cd csd-fund
 
-# 2. Create the local database
-createdb csd
-psql csd -c "CREATE USER csd_user WITH PASSWORD 'csd_local';"
-psql csd -c "GRANT ALL PRIVILEGES ON DATABASE csd TO csd_user;"
+# 2. Create the local database (matches .env.example defaults)
+createdb csd_db
+psql csd_db -c "CREATE USER csd_user WITH PASSWORD 'csd_password';"
+psql csd_db -c "GRANT ALL PRIVILEGES ON DATABASE csd_db TO csd_user;"
 
 # 3. Backend setup
 cd backend
-cp .env.example .env   # then fill in local values
+cp .env.example .env   # then fill in local values (or keep defaults if they match)
 npm install
 npm run migration:run  # apply all migrations
 npm run start:dev      # server on http://localhost:3000
@@ -672,16 +716,27 @@ npm start              # Angular dev server on http://localhost:4200
 
 You should be able to log in at `http://localhost:4200/login` with the seeded super_admin credentials.
 
-### Creating the first super_admin
+### Creating / rotating the super_admin
 
-If seeds didn't run or you need a fresh super_admin:
+The script is fail-fast — it requires `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` env vars (no defaults, no editing the script). Password must be ≥16 chars with upper + lower + digit + symbol.
 
 ```bash
 cd backend
-npx ts-node src/database/seed-super-admin.ts
+
+# Create new super_admin (or promote existing user to super_admin role)
+ SUPER_ADMIN_EMAIL='you@example.com' \
+ SUPER_ADMIN_PASSWORD='<from password manager>' \
+ npm run seed:super-admin
+
+# Rotate password of an existing super_admin
+ SUPER_ADMIN_EMAIL='you@example.com' \
+ SUPER_ADMIN_PASSWORD='<new strong password>' \
+ npm run seed:super-admin -- --rotate-password
 ```
 
-Edit the script beforehand to set the target email/password.
+(Leading space prevents the command landing in shell history when `HISTCONTROL=ignorespace` is set.)
+
+Full provisioning + rotation runbook (including prod against RDS): see [`backend/README.md` → "Provisioning the super-admin"](../backend/README.md#provisioning-the-super-admin).
 
 ---
 
@@ -702,6 +757,7 @@ Edit the script beforehand to set the target email/password.
 | `npm run migration:run` | Apply pending migrations |
 | `npm run migration:revert` | Revert the last migration |
 | `npm run migration:show` | List migrations and their state |
+| `npm run seed:super-admin` | Manual one-shot to create or rotate the super-admin (see Section 10) |
 
 ### Frontend (`cd ui`)
 
@@ -714,7 +770,7 @@ Edit the script beforehand to set the target email/password.
 | `npm run lint` | Run `ng lint` |
 | `npm run lint:fix` | `ng lint --fix` |
 | `npm run format` | Prettier on TS/HTML/SCSS |
-| `npm run test` | Karma + Jasmine unit tests |
+| `npm run test` | Vitest 4 unit tests (via `@angular/build:unit-test` builder) |
 
 ### Deployment
 
@@ -736,15 +792,16 @@ In practice, both are triggered by GitHub Actions on merge to `main`.
 ## 12. CI/CD & Release Process
 
 - **Workflow:** GitFlow. Feature branches → PR → review → merge to `main`.
-- **GitHub Actions** runs on every push to `main`:
-    1. Checkout code.
-    2. Install dependencies (both `backend` and `ui`).
-    3. Run migrations on production RDS (via SSH tunnel or direct when RDS publicly accessible).
-    4. Build backend, deploy with Serverless Framework.
-    5. Build frontend (browser + SSR), deploy with Serverless Framework.
-    6. Invalidate CloudFront cache for changed paths.
-- **Rollback:** re-run the deploy workflow at a previous commit SHA, or use Serverless Framework's `rollback` feature (`npx serverless rollback --timestamp <ts>`).
-- **Zero downtime** achieved through Lambda versioning — new version deploys and alias switches instantly.
+- **GitHub Actions trigger** (`.github/workflows/deploy.yml`):
+    - On PR **merge** to `main` (`pull_request: types: [closed]` filtered by `merged == true`), or
+    - Manual `workflow_dispatch` (cancels queued PR-merge runs via concurrency group `deploy-prod-${{ github.event_name }}`).
+    - **NOT** on direct push — direct pushes to `main` are blocked by branch protection; even if one slipped through, the workflow wouldn't fire.
+- **Pipeline order:**
+    1. Backend job: checkout → `npm ci` (backend) → `migration:show` → conditional `migration:run` if pending → `nest build` → `serverless deploy --stage prod` → smoke test `GET /api/health` (5 retries with backoff) → success/failure summary with CloudWatch links.
+    2. Frontend job (`needs: deploy-backend` — only runs if backend succeeded): checkout → `npm ci` (ui) → `ng build --configuration production` → `aws s3 sync` for hashed assets (1y immutable cache) + HTML (no-cache) → `serverless deploy --stage prod` for SSR Lambda → `aws cloudfront create-invalidation --paths "/*"` → smoke test `GET /` checking `<app-root>` presence (6 retries) → success/failure summary.
+- **Secrets** sourced from GitHub Secrets, injected as job env vars: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SERVERLESS_ACCESS_KEY`, `DB_*`, `JWT_SECRET`, `FRONTEND_URL`, `BACKEND_URL`.
+- **Rollback:** re-run the deploy workflow at a previous commit SHA via `workflow_dispatch`, or use Serverless Framework's `rollback` feature (`npx serverless rollback --timestamp <ts>` from `backend/` or `ui/`).
+- **Zero downtime** achieved through Lambda versioning — new version deploys and the API Gateway / CloudFront mapping switches atomically.
 
 ---
 
@@ -833,7 +890,7 @@ See Incident #3.
 
 **Issue:** Developer machines had both Homebrew `postgresql@14` and a `docker-compose` PostgreSQL 16 container, both claiming port 5432. Migrations would apply to one; the app connected to the other. Confusing, hard to debug.
 
-**Resolution:** Removed `docker-compose.yml`. Single source of truth: Homebrew `postgresql@14` locally, RDS on prod.
+**Resolution:** Removed `docker-compose.yml`. Today both setups coexist by convention: Homebrew binds 5432, Docker (via `docker run -p 5433:5432 postgres:16`) binds 5433. `.env.example` defaults to 5432; Docker users override `DB_PORT=5433` in their local `.env`. **Never run both bound to the same port on the same machine.**
 
 #### Cost Explorer access
 
@@ -915,9 +972,9 @@ These are conscious decisions, not bugs:
 
 **Root cause:** Homebrew `postgresql@14` service was running from install time; someone later added `docker-compose.yml` with `postgres:16`. Both claimed port 5432. Connections were racing.
 
-**Resolution:** Deleted `docker-compose.yml`. Documented Homebrew as the single source of truth in `backend/README.md`.
+**Resolution:** Deleted `docker-compose.yml`. Today Docker is back in use by some developers, but via direct `docker run -p 5433:5432 postgres:16` — different host port, no collision. `.env.example` defaults to Homebrew's 5432; Docker users override `DB_PORT=5433`.
 
-**Lesson:** If you add a new DB setup approach, explicitly remove the old one.
+**Lesson:** If you add a new DB setup approach, bind it to a distinct host port and document the convention in `.env.example`.
 
 ### Incident #2: ESM dependency caused prod outage
 
@@ -1042,7 +1099,7 @@ npx serverless logs --function api --stage prod --tail
 npx serverless logs --function ssr --stage prod --tail
 ```
 
-Or via CloudWatch Logs console: log group `/aws/lambda/csd-backend-prod-api` and `/aws/lambda/csd-ui-prod-ssr`.
+Or via CloudWatch Logs console: log group `/aws/lambda/csd-api-prod-api` and `/aws/lambda/csd-ssr-prod-ssr`.
 
 ### Export complaints for donor reporting
 
@@ -1051,9 +1108,12 @@ As admin+ in the UI: `/admin/complaints` → set filters → click "Export CSV".
 ### Invalidate CloudFront cache after a content-only update
 
 ```bash
+# Example — invalidate only blog HTML and the home page after a content update.
+# Adjust paths to match what actually changed. Note: `/partners` is currently
+# FROZEN (route commented out) — don't include it until the page is re-enabled.
 aws cloudfront create-invalidation \
   --distribution-id E3U465AMSVR9PN \
-  --paths "/blog/*" "/partners"
+  --paths "/" "/blog" "/blog/*"
 ```
 
 ---
@@ -1065,7 +1125,7 @@ Ordered by approximate priority.
 ### High priority
 
 - [ ] **Remove legacy `/publish`, `/approve`, `/reject` endpoints** after full UI migration to `/status` is verified in production.
-- [ ] **Remove safety RDS snapshot** `csd-postgres-safety-20260423-0003` once the team is confident in stability (target: 2 weeks after last incident).
+- [ ] **Remove safety RDS snapshot** `csd-postgres-safety-20260423-0003` (created 2026-04-23; original 2-week window expired 2026-05-07 — **OVERDUE** as of 2026-05-17). Verify it still exists in AWS Console first (it may have been deleted already without updating this list); if present, delete and remove this item.
 - [ ] **Add rate limiting** to public `POST` endpoints (`/api/complaints`, `/api/testimonials`, `/api/needs-forms/wash`).
 - [ ] **Fix label-for-input a11y** across all forms (109 warnings).
 
@@ -1121,6 +1181,7 @@ Task 3.1: Expand procurement status enum from 3 to 8 values
 - [ ] Any new public endpoint has appropriate `@UseGuards` and `@Roles`.
 - [ ] Any user-generated HTML input has `SanitizeHtmlPipe` applied.
 - [ ] i18n keys added to both `ua.json` and `en.json` (no English-only text in UI).
+- [ ] Non-trivial edits marked with `// CHANGED:` (or `// === ADDED: ===` for new blocks) — repo-wide review convention.
 - [ ] Changes to this doc if architecture/security-relevant.
 
 ### Code style

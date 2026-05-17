@@ -1,14 +1,17 @@
-// backend/src/lambda.ts
+// backend/lambda.ts
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import serverlessExpress from '@codegenie/serverless-express';
 import express from 'express';
 import { AppModule } from './src/app.module';
+// CHANGED: fail-fast on missing/weak JWT_SECRET at cold-start
+import { assertRequiredEnv } from './src/common/assert-required-env';
 
 let cachedServer: any;
 
 async function bootstrap() {
+  assertRequiredEnv();
   const expressApp = express();
   const adapter = new ExpressAdapter(expressApp);
   const app = await NestFactory.create(AppModule, adapter, {

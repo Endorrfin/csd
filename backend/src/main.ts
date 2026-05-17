@@ -1,10 +1,17 @@
+// CHANGED: load .env BEFORE assertRequiredEnv() — ConfigModule loads dotenv
+// only as part of Nest bootstrap, which is too late for pre-bootstrap checks.
+// Lambda runtime sets env vars itself, so lambda.ts does NOT need this import.
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DataSource } from 'typeorm';
 import { runSeeds } from './database/run-seeds';
+// CHANGED: fail-fast on missing/weak JWT_SECRET before Nest spins up
+import { assertRequiredEnv } from './common/assert-required-env';
 
 async function bootstrap() {
+  assertRequiredEnv();
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api');

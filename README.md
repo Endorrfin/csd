@@ -28,7 +28,7 @@ csd-fund/
 - **Reports:** `exceljs` for multi-sheet XLSX export of WASH submissions, manual CSV with UTF-8 BOM for complaints
 - **Lambda adapter:** `@codegenie/serverless-express` (cached bootstrap across warm invocations)
 - **API prefix:** `/api` (set globally in `lambda.ts` and `main.ts`)
-- **Tests / lint:** Jest (unit + e2e), ESLint 9 + Prettier
+- **Tests / lint:** Jest 30 (unit + e2e), ESLint 9 + Prettier
 
 ### Frontend (`ui/`)
 - **Framework:** Angular **21** standalone components + signals + Angular SSR (`@angular/ssr`, `provideClientHydration` with `withEventReplay`)
@@ -58,29 +58,30 @@ csd-fund/
 
 ## 2. Backend modules (`backend/src/modules/`)
 
-Each folder is a NestJS feature module wired in `app.module.ts`. All admin endpoints are protected by `JwtAuthGuard` + `RolesGuard`; `super_admin` bypasses role checks.
+Each folder is a NestJS feature module wired in `app.module.ts`. All admin endpoints are protected by `JwtAuthGuard` + `RolesGuard`; `super_admin` bypasses role checks. Endpoints below are relative to the module's mount point — every route is also prefixed globally with `/api`. Where the folder name differs from the mount, the actual mount is shown in parentheses.
 
 | Module | Public endpoints | Admin endpoints | Notable functionality |
 | --- | --- | --- | --- |
 | **auth** | `POST /register`, `POST /login`, `POST /forgot-password`, `POST /reset-password` | `GET /profile` | Local + JWT Passport strategies; password-reset token flow with expiry |
 | **users** | — | `GET /users`, `PATCH /users/:id/role` (super_admin only, blocks self-demotion) | Role management |
-| **content** | `GET /content`, `GET /content/:slug` | full CRUD by slug | Static bilingual pages (UA/EN) with `isPublished` flag and `sortOrder` |
+| **content** (`/pages`) | `GET /pages`, `GET /pages/:slug` | full CRUD by slug | Static bilingual pages (UA/EN) with `isPublished` flag and `sortOrder` |
 | **blog** | `GET /blog`, `GET /blog/featured`, `GET /blog/:slug` (paginated) | full CRUD | Bilingual posts, slug routing, cover image + image gallery + video, `isFeatured` |
 | **partners** | `GET /partners` (active only) | full CRUD | Donor / Partner / Government typing, soft-delete via `isActive` |
 | **cooperation** | `GET /cooperation?type=…` | full CRUD | Generic container for VACANCY / TENDER / INITIATIVE entries |
 | **procurement** | `GET /procurement` (published only) | `/admin/list`, CRUD, `PATCH /:id/status`, `PATCH /:id/publish`, delete (drafts only) | 6-step tender form, Quill HTML sanitized server-side, 8 status states |
-| **vacancy** | `GET /vacancy` (non-draft) | `/admin/list`, CRUD, `PATCH /:id/publish`, `PATCH /:id/status`, delete (drafts only) | Bilingual job posts, employment type, sanitized HTML, 7 status states |
-| **testimonial** | `GET /testimonial` (approved only) | `/admin/list`, CRUD, `PATCH /:id/status`, `PATCH /:id/verify`, delete (rejected only) | Two-tier moderation: `status` (approval) + independent `isVerified` flag |
-| **complaint** | `POST /complaint` (anonymous) | `/admin/list`, `/admin/export` (CSV + UTF-8 BOM), CRUD, `PATCH /:id/status`, delete (closed only) | Anonymous submission with attachments, location, expected resolution; admin-only |
-| **needs** | `POST /needs/wash` (anonymous) | `GET /needs/wash`, `GET /wash/export-xlsx`, `GET /wash/:id`, `GET /wash/:id/audit-log`, `PATCH /:id`, `PATCH /:id/full`, `PATCH /wash/bulk` | **WASH needs-assessment form** with 5 child relations (boreholes, towers, purification systems, pumps, equipment items) + audit log (CREATED / UPDATED / DELETED / STATUS_CHANGED), bulk status update, **6-sheet XLSX export** |
+| **vacancy** (`/vacancies`) | `GET /vacancies` (non-draft), `GET /vacancies/:id` | `GET /vacancies/admin/list`, CRUD, `PATCH /vacancies/:id/publish`, `PATCH /vacancies/:id/status`, delete (drafts only) | Bilingual job posts, employment type, sanitized HTML, 7 status states |
+| **testimonial** (`/testimonials`) | `GET /testimonials` (approved only), `GET /testimonials/:id` | `GET /testimonials/admin/list`, CRUD, `PATCH /testimonials/:id/approve`, `PATCH /testimonials/:id/reject`, `PATCH /testimonials/:id/status`, `PATCH /testimonials/:id/verify`, delete (rejected only) | Two-tier moderation: `status` (approval) + independent `isVerified` flag |
+| **complaint** (`/complaints`) | `POST /complaints` (anonymous) | `GET /complaints` (legacy unfiltered), `GET /complaints/admin/list`, `GET /complaints/admin/export` (CSV + UTF-8 BOM), `GET /complaints/:id`, `PATCH /complaints/:id`, `PATCH /complaints/:id/status`, delete (closed only) | Anonymous submission with attachments, location, expected resolution; admin-only |
+| **needs** (`/needs-forms`) | `POST /needs-forms/wash` (anonymous) | `GET /needs-forms/wash` (paginated list), `GET /needs-forms/wash/export-xlsx`, `GET /needs-forms/wash/:id`, `GET /needs-forms/wash/:id/audit-log`, `PATCH /needs-forms/wash/:id`, `PATCH /needs-forms/wash/:id/full`, `PATCH /needs-forms/wash/bulk`, `DELETE /needs-forms/wash/:id` | **WASH needs-assessment form** with 5 child relations (boreholes, towers, purification systems, pumps, equipment items) + audit log (CREATED / UPDATED / DELETED / STATUS_CHANGED), bulk status update, **6-sheet XLSX export** |
 | **equipment-catalog** | `GET /equipment-catalog` | — (seed-driven) | 21 categories / ~230 items used by the WASH form dropdowns |
 | **upload** | — | `POST /upload/presigned-url` | Generates 5-min S3 presigned PUT URLs (image/jpeg/png/webp) and returns the public CloudFront URL |
+| **about** | `GET /about` (published sections + documents) | `GET/POST/PATCH/DELETE /about/admin/sections[/:id]`, same for `/about/admin/documents[/:id]` (admin + super_admin only) | Bilingual "About" page: editable sections and downloadable documents |
 
 **Cross-cutting:**
 - `src/common/pipes/sanitize-html.pipe.ts` — HTML sanitization for Quill content
 - `src/database/data-source.ts` — standalone DataSource for the TypeORM CLI
-- `src/database/run-seeds.ts` — bootstrap seeders (super-admin, equipment catalogue, locations)
-- `src/lambda.ts` — Lambda handler with cached Nest bootstrap, base64 binary settings for XLSX/octet-stream
+- `src/database/run-seeds.ts` — called from `main.ts` after `app.listen()`. Currently runs **only** `seedEquipmentCatalog()` (21 categories / ~230 items). Super-admin is provisioned by a separate manual script (`src/database/seed-super-admin.ts`, run via `ts-node`); locations are not seeded — they live as a static frontend asset in `ui/src/assets/data/locations.json`.
+- `backend/lambda.ts` (at the backend root, **not** in `src/`) — Lambda handler with cached Nest bootstrap, base64 binary settings for XLSX/octet-stream. Compiled into `dist/lambda.js`; `serverless.yml` references it as `dist/lambda.handler`.
 
 ---
 
@@ -92,7 +93,7 @@ Routes are defined in `app.routes.ts` (public) and `features/admin/admin.routes.
 - **Home** (`/`) — hero, featured content, impact stats (signal-driven service)
 - **About** (`/about`)
 - **Blog** (`/blog`, `/blog/:slug`) — paginated list + post detail with route resolver
-- **Partners** (`/partners`)
+- **Partners** (`/partners`) — ⚠ FROZEN: route and header link are commented out until the fund provides partner logos & data. `PartnersComponent` and backend `GET /api/partners` are ready; to re-enable, uncomment the block in `ui/src/app/app.routes.ts` (search "FROZEN") and the matching nav link in `ui/src/app/layout/header/header.ts`.
 - **Activity map** (`/activity-map`) — Leaflet map with marker clustering, category sidebar, signal-based filtering, data from `assets/data/activities.json`
 - **Cooperation** (`/cooperation/...`) with four child feature areas:
     - `procurement` — list / detail / submit form (multi-step)
