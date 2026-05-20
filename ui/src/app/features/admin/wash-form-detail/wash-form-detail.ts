@@ -57,8 +57,6 @@ interface AuditLogEntry {
           (saved)="onFormSaved($event)"
           (cancelled)="cancelEdit()"
         ></app-wash-form>
-      
-      
       } @else {
         <!-- ════════════ VIEW MODE ════════════ -->
         <div class="detail-header">
@@ -78,7 +76,7 @@ interface AuditLogEntry {
             </button>
           </div>
         </div>
-      
+
         <!-- Tabs -->
         <div class="tabs">
           <button
@@ -88,18 +86,14 @@ interface AuditLogEntry {
           >
             {{ isUa ? 'Деталі' : 'Details' }}
           </button>
-          <button
-            class="tab"
-            [class.active]="activeTab() === 'audit'"
-            (click)="setTab('audit')"
-          >
+          <button class="tab" [class.active]="activeTab() === 'audit'" (click)="setTab('audit')">
             {{ isUa ? 'Історія змін' : 'Audit log' }}
             @if (auditLoaded() && auditLog().length > 0) {
               <span class="tab-badge">{{ auditLog().length }}</span>
             }
           </button>
         </div>
-      
+
         @if (activeTab() === 'details') {
           <!-- Quick status panel -->
           <div class="status-panel">
@@ -121,7 +115,7 @@ interface AuditLogEntry {
               {{ statusSaving() ? '...' : isUa ? 'Зберегти статус' : 'Save status' }}
             </button>
           </div>
-      
+
           <!-- I. General Information -->
           <div class="section-card">
             <h3>{{ isUa ? 'I. Загальна інформація' : 'I. General Information' }}</h3>
@@ -166,7 +160,7 @@ interface AuditLogEntry {
               </div>
             </div>
           </div>
-      
+
           <!-- II. Object -->
           <div class="section-card">
             <h3>{{ isUa ? 'II. Обʼєкт' : 'II. Object' }}</h3>
@@ -203,7 +197,7 @@ interface AuditLogEntry {
               }
             </div>
           </div>
-      
+
           <!-- III. Boreholes -->
           @if (f.boreholes.length) {
             <div class="section-card">
@@ -220,24 +214,32 @@ interface AuditLogEntry {
                       <span>{{ b.workType }}</span>
                     </div>
                     <div class="info-item">
-                      <span class="info-label">{{ isUa ? 'Очікуваний дебіт' : 'Expected flow' }}</span>
+                      <span class="info-label">{{
+                        isUa ? 'Очікуваний дебіт' : 'Expected flow'
+                      }}</span>
                       <span>{{ b.expectedFlowRate }} m³/h</span>
                     </div>
                     @if (b.existingDepth) {
                       <div class="info-item">
-                        <span class="info-label">{{ isUa ? 'Глибина існуючої' : 'Existing depth' }}</span>
+                        <span class="info-label">{{
+                          isUa ? 'Глибина існуючої' : 'Existing depth'
+                        }}</span>
                         <span>{{ b.existingDepth }} m</span>
                       </div>
                     }
                     @if (b.existingDebit) {
                       <div class="info-item">
-                        <span class="info-label">{{ isUa ? 'Дебіт існуючої' : 'Existing debit' }}</span>
+                        <span class="info-label">{{
+                          isUa ? 'Дебіт існуючої' : 'Existing debit'
+                        }}</span>
                         <span>{{ b.existingDebit }} m³/h</span>
                       </div>
                     }
                     @if (b.oldLocation) {
                       <div class="info-item full-w">
-                        <span class="info-label">{{ isUa ? 'Розташування старої' : 'Old location' }}</span>
+                        <span class="info-label">{{
+                          isUa ? 'Розташування старої' : 'Old location'
+                        }}</span>
                         <span>{{ b.oldLocation }}</span>
                       </div>
                     }
@@ -252,7 +254,7 @@ interface AuditLogEntry {
               }
             </div>
           }
-      
+
           <!-- IV. Towers -->
           @if (f.towers.length) {
             <div class="section-card">
@@ -271,7 +273,8 @@ interface AuditLogEntry {
                     <div class="info-item">
                       <span class="info-label">{{ isUa ? 'Висота' : 'Height' }}</span>
                       <span>
-                        {{ t.towerHeight === 'over_25' ? (t.customHeight ?? '?') : t.towerHeight }} m
+                        {{ t.towerHeight === 'over_25' ? (t.customHeight ?? '?') : t.towerHeight }}
+                        m
                       </span>
                     </div>
                     <div class="info-item">
@@ -293,7 +296,7 @@ interface AuditLogEntry {
               }
             </div>
           }
-      
+
           <!-- V. Purification -->
           @if (f.purifications.length) {
             <div class="section-card">
@@ -328,7 +331,7 @@ interface AuditLogEntry {
               }
             </div>
           }
-      
+
           <!-- VI. Pumps -->
           @if (f.pumps.length) {
             <div class="section-card">
@@ -346,11 +349,13 @@ interface AuditLogEntry {
                     </div>
                     @if (p.brand || p.model) {
                       <div class="info-item">
-                        <span class="info-label">{{ isUa ? 'Бренд / модель' : 'Brand / model' }}</span>
+                        <span class="info-label">{{
+                          isUa ? 'Бренд / модель' : 'Brand / model'
+                        }}</span>
                         <span>{{ p.brand }} {{ p.model }}</span>
                       </div>
                     }
-                    @if (p.powerKw != null) {
+                    @if (p.powerKw !== null) {
                       <div class="info-item">
                         <span class="info-label">{{ isUa ? 'Потужність' : 'Power' }}</span>
                         <span>{{ p.powerKw }} kW</span>
@@ -371,7 +376,7 @@ interface AuditLogEntry {
               }
             </div>
           }
-      
+
           <!-- VII. Equipment -->
           @if (f.items.length) {
             <div class="section-card">
@@ -417,7 +422,7 @@ interface AuditLogEntry {
               </div>
             </div>
           }
-      
+
           <!-- Danger zone -->
           @if (auth.isAdmin) {
             <div class="danger-zone">
@@ -468,7 +473,7 @@ interface AuditLogEntry {
             </div>
           }
         }
-      } 
+      }
     }
   `,
   styles: [
@@ -482,124 +487,251 @@ interface AuditLogEntry {
         margin-bottom: 1rem;
         padding: 0;
       }
-      .btn-back:hover { text-decoration: underline; }
+      .btn-back:hover {
+        text-decoration: underline;
+      }
 
       .edit-header {
         margin-bottom: 1.5rem;
       }
       .edit-header h2 {
-        font-size: 1.25rem; font-weight: 600; color: #1a365d; margin: 0 0 0.25rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin: 0 0 0.25rem;
       }
-      .edit-meta { font-size: 0.85rem; color: #64748b; margin: 0; }
+      .edit-meta {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 0;
+      }
 
       .detail-header {
-        display: flex; justify-content: space-between; align-items: flex-start;
-        margin-bottom: 1.5rem; gap: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
       }
       .detail-header h2 {
-        font-size: 1.25rem; font-weight: 600; color: #1a365d; margin: 0 0 0.25rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin: 0 0 0.25rem;
       }
-      .detail-meta { font-size: 0.85rem; color: #64748b; margin: 0; }
+      .detail-meta {
+        font-size: 0.85rem;
+        color: #64748b;
+        margin: 0;
+      }
       .detail-actions {
-        display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
       }
 
-      .btn { cursor: pointer; }
-      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .btn {
+        cursor: pointer;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
       .btn-edit {
-        background: #2b6cb0; color: #fff; padding: 0.45rem 1.1rem;
-        border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 500;
+        background: #2b6cb0;
+        color: #fff;
+        padding: 0.45rem 1.1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
       }
-      .btn-edit:hover { background: #2c5282; }
+      .btn-edit:hover {
+        background: #2c5282;
+      }
       .btn-save {
-        background: #2b6cb0; color: #fff; padding: 0.5rem 1.25rem;
-        border: none; border-radius: 6px; font-size: 0.85rem;
+        background: #2b6cb0;
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
       }
-      .btn-save:hover { background: #2c5282; }
+      .btn-save:hover {
+        background: #2c5282;
+      }
       .btn-danger {
-        background: #e53e3e; color: #fff; padding: 0.5rem 1.25rem;
-        border: none; border-radius: 6px; font-size: 0.85rem;
+        background: #e53e3e;
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
       }
-      .btn-danger:hover { background: #c53030; }
+      .btn-danger:hover {
+        background: #c53030;
+      }
 
       .status-badge {
-        display: inline-block; padding: 0.25rem 0.75rem; border-radius: 4px;
-        font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
       }
-      [data-status='new']         { background: #dbeafe; color: #1e40af; }
-      [data-status='in_review']   { background: #fef3c7; color: #92400e; }
-      [data-status='approved']    { background: #d1fae5; color: #065f46; }
-      [data-status='rejected']    { background: #fee2e2; color: #991b1b; }
-      [data-status='in_progress'] { background: #e0e7ff; color: #3730a3; }
-      [data-status='completed']   { background: #d1fae5; color: #065f46; }
+      [data-status='new'] {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      [data-status='in_review'] {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      [data-status='approved'] {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      [data-status='rejected'] {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      [data-status='in_progress'] {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+      [data-status='completed'] {
+        background: #d1fae5;
+        color: #065f46;
+      }
 
       .status-panel {
-        display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;
-        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;
-        padding: 1rem; margin-bottom: 1.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: flex-end;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
       }
       .status-panel label {
-        font-size: 0.85rem; font-weight: 500; color: #334155; width: 100%;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #334155;
+        width: 100%;
       }
       .status-panel select {
-        padding: 0.5rem 0.75rem; border: 1px solid #cbd5e0;
-        border-radius: 6px; font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.85rem;
       }
       .status-panel textarea {
-        flex: 1; min-width: 200px; padding: 0.5rem 0.75rem;
-        border: 1px solid #cbd5e0; border-radius: 6px; font-size: 0.85rem;
+        flex: 1;
+        min-width: 200px;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.85rem;
         resize: vertical;
       }
 
       .section-card {
-        background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
-        padding: 1.25rem; margin-bottom: 1rem;
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
       }
       .section-card h3 {
-        font-size: 0.95rem; font-weight: 600; color: #1a365d; margin: 0 0 0.75rem;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin: 0 0 0.75rem;
       }
       .subsection {
-        padding: 0.75rem 0; border-top: 1px dashed #e2e8f0;
+        padding: 0.75rem 0;
+        border-top: 1px dashed #e2e8f0;
       }
-      .subsection:first-of-type { border-top: none; padding-top: 0; }
+      .subsection:first-of-type {
+        border-top: none;
+        padding-top: 0;
+      }
       .subsection h4 {
-        margin: 0 0 0.5rem; font-size: 0.85rem; font-weight: 600; color: #475569;
+        margin: 0 0 0.5rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #475569;
       }
       .info-grid {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.6rem;
       }
-      .info-item { display: flex; flex-direction: column; gap: 0.1rem; }
+      .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+      }
       .info-label {
-        font-size: 0.7rem; color: #64748b; text-transform: uppercase;
+        font-size: 0.7rem;
+        color: #64748b;
+        text-transform: uppercase;
         letter-spacing: 0.03em;
       }
-      .info-item span:last-child { font-size: 0.9rem; color: #1e293b; }
-      .full-w { grid-column: 1/-1; }
+      .info-item span:last-child {
+        font-size: 0.9rem;
+        color: #1e293b;
+      }
+      .full-w {
+        grid-column: 1/-1;
+      }
 
-      .equip-table-wrap { overflow-x: auto; }
+      .equip-table-wrap {
+        overflow-x: auto;
+      }
       .equip-table {
-        width: 100%; border-collapse: collapse; font-size: 0.85rem;
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
       }
       .equip-table th {
-        text-align: left; padding: 0.5rem; border-bottom: 2px solid #e2e8f0;
-        color: #64748b; font-weight: 600; font-size: 0.75rem; text-transform: uppercase;
+        text-align: left;
+        padding: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
       }
       .equip-table td {
-        padding: 0.5rem; border-bottom: 1px solid #f1f5f9;
+        padding: 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
       }
 
       .danger-zone {
-        margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #fee2e2;
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #fee2e2;
       }
       .loading {
-        text-align: center; padding: 3rem; color: #64748b;
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
       }
       .error-banner {
-        background: #fff5f5; color: #e53e3e; padding: 0.75rem 1rem;
-        border: 1px solid #fed7d7; border-radius: 6px; margin-bottom: 1rem;
+        background: #fff5f5;
+        color: #e53e3e;
+        padding: 0.75rem 1rem;
+        border: 1px solid #fed7d7;
+        border-radius: 6px;
+        margin-bottom: 1rem;
         font-size: 0.9rem;
       }
-      
+
       /* NEW: Tabs */
       .tabs {
         display: flex;
@@ -622,7 +754,9 @@ interface AuditLogEntry {
         align-items: center;
         gap: 0.5rem;
       }
-      .tab:hover { color: #334155; }
+      .tab:hover {
+        color: #334155;
+      }
       .tab.active {
         color: #2b6cb0;
         border-bottom-color: #2b6cb0;
@@ -639,7 +773,7 @@ interface AuditLogEntry {
         background: #2b6cb0;
         color: #fff;
       }
-      
+
       /* NEW: Audit timeline */
       .audit-timeline {
         position: relative;
@@ -669,11 +803,19 @@ interface AuditLogEntry {
         border: 2px solid #fff;
         box-shadow: 0 0 0 1px #e2e8f0;
       }
-      .audit-entry[data-action='created']        .audit-marker { background: #38a169; }
-      .audit-entry[data-action='updated']        .audit-marker { background: #3182ce; }
-      .audit-entry[data-action='status_changed'] .audit-marker { background: #d69e2e; }
-      .audit-entry[data-action='deleted']        .audit-marker { background: #e53e3e; }
-      
+      .audit-entry[data-action='created'] .audit-marker {
+        background: #38a169;
+      }
+      .audit-entry[data-action='updated'] .audit-marker {
+        background: #3182ce;
+      }
+      .audit-entry[data-action='status_changed'] .audit-marker {
+        background: #d69e2e;
+      }
+      .audit-entry[data-action='deleted'] .audit-marker {
+        background: #e53e3e;
+      }
+
       .audit-body {
         background: #f8fafc;
         border: 1px solid #e2e8f0;
@@ -696,11 +838,23 @@ interface AuditLogEntry {
         padding: 0.2rem 0.55rem;
         border-radius: 4px;
       }
-      .audit-action-badge[data-action='created']        { background: #d1fae5; color: #065f46; }
-      .audit-action-badge[data-action='updated']        { background: #dbeafe; color: #1e40af; }
-      .audit-action-badge[data-action='status_changed'] { background: #fef3c7; color: #92400e; }
-      .audit-action-badge[data-action='deleted']        { background: #fee2e2; color: #991b1b; }
-      
+      .audit-action-badge[data-action='created'] {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .audit-action-badge[data-action='updated'] {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      .audit-action-badge[data-action='status_changed'] {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .audit-action-badge[data-action='deleted'] {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
       .audit-time {
         font-size: 0.75rem;
         color: #94a3b8;
@@ -711,9 +865,14 @@ interface AuditLogEntry {
         color: #64748b;
         margin-bottom: 0.4rem;
       }
-      .audit-actor-label { margin-right: 0.3rem; }
-      .audit-actor-email { color: #1e293b; font-weight: 500; }
-      
+      .audit-actor-label {
+        margin-right: 0.3rem;
+      }
+      .audit-actor-email {
+        color: #1e293b;
+        font-weight: 500;
+      }
+
       .audit-diff {
         display: flex;
         align-items: center;
@@ -740,7 +899,9 @@ interface AuditLogEntry {
         padding: 0.15rem 0.5rem;
         border-radius: 4px;
       }
-      .audit-arrow { color: #94a3b8; }
+      .audit-arrow {
+        color: #94a3b8;
+      }
       .empty {
         text-align: center;
         padding: 3rem;
@@ -749,9 +910,16 @@ interface AuditLogEntry {
       }
 
       @media (max-width: 640px) {
-        .info-grid { grid-template-columns: 1fr; }
-        .detail-header { flex-direction: column; }
-        .status-panel { flex-direction: column; align-items: stretch; }
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+        .detail-header {
+          flex-direction: column;
+        }
+        .status-panel {
+          flex-direction: column;
+          align-items: stretch;
+        }
       }
     `,
   ],
@@ -826,24 +994,20 @@ export class WashFormDetailComponent implements OnInit {
     this.saving.set(true);
     this.saveError.set(null);
 
-    this.api
-      .patch<WashFormDetail>(`needs-forms/wash/${id}/full`, payload)
-      .subscribe({
-        next: (updated) => {
-          this.form.set(updated);
-          this.saving.set(false);
-          this.mode.set('view');
-        },
-        error: (err: HttpErrorResponse) => {
-          this.saving.set(false);
-          const msg = Array.isArray(err.error?.message)
-            ? err.error.message.join('; ')
-            : err.error?.message ?? err.message;
-          this.saveError.set(
-            (this.isUa ? 'Помилка збереження: ' : 'Save error: ') + msg,
-          );
-        },
-      });
+    this.api.patch<WashFormDetail>(`needs-forms/wash/${id}/full`, payload).subscribe({
+      next: (updated) => {
+        this.form.set(updated);
+        this.saving.set(false);
+        this.mode.set('view');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.saving.set(false);
+        const msg = Array.isArray(err.error?.message)
+          ? err.error.message.join('; ')
+          : (err.error?.message ?? err.message);
+        this.saveError.set((this.isUa ? 'Помилка збереження: ' : 'Save error: ') + msg);
+      },
+    });
   }
 
   // ───── Quick status update (PATCH) ─────
@@ -886,7 +1050,7 @@ export class WashFormDetailComponent implements OnInit {
 
   yesNo(v: boolean | null | undefined): string {
     if (v === null || v === undefined) return '---';
-    return v ? (this.isUa ? 'Так' : 'Yes') : (this.isUa ? 'Ні' : 'No');
+    return v ? (this.isUa ? 'Так' : 'Yes') : this.isUa ? 'Ні' : 'No';
   }
 
   getPumpPurposeLabel(value: string | null | undefined): string {
@@ -921,16 +1085,14 @@ export class WashFormDetailComponent implements OnInit {
     const id = this.form()?.id;
     if (!id) return;
     this.auditLoading.set(true);
-    this.api
-      .get<AuditLogEntry[]>(`needs-forms/wash/${id}/audit-log`)
-      .subscribe({
-        next: (entries) => {
-          this.auditLog.set(entries);
-          this.auditLoading.set(false);
-          this.auditLoaded.set(true);
-        },
-        error: () => this.auditLoading.set(false),
-      });
+    this.api.get<AuditLogEntry[]>(`needs-forms/wash/${id}/audit-log`).subscribe({
+      next: (entries) => {
+        this.auditLog.set(entries);
+        this.auditLoading.set(false);
+        this.auditLoaded.set(true);
+      },
+      error: () => this.auditLoading.set(false),
+    });
   }
 
   // human-readable action label
