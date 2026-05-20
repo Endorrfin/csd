@@ -4,11 +4,12 @@ import { Meta, Title } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
 import { CarouselComponent } from '../../shared/components/carousel/carousel';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
 
 @Component({
   selector: 'app-blog-post',
   standalone: true,
-  imports: [DatePipe, CarouselComponent],
+  imports: [DatePipe, CarouselComponent, QuillHtmlPipe],
   template: `
     @if (post()) {
       <article class="post">
@@ -18,14 +19,15 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             post().publishedAt || post().createdAt | date: 'mediumDate'
           }}</small>
           <h1>{{ post().titleUa }}</h1>
-          <div class="post__content" [innerHTML]="post().contentUa"></div>
+          <!-- add rich-content class + quillHtml pipe so &nbsp; tokens wrap and text no longer overflows the viewport -->
+          <div class="rich-content post__content" [innerHTML]="post().contentUa | quillHtml"></div>
         </div>
         @if (post().images?.length) {
           <div class="post__carousel-wrap">
             <app-carousel [images]="post().images" />
           </div>
         }
-        
+
         @if (post().videoUrl) {
           <div class="post__video-wrap">
             @if (showVideo()) {
@@ -97,7 +99,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
         color: #4a5568;
         line-height: 1.6;
       }
-      
+
       .post__video-placeholder {
         position: relative;
         width: 100%;
