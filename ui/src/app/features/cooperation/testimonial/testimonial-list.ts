@@ -15,7 +15,7 @@ import { TestimonialItem } from './testimonial.interfaces';
         <div>
           <h2>{{ 'testimonial.list.title' | translate }}</h2>
         </div>
-        <!-- CHANGED: removed redundant @if (true) wrapper -->
+        <!-- removed redundant @if (true) wrapper -->
         <a routerLink="new" class="btn-primary">
           ✍️ {{ 'testimonial.list.submit' | translate }}
         </a>

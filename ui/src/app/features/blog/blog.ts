@@ -1,7 +1,7 @@
 // path: ui/src/app/features/blog/blog.ts
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ApiService } from '../../core/services/api.service';
-import { TranslateService, TranslateModule } from '@ngx-translate/core';
+import { LanguageService } from '../../core/services/language.service';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 
@@ -16,11 +16,11 @@ interface PaginatedPosts {
 @Component({
   selector: 'app-blog',
   standalone: true,
-  imports: [DatePipe, RouterLink, TranslateModule], // CHANGED: TranslateModule
+  imports: [DatePipe, RouterLink],
   template: `
-    <h1>{{ isUa ? 'Новини' : 'News' }}</h1>
+    <h1>{{ isUa() ? 'Новини' : 'News' }}</h1>
 
-    <!-- CHANGED: skeleton on first load -->
+    <!-- skeleton on first load -->
     @if (loading() && posts().length === 0) {
       <div class="post-card-skeleton" aria-hidden="true">
         @for (i of [1, 2, 3]; track i) {
@@ -33,33 +33,32 @@ interface PaginatedPosts {
       </div>
     }
 
-    <!-- CHANGED: posts is now signal -->
+    <!-- posts is now signal -->
     @for (post of posts(); track post.id) {
       <article class="post-card">
         <a [routerLink]="['/blog', post.slug]" class="post-card__link">
-          <h2>{{ isUa ? post.titleUa : post.titleEn }}</h2>
+          <h2>{{ isUa() ? post.titleUa : post.titleEn }}</h2>
         </a>
-        <p>{{ isUa ? post.excerptUa : post.excerptEn }}</p>
+        <p>{{ isUa() ? post.excerptUa : post.excerptEn }}</p>
         <small>{{ post.publishedAt || post.createdAt | date }}</small>
       </article>
     }
 
-    <!-- CHANGED: load more button -->
     @if (hasMore()) {
       <div class="post-card__load-more">
         <button class="btn btn--secondary" (click)="loadMore()" [disabled]="loading()">
           @if (loading()) {
             <span class="btn-spinner"></span>
-            {{ isUa ? 'Завантаження...' : 'Loading...' }}
+            {{ isUa() ? 'Завантаження...' : 'Loading...' }}
           } @else {
-            {{ isUa ? 'Показати більше' : 'Load more' }}
+            {{ isUa() ? 'Показати більше' : 'Load more' }}
           }
         </button>
       </div>
     }
 
     @if (!loading() && posts().length === 0) {
-      <p class="empty">{{ isUa ? 'Новин поки немає' : 'No news yet' }}</p>
+      <p class="empty">{{ isUa() ? 'Новин поки немає' : 'No news yet' }}</p>
     }
   `,
   styles: [
@@ -99,7 +98,6 @@ interface PaginatedPosts {
 })
 export class BlogComponent implements OnInit {
   private readonly api = inject(ApiService);
-  private readonly translate = inject(TranslateService);
 
   private readonly PAGE_SIZE = 20;
   posts = signal<any[]>([]);
@@ -107,9 +105,7 @@ export class BlogComponent implements OnInit {
   hasMore = signal(false);
   loading = signal(false);
 
-  get isUa() {
-    return (this.translate.currentLang || 'ua') === 'ua';
-  }
+  protected readonly isUa = inject(LanguageService).isUa;
 
   ngOnInit() {
     this.loadPosts(1);
@@ -117,17 +113,15 @@ export class BlogComponent implements OnInit {
 
   loadPosts(page: number) {
     this.loading.set(true);
-    this.api
-      .get<PaginatedPosts>(`blog?page=${page}&limit=${this.PAGE_SIZE}`)
-      .subscribe({
-        next: (res) => {
-          this.posts.set(page === 1 ? res.items : [...this.posts(), ...res.items]);
-          this.page.set(res.page);
-          this.hasMore.set(res.hasMore);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.api.get<PaginatedPosts>(`blog?page=${page}&limit=${this.PAGE_SIZE}`).subscribe({
+      next: (res) => {
+        this.posts.set(page === 1 ? res.items : [...this.posts(), ...res.items]);
+        this.page.set(res.page);
+        this.hasMore.set(res.hasMore);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
   }
 
   loadMore() {

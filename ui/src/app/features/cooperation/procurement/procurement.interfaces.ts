@@ -30,7 +30,7 @@ export enum SubmissionMethod {
   EPLATFORM = 'eplatform',
 }
 
-// CHANGED: synced with backend entity (8 active + 1 legacy)
+// synced with backend entity (8 active + 1 legacy)
 export enum ProcurementStatus {
   DRAFT = 'draft',
   PUBLISHED = 'published',
@@ -70,7 +70,7 @@ export interface ProcurementListItem {
   createdAt: string;
 }
 
-// CHANGED: paginated response shape — matches GET /procurement/admin/list
+// paginated response shape — matches GET /procurement/admin/list
 export interface PaginatedProcurements {
   data: ProcurementListItem[];
   total: number;

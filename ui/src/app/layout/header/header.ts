@@ -2,6 +2,7 @@ import { Component, inject, signal, HostListener } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { LanguageService } from '../../core/services/language.service';
 import { Router } from '@angular/router';
 
 @Component({
@@ -49,7 +50,7 @@ import { Router } from '@angular/router';
           }}</a>
           <!-- 🤔 FROZEN  -->
           <!-- <a routerLink="/partners" routerLinkActive="active" (click)="closeMenu()">{{  -->
-            <!-- 'NAV.PARTNERS' | translate  -->
+          <!-- 'NAV.PARTNERS' | translate  -->
           <!-- }}</a>  -->
           <a routerLink="/cooperation" routerLinkActive="active" (click)="closeMenu()">{{
             'NAV.COOPERATION' | translate
@@ -67,19 +68,19 @@ import { Router } from '@angular/router';
               class="nav-admin"
               (click)="closeMenu()"
             >
-              {{ currentLang === 'ua' ? 'Адмін' : 'Admin' }}
+              {{ isUa() ? 'Адмін' : 'Admin' }}
             </a>
           }
 
           <!-- auth actions inside nav on mobile -->
           <div class="header__nav-actions">
             <button (click)="switchLang()" class="header__lang">
-              {{ currentLang === 'ua' ? 'EN' : 'UA' }}
+              {{ isUa() ? 'EN' : 'UA' }}
             </button>
             @if (auth.isLoggedIn()) {
               <span class="header__email">{{ auth.userEmail() }}</span>
               <button (click)="logout()" class="header__login">
-                {{ currentLang === 'ua' ? 'Вийти' : 'Logout' }}
+                {{ isUa() ? 'Вийти' : 'Logout' }}
               </button>
             } @else {
               <a routerLink="/login" class="header__login" (click)="closeMenu()">
@@ -92,12 +93,12 @@ import { Router } from '@angular/router';
         <!-- desktop-only actions -->
         <div class="header__actions header__actions--desktop">
           <button (click)="switchLang()" class="header__lang">
-            {{ currentLang === 'ua' ? 'EN' : 'UA' }}
+            {{ isUa() ? 'EN' : 'UA' }}
           </button>
           @if (auth.isLoggedIn()) {
             <span class="header__email">{{ auth.userEmail() }}</span>
             <button (click)="logout()" class="header__login">
-              {{ currentLang === 'ua' ? 'Вийти' : 'Logout' }}
+              {{ isUa() ? 'Вийти' : 'Logout' }}
             </button>
           } @else {
             <a routerLink="/login" class="header__login">{{ 'NAV.LOGIN' | translate }}</a>
@@ -113,8 +114,7 @@ import { Router } from '@angular/router';
   `,
   styles: [
     `
-    
-       :host {
+      :host {
         position: sticky;
         top: 0;
         z-index: 1200;
@@ -310,7 +310,8 @@ export class HeaderComponent {
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   readonly auth = inject(AuthService);
-  currentLang = 'ua';
+  // read language from the shared signal instead of a local duplicate `currentLang` field
+  protected readonly isUa = inject(LanguageService).isUa;
 
   // signal for menu state
   readonly isMenuOpen = signal(false);
@@ -331,8 +332,8 @@ export class HeaderComponent {
   }
 
   switchLang(): void {
-    this.currentLang = this.currentLang === 'ua' ? 'en' : 'ua';
-    this.translate.use(this.currentLang);
+    // only drive translate.use(); LanguageService updates the signal via onLangChange
+    this.translate.use(this.isUa() ? 'en' : 'ua');
   }
 
   logout(): void {

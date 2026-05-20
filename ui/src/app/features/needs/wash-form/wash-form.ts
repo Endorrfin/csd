@@ -44,7 +44,7 @@ import {
   Search, // search input icon.
 } from 'lucide-angular';
 
-// CHANGED: decorator moved to templateUrl + styleUrl (Angular 17+ singular).
+// decorator moved to templateUrl + styleUrl (Angular 17+ singular).
 @Component({
   selector: 'app-wash-form',
   standalone: true,
