@@ -11,7 +11,7 @@ export const PROCUREMENT_ROUTES: Routes = [
     loadComponent: () => import('./procurement-form').then((m) => m.ProcurementFormComponent),
     canActivate: [managerGuard],
   },
-  // CHANGED: added public detail route
+  // added public detail route
   {
     path: ':id',
     loadComponent: () => import('./procurement-detail').then((m) => m.ProcurementDetailComponent),

@@ -1,8 +1,9 @@
 // path: ui/src/app/features/home/home.ts
 import { Component, inject, OnInit, signal, computed, PLATFORM_ID } from '@angular/core'; // + computed
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { QuillModule } from 'ngx-quill';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
+import { LanguageService } from '../../core/services/language.service';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
@@ -17,8 +18,6 @@ import { DOCUMENT } from '@angular/common';
 import { QUILL_MODULES } from '../../shared/config/quill.config';
 import { ImpactStatsComponent } from './components/impact-stats/impact-stats';
 import { HeroFeaturedComponent } from './components/hero-featured/hero-featured';
-
-
 
 // response envelope from paginated /blog endpoint
 interface PaginatedPosts {
@@ -46,20 +45,16 @@ interface PaginatedPosts {
   ],
   template: `
     <section class="news">
-    
-      <app-hero-featured
-        [post]="featuredPost()"
-        [loading]="featuredLoading()"
-      />
+      <app-hero-featured [post]="featuredPost()" [loading]="featuredLoading()" />
 
       <app-impact-stats />
       <div class="news__header">
-        <h2>{{ isUa ? 'Новини' : 'News' }}</h2>
+        <h2>{{ isUa() ? 'Новини' : 'News' }}</h2>
         @if (auth.isManager) {
           <button
             class="news__add"
             (click)="openCreateForm()"
-            [title]="isUa ? 'Додати новину' : 'Add news'"
+            [title]="isUa() ? 'Додати новину' : 'Add news'"
           >
             ➕
           </button>
@@ -86,10 +81,10 @@ interface PaginatedPosts {
             <h3>
               {{
                 editingPostId()
-                  ? isUa
+                  ? isUa()
                     ? 'Редагувати'
                     : 'Edit'
-                  : isUa
+                  : isUa()
                     ? 'Нова публікація'
                     : 'New post'
               }}
@@ -105,7 +100,7 @@ interface PaginatedPosts {
           </div>
 
           <label
-            >{{ isUa ? 'Заголовок (UA)' : 'Title (UA)' }} *
+            >{{ isUa() ? 'Заголовок (UA)' : 'Title (UA)' }} *
             <input
               [ngModel]="form().titleUa"
               (ngModelChange)="updateFormField('titleUa', $event)"
@@ -113,7 +108,7 @@ interface PaginatedPosts {
           </label>
 
           <label
-            >{{ isUa ? 'Заголовок (EN)' : 'Title (EN)' }} *
+            >{{ isUa() ? 'Заголовок (EN)' : 'Title (EN)' }} *
             <input
               [ngModel]="form().titleEn"
               (ngModelChange)="updateFormField('titleEn', $event)"
@@ -130,7 +125,7 @@ interface PaginatedPosts {
           </label>
 
           <label
-            >{{ isUa ? 'Короткий опис (UA)' : 'Excerpt (UA)' }}
+            >{{ isUa() ? 'Короткий опис (UA)' : 'Excerpt (UA)' }}
             <input
               [ngModel]="form().excerptUa"
               (ngModelChange)="updateFormField('excerptUa', $event)"
@@ -138,7 +133,7 @@ interface PaginatedPosts {
           </label>
 
           <label
-            >{{ isUa ? 'Короткий опис (EN)' : 'Excerpt (EN)' }}
+            >{{ isUa() ? 'Короткий опис (EN)' : 'Excerpt (EN)' }}
             <input
               [ngModel]="form().excerptEn"
               (ngModelChange)="updateFormField('excerptEn', $event)"
@@ -146,14 +141,14 @@ interface PaginatedPosts {
           </label>
 
           <label
-            >{{ isUa ? 'Детальний опис (UA)' : 'Content (UA)' }} *
+            >{{ isUa() ? 'Детальний опис (UA)' : 'Content (UA)' }} *
             @if (isBrowser) {
               <quill-editor
                 class="news-form__quill"
                 [ngModel]="form().contentUa"
                 (ngModelChange)="updateFormField('contentUa', $event)"
                 [modules]="quillModules"
-                [placeholder]="isUa ? 'Вводити детальний опис...' : 'Enter content...'"
+                [placeholder]="isUa() ? 'Вводити детальний опис...' : 'Enter content...'"
               ></quill-editor>
             } @else {
               <textarea
@@ -165,13 +160,13 @@ interface PaginatedPosts {
           </label>
 
           <label
-            >{{ isUa ? 'Детальний опис (EN)' : 'Content (EN)' }} *
+            >{{ isUa() ? 'Детальний опис (EN)' : 'Content (EN)' }} *
             @if (isBrowser) {
               <quill-editor
                 [ngModel]="form().contentEn"
                 (ngModelChange)="updateFormField('contentEn', $event)"
                 [modules]="quillModules"
-                [placeholder]="isUa ? 'Вводити детальний опис...' : 'Enter content...'"
+                [placeholder]="isUa() ? 'Вводити детальний опис...' : 'Enter content...'"
                 class="news-form__quill"
               >
               </quill-editor>
@@ -185,7 +180,7 @@ interface PaginatedPosts {
           </label>
 
           <div class="news-form__images">
-            <label>{{ isUa ? 'Зображення (до 5 фото)' : 'Images (up to 5 photos)' }}</label>
+            <label>{{ isUa() ? 'Зображення (до 5 фото)' : 'Images (up to 5 photos)' }}</label>
             @for (img of form().images; track $index; let i = $index) {
               <div class="news-form__image-row">
                 <input
@@ -202,11 +197,11 @@ interface PaginatedPosts {
                 >
                   @if (uploadingImages()[i]) {
                     <span class="news-form__spinner">⏳</span>
-                    {{ isUa ? 'Завантаження...' : 'Uploading...' }}
+                    {{ isUa() ? 'Завантаження...' : 'Uploading...' }}
                   } @else if (form().images[i]) {
-                    🔄 {{ isUa ? 'Замінити' : 'Replace' }}
+                    🔄 {{ isUa() ? 'Замінити' : 'Replace' }}
                   } @else {
-                    📎 {{ isUa ? 'Обрати фото' : 'Choose photo' }}
+                    📎 {{ isUa() ? 'Обрати фото' : 'Choose photo' }}
                   }
                 </label>
                 @if (form().images[i] && !uploadingImages()[i]) {
@@ -224,13 +219,13 @@ interface PaginatedPosts {
                 (click)="addImage()"
                 [disabled]="isAnyImageUploading()"
               >
-                {{ isUa ? '+ Додати фото' : '+ Add photo' }}
+                {{ isUa() ? '+ Додати фото' : '+ Add photo' }}
               </button>
             }
           </div>
 
           <label
-            >{{ isUa ? 'Посилання на відео (YouTube)' : 'Video URL (YouTube)' }}
+            >{{ isUa() ? 'Посилання на відео (YouTube)' : 'Video URL (YouTube)' }}
             <input
               [ngModel]="form().videoUrl"
               (ngModelChange)="updateFormField('videoUrl', $event)"
@@ -239,17 +234,17 @@ interface PaginatedPosts {
           </label>
 
           <label
-            >{{ isUa ? 'Категорія' : 'Category' }}
+            >{{ isUa() ? 'Категорія' : 'Category' }}
             <select
               [ngModel]="form().category"
               (ngModelChange)="updateFormField('category', $event)"
             >
-              <option value="news">{{ isUa ? 'Новини' : 'News' }}</option>
-              <option value="story">{{ isUa ? 'Історія успіху' : 'Success story' }}</option>
-              <option value="update">{{ isUa ? 'Оновлення' : 'Update' }}</option>
+              <option value="news">{{ isUa() ? 'Новини' : 'News' }}</option>
+              <option value="story">{{ isUa() ? 'Історія успіху' : 'Success story' }}</option>
+              <option value="update">{{ isUa() ? 'Оновлення' : 'Update' }}</option>
             </select>
           </label>
-          
+
           <!-- featured flag (single-featured enforced server-side) -->
           <label class="news-form__checkbox">
             <input
@@ -263,7 +258,7 @@ interface PaginatedPosts {
 
           <label
             >{{
-              isUa
+              isUa()
                 ? 'Дата публікації (для перенесених записів)'
                 : 'Publication date (for migrated posts)'
             }}
@@ -274,7 +269,7 @@ interface PaginatedPosts {
             />
             <small style="color:#718096">
               {{
-                isUa
+                isUa()
                   ? 'Залиш порожнім для нових публікацій — встановиться поточна дата'
                   : 'Leave empty for new posts — current date will be used'
               }}
@@ -294,14 +289,14 @@ interface PaginatedPosts {
             >
               @if (submitting()) {
                 <span class="btn-spinner"></span>
-                {{ isUa ? 'Збереження...' : 'Saving...' }}
+                {{ isUa() ? 'Збереження...' : 'Saving...' }}
               } @else {
                 {{
                   editingPostId()
-                    ? isUa
+                    ? isUa()
                       ? 'Зберегти зміни'
                       : 'Save changes'
-                    : isUa
+                    : isUa()
                       ? 'Опублікувати'
                       : 'Publish'
                 }}
@@ -313,7 +308,7 @@ interface PaginatedPosts {
               (click)="showForm.set(false)"
               [disabled]="submitting()"
             >
-              {{ isUa ? 'Скасувати' : 'Cancel' }}
+              {{ isUa() ? 'Скасувати' : 'Cancel' }}
             </button>
           </div>
         </div>
@@ -334,28 +329,28 @@ interface PaginatedPosts {
                 <button
                   class="news-card__edit"
                   (click)="openEditForm(post)"
-                  [title]="isUa ? 'Редагувати' : 'Edit'"
+                  [title]="isUa() ? 'Редагувати' : 'Edit'"
                 >
                   ✏️
                 </button>
                 <button
                   class="news-card__delete"
                   (click)="deletePost(post)"
-                  [title]="isUa ? 'Видалити' : 'Delete'"
+                  [title]="isUa() ? 'Видалити' : 'Delete'"
                 >
                   🗑️
                 </button>
               }
             </div>
 
-            <h3>{{ isUa ? post.titleUa : post.titleEn }}</h3>
+            <h3>{{ isUa() ? post.titleUa : post.titleEn }}</h3>
             <div
               class="rich-content news-card__content"
-              [innerHTML]="(isUa ? post.contentUa : post.contentEn) | quillHtml"
+              [innerHTML]="(isUa() ? post.contentUa : post.contentEn) | quillHtml"
             ></div>
 
             <div class="news-card__share">
-              <span class="news-card__share-label">{{ isUa ? 'Поділитись:' : 'Share:' }}</span>
+              <span class="news-card__share-label">{{ isUa() ? 'Поділитись:' : 'Share:' }}</span>
               <a
                 [href]="getFacebookShareUrl(post)"
                 target="_blank"
@@ -404,7 +399,7 @@ interface PaginatedPosts {
           } @else if (post.coverImage) {
             <img
               [src]="post.coverImage"
-              [alt]="isUa ? post.titleUa : post.titleEn"
+              [alt]="isUa() ? post.titleUa : post.titleEn"
               class="news-card__image"
               loading="lazy"
               decoding="async"
@@ -430,7 +425,7 @@ interface PaginatedPosts {
                   type="button"
                   class="news-card__video-placeholder"
                   (click)="showVideo(post.id)"
-                  [attr.aria-label]="isUa ? 'Відтворити відео' : 'Play video'"
+                  [attr.aria-label]="isUa() ? 'Відтворити відео' : 'Play video'"
                 >
                   <img
                     [src]="getYouTubeThumbnail(post.videoUrl)"
@@ -450,16 +445,12 @@ interface PaginatedPosts {
       <!-- load-more button replaces "fetch all on init" pattern -->
       @if (hasMore()) {
         <div class="news__load-more">
-          <button
-            class="btn btn--secondary"
-            (click)="loadMore()"
-            [disabled]="loading()"
-          >
+          <button class="btn btn--secondary" (click)="loadMore()" [disabled]="loading()">
             @if (loading()) {
               <span class="btn-spinner"></span>
-              {{ isUa ? 'Завантаження...' : 'Loading...' }}
+              {{ isUa() ? 'Завантаження...' : 'Loading...' }}
             } @else {
-              {{ isUa ? 'Показати більше' : 'Load more' }}
+              {{ isUa() ? 'Показати більше' : 'Load more' }}
             }
           </button>
         </div>
@@ -467,7 +458,7 @@ interface PaginatedPosts {
 
       <!-- empty state guarded by !loading to avoid flash on first load -->
       @if (!loading() && posts().length === 0) {
-        <p class="news__empty">{{ isUa ? 'Новин поки немає' : 'No news yet' }}</p>
+        <p class="news__empty">{{ isUa() ? 'Новин поки немає' : 'No news yet' }}</p>
       }
       <app-sticky-cta />
     </section>
@@ -612,7 +603,7 @@ interface PaginatedPosts {
         cursor: pointer;
         flex-shrink: 0;
       }
-      
+
       .news-form__checkbox {
         display: flex !important;
         align-items: center;
@@ -837,25 +828,25 @@ interface PaginatedPosts {
       .news-card__share-btn--x {
         background: #000;
       }
-      
+
       .news-form__quill {
         display: block;
         margin-top: 0.25rem;
-      
+
         :host ::ng-deep .ql-container {
           min-height: 260px;
           font-size: 0.9375rem;
           border-radius: 0 0 4px 4px;
           border-color: #cbd5e0;
         }
-      
+
         /* word-break now reaches Quill internals via ::ng-deep
            (the old .custom-quill rule was a no-op due to Angular encapsulation) */
         :host ::ng-deep .ql-editor {
           word-break: break-word;
           overflow-wrap: anywhere;
         }
-      
+
         :host ::ng-deep .ql-toolbar {
           border-radius: 4px 4px 0 0;
           border-color: #cbd5e0;
@@ -866,7 +857,6 @@ interface PaginatedPosts {
 })
 export class HomeComponent implements OnInit {
   private readonly api = inject(ApiService);
-  private readonly translate = inject(TranslateService);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
@@ -905,9 +895,8 @@ export class HomeComponent implements OnInit {
   // single computed gate for the publish/save button
   isSubmitDisabled = computed(() => this.submitting() || this.isAnyImageUploading());
 
-  get isUa(): boolean {
-    return (this.translate.currentLang || 'ua') === 'ua';
-  }
+  // signal-based language flag (reactive in zoneless) — call as isUa() everywhere
+  protected readonly isUa = inject(LanguageService).isUa;
 
   isAnyImageUploading(): boolean {
     return this.uploadingImages().some(Boolean);
@@ -937,18 +926,16 @@ export class HomeComponent implements OnInit {
   // paginated; appends on page > 1, replaces on page === 1
   loadPosts(page: number): void {
     this.loading.set(true);
-    this.api
-      .get<PaginatedPosts>(`blog?page=${page}&limit=${this.PAGE_SIZE}`)
-      .subscribe({
-        next: (res) => {
-          this.posts.set(page === 1 ? res.items : [...this.posts(), ...res.items]);
-          this.page.set(res.page);
-          this.hasMore.set(res.hasMore);
-          this.total.set(res.total);
-          this.loading.set(false);
-        },
-        error: () => this.loading.set(false),
-      });
+    this.api.get<PaginatedPosts>(`blog?page=${page}&limit=${this.PAGE_SIZE}`).subscribe({
+      next: (res) => {
+        this.posts.set(page === 1 ? res.items : [...this.posts(), ...res.items]);
+        this.page.set(res.page);
+        this.hasMore.set(res.hasMore);
+        this.total.set(res.total);
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
   }
 
   // load-more handler
@@ -1014,7 +1001,7 @@ export class HomeComponent implements OnInit {
   }
 
   deletePost(post: any): void {
-    const message = this.isUa ? `Видалити "${post.titleUa}"?` : `Delete "${post.titleEn}"?`;
+    const message = this.isUa() ? `Видалити "${post.titleUa}"?` : `Delete "${post.titleEn}"?`;
     if (confirm(message)) {
       this.api.delete(`blog/${post.slug}`).subscribe({
         next: () => {
@@ -1093,7 +1080,7 @@ export class HomeComponent implements OnInit {
       images[index] = publicUrl;
       this.form.set({ ...this.form(), images });
     } catch {
-      this.formError.set(this.isUa ? 'Помилка завантаження фото' : 'Image upload failed');
+      this.formError.set(this.isUa() ? 'Помилка завантаження фото' : 'Image upload failed');
     } finally {
       const updated = [...this.uploadingImages()];
       updated[index] = false;
@@ -1152,7 +1139,7 @@ export class HomeComponent implements OnInit {
   }
 
   getXShareUrl(post: any): string {
-    const title = this.isUa ? post.titleUa : post.titleEn;
+    const title = this.isUa() ? post.titleUa : post.titleEn;
     return `https://x.com/intent/tweet?url=${encodeURIComponent(this.getArticleUrl(post))}&text=${encodeURIComponent(title)}`;
   }
 
@@ -1172,7 +1159,7 @@ export class HomeComponent implements OnInit {
     const f = this.form();
     if (!f.slug || !f.titleUa || !f.titleEn || !f.contentUa || !f.contentEn) {
       this.formError.set(
-        this.isUa
+        this.isUa()
           ? "Заповніть обов'язкові поля (slug, заголовки, зміст)"
           : 'Fill in required fields (slug, titles, content)',
       );

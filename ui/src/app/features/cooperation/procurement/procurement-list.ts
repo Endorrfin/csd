@@ -24,7 +24,7 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
         <div>
           <h1>{{ 'procurement.list.title' | translate }}</h1>
           <p class="procurement-list__subtitle">{{ 'procurement.list.subtitle' | translate }}</p>
-          <!-- CHANGED: total + active counter -->
+          <!-- total + active counter -->
           @if (items().length > 0) {
             <p class="stats">
               <span class="stats-total">{{ items().length }}</span>
@@ -58,7 +58,7 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
                     {{ 'procurement.category.' + item.procurementCategory | translate }}
                   </span>
                 }
-                <!-- CHANGED: status badge uses admin palette via data-status attr -->
+                <!-- status badge uses admin palette via data-status attr -->
                 <span class="badge-status" [attr.data-status]="item.status">
                   {{ 'procurement.status.' + item.status | translate }}
                 </span>
@@ -189,7 +189,7 @@ const ACTIVE_STATUSES: ProcurementStatus[] = [
         }
       }
 
-      /* CHANGED: unified palette matching admin panel */
+      /* unified palette matching admin panel */
       .badge-status {
         display: inline-flex;
         padding: 0.2rem 0.625rem;

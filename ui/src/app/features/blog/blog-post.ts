@@ -5,6 +5,8 @@ import { DatePipe } from '@angular/common';
 import { CarouselComponent } from '../../shared/components/carousel/carousel';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
+// reactive language signal so the post follows the EN/UA toggle
+import { LanguageService } from '../../core/services/language.service';
 
 @Component({
   selector: 'app-blog-post',
@@ -18,9 +20,13 @@ import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
           <small class="post__date">{{
             post().publishedAt || post().createdAt | date: 'mediumDate'
           }}</small>
-          <h1>{{ post().titleUa }}</h1>
-          <!-- add rich-content class + quillHtml pipe so &nbsp; tokens wrap and text no longer overflows the viewport -->
-          <div class="rich-content post__content" [innerHTML]="post().contentUa | quillHtml"></div>
+          <!-- title/content follow the active language signal -->
+          <h1>{{ isUa() ? post().titleUa : post().titleEn }}</h1>
+          <!-- rich-content class + quillHtml pipe so &nbsp; tokens wrap and text no longer overflows the viewport -->
+          <div
+            class="rich-content post__content"
+            [innerHTML]="(isUa() ? post().contentUa : post().contentEn) | quillHtml"
+          ></div>
         </div>
         @if (post().images?.length) {
           <div class="post__carousel-wrap">
@@ -147,6 +153,7 @@ export class BlogPostComponent implements OnInit {
 
   post = signal<any>(null);
   showVideo = signal(false);
+  protected readonly isUa = inject(LanguageService).isUa;
 
   ngOnInit(): void {
     // read from resolver data — available synchronously during SSR
@@ -156,8 +163,13 @@ export class BlogPostComponent implements OnInit {
   }
 
   private setMetaTags(post: any): void {
-    const pageTitle = `${post.titleUa} — CSD`;
-    const description = post.excerptUa || post.contentUa?.slice(0, 160) || '';
+    // meta reflects the active language at render time (set once; SSR renders the default UA).
+    const ua = this.isUa();
+    const pageTitle = `${ua ? post.titleUa : post.titleEn} — CSD`;
+    const description =
+      (ua ? post.excerptUa : post.excerptEn) ||
+      (ua ? post.contentUa : post.contentEn)?.slice(0, 160) ||
+      '';
     const image =
       post.images?.[0] ||
       post.coverImage ||

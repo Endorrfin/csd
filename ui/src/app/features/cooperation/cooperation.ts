@@ -12,7 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
       <!-- <h1>{{ 'NAV.COOPERATION' | translate }}</h1> -->
       <!-- </div> -->
 
-      <!-- CHANGED: all tabs are now active routerLinks -->
+      <!-- all tabs are now active routerLinks -->
       <nav class="coop-tabs">
         <a
           routerLink="procurement"

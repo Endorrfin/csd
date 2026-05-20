@@ -29,7 +29,7 @@ import { TranslateModule } from '@ngx-translate/core';
 
       @media (max-width: 768px) {
         .footer {
-          font-size: 0.8rem; // CHANGED: трохи менший текст
+          font-size: 0.8rem;
           padding: 1.25rem 1rem;
         }
       }

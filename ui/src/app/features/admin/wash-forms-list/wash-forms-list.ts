@@ -379,7 +379,7 @@ export class WashFormsListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
-  // CHANGED: removed unused `auth` injection (was lint warning)
+  // removed unused `auth` injection (was lint warning)
 
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
@@ -390,8 +390,8 @@ export class WashFormsListComponent implements OnInit {
   total = signal(0);
   loading = signal(true);
   totalPages = signal(1);
-  exporting = signal(false);          // NEW
-  bulkApplying = signal(false);       // NEW
+  exporting = signal(false);
+  bulkApplying = signal(false);
 
   // ───── Filters ─────
   currentPage = 1;
@@ -428,7 +428,7 @@ export class WashFormsListComponent implements OnInit {
     this.loadForms();
   }
 
-  // CHANGED: URLSearchParams (safer encoding) + sort + date range params
+  // URLSearchParams (safer encoding) + sort + date range params
   loadForms(): void {
     this.loading.set(true);
     const params = new URLSearchParams();
@@ -586,7 +586,7 @@ export class WashFormsListComponent implements OnInit {
     this.router.navigate(['/admin', 'wash-forms', id]);
   }
 
-  // CHANGED: CSV → XLSX, with loading/error handling and URLSearchParams
+  // CSV → XLSX, with loading/error handling and URLSearchParams
   exportXlsx(): void {
     this.exporting.set(true);
     const params = new URLSearchParams();
@@ -632,7 +632,7 @@ export class WashFormsListComponent implements OnInit {
     return v ? (this.isUa ? v[0] : v[1]) : status;
   }
 
-  // CHANGED: now reads array lengths (boreholes/towers/purifications/pumps)
+  // now reads array lengths (boreholes/towers/purifications/pumps)
   getSections(f: WashFormSummary): string {
     const parts: string[] = [];
     if (f.boreholes?.length) parts.push(`${this.isUa ? 'Бур.' : 'Bore'} ${f.boreholes.length}`);

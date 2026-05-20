@@ -310,7 +310,7 @@ export class AdminAboutSectionsListComponent implements OnInit {
     this.loadItems();
   }
 
-  // CHANGED: if all 10 enum keys are used, hide create button (key is unique constraint)
+  // if all 10 enum keys are used, hide create button (key is unique constraint)
   canCreateMore(): boolean {
     return this.items().length < ALL_SECTION_KEYS.length;
   }

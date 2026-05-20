@@ -1,21 +1,17 @@
 // ui/src/app/features/about/about.ts
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { LanguageService } from '../../core/services/language.service';
 import { ApiService } from '../../core/services/api.service';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
-import {
-  AboutDocument,
-  AboutDocumentType,
-  AboutSection,
-} from '../admin/about/about.interfaces';
+import { AboutDocument, AboutDocumentType, AboutSection } from '../admin/about/about.interfaces';
 
 interface PublicAboutResponse {
   sections: AboutSection[];
   documents: AboutDocument[];
 }
 
-// CHANGED: explicit display order for document groups (POLICY first = most common)
 const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
   'POLICY',
   'PROCEDURE',
@@ -53,7 +49,7 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
                     <div class="fact-card">
                       <div class="fact-value">{{ item.value }}</div>
                       <div class="fact-label">
-                        {{ isUa ? item.labelUa : item.labelEn }}
+                        {{ isUa() ? item.labelUa : item.labelEn }}
                       </div>
                     </div>
                   }
@@ -100,12 +96,7 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
                           </span>
                         }
                         @if (doc.fileUrl) {
-                          <a
-                            [href]="doc.fileUrl"
-                            target="_blank"
-                            rel="noopener"
-                            class="doc-link"
-                          >
+                          <a [href]="doc.fileUrl" target="_blank" rel="noopener" class="doc-link">
                             📄 {{ 'about.page.viewFile' | translate }}
                           </a>
                         }
@@ -317,7 +308,6 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
 })
 export class AboutComponent implements OnInit {
   private readonly api = inject(ApiService);
-  private readonly translate = inject(TranslateService);
 
   // ----- State -----
   loading = signal(true);
@@ -326,20 +316,17 @@ export class AboutComponent implements OnInit {
   documents = signal<AboutDocument[]>([]);
 
   // ----- Computed -----
-  // CHANGED: pre-grouped documents, in fixed type order, only types with content
-  documentsByType = computed<Array<{ type: AboutDocumentType; docs: AboutDocument[] }>>(
-    () => {
-      const all = this.documents();
-      return DOCUMENT_TYPE_ORDER.map((type) => ({
-        type,
-        docs: all.filter((d) => d.documentType === type),
-      })).filter((g) => g.docs.length > 0);
-    },
-  );
+  // pre-grouped documents, in fixed type order, only types with content
+  documentsByType = computed<{ type: AboutDocumentType; docs: AboutDocument[] }[]>(() => {
+    const all = this.documents();
+    return DOCUMENT_TYPE_ORDER.map((type) => ({
+      type,
+      docs: all.filter((d) => d.documentType === type),
+    })).filter((g) => g.docs.length > 0);
+  });
 
-  get isUa(): boolean {
-    return (this.translate.currentLang || 'ua') === 'ua';
-  }
+  // signal-based language flag (reactive in zoneless) — call as isUa() everywhere
+  protected readonly isUa = inject(LanguageService).isUa;
 
   ngOnInit(): void {
     this.loadAbout();
@@ -357,7 +344,7 @@ export class AboutComponent implements OnInit {
       },
       error: (err) => {
         this.errorMessage.set(
-          err?.error?.message || (this.isUa ? 'Не вдалося завантажити' : 'Failed to load'),
+          err?.error?.message || (this.isUa() ? 'Не вдалося завантажити' : 'Failed to load'),
         );
         this.loading.set(false);
       },
@@ -367,11 +354,11 @@ export class AboutComponent implements OnInit {
   // ----- Helpers (used in template, kept simple for type-safety) -----
 
   getTitle(s: AboutSection): string {
-    return this.isUa ? s.titleUa : s.titleEn;
+    return this.isUa() ? s.titleUa : s.titleEn;
   }
 
   getContent(s: AboutSection): string | null {
-    return this.isUa ? s.contentUa : s.contentEn;
+    return this.isUa() ? s.contentUa : s.contentEn;
   }
 
   getKeyFacts(s: AboutSection) {
@@ -379,10 +366,10 @@ export class AboutComponent implements OnInit {
   }
 
   getDocTitle(d: AboutDocument): string {
-    return this.isUa ? d.titleUa : d.titleEn;
+    return this.isUa() ? d.titleUa : d.titleEn;
   }
 
   getDocDescription(d: AboutDocument): string | null {
-    return this.isUa ? d.descriptionUa : d.descriptionEn;
+    return this.isUa() ? d.descriptionUa : d.descriptionEn;
   }
 }

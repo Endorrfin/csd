@@ -89,7 +89,7 @@ export interface CreatePurificationPayload {
   sortOrder?: number;
 }
 
-// CHANGED: new — pumps section.
+// new — pumps section.
 export type PumpPurpose = 'borehole' | 'surface' | 'drainage_sewage' | 'other';
 
 export interface CreatePumpPayload {
@@ -131,7 +131,7 @@ export interface CreateWashFormPayload {
   installationDeadline?: string;
   replacementReason: string;
 
-  // CHANGED: arrays replace single-object sections.
+  // arrays replace single-object sections.
   boreholes?: CreateBoreholePayload[];
   towers?: CreateTowerPayload[];
   purifications?: CreatePurificationPayload[];

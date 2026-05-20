@@ -5,7 +5,7 @@ import { ValidationPipe } from '@nestjs/common';
 import serverlessExpress from '@codegenie/serverless-express';
 import express from 'express';
 import { AppModule } from './src/app.module';
-// CHANGED: fail-fast on missing/weak JWT_SECRET at cold-start
+// fail-fast on missing/weak JWT_SECRET at cold-start
 import { assertRequiredEnv } from './src/common/assert-required-env';
 
 let cachedServer: any;
