@@ -15,6 +15,27 @@ export enum TestimonialStatus {
   REJECTED = 'rejected',
 }
 
+// === kinds of WASH assistance a beneficiary may report receiving ===
+export enum AssistanceType {
+  BOREHOLE_DRILLING = 'borehole_drilling',
+  WATER_TOWERS = 'water_towers',
+  PIPES_VALVES_FITTINGS = 'pipes_valves_fittings',
+  PURIFICATION_SYSTEM = 'purification_system',
+  PUMPS_EQUIPMENT = 'pumps_equipment',
+  WATER_TANKS = 'water_tanks',
+  BOTTLED_WATER = 'bottled_water',
+  HYGIENE_KITS = 'hygiene_kits',
+  EQUIPMENT = 'equipment',
+  WASH_REHABILITATION = 'wash_rehabilitation',
+  OTHER = 'other',
+}
+
+// === single evidence photo (uploaded to S3 or external link) ===
+export interface TestimonialPhoto {
+  url: string;
+  name?: string;
+}
+
 @Entity('testimonials')
 export class Testimonial {
   @PrimaryGeneratedColumn('uuid')
@@ -35,6 +56,23 @@ export class Testimonial {
 
   @Column({ type: 'varchar', nullable: true })
   photoUrl: string | null;
+
+  // === evidence gallery (max 3, enforced in DTO) — uploaded S3 files or external links ===
+  @Column({ type: 'jsonb', nullable: true })
+  photos: TestimonialPhoto[] | null;
+
+  // === kinds of assistance received (multi-select) ===
+  @Column({
+    type: 'enum',
+    enum: AssistanceType,
+    array: true,
+    nullable: true,
+  })
+  assistanceTypes: AssistanceType[] | null;
+
+  // === free-text detail when AssistanceType.OTHER is selected ===
+  @Column({ type: 'varchar', nullable: true })
+  assistanceTypeOther: string | null;
 
   // ── Location fields (same pattern as WashForm) ──
   @Column({ type: 'varchar', nullable: true })

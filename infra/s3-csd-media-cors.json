@@ -1,0 +1,15 @@
+{
+  "CORSRules": [
+    {
+      "AllowedOrigins": [
+        "http://localhost:4200",
+        "https://www.csd-fund.org",
+        "https://csd-fund.org"
+      ],
+      "AllowedMethods": ["GET", "PUT", "POST"],
+      "AllowedHeaders": ["*"],
+      "ExposeHeaders": ["ETag", "Location"],
+      "MaxAgeSeconds": 3000
+    }
+  ]
+}

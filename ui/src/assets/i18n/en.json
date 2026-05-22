@@ -162,7 +162,8 @@
     "loading": "Loading...",
     "back": "Back",
     "next": "Next",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "delete": "Delete"
   },
   "procurement": {
     "list": {
@@ -329,9 +330,33 @@
       "rating": "Rating",
       "location": "Location (optional)",
       "publishedAt": "Testimonial date (leave empty = today)",
+      "assistanceTypes": "Type of assistance received",
+      "assistanceOtherPlaceholder": "Specify the type of assistance received",
+      "evidence": "Evidence photos (optional)",
+      "evidenceHint": "Up to 3 photos, max 5 MB each (JPG, PNG, WEBP). Upload a file or add a link.",
+      "evidenceUpload": "Upload photo",
+      "evidenceAddLink": "Add link",
+      "evidenceLinkPlaceholder": "https://...",
+      "evidenceLinkInvalid": "Enter a valid link (http/https).",
+      "evidenceTypeError": "Only JPG, PNG or WEBP images are allowed.",
+      "evidenceSizeError": "Photo is too large (max 5 MB).",
+      "evidenceUploadError": "Photo upload failed. Please try again.",
       "submit": "Submit testimonial",
       "success": "Thank you! Your testimonial has been submitted for moderation.",
       "loginRequired": "Please log in to leave a testimonial."
+    },
+    "assistance": {
+      "borehole_drilling": "Borehole drilling",
+      "water_towers": "Water towers installation",
+      "pipes_valves_fittings": "Pipes, valves, fittings",
+      "purification_system": "Purification system installation",
+      "pumps_equipment": "Pumps & related equipment",
+      "water_tanks": "Provision of water tanks",
+      "bottled_water": "Bottled water",
+      "hygiene_kits": "Hygiene kits",
+      "equipment": "Equipment",
+      "wash_rehabilitation": "Rehabilitation of WASH facilities",
+      "other": "Other"
     },
     "status": {
       "pending": "Pending",
