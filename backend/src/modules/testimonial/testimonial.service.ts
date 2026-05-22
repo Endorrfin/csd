@@ -1,9 +1,5 @@
 // backend/src/modules/testimonial/testimonial.service.ts
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Testimonial, TestimonialStatus } from './entities/testimonial.entity';
@@ -25,14 +21,15 @@ export class TestimonialService {
     private readonly repo: Repository<Testimonial>,
   ) {}
 
+  // newest submissions first (display date = createdAt)
   findAllApproved(): Promise<Testimonial[]> {
     return this.repo.find({
       where: { status: TestimonialStatus.APPROVED },
-      order: { publishedAt: 'ASC', createdAt: 'ASC' },
+      order: { createdAt: 'DESC' },
     });
   }
 
-  // CHANGED: paginated + filtered admin grid
+  // paginated + filtered admin grid
   async findAllForAdmin(
     query: AdminTestimonialQueryDto,
   ): Promise<PaginatedTestimonials> {
@@ -124,16 +121,9 @@ export class TestimonialService {
     return this.findById(id);
   }
 
-  // CHANGED: only rejected testimonials can be hard-deleted
+  // any testimonial can be hard-deleted (admin confirms in UI)
   async remove(id: string): Promise<void> {
-    const existing = await this.findById(id);
-
-    if (existing.status !== TestimonialStatus.REJECTED) {
-      throw new BadRequestException(
-        'Only rejected testimonials can be deleted. Reject it first to remove.',
-      );
-    }
-
+    await this.findById(id);
     await this.repo.delete(id);
   }
 }

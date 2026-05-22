@@ -37,6 +37,12 @@ export const adminRoutes: Routes = [
     loadComponent: () =>
       import('./testimonials/testimonials-list').then((m) => m.AdminTestimonialsListComponent),
   },
+  // full-field edit screen for a single testimonial
+  {
+    path: 'testimonials/:id/edit',
+    loadComponent: () =>
+      import('./testimonials/testimonial-edit').then((m) => m.AdminTestimonialEditComponent),
+  },
 
   // Complaints admin (placeholder — replaced in Step 7; admin+ only)
   {
@@ -50,7 +56,6 @@ export const adminRoutes: Routes = [
     path: 'about',
     loadChildren: () => import('./about/about.routes').then((m) => m.aboutRoutes),
   },
-
 
   // Users management (super_admin only)
   {

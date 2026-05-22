@@ -162,7 +162,8 @@
     "loading": "Завантаження...",
     "back": "Назад",
     "next": "Далі",
-    "saving": "Збереження..."
+    "saving": "Збереження...",
+    "delete": "Видалити"
   },
   "procurement": {
     "list": {
@@ -329,9 +330,33 @@
       "rating": "Оцінка",
       "location": "Локація (необов'язково)",
       "publishedAt": "Дата відгуку (залишити порожнім = сьогодні)",
+      "assistanceTypes": "Який вид допомоги було отримано",
+      "assistanceOtherPlaceholder": "Вкажіть, який саме вид допомоги було отримано",
+      "evidence": "Фото-докази (необов'язково)",
+      "evidenceHint": "До 3 фото, до 5 МБ кожне (JPG, PNG, WEBP). Можна завантажити файл або додати посилання.",
+      "evidenceUpload": "Завантажити фото",
+      "evidenceAddLink": "Додати посилання",
+      "evidenceLinkPlaceholder": "https://...",
+      "evidenceLinkInvalid": "Вкажіть коректне посилання (http/https).",
+      "evidenceTypeError": "Дозволені лише зображення JPG, PNG або WEBP.",
+      "evidenceSizeError": "Фото завелике (максимум 5 МБ).",
+      "evidenceUploadError": "Помилка завантаження фото. Спробуйте ще раз.",
       "submit": "Надіслати відгук",
       "success": "Дякуємо! Ваш відгук надіслано на модерацію.",
       "loginRequired": "Щоб залишити відгук, увійдіть в систему."
+    },
+    "assistance": {
+      "borehole_drilling": "Буріння свердловин",
+      "water_towers": "Встановлення водонапірних башт",
+      "pipes_valves_fittings": "Труби, засувки, фітинги",
+      "purification_system": "Встановлення систем очищення",
+      "pumps_equipment": "Насоси та супутнє обладнання",
+      "water_tanks": "Ємності для води",
+      "bottled_water": "Питна вода (бутильована)",
+      "hygiene_kits": "Гігієнічні набори",
+      "equipment": "Обладнання",
+      "wash_rehabilitation": "Ремонт санітарних вузлів",
+      "other": "Інше"
     },
     "status": {
       "pending": "На модерації",

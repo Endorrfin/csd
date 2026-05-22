@@ -5,10 +5,29 @@ import {
   IsEnum,
   IsUrl,
   IsDateString,
+  IsArray,
+  ArrayMaxSize,
+  ValidateNested,
+  MaxLength,
   Min,
   Max,
 } from 'class-validator';
-import { TestimonialStatus } from '../entities/testimonial.entity';
+import { Type } from 'class-transformer';
+import {
+  AssistanceType,
+  TestimonialStatus,
+} from '../entities/testimonial.entity';
+
+// === one evidence photo (uploaded S3 url or external link) ===
+export class TestimonialPhotoDto {
+  @IsUrl({ require_protocol: true })
+  url: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  name?: string;
+}
 
 export class CreateTestimonialDto {
   @IsString()
@@ -30,6 +49,26 @@ export class CreateTestimonialDto {
   @IsOptional()
   @IsUrl()
   photoUrl?: string;
+
+  // === evidence gallery — max 3 photos ===
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(3)
+  @ValidateNested({ each: true })
+  @Type(() => TestimonialPhotoDto)
+  photos?: TestimonialPhotoDto[];
+
+  // === kinds of assistance received (multi-select) ===
+  @IsOptional()
+  @IsArray()
+  @IsEnum(AssistanceType, { each: true })
+  assistanceTypes?: AssistanceType[];
+
+  // === free text shown when AssistanceType.OTHER is selected ===
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  assistanceTypeOther?: string;
 
   // ── Location fields ──
   @IsOptional()

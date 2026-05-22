@@ -2,6 +2,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
 import {
@@ -26,18 +27,24 @@ interface RejectModalState {
 @Component({
   selector: 'app-admin-testimonials-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
   template: `
     <div class="list-header">
       <h2>
         {{ isUa ? 'Відгуки' : 'Testimonials' }}
-        @if (total() > 0) { <span class="count">({{ total() }})</span> }
+        @if (total() > 0) {
+          <span class="count">({{ total() }})</span>
+        }
       </h2>
     </div>
 
     <div class="filters">
       <input
-        [placeholder]="isUa ? 'Пошук за автором, організацією, текстом...' : 'Search by author, organization, text...'"
+        [placeholder]="
+          isUa
+            ? 'Пошук за автором, організацією, текстом...'
+            : 'Search by author, organization, text...'
+        "
         [(ngModel)]="searchQuery"
         (input)="onSearchChange()"
         class="filter-input filter-search"
@@ -54,8 +61,12 @@ interface RejectModalState {
       </label>
     </div>
 
-    @if (successMessage()) { <div class="banner banner-success">{{ successMessage() }}</div> }
-    @if (errorMessage()) { <div class="banner banner-error">{{ errorMessage() }}</div> }
+    @if (successMessage()) {
+      <div class="banner banner-success">{{ successMessage() }}</div>
+    }
+    @if (errorMessage()) {
+      <div class="banner banner-error">{{ errorMessage() }}</div>
+    }
 
     @if (loading()) {
       <div class="loading">{{ isUa ? 'Завантаження...' : 'Loading...' }}</div>
@@ -80,7 +91,7 @@ interface RejectModalState {
             @for (item of items(); track item.id; let i = $index) {
               <tr>
                 <td class="td-num">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
-                <td class="td-date">{{ item.createdAt | date:'dd.MM.yyyy' }}</td>
+                <td class="td-date">{{ item.createdAt | date: 'dd.MM.yyyy' }}</td>
 
                 <td>
                   <select
@@ -88,7 +99,8 @@ interface RejectModalState {
                     (ngModelChange)="onStatusChange(item, $event)"
                     [disabled]="savingId() === item.id"
                     class="status-select"
-                    [attr.data-status]="item.status">
+                    [attr.data-status]="item.status"
+                  >
                     @for (s of activeStatuses; track s) {
                       <option [value]="s">{{ 'testimonial.status.' + s | translate }}</option>
                     }
@@ -101,8 +113,7 @@ interface RejectModalState {
                     <div class="author-org">{{ item.organization }}</div>
                   }
                   @if (item.managerNotes) {
-                    <div class="notes-preview"
-                         [title]="item.managerNotes">
+                    <div class="notes-preview" [title]="item.managerNotes">
                       📝 {{ isUa ? 'Примітка' : 'Notes' }}
                     </div>
                   }
@@ -117,7 +128,9 @@ interface RejectModalState {
                     <span class="rating-stars">
                       {{ '★'.repeat(item.rating) }}{{ '☆'.repeat(5 - item.rating) }}
                     </span>
-                  } @else { — }
+                  } @else {
+                    —
+                  }
                 </td>
 
                 <td class="td-center">
@@ -127,20 +140,34 @@ interface RejectModalState {
                     [class.verify-toggle--on]="item.isVerified"
                     [disabled]="savingId() === item.id"
                     (click)="onVerifyToggle(item)"
-                    [title]="isUa ? 'Перемкнути верифікацію' : 'Toggle verification'">
-                    @if (item.isVerified) { ✓ } @else { — }
+                    [title]="isUa ? 'Перемкнути верифікацію' : 'Toggle verification'"
+                  >
+                    @if (item.isVerified) {
+                      ✓
+                    } @else {
+                      —
+                    }
                   </button>
                 </td>
 
                 <td class="td-actions">
-                  @if (item.status === 'rejected') {
-                    <button
-                      type="button"
-                      class="action-btn action-delete"
-                      [disabled]="savingId() === item.id"
-                      (click)="onDelete(item)"
-                      [title]="isUa ? 'Видалити відгук' : 'Delete testimonial'">✕</button>
-                  }
+                  <!-- CHANGED: edit any testimonial -->
+                  <a
+                    class="action-btn action-edit"
+                    [routerLink]="['/admin/testimonials', item.id, 'edit']"
+                    [title]="isUa ? 'Редагувати відгук' : 'Edit testimonial'"
+                    >✎</a
+                  >
+                  <!-- CHANGED: delete allowed for any status now -->
+                  <button
+                    type="button"
+                    class="action-btn action-delete"
+                    [disabled]="savingId() === item.id"
+                    (click)="onDelete(item)"
+                    [title]="isUa ? 'Видалити відгук' : 'Delete testimonial'"
+                  >
+                    ✕
+                  </button>
                 </td>
               </tr>
             }
@@ -154,7 +181,11 @@ interface RejectModalState {
             {{ isUa ? 'Попередня' : 'Previous' }}
           </button>
           <span class="page-info">{{ currentPage }} / {{ totalPages() }}</span>
-          <button class="btn-sm" [disabled]="currentPage >= totalPages()" (click)="goPage(currentPage + 1)">
+          <button
+            class="btn-sm"
+            [disabled]="currentPage >= totalPages()"
+            (click)="goPage(currentPage + 1)"
+          >
             {{ isUa ? 'Наступна' : 'Next' }}
           </button>
         </div>
@@ -167,16 +198,21 @@ interface RejectModalState {
         <div class="modal" (click)="$event.stopPropagation()">
           <h3>{{ isUa ? 'Причина відхилення' : 'Rejection reason' }}</h3>
           <p class="modal-hint">
-            {{ isUa
-              ? 'Коротко опишіть причину. Примітка видима лише менеджерам.'
-              : 'Briefly describe the reason. Note is visible to managers only.' }}
+            {{
+              isUa
+                ? 'Коротко опишіть причину. Примітка видима лише менеджерам.'
+                : 'Briefly describe the reason. Note is visible to managers only.'
+            }}
           </p>
           <textarea
             [(ngModel)]="rejectModal()!.notes"
-            [placeholder]="isUa ? 'Наприклад: невідповідний контент...' : 'E.g. inappropriate content...'"
+            [placeholder]="
+              isUa ? 'Наприклад: невідповідний контент...' : 'E.g. inappropriate content...'
+            "
             rows="4"
             class="modal-textarea"
-            #rejectTextarea></textarea>
+            #rejectTextarea
+          ></textarea>
           <div class="modal-actions">
             <button type="button" class="btn-sm" (click)="closeRejectModal()">
               {{ isUa ? 'Скасувати' : 'Cancel' }}
@@ -185,7 +221,8 @@ interface RejectModalState {
               type="button"
               class="btn-primary"
               [disabled]="!rejectModal()!.notes.trim()"
-              (click)="confirmReject()">
+              (click)="confirmReject()"
+            >
               {{ isUa ? 'Відхилити' : 'Reject' }}
             </button>
           </div>
@@ -193,104 +230,347 @@ interface RejectModalState {
       </div>
     }
   `,
-  styles: [`
-    .list-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; gap:1rem; flex-wrap:wrap; }
-    .list-header h2 { font-size:1.2rem; font-weight:600; color:#1a365d; margin:0; }
-    .count { color:#64748b; font-weight:400; }
+  styles: [
+    `
+      .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .list-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin: 0;
+      }
+      .count {
+        color: #64748b;
+        font-weight: 400;
+      }
 
-    .filters { display:flex; gap:.75rem; margin-bottom:1.25rem; flex-wrap:wrap; align-items:center; }
-    .filter-input { padding:.5rem .75rem; border:1px solid #cbd5e0; border-radius:6px; font-size:.85rem; background:#fff; }
-    .filter-search { flex:1; min-width:240px; }
-    .filter-checkbox { display:inline-flex; align-items:center; gap:.4rem; font-size:.85rem; color:#475569; cursor:pointer; }
+      .filters {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .filter-input {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        background: #fff;
+      }
+      .filter-search {
+        flex: 1;
+        min-width: 240px;
+      }
+      .filter-checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        color: #475569;
+        cursor: pointer;
+      }
 
-    .banner { padding:.6rem 1rem; border-radius:6px; font-size:.85rem; margin-bottom:1rem; border:1px solid; }
-    .banner-success { background:#f0fff4; color:#276749; border-color:#c6f6d5; }
-    .banner-error { background:#fff5f5; color:#c53030; border-color:#fed7d7; }
+      .banner {
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        border: 1px solid;
+      }
+      .banner-success {
+        background: #f0fff4;
+        color: #276749;
+        border-color: #c6f6d5;
+      }
+      .banner-error {
+        background: #fff5f5;
+        color: #c53030;
+        border-color: #fed7d7;
+      }
 
-    .table-wrap { overflow-x:auto; }
-    .data-table { width:100%; border-collapse:collapse; font-size:.85rem; }
-    .data-table th { text-align:left; padding:.65rem .5rem; border-bottom:2px solid #e2e8f0; color:#64748b; font-weight:600; font-size:.72rem; text-transform:uppercase; white-space:nowrap; }
-    .data-table td { padding:.65rem .5rem; border-bottom:1px solid #f1f5f9; vertical-align:top; }
-    .th-actions, .th-center { text-align:center; }
-    .td-num { text-align:center; color:#64748b; }
-    .td-date { white-space:nowrap; color:#64748b; font-size:.8rem; }
-    .td-center { text-align:center; }
-    .td-author { min-width:140px; max-width:180px; }
-    .td-text { max-width:380px; color:#475569; font-style:italic; line-height:1.4; }
-    .author-name { font-weight:500; color:#1a365d; }
-    .author-org { font-size:.75rem; color:#64748b; }
-    .notes-preview { font-size:.7rem; color:#92400e; margin-top:.25rem; cursor:help; }
-    .rating-stars { color:#f6ad55; font-size:.95rem; letter-spacing:1px; }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+      .data-table th {
+        text-align: left;
+        padding: 0.65rem 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .data-table td {
+        padding: 0.65rem 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: top;
+      }
+      .th-actions,
+      .th-center {
+        text-align: center;
+      }
+      .td-num {
+        text-align: center;
+        color: #64748b;
+      }
+      .td-date {
+        white-space: nowrap;
+        color: #64748b;
+        font-size: 0.8rem;
+      }
+      .td-center {
+        text-align: center;
+      }
+      .td-author {
+        min-width: 140px;
+        max-width: 180px;
+      }
+      .td-text {
+        max-width: 380px;
+        color: #475569;
+        font-style: italic;
+        line-height: 1.4;
+      }
+      .author-name {
+        font-weight: 500;
+        color: #1a365d;
+      }
+      .author-org {
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+      .notes-preview {
+        font-size: 0.7rem;
+        color: #92400e;
+        margin-top: 0.25rem;
+        cursor: help;
+      }
+      .rating-stars {
+        color: #f6ad55;
+        font-size: 0.95rem;
+        letter-spacing: 1px;
+      }
 
-    /* Status palette — 3 unique colors */
-    .status-select {
-      padding:.25rem .5rem; border:1px solid transparent; border-radius:4px;
-      font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.02em;
-      cursor:pointer; min-width:105px;
-    }
-    .status-select:disabled { opacity:.5; cursor:wait; }
-    .status-select[data-status="pending"]  { background:#fef3c7; color:#92400e; } /* amber */
-    .status-select[data-status="approved"] { background:#d1fae5; color:#065f46; } /* green */
-    .status-select[data-status="rejected"] { background:#fee2e2; color:#991b1b; } /* red */
+      /* Status palette — 3 unique colors */
+      .status-select {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        min-width: 105px;
+      }
+      .status-select:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      .status-select[data-status='pending'] {
+        background: #fef3c7;
+        color: #92400e;
+      } /* amber */
+      .status-select[data-status='approved'] {
+        background: #d1fae5;
+        color: #065f46;
+      } /* green */
+      .status-select[data-status='rejected'] {
+        background: #fee2e2;
+        color: #991b1b;
+      } /* red */
 
-    /* Verify toggle — pill button */
-    .verify-toggle {
-      width:30px; height:24px; border-radius:12px; border:1px solid #cbd5e0;
-      background:#f1f5f9; color:#94a3b8; cursor:pointer; font-size:.85rem;
-      transition:all .15s;
-    }
-    .verify-toggle:hover:not(:disabled) { border-color:#94a3b8; }
-    .verify-toggle--on { background:#d1fae5; color:#065f46; border-color:#86efac; }
-    .verify-toggle:disabled { opacity:.5; cursor:wait; }
+      /* Verify toggle — pill button */
+      .verify-toggle {
+        width: 30px;
+        height: 24px;
+        border-radius: 12px;
+        border: 1px solid #cbd5e0;
+        background: #f1f5f9;
+        color: #94a3b8;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.15s;
+      }
+      .verify-toggle:hover:not(:disabled) {
+        border-color: #94a3b8;
+      }
+      .verify-toggle--on {
+        background: #d1fae5;
+        color: #065f46;
+        border-color: #86efac;
+      }
+      .verify-toggle:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
 
-    .td-actions { text-align:center; white-space:nowrap; }
-    .action-btn {
-      display:inline-flex; align-items:center; justify-content:center;
-      width:28px; height:28px; margin:0 2px;
-      border-radius:4px; font-size:.85rem; cursor:pointer;
-      border:1px solid transparent; background:transparent; transition:all .15s;
-    }
-    .action-delete { color:#c53030; }
-    .action-delete:hover { background:#fff5f5; border-color:#fed7d7; }
-    .action-delete:disabled { opacity:.4; cursor:not-allowed; }
+      .td-actions {
+        text-align: center;
+        white-space: nowrap;
+      }
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        margin: 0 2px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border: 1px solid transparent;
+        background: transparent;
+        transition: all 0.15s;
+      }
+      .action-edit {
+        color: #2b6cb0;
+        text-decoration: none;
+      }
+      .action-edit:hover {
+        background: #ebf8ff;
+        border-color: #bee3f8;
+      }
+      .action-delete {
+        color: #c53030;
+      }
+      .action-delete:hover {
+        background: #fff5f5;
+        border-color: #fed7d7;
+      }
+      .action-delete:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
 
-    .pagination { display:flex; justify-content:center; align-items:center; gap:1rem; margin-top:1.25rem; }
-    .page-info { font-size:.85rem; color:#64748b; }
-    .btn-sm { padding:.4rem 1rem; border:1px solid #cbd5e0; background:#fff; border-radius:6px; font-size:.8rem; cursor:pointer; }
-    .btn-sm:disabled { opacity:.4; cursor:not-allowed; }
-    .btn-sm:not(:disabled):hover { background:#f8fafc; }
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.25rem;
+      }
+      .page-info {
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+      .btn-sm {
+        padding: 0.4rem 1rem;
+        border: 1px solid #cbd5e0;
+        background: #fff;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+      }
+      .btn-sm:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-sm:not(:disabled):hover {
+        background: #f8fafc;
+      }
 
-    .btn-primary { padding:.5rem 1rem; background:#2b6cb0; color:#fff; border:none; border-radius:6px; font-size:.85rem; font-weight:500; cursor:pointer; }
-    .btn-primary:hover:not(:disabled) { background:#2c5282; }
-    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+      .btn-primary {
+        padding: 0.5rem 1rem;
+        background: #2b6cb0;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: #2c5282;
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
 
-    .loading, .empty { text-align:center; padding:3rem; color:#64748b; font-size:.95rem; }
+      .loading,
+      .empty {
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
+        font-size: 0.95rem;
+      }
 
-    /* Reject reason modal */
-    .modal-overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,.5);
-      display:flex; align-items:center; justify-content:center;
-      z-index:1000; padding:1rem;
-    }
-    .modal {
-      background:#fff; border-radius:8px; padding:1.5rem;
-      width:100%; max-width:480px;
-      box-shadow:0 10px 25px rgba(0,0,0,.2);
-    }
-    .modal h3 { margin:0 0 .5rem; font-size:1.1rem; color:#1a365d; }
-    .modal-hint { font-size:.8rem; color:#64748b; margin:0 0 1rem; }
-    .modal-textarea {
-      width:100%; padding:.65rem; border:1px solid #cbd5e0; border-radius:6px;
-      font-family:inherit; font-size:.9rem; resize:vertical;
-    }
-    .modal-textarea:focus { outline:none; border-color:#2b6cb0; box-shadow:0 0 0 3px rgba(43,108,176,.1); }
-    .modal-actions { display:flex; justify-content:flex-end; gap:.5rem; margin-top:1rem; }
+      /* Reject reason modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 1rem;
+      }
+      .modal {
+        background: #fff;
+        border-radius: 8px;
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 480px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+      .modal h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.1rem;
+        color: #1a365d;
+      }
+      .modal-hint {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin: 0 0 1rem;
+      }
+      .modal-textarea {
+        width: 100%;
+        padding: 0.65rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        resize: vertical;
+      }
+      .modal-textarea:focus {
+        outline: none;
+        border-color: #2b6cb0;
+        box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
 
-    @media (max-width:768px) {
-      .filters { flex-direction:column; align-items:stretch; }
-      .filter-search { min-width:auto; }
-    }
-  `],
+      @media (max-width: 768px) {
+        .filters {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .filter-search {
+          min-width: auto;
+        }
+      }
+    `,
+  ],
 })
 export class AdminTestimonialsListComponent implements OnInit {
   private readonly api = inject(ApiService);
@@ -417,9 +697,7 @@ export class AdminTestimonialsListComponent implements OnInit {
 
     this.api.patch<TestimonialItem>(`testimonials/${item.id}/status`, body).subscribe({
       next: (updated) => {
-        this.items.update((list) =>
-          list.map((t) => (t.id === updated.id ? updated : t)),
-        );
+        this.items.update((list) => list.map((t) => (t.id === updated.id ? updated : t)));
         this.savingId.set(null);
         const label = this.translate.instant('testimonial.status.' + status);
         this.flashSuccess(
@@ -439,23 +717,29 @@ export class AdminTestimonialsListComponent implements OnInit {
     this.savingId.set(item.id);
     this.clearMessages();
 
-    this.api.patch<TestimonialItem>(`testimonials/${item.id}/verify`, { isVerified: newValue }).subscribe({
-      next: (updated) => {
-        this.items.update((list) =>
-          list.map((t) => (t.id === updated.id ? { ...t, isVerified: updated.isVerified } : t)),
-        );
-        this.savingId.set(null);
-        this.flashSuccess(
-          newValue
-            ? (this.isUa ? 'Верифіковано' : 'Verified')
-            : (this.isUa ? 'Верифікацію знято' : 'Verification removed'),
-        );
-      },
-      error: (err) => {
-        this.savingId.set(null);
-        this.flashError(err?.error?.message || 'Error');
-      },
-    });
+    this.api
+      .patch<TestimonialItem>(`testimonials/${item.id}/verify`, { isVerified: newValue })
+      .subscribe({
+        next: (updated) => {
+          this.items.update((list) =>
+            list.map((t) => (t.id === updated.id ? { ...t, isVerified: updated.isVerified } : t)),
+          );
+          this.savingId.set(null);
+          this.flashSuccess(
+            newValue
+              ? this.isUa
+                ? 'Верифіковано'
+                : 'Verified'
+              : this.isUa
+                ? 'Верифікацію знято'
+                : 'Verification removed',
+          );
+        },
+        error: (err) => {
+          this.savingId.set(null);
+          this.flashError(err?.error?.message || 'Error');
+        },
+      });
   }
 
   onDelete(item: TestimonialItem): void {
