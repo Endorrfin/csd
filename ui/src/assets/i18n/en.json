@@ -406,6 +406,31 @@
   "wash_form_pumps_title": "Pumps",
   "wash_form_pumps_hint": "Specify pump needs — submersible, surface, drainage or other.",
   "wash_form_pumps_coming_soon": "This step will be activated in the next update.",
+  "inquiry": {
+    "status": {
+      "new": "New",
+      "read": "Read",
+      "replied": "Replied",
+      "archived": "Archived"
+    },
+    "reason": {
+      "partnership": "Partnership / donor",
+      "volunteering": "Volunteering",
+      "press": "Press / media",
+      "general": "General inquiry",
+      "other": "Other"
+    },
+    "messenger": {
+      "telegram": "Telegram",
+      "viber": "Viber",
+      "whatsapp": "WhatsApp",
+      "other": "Other"
+    },
+    "lang": {
+      "ua": "Ukrainian",
+      "en": "English"
+    }
+  },
   "CONTACT": {
     "PAGE": {
       "TITLE": "Contacts",
