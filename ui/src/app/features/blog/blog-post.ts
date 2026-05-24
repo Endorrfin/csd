@@ -5,40 +5,42 @@ import { DatePipe } from '@angular/common';
 import { CarouselComponent } from '../../shared/components/carousel/carousel';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
-// reactive language signal so the post follows the EN/UA toggle
 import { LanguageService } from '../../core/services/language.service';
+import { BlogPost } from './blog.interfaces';
 
 @Component({
   selector: 'app-blog-post',
   standalone: true,
   imports: [DatePipe, CarouselComponent, QuillHtmlPipe],
   template: `
-    @if (post()) {
+    <!-- bind the signal to a non-null local (as post) so strictTemplates narrows it -->
+    @if (post(); as post) {
       <article class="post">
         <div class="post__body">
-          <span class="post__category">{{ post().category }}</span>
+          <span class="post__category">{{ post.category }}</span>
           <small class="post__date">{{
-            post().publishedAt || post().createdAt | date: 'mediumDate'
+            post.publishedAt || post.createdAt | date: 'mediumDate'
           }}</small>
           <!-- title/content follow the active language signal -->
-          <h1>{{ isUa() ? post().titleUa : post().titleEn }}</h1>
+          <h1>{{ isUa() ? post.titleUa : post.titleEn }}</h1>
           <!-- rich-content class + quillHtml pipe so &nbsp; tokens wrap and text no longer overflows the viewport -->
           <div
             class="rich-content post__content"
-            [innerHTML]="(isUa() ? post().contentUa : post().contentEn) | quillHtml"
+            [innerHTML]="(isUa() ? post.contentUa : post.contentEn) | quillHtml"
           ></div>
         </div>
-        @if (post().images?.length) {
+        @if (post.images?.length) {
           <div class="post__carousel-wrap">
-            <app-carousel [images]="post().images" />
+            <!-- images optional on BlogPost — fall back to [] -->
+            <app-carousel [images]="post.images ?? []" />
           </div>
         }
 
-        @if (post().videoUrl) {
+        @if (post.videoUrl; as videoUrl) {
           <div class="post__video-wrap">
             @if (showVideo()) {
               <iframe
-                [src]="getEmbedUrl(post().videoUrl)"
+                [src]="getEmbedUrl(videoUrl)"
                 width="100%"
                 height="630"
                 frameborder="0"
@@ -53,7 +55,7 @@ import { LanguageService } from '../../core/services/language.service';
                 [attr.aria-label]="'Play video'"
               >
                 <img
-                  [src]="getYouTubeThumbnail(post().videoUrl)"
+                  [src]="getYouTubeThumbnail(videoUrl)"
                   alt=""
                   loading="lazy"
                   decoding="async"
@@ -151,7 +153,7 @@ export class BlogPostComponent implements OnInit {
   private readonly title = inject(Title);
   private readonly sanitizer = inject(DomSanitizer);
 
-  post = signal<any>(null);
+  post = signal<BlogPost | null>(null);
   showVideo = signal(false);
   protected readonly isUa = inject(LanguageService).isUa;
 
@@ -162,7 +164,7 @@ export class BlogPostComponent implements OnInit {
     this.setMetaTags(data);
   }
 
-  private setMetaTags(post: any): void {
+  private setMetaTags(post: BlogPost): void {
     // meta reflects the active language at render time (set once; SSR renders the default UA).
     const ua = this.isUa();
     const pageTitle = `${ua ? post.titleUa : post.titleEn} — CSD`;

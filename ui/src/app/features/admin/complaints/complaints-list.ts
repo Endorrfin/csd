@@ -1,4 +1,3 @@
-// ui/src/app/features/admin/complaints/complaints-list.ts
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -48,7 +47,9 @@ interface NotesModalState {
     <div class="list-header">
       <h2>
         {{ isUa ? 'Скарги' : 'Complaints' }}
-        @if (total() > 0) { <span class="count">({{ total() }})</span> }
+        @if (total() > 0) {
+          <span class="count">({{ total() }})</span>
+        }
       </h2>
       <button type="button" class="btn-export" (click)="exportCsv()">
         {{ isUa ? 'Експорт CSV' : 'Export CSV' }}
@@ -74,14 +75,21 @@ interface NotesModalState {
           <option [value]="c">{{ 'complaint.category.' + c | translate }}</option>
         }
       </select>
-      <label class="filter-checkbox" [title]="isUa ? 'Показати телефон та email' : 'Show phone and email'">
+      <label
+        class="filter-checkbox"
+        [title]="isUa ? 'Показати телефон та email' : 'Show phone and email'"
+      >
         <input type="checkbox" [(ngModel)]="showContactInfo" />
         {{ isUa ? 'Показати PII' : 'Show contact info' }}
       </label>
     </div>
 
-    @if (successMessage()) { <div class="banner banner-success">{{ successMessage() }}</div> }
-    @if (errorMessage()) { <div class="banner banner-error">{{ errorMessage() }}</div> }
+    @if (successMessage()) {
+      <div class="banner banner-success">{{ successMessage() }}</div>
+    }
+    @if (errorMessage()) {
+      <div class="banner banner-error">{{ errorMessage() }}</div>
+    }
 
     @if (loading()) {
       <div class="loading">{{ isUa ? 'Завантаження...' : 'Loading...' }}</div>
@@ -108,7 +116,7 @@ interface NotesModalState {
             @for (item of items(); track item.id; let i = $index) {
               <tr class="clickable" (click)="openDrawer(item)">
                 <td class="td-num">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
-                <td class="td-date">{{ item.createdAt | date:'dd.MM.yyyy' }}</td>
+                <td class="td-date">{{ item.createdAt | date: 'dd.MM.yyyy' }}</td>
 
                 <td (click)="$event.stopPropagation()">
                   <select
@@ -116,7 +124,8 @@ interface NotesModalState {
                     (ngModelChange)="onStatusChange(item, $event)"
                     [disabled]="savingId() === item.id"
                     class="status-select"
-                    [attr.data-status]="item.status">
+                    [attr.data-status]="item.status"
+                  >
                     @for (s of statuses; track s) {
                       <option [value]="s">{{ 'complaint.status.' + s | translate }}</option>
                     }
@@ -136,16 +145,24 @@ interface NotesModalState {
 
                 @if (showContactInfo) {
                   <td class="td-pii">
-                    @if (item.phone) { <div>{{ item.phone }}</div> }
-                    @if (item.email) { <div class="td-pii-email">{{ item.email }}</div> }
-                    @if (!item.phone && !item.email) { — }
+                    @if (item.phone) {
+                      <div>{{ item.phone }}</div>
+                    }
+                    @if (item.email) {
+                      <div class="td-pii-email">{{ item.email }}</div>
+                    }
+                    @if (!item.phone && !item.email) {
+                      —
+                    }
                   </td>
                 }
 
                 <td class="td-center">
                   @if (item.attachments?.length) {
                     <span class="attach-count">{{ item.attachments?.length }}</span>
-                  } @else { — }
+                  } @else {
+                    —
+                  }
                 </td>
 
                 <td class="td-actions" (click)="$event.stopPropagation()">
@@ -155,7 +172,10 @@ interface NotesModalState {
                       class="action-btn action-delete"
                       [disabled]="savingId() === item.id"
                       (click)="onDelete(item)"
-                      [title]="isUa ? 'Видалити закриту скаргу' : 'Delete closed complaint'">✕</button>
+                      [title]="isUa ? 'Видалити закриту скаргу' : 'Delete closed complaint'"
+                    >
+                      ✕
+                    </button>
                   }
                 </td>
               </tr>
@@ -170,7 +190,11 @@ interface NotesModalState {
             {{ isUa ? 'Попередня' : 'Previous' }}
           </button>
           <span class="page-info">{{ currentPage }} / {{ totalPages() }}</span>
-          <button class="btn-sm" [disabled]="currentPage >= totalPages()" (click)="goPage(currentPage + 1)">
+          <button
+            class="btn-sm"
+            [disabled]="currentPage >= totalPages()"
+            (click)="goPage(currentPage + 1)"
+          >
             {{ isUa ? 'Наступна' : 'Next' }}
           </button>
         </div>
@@ -179,14 +203,32 @@ interface NotesModalState {
 
     <!-- Status change modal with notes -->
     @if (notesModal()) {
-      <div class="modal-overlay" (click)="closeNotesModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
+      <!-- keyboard a11y — close on Enter/Space, focusable role=button -->
+      <div
+        class="modal-overlay"
+        role="button"
+        tabindex="0"
+        (click)="closeNotesModal()"
+        (keydown.enter)="closeNotesModal()"
+        (keydown.space)="closeNotesModal(); $event.preventDefault()"
+      >
+        <!-- stop key/click bubbling to overlay; tabindex=-1 keeps it focusable (a11y) -->
+        <div
+          class="modal"
+          tabindex="-1"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+        >
           <h3>
             {{ isUa ? 'Примітки менеджера' : 'Manager notes' }}
           </h3>
           <p class="modal-hint">
             @if (notesModal()!.targetStatus === 'resolved') {
-              {{ isUa ? 'Опишіть, як було вирішено скаргу.' : 'Describe how the complaint was resolved.' }}
+              {{
+                isUa
+                  ? 'Опишіть, як було вирішено скаргу.'
+                  : 'Describe how the complaint was resolved.'
+              }}
             } @else if (notesModal()!.targetStatus === 'closed') {
               {{ isUa ? 'Фінальне резюме реагування.' : 'Final response summary.' }}
             } @else {
@@ -197,7 +239,8 @@ interface NotesModalState {
             [(ngModel)]="notesModal()!.notes"
             [placeholder]="isUa ? 'Що було зроблено...' : 'What was done...'"
             rows="5"
-            class="modal-textarea"></textarea>
+            class="modal-textarea"
+          ></textarea>
           <div class="modal-actions">
             <button type="button" class="btn-sm" (click)="closeNotesModal()">
               {{ isUa ? 'Скасувати' : 'Cancel' }}
@@ -206,7 +249,8 @@ interface NotesModalState {
               type="button"
               class="btn-primary"
               [disabled]="!isNotesValid()"
-              (click)="confirmStatusChange()">
+              (click)="confirmStatusChange()"
+            >
               {{ isUa ? 'Підтвердити' : 'Confirm' }}
             </button>
           </div>
@@ -216,110 +260,345 @@ interface NotesModalState {
 
     <!-- Detail drawer -->
     @if (selectedItem()) {
-      <app-complaint-drawer
-        [item]="selectedItem()!"
-        (close)="closeDrawer()"
-      />
+      <app-complaint-drawer [item]="selectedItem()!" (closed)="closeDrawer()" />
     }
   `,
-  styles: [`
-    .list-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem; gap:1rem; flex-wrap:wrap; }
-    .list-header h2 { font-size:1.2rem; font-weight:600; color:#1a365d; margin:0; }
-    .count { color:#64748b; font-weight:400; }
-    .btn-export { background:#2b6cb0; color:#fff; padding:.5rem 1.25rem; border:none; border-radius:6px; font-size:.85rem; font-weight:500; cursor:pointer; }
-    .btn-export:hover { background:#2c5282; }
+  styles: [
+    `
+      .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.25rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      .list-header h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1a365d;
+        margin: 0;
+      }
+      .count {
+        color: #64748b;
+        font-weight: 400;
+      }
+      .btn-export {
+        background: #2b6cb0;
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .btn-export:hover {
+        background: #2c5282;
+      }
 
-    .filters { display:flex; gap:.75rem; margin-bottom:1.25rem; flex-wrap:wrap; align-items:center; }
-    .filter-input { padding:.5rem .75rem; border:1px solid #cbd5e0; border-radius:6px; font-size:.85rem; background:#fff; }
-    .filter-search { flex:1; min-width:240px; }
-    .filter-checkbox { display:inline-flex; align-items:center; gap:.4rem; font-size:.85rem; color:#475569; cursor:pointer; }
+      .filters {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .filter-input {
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        background: #fff;
+      }
+      .filter-search {
+        flex: 1;
+        min-width: 240px;
+      }
+      .filter-checkbox {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.85rem;
+        color: #475569;
+        cursor: pointer;
+      }
 
-    .banner { padding:.6rem 1rem; border-radius:6px; font-size:.85rem; margin-bottom:1rem; border:1px solid; }
-    .banner-success { background:#f0fff4; color:#276749; border-color:#c6f6d5; }
-    .banner-error { background:#fff5f5; color:#c53030; border-color:#fed7d7; }
+      .banner {
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        margin-bottom: 1rem;
+        border: 1px solid;
+      }
+      .banner-success {
+        background: #f0fff4;
+        color: #276749;
+        border-color: #c6f6d5;
+      }
+      .banner-error {
+        background: #fff5f5;
+        color: #c53030;
+        border-color: #fed7d7;
+      }
 
-    .table-wrap { overflow-x:auto; }
-    .data-table { width:100%; border-collapse:collapse; font-size:.85rem; }
-    .data-table th { text-align:left; padding:.65rem .5rem; border-bottom:2px solid #e2e8f0; color:#64748b; font-weight:600; font-size:.72rem; text-transform:uppercase; white-space:nowrap; }
-    .data-table td { padding:.65rem .5rem; border-bottom:1px solid #f1f5f9; vertical-align:top; }
-    .th-center, .th-actions { text-align:center; }
-    .td-num { text-align:center; color:#64748b; }
-    .td-date { white-space:nowrap; color:#64748b; font-size:.8rem; }
-    .td-center { text-align:center; }
-    .td-category { color:#475569; font-size:.8rem; white-space:nowrap; }
-    .td-description { max-width:360px; color:#334155; line-height:1.4; }
-    .td-pii { font-size:.8rem; color:#475569; white-space:nowrap; }
-    .td-pii-email { color:#2b6cb0; }
-    .notes-marker { cursor:help; margin-left:.25rem; }
-    .attach-count {
-      display:inline-block; min-width:22px; padding:.1rem .4rem;
-      background:#dbeafe; color:#1e40af; border-radius:10px;
-      font-size:.7rem; font-weight:600;
-    }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+      }
+      .data-table th {
+        text-align: left;
+        padding: 0.65rem 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .data-table td {
+        padding: 0.65rem 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: top;
+      }
+      .th-center,
+      .th-actions {
+        text-align: center;
+      }
+      .td-num {
+        text-align: center;
+        color: #64748b;
+      }
+      .td-date {
+        white-space: nowrap;
+        color: #64748b;
+        font-size: 0.8rem;
+      }
+      .td-center {
+        text-align: center;
+      }
+      .td-category {
+        color: #475569;
+        font-size: 0.8rem;
+        white-space: nowrap;
+      }
+      .td-description {
+        max-width: 360px;
+        color: #334155;
+        line-height: 1.4;
+      }
+      .td-pii {
+        font-size: 0.8rem;
+        color: #475569;
+        white-space: nowrap;
+      }
+      .td-pii-email {
+        color: #2b6cb0;
+      }
+      .notes-marker {
+        cursor: help;
+        margin-left: 0.25rem;
+      }
+      .attach-count {
+        display: inline-block;
+        min-width: 22px;
+        padding: 0.1rem 0.4rem;
+        background: #dbeafe;
+        color: #1e40af;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 600;
+      }
 
-    .clickable { cursor:pointer; transition:background .15s; }
-    .clickable:hover { background:#f8fafc; }
+      .clickable {
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .clickable:hover {
+        background: #f8fafc;
+      }
 
-    /* Status palette — 4 unique colors */
-    .status-select {
-      padding:.25rem .5rem; border:1px solid transparent; border-radius:4px;
-      font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.02em;
-      cursor:pointer; min-width:105px;
-    }
-    .status-select:disabled { opacity:.5; cursor:wait; }
-    .status-select[data-status="new"]       { background:#dbeafe; color:#1e40af; } /* blue */
-    .status-select[data-status="in_review"] { background:#fef3c7; color:#92400e; } /* amber */
-    .status-select[data-status="resolved"]  { background:#d1fae5; color:#065f46; } /* green */
-    .status-select[data-status="closed"]    { background:#e2e8f0; color:#475569; } /* slate */
+      /* Status palette — 4 unique colors */
+      .status-select {
+        padding: 0.25rem 0.5rem;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        min-width: 105px;
+      }
+      .status-select:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+      .status-select[data-status='new'] {
+        background: #dbeafe;
+        color: #1e40af;
+      } /* blue */
+      .status-select[data-status='in_review'] {
+        background: #fef3c7;
+        color: #92400e;
+      } /* amber */
+      .status-select[data-status='resolved'] {
+        background: #d1fae5;
+        color: #065f46;
+      } /* green */
+      .status-select[data-status='closed'] {
+        background: #e2e8f0;
+        color: #475569;
+      } /* slate */
 
-    .td-actions { text-align:center; white-space:nowrap; }
-    .action-btn {
-      display:inline-flex; align-items:center; justify-content:center;
-      width:28px; height:28px; margin:0 2px;
-      border-radius:4px; font-size:.85rem; cursor:pointer;
-      border:1px solid transparent; background:transparent; transition:all .15s;
-    }
-    .action-delete { color:#c53030; }
-    .action-delete:hover { background:#fff5f5; border-color:#fed7d7; }
-    .action-delete:disabled { opacity:.4; cursor:not-allowed; }
+      .td-actions {
+        text-align: center;
+        white-space: nowrap;
+      }
+      .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        margin: 0 2px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        border: 1px solid transparent;
+        background: transparent;
+        transition: all 0.15s;
+      }
+      .action-delete {
+        color: #c53030;
+      }
+      .action-delete:hover {
+        background: #fff5f5;
+        border-color: #fed7d7;
+      }
+      .action-delete:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
 
-    .pagination { display:flex; justify-content:center; align-items:center; gap:1rem; margin-top:1.25rem; }
-    .page-info { font-size:.85rem; color:#64748b; }
-    .btn-sm { padding:.4rem 1rem; border:1px solid #cbd5e0; background:#fff; border-radius:6px; font-size:.8rem; cursor:pointer; }
-    .btn-sm:disabled { opacity:.4; cursor:not-allowed; }
-    .btn-sm:not(:disabled):hover { background:#f8fafc; }
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.25rem;
+      }
+      .page-info {
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+      .btn-sm {
+        padding: 0.4rem 1rem;
+        border: 1px solid #cbd5e0;
+        background: #fff;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        cursor: pointer;
+      }
+      .btn-sm:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-sm:not(:disabled):hover {
+        background: #f8fafc;
+      }
 
-    .btn-primary { padding:.5rem 1rem; background:#2b6cb0; color:#fff; border:none; border-radius:6px; font-size:.85rem; font-weight:500; cursor:pointer; }
-    .btn-primary:hover:not(:disabled) { background:#2c5282; }
-    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+      .btn-primary {
+        padding: 0.5rem 1rem;
+        background: #2b6cb0;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: #2c5282;
+      }
+      .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
 
-    .loading, .empty { text-align:center; padding:3rem; color:#64748b; font-size:.95rem; }
+      .loading,
+      .empty {
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
+        font-size: 0.95rem;
+      }
 
-    /* Modal */
-    .modal-overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,.5);
-      display:flex; align-items:center; justify-content:center;
-      z-index:1000; padding:1rem;
-    }
-    .modal {
-      background:#fff; border-radius:8px; padding:1.5rem;
-      width:100%; max-width:480px;
-      box-shadow:0 10px 25px rgba(0,0,0,.2);
-    }
-    .modal h3 { margin:0 0 .5rem; font-size:1.1rem; color:#1a365d; }
-    .modal-hint { font-size:.8rem; color:#64748b; margin:0 0 1rem; }
-    .modal-textarea {
-      width:100%; padding:.65rem; border:1px solid #cbd5e0; border-radius:6px;
-      font-family:inherit; font-size:.9rem; resize:vertical;
-    }
-    .modal-textarea:focus { outline:none; border-color:#2b6cb0; box-shadow:0 0 0 3px rgba(43,108,176,.1); }
-    .modal-actions { display:flex; justify-content:flex-end; gap:.5rem; margin-top:1rem; }
+      /* Modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 1rem;
+      }
+      .modal {
+        background: #fff;
+        border-radius: 8px;
+        padding: 1.5rem;
+        width: 100%;
+        max-width: 480px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      }
+      .modal h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.1rem;
+        color: #1a365d;
+      }
+      .modal-hint {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin: 0 0 1rem;
+      }
+      .modal-textarea {
+        width: 100%;
+        padding: 0.65rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 0.9rem;
+        resize: vertical;
+      }
+      .modal-textarea:focus {
+        outline: none;
+        border-color: #2b6cb0;
+        box-shadow: 0 0 0 3px rgba(43, 108, 176, 0.1);
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1rem;
+      }
 
-    @media (max-width:768px) {
-      .filters { flex-direction:column; align-items:stretch; }
-      .filter-search { min-width:auto; }
-    }
-  `],
+      @media (max-width: 768px) {
+        .filters {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .filter-search {
+          min-width: auto;
+        }
+      }
+    `,
+  ],
 })
 export class AdminComplaintsListComponent implements OnInit {
   private readonly api = inject(ApiService);
@@ -454,9 +733,7 @@ export class AdminComplaintsListComponent implements OnInit {
 
     this.api.patch<ComplaintItem>(`complaints/${item.id}/status`, body).subscribe({
       next: (updated) => {
-        this.items.update((list) =>
-          list.map((c) => (c.id === updated.id ? updated : c)),
-        );
+        this.items.update((list) => list.map((c) => (c.id === updated.id ? updated : c)));
         // If drawer is showing this item, refresh it too
         if (this.selectedItem()?.id === updated.id) {
           this.selectedItem.set(updated);

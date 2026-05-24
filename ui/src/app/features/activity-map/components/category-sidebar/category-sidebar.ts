@@ -1,6 +1,5 @@
 import { CommonModule } from '@angular/common';
 import {
-  AfterViewInit,
   Component,
   ElementRef,
   QueryList,
@@ -19,10 +18,7 @@ import {
   TypeId,
 } from '../../activity-map.interfaces';
 import { ActivityDataService } from '../../services/activity-data.service';
-import {
-  ActivityFilterService,
-  SettlementGroup,
-} from '../../services/activity-filter.service';
+import { ActivityFilterService, SettlementGroup } from '../../services/activity-filter.service';
 
 interface CategoryView {
   id: CategoryId;
@@ -115,9 +111,7 @@ interface TypeView {
                       @for (s of filter.settlementsForType(type.id); track s.key) {
                         <li
                           class="settlement"
-                          [class.settlement--selected]="
-                            filter.selectedSettlementKey() === s.key
-                          "
+                          [class.settlement--selected]="filter.selectedSettlementKey() === s.key"
                           [attr.data-settlement-key]="s.key"
                         >
                           <button
@@ -127,9 +121,7 @@ interface TypeView {
                             (click)="onSettlementClick(s)"
                             [disabled]="s.lat === null"
                             [title]="
-                              s.lat === null
-                                ? ('ACTIVITY_MAP.SIDEBAR.NO_COORDS' | translate)
-                                : ''
+                              s.lat === null ? ('ACTIVITY_MAP.SIDEBAR.NO_COORDS' | translate) : ''
                             "
                           >
                             <span class="settlement__name">{{ pick(s.name) }}</span>
@@ -148,9 +140,15 @@ interface TypeView {
     </aside>
 
     @if (filter.mobileDrawerOpen()) {
+      <!-- keyboard a11y — close on Enter/Space, focusable role=button -->
       <div
         class="sidebar__overlay"
+        role="button"
+        tabindex="0"
+        [attr.aria-label]="'common.close' | translate"
         (click)="filter.setMobileDrawerOpen(false)"
+        (keydown.enter)="filter.setMobileDrawerOpen(false)"
+        (keydown.space)="filter.setMobileDrawerOpen(false); $event.preventDefault()"
       ></div>
     }
   `,
@@ -367,12 +365,12 @@ interface TypeView {
     `,
   ],
 })
-export class CategorySidebarComponent implements AfterViewInit {
+export class CategorySidebarComponent {
   readonly filter = inject(ActivityFilterService);
   private readonly dataService = inject(ActivityDataService);
   private readonly translate = inject(TranslateService);
 
-  // CHANGED (Step 7): query all settlement buttons to enable auto-scroll on selection.
+  // (Step 7): query all settlement buttons to enable auto-scroll on selection.
   @ViewChildren('settlementBtn')
   private settlementBtns!: QueryList<ElementRef<HTMLButtonElement>>;
 
@@ -387,9 +385,7 @@ export class CategorySidebarComponent implements AfterViewInit {
     };
 
     return data.categories.map<CategoryView>((cat: ActivityCategory) => {
-      const types: TypeView[] = (
-        Object.entries(data.types) as [TypeId, ActivityTypeMeta][]
-      )
+      const types: TypeView[] = (Object.entries(data.types) as [TypeId, ActivityTypeMeta][])
         .filter(([, meta]) => meta.categoryId === cat.id)
         .map<TypeView>(([id, meta]) => ({
           id,
@@ -420,14 +416,10 @@ export class CategorySidebarComponent implements AfterViewInit {
     });
   }
 
-  ngAfterViewInit(): void {
-    // No-op — kept for ViewChildren initialization.
-  }
-
   private scrollSelectedIntoView(_key: string): void {
     // Find the <li> with matching data-settlement-key and scroll its button into view.
-    const host = (this.settlementBtns?.first?.nativeElement?.closest('aside.sidebar')
-      ?? null) as HTMLElement | null;
+    const host = (this.settlementBtns?.first?.nativeElement?.closest('aside.sidebar') ??
+      null) as HTMLElement | null;
     if (!host) return;
     const selected = host.querySelector<HTMLElement>('.settlement--selected .settlement__btn');
     if (!selected) return;

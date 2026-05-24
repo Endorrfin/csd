@@ -26,9 +26,7 @@ import {
             : ('about.admin.documents.createTitle' | translate)
         }}
       </h2>
-      <a routerLink=".." class="btn-secondary">
-        ← {{ 'about.admin.common.back' | translate }}
-      </a>
+      <a routerLink=".." class="btn-secondary"> ← {{ 'about.admin.common.back' | translate }} </a>
     </div>
 
     @if (errorMessage()) {
@@ -44,12 +42,7 @@ import {
             <label for="documentType">
               {{ 'about.admin.documents.typeLabel' | translate }} *
             </label>
-            <select
-              id="documentType"
-              [(ngModel)]="documentType"
-              name="documentType"
-              required
-            >
+            <select id="documentType" [(ngModel)]="documentType" name="documentType" required>
               @for (t of allDocumentTypes; track t) {
                 <option [value]="t">{{ 'about.admin.documentType.' + t | translate }}</option>
               }
@@ -129,13 +122,7 @@ import {
         <div class="row">
           <div class="field">
             <label for="sortOrder">{{ 'about.admin.sections.sortOrder' | translate }}</label>
-            <input
-              id="sortOrder"
-              type="number"
-              [(ngModel)]="sortOrder"
-              name="sortOrder"
-              min="0"
-            />
+            <input id="sortOrder" type="number" [(ngModel)]="sortOrder" name="sortOrder" min="0" />
           </div>
 
           <label class="field-checkbox">
@@ -351,7 +338,7 @@ export class AdminAboutDocumentEditComponent implements OnInit {
   onSave(): void {
     if (!this.titleUa.trim() || !this.titleEn.trim()) {
       this.errorMessage.set(
-        this.isUa ? 'Заголовки UA та EN обов\'язкові' : 'UA and EN titles are required',
+        this.isUa ? "Заголовки UA та EN обов'язкові" : 'UA and EN titles are required',
       );
       return;
     }
@@ -375,9 +362,9 @@ export class AdminAboutDocumentEditComponent implements OnInit {
 
     const request$ = this.isEditMode()
       ? this.api.patch<AboutDocument>(
-        `about/admin/documents/${this.id()}`,
-        payload satisfies UpdateAboutDocumentDto,
-      )
+          `about/admin/documents/${this.id()}`,
+          payload satisfies UpdateAboutDocumentDto,
+        )
       : this.api.post<AboutDocument>('about/admin/documents', payload);
 
     request$.subscribe({

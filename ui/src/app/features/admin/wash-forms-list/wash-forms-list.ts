@@ -7,24 +7,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
 import { environment } from '../../../../environments/environment';
 
-// CHANGED: typed status + sortable field keys
-type FormStatus =
-  | 'new'
-  | 'in_review'
-  | 'approved'
-  | 'rejected'
-  | 'in_progress'
-  | 'completed';
+// typed status + sortable field keys
+type FormStatus = 'new' | 'in_review' | 'approved' | 'rejected' | 'in_progress' | 'completed';
 
-type SortField =
-  | 'createdAt'
-  | 'organizationName'
-  | 'region'
-  | 'dependentPopulation'
-  | 'status';
+type SortField = 'createdAt' | 'organizationName' | 'region' | 'dependentPopulation' | 'status';
 type SortDir = 'ASC' | 'DESC';
 
-// CHANGED: align with new multi-section schema (arrays, not singular)
+// align with new multi-section schema (arrays, not singular)
 interface WashFormSummary {
   id: string;
   region: string;
@@ -61,7 +50,7 @@ interface PaginatedResponse {
           <span class="count">({{ total() }})</span>
         }
       </h2>
-      <!-- CHANGED: CSV → XLSX, with disabled state during download -->
+      <!-- CSV → XLSX, with disabled state during download -->
       <button class="btn btn-export" (click)="exportXlsx()" [disabled]="exporting()">
         @if (exporting()) {
           {{ isUa ? 'Експортується...' : 'Exporting...' }}
@@ -93,7 +82,7 @@ interface PaginatedResponse {
         (input)="onSearchChange()"
         class="filter-input filter-region"
       />
-      <!-- NEW: date range -->
+      <!-- date range -->
       <label class="filter-date">
         <span>{{ isUa ? 'Від' : 'From' }}</span>
         <input
@@ -105,12 +94,7 @@ interface PaginatedResponse {
       </label>
       <label class="filter-date">
         <span>{{ isUa ? 'До' : 'To' }}</span>
-        <input
-          type="date"
-          [(ngModel)]="dateTo"
-          (change)="onFilterChange()"
-          class="filter-input"
-        />
+        <input type="date" [(ngModel)]="dateTo" (change)="onFilterChange()" class="filter-input" />
       </label>
       @if (hasActiveFilters()) {
         <button class="btn btn-link" (click)="clearFilters()">
@@ -119,7 +103,7 @@ interface PaginatedResponse {
       }
     </div>
 
-    <!-- NEW: Bulk action bar — appears only when selection exists -->
+    <!-- Bulk action bar — appears only when selection exists -->
     @if (hasSelection()) {
       <div class="bulk-bar">
         <span class="bulk-count">
@@ -157,7 +141,7 @@ interface PaginatedResponse {
         <table class="data-table">
           <thead>
             <tr>
-              <!-- NEW: select-all checkbox -->
+              <!-- select-all checkbox -->
               <th class="th-check">
                 <input
                   type="checkbox"
@@ -166,7 +150,7 @@ interface PaginatedResponse {
                 />
               </th>
               <th>#</th>
-              <!-- CHANGED: sortable headers -->
+              <!-- sortable headers -->
               <th class="sortable" (click)="toggleSort('createdAt')">
                 {{ isUa ? 'Дата' : 'Date' }}{{ sortIndicator('createdAt') }}
               </th>
@@ -189,8 +173,12 @@ interface PaginatedResponse {
           </thead>
           <tbody>
             @for (f of forms(); track f.id; let i = $index) {
-              <tr class="clickable" [class.row-selected]="isSelected(f.id)" (click)="openDetail(f.id)">
-                <!-- NEW: row checkbox — stops propagation so it doesn't open detail -->
+              <tr
+                class="clickable"
+                [class.row-selected]="isSelected(f.id)"
+                (click)="openDetail(f.id)"
+              >
+                <!-- row checkbox — stops propagation so it doesn't open detail -->
                 <td class="td-check" (click)="$event.stopPropagation()">
                   <input
                     type="checkbox"
@@ -219,7 +207,7 @@ interface PaginatedResponse {
 
       <!-- Pagination -->
       <div class="pagination">
-        <!-- NEW: page size selector -->
+        <!-- page size selector -->
         <label class="page-size">
           <span>{{ isUa ? 'На сторінці:' : 'Per page:' }}</span>
           <select [(ngModel)]="pageSize" (change)="onFilterChange()">
@@ -231,7 +219,11 @@ interface PaginatedResponse {
 
         @if (totalPages() > 1) {
           <div class="pager">
-            <button class="btn btn-sm" [disabled]="currentPage <= 1" (click)="goPage(currentPage - 1)">
+            <button
+              class="btn btn-sm"
+              [disabled]="currentPage <= 1"
+              (click)="goPage(currentPage - 1)"
+            >
               {{ isUa ? 'Попередня' : 'Previous' }}
             </button>
             <span class="page-info">{{ currentPage }} / {{ totalPages() }}</span>
@@ -261,116 +253,274 @@ interface PaginatedResponse {
         color: #1a365d;
         margin: 0;
       }
-      .count { color: #64748b; font-weight: 400; }
-      .btn { cursor: pointer; }
-      .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .count {
+        color: #64748b;
+        font-weight: 400;
+      }
+      .btn {
+        cursor: pointer;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
       .btn-export {
-        background: #2b6cb0; color: #fff; padding: 0.5rem 1.25rem;
-        border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 500;
+        background: #2b6cb0;
+        color: #fff;
+        padding: 0.5rem 1.25rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
       }
-      .btn-export:not(:disabled):hover { background: #2c5282; }
+      .btn-export:not(:disabled):hover {
+        background: #2c5282;
+      }
       .btn-primary {
-        background: #2b6cb0; color: #fff; padding: 0.4rem 1rem;
-        border: none; border-radius: 6px; font-size: 0.85rem; font-weight: 500;
+        background: #2b6cb0;
+        color: #fff;
+        padding: 0.4rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
       }
-      .btn-primary:not(:disabled):hover { background: #2c5282; }
+      .btn-primary:not(:disabled):hover {
+        background: #2c5282;
+      }
       .btn-link {
-        background: transparent; border: none; color: #2b6cb0;
-        font-size: 0.85rem; padding: 0.4rem 0.6rem;
+        background: transparent;
+        border: none;
+        color: #2b6cb0;
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
       }
-      .btn-link:hover { text-decoration: underline; }
+      .btn-link:hover {
+        text-decoration: underline;
+      }
 
       .filters {
-        display: flex; gap: 0.75rem; margin-bottom: 1rem;
-        flex-wrap: wrap; align-items: center;
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        align-items: center;
       }
       .filter-input {
-        padding: 0.5rem 0.75rem; border: 1px solid #cbd5e0;
-        border-radius: 6px; font-size: 0.85rem; background: #fff;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        background: #fff;
       }
-      .filter-search { flex: 1; min-width: 200px; }
-      .filter-region { width: 160px; }
+      .filter-search {
+        flex: 1;
+        min-width: 200px;
+      }
+      .filter-region {
+        width: 160px;
+      }
       .filter-date {
-        display: flex; align-items: center; gap: 0.4rem;
-        font-size: 0.8rem; color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: #64748b;
       }
-      .filter-date input { padding: 0.4rem 0.6rem; }
+      .filter-date input {
+        padding: 0.4rem 0.6rem;
+      }
 
-      /* NEW: bulk action bar */
+      /* bulk action bar */
       .bulk-bar {
-        display: flex; gap: 0.75rem; align-items: center;
-        padding: 0.65rem 1rem; margin-bottom: 1rem;
-        background: #ebf4ff; border: 1px solid #bee3f8; border-radius: 6px;
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        padding: 0.65rem 1rem;
+        margin-bottom: 1rem;
+        background: #ebf4ff;
+        border: 1px solid #bee3f8;
+        border-radius: 6px;
       }
-      .bulk-count { font-size: 0.85rem; color: #1a365d; margin-right: auto; }
-      .bulk-count strong { color: #2b6cb0; }
+      .bulk-count {
+        font-size: 0.85rem;
+        color: #1a365d;
+        margin-right: auto;
+      }
+      .bulk-count strong {
+        color: #2b6cb0;
+      }
 
-      .table-wrap { overflow-x: auto; }
+      .table-wrap {
+        overflow-x: auto;
+      }
       .data-table {
-        width: 100%; border-collapse: collapse; font-size: 0.85rem;
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
       }
       .data-table th {
-        text-align: left; padding: 0.65rem 0.5rem;
+        text-align: left;
+        padding: 0.65rem 0.5rem;
         border-bottom: 2px solid #e2e8f0;
-        color: #64748b; font-weight: 600; font-size: 0.75rem;
-        text-transform: uppercase; white-space: nowrap;
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        white-space: nowrap;
       }
-      .data-table th.sortable { cursor: pointer; user-select: none; }
-      .data-table th.sortable:hover { color: #1a365d; }
-      .th-check, .td-check { width: 32px; text-align: center; }
+      .data-table th.sortable {
+        cursor: pointer;
+        user-select: none;
+      }
+      .data-table th.sortable:hover {
+        color: #1a365d;
+      }
+      .th-check,
+      .td-check {
+        width: 32px;
+        text-align: center;
+      }
       .data-table td {
-        padding: 0.65rem 0.5rem; border-bottom: 1px solid #f1f5f9;
+        padding: 0.65rem 0.5rem;
+        border-bottom: 1px solid #f1f5f9;
       }
-      .clickable { cursor: pointer; transition: background 0.15s; }
-      .clickable:hover { background: #f8fafc; }
-      .row-selected { background: #ebf8ff; }
-      .row-selected:hover { background: #d9edf7; }
-      .td-num { text-align: center; color: #64748b; }
-      .td-date { white-space: nowrap; color: #64748b; font-size: 0.8rem; }
-      .td-org { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-      .td-sections { font-size: 0.75rem; color: #64748b; }
-      .td-action { text-align: center; }
-      .arrow { font-size: 1.2rem; color: #94a3b8; }
+      .clickable {
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .clickable:hover {
+        background: #f8fafc;
+      }
+      .row-selected {
+        background: #ebf8ff;
+      }
+      .row-selected:hover {
+        background: #d9edf7;
+      }
+      .td-num {
+        text-align: center;
+        color: #64748b;
+      }
+      .td-date {
+        white-space: nowrap;
+        color: #64748b;
+        font-size: 0.8rem;
+      }
+      .td-org {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .td-sections {
+        font-size: 0.75rem;
+        color: #64748b;
+      }
+      .td-action {
+        text-align: center;
+      }
+      .arrow {
+        font-size: 1.2rem;
+        color: #94a3b8;
+      }
 
       .status-badge {
-        display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px;
-        font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+        display: inline-block;
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
         letter-spacing: 0.03em;
       }
-      [data-status='new']         { background: #dbeafe; color: #1e40af; }
-      [data-status='in_review']   { background: #fef3c7; color: #92400e; }
-      [data-status='approved']    { background: #d1fae5; color: #065f46; }
-      [data-status='rejected']    { background: #fee2e2; color: #991b1b; }
-      [data-status='in_progress'] { background: #e0e7ff; color: #3730a3; }
-      [data-status='completed']   { background: #d1fae5; color: #065f46; }
+      [data-status='new'] {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+      [data-status='in_review'] {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      [data-status='approved'] {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      [data-status='rejected'] {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      [data-status='in_progress'] {
+        background: #e0e7ff;
+        color: #3730a3;
+      }
+      [data-status='completed'] {
+        background: #d1fae5;
+        color: #065f46;
+      }
 
       .pagination {
-        display: flex; justify-content: space-between; align-items: center;
-        gap: 1rem; margin-top: 1.25rem; flex-wrap: wrap;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-top: 1.25rem;
+        flex-wrap: wrap;
       }
       .page-size {
-        display: flex; align-items: center; gap: 0.5rem;
-        font-size: 0.8rem; color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.8rem;
+        color: #64748b;
       }
       .page-size select {
-        padding: 0.3rem 0.5rem; border: 1px solid #cbd5e0;
-        border-radius: 6px; background: #fff;
+        padding: 0.3rem 0.5rem;
+        border: 1px solid #cbd5e0;
+        border-radius: 6px;
+        background: #fff;
       }
-      .pager { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
-      .page-info { font-size: 0.85rem; color: #64748b; }
+      .pager {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-left: auto;
+      }
+      .page-info {
+        font-size: 0.85rem;
+        color: #64748b;
+      }
       .btn-sm {
-        padding: 0.4rem 1rem; border: 1px solid #cbd5e0; background: #fff;
-        border-radius: 6px; font-size: 0.8rem;
+        padding: 0.4rem 1rem;
+        border: 1px solid #cbd5e0;
+        background: #fff;
+        border-radius: 6px;
+        font-size: 0.8rem;
       }
-      .btn-sm:not(:disabled):hover { background: #f8fafc; }
+      .btn-sm:not(:disabled):hover {
+        background: #f8fafc;
+      }
 
-      .loading, .empty {
-        text-align: center; padding: 3rem; color: #64748b; font-size: 0.95rem;
+      .loading,
+      .empty {
+        text-align: center;
+        padding: 3rem;
+        color: #64748b;
+        font-size: 0.95rem;
       }
       @media (max-width: 768px) {
-        .filters { flex-direction: column; align-items: stretch; }
-        .filter-search, .filter-region { min-width: auto; width: 100%; }
-        .bulk-bar { flex-wrap: wrap; }
+        .filters {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .filter-search,
+        .filter-region {
+          min-width: auto;
+          width: 100%;
+        }
+        .bulk-bar {
+          flex-wrap: wrap;
+        }
       }
     `,
   ],
@@ -379,7 +529,6 @@ export class WashFormsListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
-  // removed unused `auth` injection (was lint warning)
 
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
@@ -399,18 +548,18 @@ export class WashFormsListComponent implements OnInit {
   searchQuery = '';
   statusFilter = '';
   regionFilter = '';
-  dateFrom = '';                      // NEW
-  dateTo = '';                        // NEW
+  dateFrom = ''; // NEW
+  dateTo = ''; // NEW
 
   // ───── Sorting ─────
-  sortBy: SortField = 'createdAt';    // NEW
-  sortOrder: SortDir = 'DESC';        // NEW
+  sortBy: SortField = 'createdAt'; // NEW
+  sortOrder: SortDir = 'DESC'; // NEW
 
   // ───── Bulk selection ─────
   selectedIds = signal<Set<string>>(new Set()); // NEW
-  bulkStatus: FormStatus | '' = '';             // NEW
+  bulkStatus: FormStatus | '' = ''; // NEW
 
-  // NEW: derived flags
+  // derived flags
   allOnPageSelected = computed(() => {
     const sel = this.selectedIds();
     const rows = this.forms();
@@ -418,8 +567,13 @@ export class WashFormsListComponent implements OnInit {
   });
   hasSelection = computed(() => this.selectedIds().size > 0);
 
-  readonly STATUSES: ReadonlyArray<FormStatus> = [ // NEW
-    'new', 'in_review', 'approved', 'rejected', 'in_progress', 'completed',
+  readonly STATUSES: readonly FormStatus[] = [
+    'new',
+    'in_review',
+    'approved',
+    'rejected',
+    'in_progress',
+    'completed',
   ];
 
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -462,13 +616,12 @@ export class WashFormsListComponent implements OnInit {
     }, 400);
   }
 
-  // NEW: instant filter changes (status / dates / page size)
+  // instant filter changes (status / dates / page size)
   onFilterChange(): void {
     this.currentPage = 1;
     this.loadForms();
   }
 
-  // NEW
   hasActiveFilters(): boolean {
     return !!(
       this.searchQuery ||
@@ -479,7 +632,6 @@ export class WashFormsListComponent implements OnInit {
     );
   }
 
-  // NEW
   clearFilters(): void {
     this.searchQuery = '';
     this.statusFilter = '';
@@ -495,19 +647,17 @@ export class WashFormsListComponent implements OnInit {
     this.loadForms();
   }
 
-  // NEW: header click → toggle direction or switch column with sensible default
+  // header click → toggle direction or switch column with sensible default
   toggleSort(field: SortField): void {
     if (this.sortBy === field) {
       this.sortOrder = this.sortOrder === 'ASC' ? 'DESC' : 'ASC';
     } else {
       this.sortBy = field;
-      this.sortOrder =
-        field === 'createdAt' || field === 'dependentPopulation' ? 'DESC' : 'ASC';
+      this.sortOrder = field === 'createdAt' || field === 'dependentPopulation' ? 'DESC' : 'ASC';
     }
     this.loadForms();
   }
 
-  // NEW
   sortIndicator(field: SortField): string {
     if (this.sortBy !== field) return '';
     return this.sortOrder === 'ASC' ? ' ▲' : ' ▼';
@@ -574,10 +724,7 @@ export class WashFormsListComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           this.bulkApplying.set(false);
-          alert(
-            (this.isUa ? 'Помилка: ' : 'Error: ') +
-            (err.error?.message ?? err.message),
-          );
+          alert((this.isUa ? 'Помилка: ' : 'Error: ') + (err.error?.message ?? err.message));
         },
       });
   }
@@ -637,7 +784,8 @@ export class WashFormsListComponent implements OnInit {
     const parts: string[] = [];
     if (f.boreholes?.length) parts.push(`${this.isUa ? 'Бур.' : 'Bore'} ${f.boreholes.length}`);
     if (f.towers?.length) parts.push(`${this.isUa ? 'Башта' : 'Tower'} ${f.towers.length}`);
-    if (f.purifications?.length) parts.push(`${this.isUa ? 'Очищ.' : 'Purif'} ${f.purifications.length}`);
+    if (f.purifications?.length)
+      parts.push(`${this.isUa ? 'Очищ.' : 'Purif'} ${f.purifications.length}`);
     if (f.pumps?.length) parts.push(`${this.isUa ? 'Помпа' : 'Pump'} ${f.pumps.length}`);
     if (f.items?.length) parts.push(`${f.items.length} ${this.isUa ? 'поз.' : 'items'}`);
     return parts.join(', ') || '---';

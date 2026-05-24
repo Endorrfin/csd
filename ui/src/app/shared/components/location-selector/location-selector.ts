@@ -39,20 +39,16 @@ import {
     @if (loading()) {
       <div class="loc-loading">{{ isUa ? 'Завантаження...' : 'Loading...' }}</div>
     } @else {
-      
       <div class="loc-grid">
         <!-- Region -->
         <div class="loc-field">
-          <label>
+          <label for="loc-region">
             {{ isUa ? 'Область' : 'Region' }}
             @if (required) {
               <span class="loc-req">*</span>
             }
           </label>
-          <select
-            (change)="onRegionChange($event)"
-            [disabled]="isDisabled"
-          >
+          <select id="loc-region" (change)="onRegionChange($event)" [disabled]="isDisabled">
             <option value="-1" [selected]="selectedRegionIdx() === -1">
               {{ isUa ? '-- Оберіть область --' : '-- Select region --' }}
             </option>
@@ -63,11 +59,12 @@ import {
             }
           </select>
         </div>
-      
+
         <!-- District -->
         <div class="loc-field">
-          <label>{{ isUa ? 'Район' : 'District' }}</label>
+          <label for="loc-district">{{ isUa ? 'Район' : 'District' }}</label>
           <select
+            id="loc-district"
             (change)="onDistrictChange($event)"
             [disabled]="isDisabled || selectedRegionIdx() < 0"
           >
@@ -81,11 +78,12 @@ import {
             }
           </select>
         </div>
-      
+
         <!-- Community -->
         <div class="loc-field">
-          <label>{{ isUa ? 'Громада' : 'Community' }}</label>
+          <label for="loc-community">{{ isUa ? 'Громада' : 'Community' }}</label>
           <select
+            id="loc-community"
             (change)="onCommunityChange($event)"
             [disabled]="isDisabled || selectedDistrictIdx() < 0"
           >
@@ -99,11 +97,12 @@ import {
             }
           </select>
         </div>
-      
+
         <!-- Settlement -->
         <div class="loc-field">
-          <label>{{ isUa ? 'Населений пункт' : 'Settlement' }}</label>
+          <label for="loc-settlement">{{ isUa ? 'Населений пункт' : 'Settlement' }}</label>
           <select
+            id="loc-settlement"
             (change)="onSettlementChange($event)"
             [disabled]="isDisabled || selectedCommunityIdx() < 0"
           >

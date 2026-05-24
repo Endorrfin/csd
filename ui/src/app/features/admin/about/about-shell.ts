@@ -22,18 +22,10 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
       </header>
 
       <nav class="tab-nav">
-        <a
-          routerLink="sections"
-          routerLinkActive="tab-active"
-          class="tab"
-        >
+        <a routerLink="sections" routerLinkActive="tab-active" class="tab">
           {{ 'about.admin.nav.sections' | translate }}
         </a>
-        <a
-          routerLink="documents"
-          routerLinkActive="tab-active"
-          class="tab"
-        >
+        <a routerLink="documents" routerLinkActive="tab-active" class="tab">
           {{ 'about.admin.nav.documents' | translate }}
         </a>
       </nav>

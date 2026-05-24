@@ -1,10 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import {
-  Activity,
-  CategoryId,
-  LocalizedText,
-  TypeId,
-} from '../activity-map.interfaces';
+import { Activity, CategoryId, LocalizedText, TypeId } from '../activity-map.interfaces';
 import { ActivityDataService } from './activity-data.service';
 
 export interface SettlementGroup {
@@ -22,9 +17,7 @@ export class ActivityFilterService {
 
   private readonly _enabledTypes = signal<Set<TypeId>>(new Set());
   private readonly _expandedTypes = signal<Set<TypeId>>(new Set());
-  private readonly _expandedCategories = signal<Set<CategoryId>>(
-    new Set<CategoryId>(['wash']),
-  );
+  private readonly _expandedCategories = signal<Set<CategoryId>>(new Set<CategoryId>(['wash']));
   private readonly _selectedSettlementKey = signal<string | null>(null);
   private readonly _mobileDrawerOpen = signal(false);
 
@@ -61,9 +54,7 @@ export class ActivityFilterService {
         });
       }
     }
-    return [...groups.values()].sort((x, y) =>
-      x.name.uk.localeCompare(y.name.uk, 'uk'),
-    );
+    return [...groups.values()].sort((x, y) => x.name.uk.localeCompare(y.name.uk, 'uk'));
   }
 
   enableAllTypes(): void {

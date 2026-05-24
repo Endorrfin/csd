@@ -80,7 +80,7 @@ import { AuthService } from '../../core/services/auth.service';
             </a>
           }
         </nav>
-        
+
         <!-- admin & super admin only section -->
         @if (auth.isSuperAdmin || auth.isAdmin) {
           <p class="admin-group-label">{{ isUa ? 'Адміністрування' : 'Administration' }}</p>
@@ -113,7 +113,16 @@ import { AuthService } from '../../core/services/auth.service';
 
       <!-- Overlay for mobile -->
       @if (isSidebarOpen()) {
-        <div class="admin-overlay" (click)="closeSidebar()"></div>
+        <!-- keyboard a11y — close on Enter/Space, focusable role=button -->
+        <div
+          class="admin-overlay"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="isUa ? 'Закрити меню' : 'Close menu'"
+          (click)="closeSidebar()"
+          (keydown.enter)="closeSidebar()"
+          (keydown.space)="closeSidebar(); $event.preventDefault()"
+        ></div>
       }
 
       <!-- Main content area with outlet -->

@@ -38,22 +38,34 @@
 /* semantic group colors for stepper circles.
    primary = blue; infra = teal; equipment = amber; review = gray.
    `active` overrides the base, `completed` wins over `active`. */
-.step[data-group='primary'] .step-circle { color: #1e40af; }
-.step[data-group='infra'] .step-circle { color: #0f766e; }
-.step[data-group='equipment'] .step-circle { color: #b45309; }
-.step[data-group='review'] .step-circle { color: #475569; }
+.step[data-group='primary'] .step-circle {
+  color: #1e40af;
+}
+.step[data-group='infra'] .step-circle {
+  color: #0f766e;
+}
+.step[data-group='equipment'] .step-circle {
+  color: #b45309;
+}
+.step[data-group='review'] .step-circle {
+  color: #475569;
+}
 
 .step[data-group='primary'].active .step-circle {
-  background: #1e40af; color: #fff;
+  background: #1e40af;
+  color: #fff;
 }
 .step[data-group='infra'].active .step-circle {
-  background: #0f766e; color: #fff;
+  background: #0f766e;
+  color: #fff;
 }
 .step[data-group='equipment'].active .step-circle {
-  background: #b45309; color: #fff;
+  background: #b45309;
+  color: #fff;
 }
 .step[data-group='review'].active .step-circle {
-  background: #475569; color: #fff;
+  background: #475569;
+  color: #fff;
 }
 
 .step.completed[data-group] .step-circle {
@@ -75,10 +87,18 @@
 .step-label {
   transition: color 0.2s;
 }
-.step[data-group='primary'].active .step-label { color: #1e40af; }
-.step[data-group='infra'].active .step-label { color: #0f766e; }
-.step[data-group='equipment'].active .step-label { color: #b45309; }
-.step[data-group='review'].active .step-label { color: #475569; }
+.step[data-group='primary'].active .step-label {
+  color: #1e40af;
+}
+.step[data-group='infra'].active .step-label {
+  color: #0f766e;
+}
+.step[data-group='equipment'].active .step-label {
+  color: #b45309;
+}
+.step[data-group='review'].active .step-label {
+  color: #475569;
+}
 
 .placeholder-card {
   background: #fffbeb;
@@ -614,9 +634,6 @@
   width: 16px;
   height: 16px;
   object-fit: contain;
-  /* Inherit color from parent .step-circle so completed/active states
-     stay consistent if SVG uses currentColor. If your SVGs are full-color
-     (look at the screenshot — they are), no filter is applied. */
   display: block;
 }
 

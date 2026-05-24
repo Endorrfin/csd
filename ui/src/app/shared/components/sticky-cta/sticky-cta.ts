@@ -1,11 +1,4 @@
-import {
-  Component,
-  inject,
-  OnDestroy,
-  OnInit,
-  PLATFORM_ID,
-  signal,
-} from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, PLATFORM_ID, signal } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,11 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
   standalone: true,
   imports: [RouterLink, TranslateModule],
   template: `
-    <a
-      routerLink="/cooperation"
-      class="sticky-cta"
-      [class.sticky-cta--visible]="visible()"
-    >
+    <a routerLink="/cooperation" class="sticky-cta" [class.sticky-cta--visible]="visible()">
       <span class="sticky-cta__label">{{ 'HOME.CTA.LABEL' | translate }}</span>
       <span class="sticky-cta__arrow" aria-hidden="true">&rarr;</span>
     </a>

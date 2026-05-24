@@ -51,8 +51,11 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <div class="form-row">
               <div class="fg fg--required">
-                <label>{{ 'procurement.form.tenderTitleUa' | translate }}</label>
+                <label for="tenderTitleUa">{{
+                  'procurement.form.tenderTitleUa' | translate
+                }}</label>
                 <input
+                  id="tenderTitleUa"
                   formControlName="tenderTitleUa"
                   placeholder="{{ 'procurement.form.tenderTitleUaPlaceholder' | translate }}"
                 />
@@ -61,8 +64,11 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
                 }
               </div>
               <div class="fg fg--required">
-                <label>{{ 'procurement.form.tenderTitleEn' | translate }}</label>
+                <label for="tenderTitleEn">{{
+                  'procurement.form.tenderTitleEn' | translate
+                }}</label>
                 <input
+                  id="tenderTitleEn"
                   formControlName="tenderTitleEn"
                   placeholder="Supply and Installation of Water Treatment Units"
                 />
@@ -74,12 +80,18 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <div class="form-row">
               <div class="fg">
-                <label>{{ 'procurement.form.referenceNumber' | translate }}</label>
-                <input formControlName="referenceNumber" placeholder="UKR-WASH-2026-001" />
+                <label for="referenceNumber">{{
+                  'procurement.form.referenceNumber' | translate
+                }}</label>
+                <input
+                  id="referenceNumber"
+                  formControlName="referenceNumber"
+                  placeholder="UKR-WASH-2026-001"
+                />
               </div>
               <div class="fg">
-                <label>{{ 'procurement.form.donor' | translate }}</label>
-                <select formControlName="donor">
+                <label for="donor">{{ 'procurement.form.donor' | translate }}</label>
+                <select id="donor" formControlName="donor">
                   <option value="">—</option>
                   @for (d of donors; track d) {
                     <option [value]="d">{{ d }}</option>
@@ -90,18 +102,29 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <div class="form-row">
               <div class="fg">
-                <label>{{ 'procurement.form.projectName' | translate }}</label>
-                <input formControlName="projectName" placeholder="Emergency WASH Response 2026" />
+                <label for="projectName">{{ 'procurement.form.projectName' | translate }}</label>
+                <input
+                  id="projectName"
+                  formControlName="projectName"
+                  placeholder="Emergency WASH Response 2026"
+                />
               </div>
               <div class="fg">
-                <label>{{ 'procurement.form.projectCode' | translate }}</label>
-                <input formControlName="projectCode" placeholder="WASH-UKR-23-4567" />
+                <label for="projectCode">{{ 'procurement.form.projectCode' | translate }}</label>
+                <input
+                  id="projectCode"
+                  formControlName="projectCode"
+                  placeholder="WASH-UKR-23-4567"
+                />
               </div>
             </div>
 
             <div class="fg">
-              <label>{{ 'procurement.form.implementingOrganization' | translate }}</label>
+              <label for="implementingOrganization">{{
+                'procurement.form.implementingOrganization' | translate
+              }}</label>
               <input
+                id="implementingOrganization"
                 formControlName="implementingOrganization"
                 placeholder="{{ 'procurement.form.implementingOrgPlaceholder' | translate }}"
               />
@@ -116,8 +139,10 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <div class="form-row">
               <div class="fg">
-                <label>{{ 'procurement.form.procurementMethod' | translate }}</label>
-                <select formControlName="procurementMethod">
+                <label for="procurementMethod">{{
+                  'procurement.form.procurementMethod' | translate
+                }}</label>
+                <select id="procurementMethod" formControlName="procurementMethod">
                   <option value="">—</option>
                   <option value="open_tender">
                     {{ 'procurement.method.open_tender' | translate }}
@@ -127,8 +152,10 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
                 </select>
               </div>
               <div class="fg">
-                <label>{{ 'procurement.form.procurementCategory' | translate }}</label>
-                <select formControlName="procurementCategory">
+                <label for="procurementCategory">{{
+                  'procurement.form.procurementCategory' | translate
+                }}</label>
+                <select id="procurementCategory" formControlName="procurementCategory">
                   <option value="">—</option>
                   <option value="goods">{{ 'procurement.category.goods' | translate }}</option>
                   <option value="works">{{ 'procurement.category.works' | translate }}</option>
@@ -140,7 +167,7 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             </div>
 
             <div class="fg">
-              <label>{{ 'procurement.form.lotStructure' | translate }}</label>
+              <span class="fg-label">{{ 'procurement.form.lotStructure' | translate }}</span>
               <div class="radio-group">
                 <label class="radio-label">
                   <input type="radio" formControlName="lotStructure" value="single" />
@@ -164,7 +191,9 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             @if (isBrowser) {
               <div class="form-row">
                 <div class="fg">
-                  <label>{{ 'procurement.form.shortDescriptionUa' | translate }}</label>
+                  <span class="fg-label">{{
+                    'procurement.form.shortDescriptionUa' | translate
+                  }}</span>
                   <quill-editor
                     formControlName="shortDescriptionUa"
                     [modules]="quillModules"
@@ -173,7 +202,9 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
                   </quill-editor>
                 </div>
                 <div class="fg">
-                  <label>{{ 'procurement.form.shortDescriptionEn' | translate }}</label>
+                  <span class="fg-label">{{
+                    'procurement.form.shortDescriptionEn' | translate
+                  }}</span>
                   <quill-editor
                     formControlName="shortDescriptionEn"
                     [modules]="quillModules"
@@ -186,16 +217,22 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
               <!-- SSR fallback: plain textarea, no Quill DOM dependencies -->
               <div class="form-row">
                 <div class="fg">
-                  <label>{{ 'procurement.form.shortDescriptionUa' | translate }}</label>
+                  <label for="shortDescriptionUa">{{
+                    'procurement.form.shortDescriptionUa' | translate
+                  }}</label>
                   <textarea
+                    id="shortDescriptionUa"
                     formControlName="shortDescriptionUa"
                     rows="3"
                     placeholder="{{ 'procurement.form.shortDescUaPlaceholder' | translate }}"
                   ></textarea>
                 </div>
                 <div class="fg">
-                  <label>{{ 'procurement.form.shortDescriptionEn' | translate }}</label>
+                  <label for="shortDescriptionEn">{{
+                    'procurement.form.shortDescriptionEn' | translate
+                  }}</label>
                   <textarea
+                    id="shortDescriptionEn"
                     formControlName="shortDescriptionEn"
                     rows="3"
                     placeholder="Installation of modular water purification systems"
@@ -207,7 +244,9 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             <!-- Quill rendered only in browser — SSR unsafe -->
             @if (isBrowser) {
               <div class="fg">
-                <label>{{ 'procurement.form.detailedDescriptionUa' | translate }}</label>
+                <span class="fg-label">{{
+                  'procurement.form.detailedDescriptionUa' | translate
+                }}</span>
                 <quill-editor
                   formControlName="detailedDescriptionUa"
                   [modules]="quillModules"
@@ -216,7 +255,9 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
                 </quill-editor>
               </div>
               <div class="fg">
-                <label>{{ 'procurement.form.detailedDescriptionEn' | translate }}</label>
+                <span class="fg-label">{{
+                  'procurement.form.detailedDescriptionEn' | translate
+                }}</span>
                 <quill-editor
                   formControlName="detailedDescriptionEn"
                   [modules]="quillModules"
@@ -228,15 +269,19 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <div class="form-row">
               <div class="fg">
-                <label>{{ 'procurement.form.region' | translate }}</label>
+                <label for="region">{{ 'procurement.form.region' | translate }}</label>
                 <input
+                  id="region"
                   formControlName="region"
                   placeholder="{{ 'procurement.form.regionPlaceholder' | translate }}"
                 />
               </div>
               <div class="fg">
-                <label>{{ 'procurement.form.implementationPeriodDays' | translate }}</label>
+                <label for="implementationPeriodDays">{{
+                  'procurement.form.implementationPeriodDays' | translate
+                }}</label>
                 <input
+                  id="implementationPeriodDays"
                   type="number"
                   formControlName="implementationPeriodDays"
                   min="1"
@@ -254,30 +299,46 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <div class="form-row">
               <div class="fg">
-                <label>{{ 'procurement.form.publicationDate' | translate }}</label>
+                <label for="publicationDate">{{
+                  'procurement.form.publicationDate' | translate
+                }}</label>
                 <!-- No min — historical dates allowed for data migration -->
-                <input type="date" formControlName="publicationDate" />
+                <input id="publicationDate" type="date" formControlName="publicationDate" />
               </div>
               <div class="fg">
-                <label>{{ 'procurement.form.clarificationDeadline' | translate }}</label>
-                <input type="date" formControlName="clarificationDeadline" />
+                <label for="clarificationDeadline">{{
+                  'procurement.form.clarificationDeadline' | translate
+                }}</label>
+                <input
+                  id="clarificationDeadline"
+                  type="date"
+                  formControlName="clarificationDeadline"
+                />
               </div>
             </div>
 
             <div class="form-row">
               <div class="fg">
-                <label>{{ 'procurement.form.bidSubmissionDeadline' | translate }}</label>
-                <input type="date" formControlName="bidSubmissionDeadline" />
+                <label for="bidSubmissionDeadline">{{
+                  'procurement.form.bidSubmissionDeadline' | translate
+                }}</label>
+                <input
+                  id="bidSubmissionDeadline"
+                  type="date"
+                  formControlName="bidSubmissionDeadline"
+                />
               </div>
               <div class="fg">
-                <label>{{ 'procurement.form.expectedStartDate' | translate }}</label>
+                <label for="expectedStartDate">{{
+                  'procurement.form.expectedStartDate' | translate
+                }}</label>
                 <!-- No min — historical dates allowed for data migration -->
-                <input type="date" formControlName="expectedStartDate" />
+                <input id="expectedStartDate" type="date" formControlName="expectedStartDate" />
               </div>
             </div>
 
             <div class="fg">
-              <label>{{ 'procurement.form.submissionMethods' | translate }}</label>
+              <span class="fg-label">{{ 'procurement.form.submissionMethods' | translate }}</span>
               <div class="checkbox-group">
                 <label class="checkbox-label">
                   <input type="checkbox" formControlName="submissionMethodEmail" />
@@ -296,16 +357,25 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <div class="form-row">
               <div class="fg">
-                <label>{{ 'procurement.form.submissionEmail' | translate }}</label>
+                <label for="submissionEmail">{{
+                  'procurement.form.submissionEmail' | translate
+                }}</label>
                 <input
+                  id="submissionEmail"
                   type="email"
                   formControlName="submissionEmail"
                   placeholder="tender.csd@gmail.com"
                 />
               </div>
               <div class="fg">
-                <label>{{ 'procurement.form.fileRequirements' | translate }}</label>
-                <input formControlName="fileRequirements" placeholder="PDF + Excel (BOQ)" />
+                <label for="fileRequirements">{{
+                  'procurement.form.fileRequirements' | translate
+                }}</label>
+                <input
+                  id="fileRequirements"
+                  formControlName="fileRequirements"
+                  placeholder="PDF + Excel (BOQ)"
+                />
               </div>
             </div>
           </section>
@@ -317,8 +387,11 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
             <h3>{{ 'procurement.steps.evaluation' | translate }}</h3>
 
             <div class="fg">
-              <label>{{ 'procurement.form.evaluationMethod' | translate }}</label>
+              <label for="evaluationMethod">{{
+                'procurement.form.evaluationMethod' | translate
+              }}</label>
               <input
+                id="evaluationMethod"
                 formControlName="evaluationMethod"
                 placeholder="{{ 'procurement.form.evaluationMethodPlaceholder' | translate }}"
               />
@@ -326,7 +399,7 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <!-- Dynamic evaluation criteria table -->
             <div class="fg">
-              <label>{{ 'procurement.form.evaluationCriteria' | translate }}</label>
+              <span class="fg-label">{{ 'procurement.form.evaluationCriteria' | translate }}</span>
               <table class="criteria-table" formArrayName="evaluationCriteria">
                 <thead>
                   <tr>
@@ -358,7 +431,9 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
 
             <!-- Dynamic eligibility requirements -->
             <div class="fg" formArrayName="eligibilityRequirements">
-              <label>{{ 'procurement.form.eligibilityRequirements' | translate }}</label>
+              <span class="fg-label">{{
+                'procurement.form.eligibilityRequirements' | translate
+              }}</span>
               @for (ctrl of eligibilityRequirements.controls; track $index; let i = $index) {
                 <div class="input-row">
                   <input
@@ -579,12 +654,14 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
         gap: 0.375rem;
         margin-bottom: 1.25rem;
 
-        &--required label::after {
+        &--required label::after,
+        &--required .fg-label::after {
           content: ' *';
           color: #e53e3e;
         }
 
-        label {
+        label,
+        .fg-label {
           font-size: 0.875rem;
           font-weight: 500;
           color: #4a5568;

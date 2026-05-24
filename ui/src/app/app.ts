@@ -16,19 +16,19 @@ import { FooterComponent } from './layout/footer/footer';
   `,
   styles: [
     `
-    :host {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-    }
-    .main {
-      flex: 1;
-      max-width: 1200px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 2rem 1rem;
-    }
-  `,
+      :host {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      .main {
+        flex: 1;
+        max-width: 1200px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+      }
+    `,
   ],
 })
 export class App {

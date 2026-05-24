@@ -87,7 +87,6 @@ export class WashFormComponent implements OnInit {
   submitError = signal(false);
   stepInvalid = signal(false);
 
-
   catalogLoading = signal(true);
   categories = signal<EquipmentCategory[]>([]);
   private itemsMap = new Map<string, EquipmentItem>();
@@ -128,30 +127,78 @@ export class WashFormComponent implements OnInit {
    * Other steps keep lucide icons via `iconKey`.
    */
   steps = [
-    { key: 'general', labelUa: 'Інфо', labelEn: 'Info',
-      optional: false, group: 'primary',
-      iconKey: 'info' as const, iconSrc: null },
-    { key: 'object', labelUa: 'Обʼєкт', labelEn: 'Object',
-      optional: false, group: 'primary',
-      iconKey: 'object' as const, iconSrc: null },
-    { key: 'borehole', labelUa: 'Буріння', labelEn: 'Borehole',
-      optional: true, group: 'infra',
-      iconKey: null, iconSrc: '/assets/icons/activities/borehole.svg' },
-    { key: 'tower', labelUa: 'Башти', labelEn: 'Towers',
-      optional: true, group: 'infra',
-      iconKey: null, iconSrc: '/assets/icons/activities/water-tower.svg' },
-    { key: 'purification', labelUa: 'Очищення', labelEn: 'Purify',
-      optional: true, group: 'infra',
-      iconKey: null, iconSrc: '/assets/icons/activities/purification-system.svg' },
-    { key: 'pumps', labelUa: 'Насоси', labelEn: 'Pumps',
-      optional: true, group: 'infra',
-      iconKey: null, iconSrc: '/assets/icons/activities/pumps.svg' },
-    { key: 'equipment', labelUa: 'Обладнання', labelEn: 'Equipment',
-      optional: true, group: 'equipment',
-      iconKey: 'equipment' as const, iconSrc: null },
-    { key: 'review', labelUa: 'Перевірка', labelEn: 'Review',
-      optional: false, group: 'review',
-      iconKey: 'review' as const, iconSrc: null },
+    {
+      key: 'general',
+      labelUa: 'Інфо',
+      labelEn: 'Info',
+      optional: false,
+      group: 'primary',
+      iconKey: 'info' as const,
+      iconSrc: null,
+    },
+    {
+      key: 'object',
+      labelUa: 'Обʼєкт',
+      labelEn: 'Object',
+      optional: false,
+      group: 'primary',
+      iconKey: 'object' as const,
+      iconSrc: null,
+    },
+    {
+      key: 'borehole',
+      labelUa: 'Буріння',
+      labelEn: 'Borehole',
+      optional: true,
+      group: 'infra',
+      iconKey: null,
+      iconSrc: '/assets/icons/activities/borehole.svg',
+    },
+    {
+      key: 'tower',
+      labelUa: 'Башти',
+      labelEn: 'Towers',
+      optional: true,
+      group: 'infra',
+      iconKey: null,
+      iconSrc: '/assets/icons/activities/water-tower.svg',
+    },
+    {
+      key: 'purification',
+      labelUa: 'Очищення',
+      labelEn: 'Purify',
+      optional: true,
+      group: 'infra',
+      iconKey: null,
+      iconSrc: '/assets/icons/activities/purification-system.svg',
+    },
+    {
+      key: 'pumps',
+      labelUa: 'Насоси',
+      labelEn: 'Pumps',
+      optional: true,
+      group: 'infra',
+      iconKey: null,
+      iconSrc: '/assets/icons/activities/pumps.svg',
+    },
+    {
+      key: 'equipment',
+      labelUa: 'Обладнання',
+      labelEn: 'Equipment',
+      optional: true,
+      group: 'equipment',
+      iconKey: 'equipment' as const,
+      iconSrc: null,
+    },
+    {
+      key: 'review',
+      labelUa: 'Перевірка',
+      labelEn: 'Review',
+      optional: false,
+      group: 'review',
+      iconKey: 'review' as const,
+      iconSrc: null,
+    },
   ] as const;
 
   /**
@@ -166,11 +213,7 @@ export class WashFormComponent implements OnInit {
     location: [null, [Validators.required]],
     organizationName: ['', [Validators.required, Validators.minLength(2)]],
     headName: ['', [Validators.required, Validators.minLength(2)]],
-    // digits-only, exactly 10 chars. '+380' is the frozen prefix.
-    headPhoneDigits: [
-      '',
-      [Validators.required, Validators.pattern(/^\d{10}$/)],
-    ],
+    headPhoneDigits: ['', [Validators.required, Validators.pattern(/^\d{10}$/)]],
     email: ['', [Validators.required, Validators.email]],
     objectName: ['', [Validators.required, Validators.minLength(2)]],
     dependentPopulation: [null, [Validators.required, Validators.min(1)]],
@@ -218,10 +261,7 @@ export class WashFormComponent implements OnInit {
   private createBoreholeGroup(): FormGroup {
     return this.fb.group({
       workType: ['', [Validators.required]],
-      expectedFlowRate: [
-        null,
-        [Validators.required, Validators.min(7), Validators.max(50)],
-      ],
+      expectedFlowRate: [null, [Validators.required, Validators.min(7), Validators.max(50)]],
       hasAquiferInfo: [false],
       existingDepth: [null, [Validators.min(1), Validators.max(800)]],
       existingDebit: [null, [Validators.min(1), Validators.max(30)]],
@@ -292,7 +332,6 @@ export class WashFormComponent implements OnInit {
     return group;
   }
 
-
   // ══════════════════════════════════════════════════════════════
   // Add/remove handlers (template)
   // ══════════════════════════════════════════════════════════════
@@ -321,7 +360,6 @@ export class WashFormComponent implements OnInit {
   removePump(i: number): void {
     this.pumpsArray.removeAt(i);
   }
-
 
   // ══════════════════════════════════════════════════════════════
   // Equipment accordion (Task 5c)
@@ -407,9 +445,7 @@ export class WashFormComponent implements OnInit {
     const q = this.equipmentSearch().toLowerCase().trim();
     if (!q) return cat.items;
     return cat.items.filter(
-      (it) =>
-        it.nameUa.toLowerCase().includes(q) ||
-        it.nameEn.toLowerCase().includes(q),
+      (it) => it.nameUa.toLowerCase().includes(q) || it.nameEn.toLowerCase().includes(q),
     );
   }
 
@@ -438,7 +474,6 @@ export class WashFormComponent implements OnInit {
   getEquipmentItem(itemId: string): EquipmentItem | undefined {
     return this.itemsMap.get(itemId);
   }
-
 
   /** Phone digits helper — accepts only digits, max 10. */
   onPhoneInput(event: Event): void {
@@ -512,12 +547,12 @@ export class WashFormComponent implements OnInit {
   }
 
   /** Array of selected items with valid qty — used in submit and review. */
-  getFilledEquipmentEntries(): Array<{
+  getFilledEquipmentEntries(): {
     itemId: string;
     quantity: number;
     notes: string;
-  }> {
-    const out: Array<{ itemId: string; quantity: number; notes: string }> = [];
+  }[] {
+    const out: { itemId: string; quantity: number; notes: string }[] = [];
     for (const [itemId, entry] of this.selectedEquipment().entries()) {
       if (entry.quantity && entry.quantity > 0) {
         out.push({ itemId, quantity: entry.quantity, notes: entry.notes });
@@ -552,11 +587,7 @@ export class WashFormComponent implements OnInit {
   ): string {
     if (!height) return '---';
     if (height === 'over_25') {
-      return customHeight
-        ? `${customHeight} m`
-        : this.isUa
-          ? 'Понад 25 м'
-          : 'Over 25 m';
+      return customHeight ? `${customHeight} m` : this.isUa ? 'Понад 25 м' : 'Over 25 m';
     }
     return `${height} m`;
   }
@@ -659,9 +690,7 @@ export class WashFormComponent implements OnInit {
       },
       organizationName: d.organizationName,
       headName: d.headName,
-      headPhoneDigits: d.headPhone?.startsWith('+38')
-        ? d.headPhone.slice(3)
-        : d.headPhone ?? '',
+      headPhoneDigits: d.headPhone?.startsWith('+38') ? d.headPhone.slice(3) : (d.headPhone ?? ''),
       email: d.email,
       objectName: d.objectName,
       dependentPopulation: d.dependentPopulation,
@@ -819,13 +848,13 @@ export class WashFormComponent implements OnInit {
           expectedFlowRate: bh.expectedFlowRate,
           ...(bh.workType === 'new_near_existing'
             ? {
-              hasAquiferInfo: bh.hasAquiferInfo ?? false,
-              existingDepth: bh.existingDepth || undefined,
-              existingDebit: bh.existingDebit || undefined,
-              hasDesignInfo: bh.hasDesignInfo ?? false,
-              hasPassport: bh.hasPassport ?? false,
-              oldLocation: bh.oldLocation || undefined,
-            }
+                hasAquiferInfo: bh.hasAquiferInfo ?? false,
+                existingDepth: bh.existingDepth || undefined,
+                existingDebit: bh.existingDebit || undefined,
+                hasDesignInfo: bh.hasDesignInfo ?? false,
+                hasPassport: bh.hasPassport ?? false,
+                oldLocation: bh.oldLocation || undefined,
+              }
             : {}),
           ...(bh.notes ? { notes: bh.notes } : {}),
           sortOrder: idx,

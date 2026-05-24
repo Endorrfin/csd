@@ -1,12 +1,12 @@
-// path: ui/src/app/features/blog/blog.ts
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ApiService } from '../../core/services/api.service';
 import { LanguageService } from '../../core/services/language.service';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { BlogPost } from './blog.interfaces'; // CHANGED: typed posts instead of any
 
 interface PaginatedPosts {
-  items: any[];
+  items: BlogPost[];
   total: number;
   page: number;
   limit: number;
@@ -100,7 +100,7 @@ export class BlogComponent implements OnInit {
   private readonly api = inject(ApiService);
 
   private readonly PAGE_SIZE = 20;
-  posts = signal<any[]>([]);
+  posts = signal<BlogPost[]>([]); // CHANGED: was signal<any[]>
   page = signal(1);
   hasMore = signal(false);
   loading = signal(false);

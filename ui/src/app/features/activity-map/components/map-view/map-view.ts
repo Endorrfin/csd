@@ -157,7 +157,7 @@ import { ActivityMapService, MapPoint } from '../../services/activity-map.servic
     `
       :host ::ng-deep .amp {
         min-width: 220px;
-        
+
         :host ::ng-deep .amp__field {
           font-size: 0.75rem;
           color: #4a5568;
@@ -270,7 +270,9 @@ export class MapViewComponent {
       throw new Error('Leaflet not loaded — check <script> tags in index.html');
     }
     if (typeof L.markerClusterGroup !== 'function') {
-      throw new Error('leaflet.markercluster plugin not loaded — check <script> tags in index.html');
+      throw new Error(
+        'leaflet.markercluster plugin not loaded — check <script> tags in index.html',
+      );
     }
 
     const container = this.mapContainerRef.nativeElement;
@@ -330,11 +332,7 @@ export class MapViewComponent {
       this.clusterGroup.addLayer(marker);
     }
 
-    if (
-      points.length > 0 &&
-      this.markerByPointKey.size === points.length &&
-      !this.didInitialFit
-    ) {
+    if (points.length > 0 && this.markerByPointKey.size === points.length && !this.didInitialFit) {
       this.fitBoundsToPoints(points);
       this.didInitialFit = true;
     }

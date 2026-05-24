@@ -68,9 +68,7 @@ export class ActivityMapService {
   createMarkerIcon(LL: typeof L, point: MapPoint, data: ActivityMapData): L.DivIcon {
     const total = point.activities.length;
     const typesCount = point.typeIds.size;
-    const color = point.dominantCategory
-      ? CATEGORY_COLORS[point.dominantCategory]
-      : MIXED_COLOR;
+    const color = point.dominantCategory ? CATEGORY_COLORS[point.dominantCategory] : MIXED_COLOR;
 
     let inner: string;
     if (typesCount === 1) {
@@ -106,7 +104,7 @@ export class ActivityMapService {
   }
 
   buildPopupHtml(point: MapPoint, data: ActivityMapData, lang: 'uk' | 'en'): string {
-    const pick = (t: LocalizedText | null | undefined) => (t ? t[lang] ?? t.uk : '');
+    const pick = (t: LocalizedText | null | undefined) => (t ? (t[lang] ?? t.uk) : '');
     const settlementName = pick(point.settlement) || '—';
     const items = point.activities
       .map((a) => {
@@ -116,13 +114,19 @@ export class ActivityMapService {
         // (Step 7+): stacked metadata, always-English labels per user request.
         const fields: string[] = [];
         if (a.completedAt) {
-          fields.push(`<div class="amp__field"><span class="amp__key">Completed:</span> ${a.completedAt}</div>`);
+          fields.push(
+            `<div class="amp__field"><span class="amp__key">Completed:</span> ${a.completedAt}</div>`,
+          );
         }
         if (a.beneficiaries) {
-          fields.push(`<div class="amp__field"><span class="amp__key">Beneficiaries:</span> ${a.beneficiaries}</div>`);
+          fields.push(
+            `<div class="amp__field"><span class="amp__key">Beneficiaries:</span> ${a.beneficiaries}</div>`,
+          );
         }
         if (a.donor) {
-          fields.push(`<div class="amp__field"><span class="amp__key">Donor:</span> ${this.escapeHtml(a.donor)}</div>`);
+          fields.push(
+            `<div class="amp__field"><span class="amp__key">Donor:</span> ${this.escapeHtml(a.donor)}</div>`,
+          );
         }
 
         return `

@@ -10,6 +10,10 @@
     "serve:ssr:ui": "node dist/ui/server/server.mjs",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
+    "typecheck": "ngc -p tsconfig.app.json --noEmit",
+    "test:ci": "ng test --no-watch",
+    "format:check": "prettier --check \"src/**/*.scss\"",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test:ci",
     "format": "prettier --write \"src/**/*.{ts,html,scss}\""
   },
   "private": true,

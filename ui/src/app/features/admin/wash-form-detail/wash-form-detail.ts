@@ -97,8 +97,8 @@ interface AuditLogEntry {
         @if (activeTab() === 'details') {
           <!-- Quick status panel -->
           <div class="status-panel">
-            <label>{{ isUa ? 'Змінити статус:' : 'Change status:' }}</label>
-            <select [(ngModel)]="newStatus">
+            <label for="status-select">{{ isUa ? 'Змінити статус:' : 'Change status:' }}</label>
+            <select id="status-select" [(ngModel)]="newStatus">
               <option value="new">{{ isUa ? 'Нова' : 'New' }}</option>
               <option value="in_review">{{ isUa ? 'На розгляді' : 'In review' }}</option>
               <option value="approved">{{ isUa ? 'Затверджено' : 'Approved' }}</option>

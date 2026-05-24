@@ -1,12 +1,4 @@
-// ui/src/app/features/admin/about/sections/section-edit.ts
-import {
-  Component,
-  PLATFORM_ID,
-  computed,
-  inject,
-  OnInit,
-  signal,
-} from '@angular/core';
+import { Component, PLATFORM_ID, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -36,9 +28,7 @@ import {
             : ('about.admin.sections.createTitle' | translate)
         }}
       </h2>
-      <a routerLink=".." class="btn-secondary">
-        ← {{ 'about.admin.common.back' | translate }}
-      </a>
+      <a routerLink=".." class="btn-secondary"> ← {{ 'about.admin.common.back' | translate }} </a>
     </div>
 
     @if (errorMessage()) {
@@ -87,7 +77,7 @@ import {
 
         <!-- CONTENT UA (Quill, browser-only to avoid SSR errors) -->
         <div class="field">
-          <label>{{ 'about.admin.sections.contentUa' | translate }}</label>
+          <span class="field-label">{{ 'about.admin.sections.contentUa' | translate }}</span>
           @if (isBrowser) {
             <quill-editor
               [(ngModel)]="contentUa"
@@ -103,7 +93,7 @@ import {
 
         <!-- CONTENT EN -->
         <div class="field">
-          <label>{{ 'about.admin.sections.contentEn' | translate }}</label>
+          <span class="field-label">{{ 'about.admin.sections.contentEn' | translate }}</span>
           @if (isBrowser) {
             <quill-editor
               [(ngModel)]="contentEn"
@@ -173,13 +163,7 @@ import {
         <div class="row">
           <div class="field">
             <label for="sortOrder">{{ 'about.admin.sections.sortOrder' | translate }}</label>
-            <input
-              id="sortOrder"
-              type="number"
-              [(ngModel)]="sortOrder"
-              name="sortOrder"
-              min="0"
-            />
+            <input id="sortOrder" type="number" [(ngModel)]="sortOrder" name="sortOrder" min="0" />
           </div>
 
           <label class="field-checkbox">
@@ -237,7 +221,8 @@ import {
         flex-direction: column;
         gap: 0.4rem;
       }
-      .field label {
+      .field label,
+      .field-label {
         font-size: 0.85rem;
         font-weight: 500;
         color: #2d3748;
@@ -402,7 +387,6 @@ export class AdminAboutSectionEditComponent implements OnInit {
   private readonly platformId = inject(PLATFORM_ID);
 
   readonly quillModules = QUILL_MODULES;
-  // CHANGED: Quill needs `document` — skip render during SSR pre-rendering pass
   readonly isBrowser = isPlatformBrowser(this.platformId);
 
   // ----- State -----
@@ -419,7 +403,6 @@ export class AdminAboutSectionEditComponent implements OnInit {
   contentEn: string | null = '';
   isPublished = false;
   sortOrder = 0;
-  // CHANGED: plain array (not signal) — keeps [(ngModel)] inside @for simple
   metadataItems: KeyFactItem[] = [];
 
   // ----- Computed -----
@@ -427,9 +410,7 @@ export class AdminAboutSectionEditComponent implements OnInit {
   isKeyFacts = computed(() => this.key() === 'KEY_FACTS');
 
   private usedKeys = signal<Set<AboutSectionKey>>(new Set());
-  availableKeys = computed(() =>
-    ALL_SECTION_KEYS.filter((k) => !this.usedKeys().has(k)),
-  );
+  availableKeys = computed(() => ALL_SECTION_KEYS.filter((k) => !this.usedKeys().has(k)));
 
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
@@ -466,7 +447,6 @@ export class AdminAboutSectionEditComponent implements OnInit {
     });
   }
 
-  // CHANGED: in create mode, fetch existing sections to exclude their keys from dropdown
   private loadUsedKeys(): void {
     this.loading.set(true);
     this.api.get<AboutSection[]>('about/admin/sections').subscribe({
@@ -493,7 +473,7 @@ export class AdminAboutSectionEditComponent implements OnInit {
   onSave(): void {
     if (!this.titleUa.trim() || !this.titleEn.trim()) {
       this.errorMessage.set(
-        this.isUa ? 'Заголовки UA та EN обов\'язкові' : 'UA and EN titles are required',
+        this.isUa ? "Заголовки UA та EN обов'язкові" : 'UA and EN titles are required',
       );
       return;
     }
@@ -520,13 +500,13 @@ export class AdminAboutSectionEditComponent implements OnInit {
 
     const request$ = this.isEditMode()
       ? this.api.patch<AboutSection>(
-        `about/admin/sections/${this.id()}`,
-        basePayload satisfies UpdateAboutSectionDto,
-      )
+          `about/admin/sections/${this.id()}`,
+          basePayload satisfies UpdateAboutSectionDto,
+        )
       : this.api.post<AboutSection>('about/admin/sections', {
-        key: this.key(),
-        ...basePayload,
-      } satisfies CreateAboutSectionDto);
+          key: this.key(),
+          ...basePayload,
+        } satisfies CreateAboutSectionDto);
 
     request$.subscribe({
       next: () => this.router.navigate(['/admin/about/sections']),

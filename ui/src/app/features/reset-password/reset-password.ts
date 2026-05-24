@@ -55,8 +55,11 @@ import { ApiService } from '../../core/services/api.service';
 
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
             <div class="form-field">
-              <label>{{ isUa ? 'Новий пароль' : 'New password' }} <span class="req">*</span></label>
+              <label for="reset-password"
+                >{{ isUa ? 'Новий пароль' : 'New password' }} <span class="req">*</span></label
+              >
               <input
+                id="reset-password"
                 type="password"
                 formControlName="password"
                 [placeholder]="isUa ? 'Мінімум 6 символів' : 'Min 6 characters'"
@@ -70,11 +73,12 @@ import { ApiService } from '../../core/services/api.service';
             </div>
 
             <div class="form-field">
-              <label
+              <label for="reset-confirmPassword"
                 >{{ isUa ? 'Підтвердити пароль' : 'Confirm password' }}
                 <span class="req">*</span></label
               >
               <input
+                id="reset-confirmPassword"
                 type="password"
                 formControlName="confirmPassword"
                 [placeholder]="isUa ? 'Повторіть пароль' : 'Repeat password'"

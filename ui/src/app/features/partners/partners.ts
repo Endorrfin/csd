@@ -2,6 +2,15 @@ import { Component, inject, OnInit } from '@angular/core';
 import { ApiService } from '../../core/services/api.service';
 import { TranslateService } from '@ngx-translate/core';
 
+interface Partner {
+  id: string;
+  nameUa: string;
+  nameEn: string;
+  descriptionUa?: string;
+  descriptionEn?: string;
+  websiteUrl?: string;
+}
+
 @Component({
   selector: 'app-partners',
   standalone: true,
@@ -37,12 +46,12 @@ import { TranslateService } from '@ngx-translate/core';
 export class PartnersComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
-  partners: any[] = [];
+  partners: Partner[] = [];
   get isUa() {
     return (this.translate.currentLang || 'ua') === 'ua';
   }
 
   ngOnInit() {
-    this.api.get<any[]>('partners').subscribe((data) => (this.partners = data));
+    this.api.get<Partner[]>('partners').subscribe((data) => (this.partners = data));
   }
 }

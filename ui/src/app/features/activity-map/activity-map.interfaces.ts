@@ -18,12 +18,7 @@ export type TypeId =
   | 'windows_doors_replacement'
   | 'windows_replacement';
 
-export type InstitutionType =
-  | 'educational'
-  | 'medical'
-  | 'cultural'
-  | 'community'
-  | 'other';
+export type InstitutionType = 'educational' | 'medical' | 'cultural' | 'community' | 'other';
 
 export type Lang = 'uk' | 'en';
 
