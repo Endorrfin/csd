@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('blog')
 export class BlogController {
@@ -49,7 +50,7 @@ export class BlogController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
-  create(@Body() dto: CreatePostDto, @Request() req: any) {
+  create(@Body() dto: CreatePostDto, @Request() req: AuthenticatedRequest) {
     return this.blogService.create(dto, req.user);
   }
 

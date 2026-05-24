@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from './entities/user.entity';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -35,7 +36,7 @@ export class UsersController {
   async updateRole(
     @Param('id') id: string,
     @Body() dto: UpdateRoleDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     // Prevent super_admin from demoting themselves
     if (id === req.user.id) {

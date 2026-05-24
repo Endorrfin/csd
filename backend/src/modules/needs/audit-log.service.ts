@@ -26,7 +26,8 @@ const NON_LOGGABLE_FIELDS = new Set(['createdAt', 'updatedAt', 'id']);
  * Serialises a value for storage as text. Objects become JSON; primitives
  * stay as-is. Null stays null. Arrays use JSON to preserve structure.
  */
-function stringify(value: unknown): string | null {
+// export so callers (e.g. NeedsService) can safely stringify unknown audit values
+export function stringify(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') {
@@ -35,7 +36,7 @@ function stringify(value: unknown): string | null {
   try {
     return JSON.stringify(value);
   } catch {
-    return String(value);
+    return '[unserializable]';
   }
 }
 

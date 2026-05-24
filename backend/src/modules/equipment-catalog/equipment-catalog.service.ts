@@ -19,8 +19,6 @@ export class EquipmentCatalogService {
   }
 }
 
-
-
 // SORT EQUIPMENT - NOT WORKING
 // import { Injectable } from '@nestjs/common';
 // import { InjectRepository } from '@nestjs/typeorm';

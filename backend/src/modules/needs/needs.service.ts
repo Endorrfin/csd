@@ -14,7 +14,7 @@ import { WashFormPump } from './entities/wash-form-pump.entity';
 import { CreateWashFormDto } from './dto/create-wash-form.dto';
 import { UpdateWashFormDto } from './dto/update-wash-form.dto';
 import { UpdateWashFormFullDto } from './dto/update-wash-form-full.dto';
-import { AuditActor, AuditLogService } from './audit-log.service';
+import { AuditActor, AuditLogService, stringify } from './audit-log.service';
 
 export interface PaginatedResult<T> {
   data: T[];
@@ -54,22 +54,12 @@ export class NeedsService {
    * Enforces "at least one of boreholes / towers / purifications / pumps /
    * items must be present" rule at the service layer.
    */
-  async create(
-    dto: CreateWashFormDto,
-    actor: AuditActor,
-  ): Promise<WashForm> {
+  async create(dto: CreateWashFormDto, actor: AuditActor): Promise<WashForm> {
     this.assertAtLeastOneSection(dto);
 
-    const {
-      items,
-      boreholes,
-      towers,
-      purifications,
-      pumps,
-      ...formData
-    } = dto;
+    const { items, boreholes, towers, purifications, pumps, ...formData } = dto;
 
-    // CHANGED: map all child arrays through the corresponding repo.create()
+    // map all child arrays through the corresponding repo.create()
     // so TypeORM cascade saves them together with the parent.
     const form = this.washFormRepo.create({
       ...formData,
@@ -118,22 +108,22 @@ export class NeedsService {
   // READ
   // ══════════════════════════════════════════════════════════════
 
-// CHANGED: extended options + sort whitelist + date range
+  // CHANGED: extended options + sort whitelist + date range
   async findAll(options?: {
     page?: number;
     limit?: number;
     status?: FormStatus;
     region?: string;
     search?: string;
-    sortBy?: string;                // NEW
-    sortOrder?: 'ASC' | 'DESC';     // NEW
-    dateFrom?: string;              // NEW: ISO date (YYYY-MM-DD)
-    dateTo?: string;                // NEW: ISO date (inclusive end-of-day)
+    sortBy?: string;
+    sortOrder?: 'ASC' | 'DESC';
+    dateFrom?: string; // ISO date (YYYY-MM-DD)
+    dateTo?: string; // ISO date (inclusive end-of-day)
   }): Promise<PaginatedResult<WashForm>> {
     const page = options?.page ?? 1;
     const limit = options?.limit ?? 20;
 
-    // NEW: whitelist — never interpolate raw user input into ORDER BY.
+    // whitelist — never interpolate raw user input into ORDER BY.
     const SORTABLE: Record<string, string> = {
       createdAt: 'form.createdAt',
       organizationName: 'form.organizationName',
@@ -157,7 +147,7 @@ export class NeedsService {
       .leftJoinAndSelect('form.towers', 'tower')
       .leftJoinAndSelect('form.purifications', 'purification')
       .leftJoinAndSelect('form.pumps', 'pump')
-      .orderBy(sortColumn, sortDirection); // CHANGED: whitelisted column
+      .orderBy(sortColumn, sortDirection);
 
     if (options?.status) {
       qb.andWhere('form.status = :status', { status: options.status });
@@ -175,7 +165,7 @@ export class NeedsService {
       );
     }
 
-    // NEW: date range on createdAt — dateTo is end-of-day inclusive
+    // date range on createdAt — dateTo is end-of-day inclusive
     if (options?.dateFrom) {
       qb.andWhere('form.createdAt >= :dateFrom', {
         dateFrom: new Date(options.dateFrom),
@@ -263,7 +253,6 @@ export class NeedsService {
     });
     if (!form) throw new NotFoundException('WASH form not found');
 
-    // CHANGED: ensure child arrays are ordered by sortOrder for stable UI.
     form.boreholes.sort((a, b) => a.sortOrder - b.sortOrder);
     form.towers.sort((a, b) => a.sortOrder - b.sortOrder);
     form.purifications.sort((a, b) => a.sortOrder - b.sortOrder);
@@ -346,14 +335,8 @@ export class NeedsService {
     const existing = await this.findById(id);
     const beforeSnapshot = this.toSnapshot(existing);
 
-    const {
-      boreholes,
-      towers,
-      purifications,
-      pumps,
-      items,
-      ...scalarFields
-    } = dto;
+    const { boreholes, towers, purifications, pumps, items, ...scalarFields } =
+      dto;
 
     await this.dataSource.transaction(async (manager) => {
       // 1. Apply scalar field updates on the parent form.
@@ -442,15 +425,13 @@ export class NeedsService {
       const changes = AuditLogService.diff(beforeSnapshot, afterSnapshot);
       // Split status off into its own audit action if it changed.
       const statusChange = changes.find((c) => c.fieldName === 'status');
-      const nonStatusChanges = changes.filter(
-        (c) => c.fieldName !== 'status',
-      );
+      const nonStatusChanges = changes.filter((c) => c.fieldName !== 'status');
       if (statusChange) {
         await this.auditLog.logStatusChange(
           id,
           actor,
-          String(statusChange.oldValue ?? ''),
-          String(statusChange.newValue ?? ''),
+          stringify(statusChange.oldValue) ?? '',
+          stringify(statusChange.newValue) ?? '',
         );
       }
       if (nonStatusChanges.length) {
@@ -534,7 +515,6 @@ export class NeedsService {
       replacementReason: form.replacementReason,
       status: form.status,
       managerNotes: form.managerNotes,
-      // Child arrays — JSON-stringified shape for comparison.
       boreholes: form.boreholes?.map((b) => ({
         workType: b.workType,
         expectedFlowRate: b.expectedFlowRate,

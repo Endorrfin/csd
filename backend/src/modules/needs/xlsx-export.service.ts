@@ -104,31 +104,95 @@ export class XlsxExportService {
   // Sheet 1: Forms (master)
   // ══════════════════════════════════════════════════════════════
 
-  private buildFormsSheet(wb: ExcelJS.Workbook, forms: WashForm[], lang: Lang): void {
+  private buildFormsSheet(
+    wb: ExcelJS.Workbook,
+    forms: WashForm[],
+    lang: Lang,
+  ): void {
     const ua = lang === 'ua';
     const columns: ColSpec[] = [
       { header: ua ? 'ID заявки' : 'Form ID', key: 'formId', width: 38 },
-      { header: ua ? 'Дата створення' : 'Created at', key: 'createdAt', width: 18 },
+      {
+        header: ua ? 'Дата створення' : 'Created at',
+        key: 'createdAt',
+        width: 18,
+      },
       { header: ua ? 'Статус' : 'Status', key: 'status', width: 14 },
       { header: ua ? 'Область' : 'Region', key: 'region', width: 20 },
       { header: ua ? 'Район' : 'District', key: 'district', width: 20 },
       { header: ua ? 'Громада' : 'Community', key: 'community', width: 22 },
-      { header: ua ? 'Населений пункт' : 'Settlement', key: 'settlement', width: 22 },
-      { header: ua ? 'Організація' : 'Organization', key: 'organizationName', width: 28 },
-      { header: ua ? 'ПІБ керівника' : 'Head name', key: 'headName', width: 22 },
+      {
+        header: ua ? 'Населений пункт' : 'Settlement',
+        key: 'settlement',
+        width: 22,
+      },
+      {
+        header: ua ? 'Організація' : 'Organization',
+        key: 'organizationName',
+        width: 28,
+      },
+      {
+        header: ua ? 'ПІБ керівника' : 'Head name',
+        key: 'headName',
+        width: 22,
+      },
       { header: ua ? 'Телефон' : 'Phone', key: 'headPhone', width: 16 },
       { header: 'Email', key: 'email', width: 24 },
-      { header: ua ? 'Назва обʼєкту' : 'Object name', key: 'objectName', width: 24 },
-      { header: ua ? 'Залежне населення' : 'Dependent pop.', key: 'dependentPopulation', width: 14 },
-      { header: ua ? 'Соц. установи' : 'Social facilities', key: 'socialFacilities', width: 28 },
-      { header: ua ? 'Термін монтажу' : 'Install deadline', key: 'installationDeadline', width: 18 },
-      { header: ua ? 'Причини заміни' : 'Replacement reason', key: 'replacementReason', width: 40 },
-      { header: ua ? 'Свердловини (шт.)' : 'Boreholes (count)', key: 'boreholesCount', width: 10 },
-      { header: ua ? 'Башти (шт.)' : 'Towers (count)', key: 'towersCount', width: 10 },
-      { header: ua ? 'Очищення (шт.)' : 'Purifications (count)', key: 'purificationsCount', width: 10 },
-      { header: ua ? 'Насоси (шт.)' : 'Pumps (count)', key: 'pumpsCount', width: 10 },
-      { header: ua ? 'Обладнання (поз.)' : 'Equipment (items)', key: 'itemsCount', width: 10 },
-      { header: ua ? 'Нотатки менеджера' : 'Manager notes', key: 'managerNotes', width: 32 },
+      {
+        header: ua ? 'Назва обʼєкту' : 'Object name',
+        key: 'objectName',
+        width: 24,
+      },
+      {
+        header: ua ? 'Залежне населення' : 'Dependent pop.',
+        key: 'dependentPopulation',
+        width: 14,
+      },
+      {
+        header: ua ? 'Соц. установи' : 'Social facilities',
+        key: 'socialFacilities',
+        width: 28,
+      },
+      {
+        header: ua ? 'Термін монтажу' : 'Install deadline',
+        key: 'installationDeadline',
+        width: 18,
+      },
+      {
+        header: ua ? 'Причини заміни' : 'Replacement reason',
+        key: 'replacementReason',
+        width: 40,
+      },
+      {
+        header: ua ? 'Свердловини (шт.)' : 'Boreholes (count)',
+        key: 'boreholesCount',
+        width: 10,
+      },
+      {
+        header: ua ? 'Башти (шт.)' : 'Towers (count)',
+        key: 'towersCount',
+        width: 10,
+      },
+      {
+        header: ua ? 'Очищення (шт.)' : 'Purifications (count)',
+        key: 'purificationsCount',
+        width: 10,
+      },
+      {
+        header: ua ? 'Насоси (шт.)' : 'Pumps (count)',
+        key: 'pumpsCount',
+        width: 10,
+      },
+      {
+        header: ua ? 'Обладнання (поз.)' : 'Equipment (items)',
+        key: 'itemsCount',
+        width: 10,
+      },
+      {
+        header: ua ? 'Нотатки менеджера' : 'Manager notes',
+        key: 'managerNotes',
+        width: 32,
+      },
     ];
 
     const sheet = wb.addWorksheet('Forms');
@@ -142,7 +206,9 @@ export class XlsxExportService {
         region: ua ? f.region : f.regionEn || f.region,
         district: ua ? f.district : f.districtEn || f.district,
         community: ua ? f.community : f.communityEn || f.community,
-        settlement: ua ? f.settlement ?? '' : f.settlementEn ?? f.settlement ?? '',
+        settlement: ua
+          ? (f.settlement ?? '')
+          : (f.settlementEn ?? f.settlement ?? ''),
         organizationName: f.organizationName,
         headName: f.headName,
         headPhone: f.headPhone,
@@ -168,22 +234,58 @@ export class XlsxExportService {
   // Sheet 2: Boreholes
   // ══════════════════════════════════════════════════════════════
 
-  private buildBoreholesSheet(wb: ExcelJS.Workbook, forms: WashForm[], lang: Lang): void {
+  private buildBoreholesSheet(
+    wb: ExcelJS.Workbook,
+    forms: WashForm[],
+    lang: Lang,
+  ): void {
     const ua = lang === 'ua';
     const columns: ColSpec[] = [
       { header: ua ? 'ID свердловини' : 'Borehole ID', key: 'id', width: 38 },
       { header: 'form_id', key: 'formId', width: 38 },
       { header: ua ? '#' : '#', key: 'sortOrder', width: 5 },
       { header: ua ? 'Область' : 'Region', key: 'region', width: 20 },
-      { header: ua ? 'Організація' : 'Organization', key: 'organizationName', width: 28 },
-      { header: ua ? 'Варіант робіт' : 'Work type', key: 'workType', width: 24 },
-      { header: ua ? 'Очік. дебіт, м³/год' : 'Expected flow, m³/h', key: 'expectedFlowRate', width: 16 },
-      { header: ua ? 'Глибина існуючої, м' : 'Existing depth, m', key: 'existingDepth', width: 14 },
-      { header: ua ? 'Дебіт існуючої, м³/год' : 'Existing debit, m³/h', key: 'existingDebit', width: 16 },
-      { header: ua ? 'Водоносний горизонт' : 'Aquifer info', key: 'hasAquiferInfo', width: 12 },
-      { header: ua ? 'Дані конструкції' : 'Design info', key: 'hasDesignInfo', width: 12 },
+      {
+        header: ua ? 'Організація' : 'Organization',
+        key: 'organizationName',
+        width: 28,
+      },
+      {
+        header: ua ? 'Варіант робіт' : 'Work type',
+        key: 'workType',
+        width: 24,
+      },
+      {
+        header: ua ? 'Очік. дебіт, м³/год' : 'Expected flow, m³/h',
+        key: 'expectedFlowRate',
+        width: 16,
+      },
+      {
+        header: ua ? 'Глибина існуючої, м' : 'Existing depth, m',
+        key: 'existingDepth',
+        width: 14,
+      },
+      {
+        header: ua ? 'Дебіт існуючої, м³/год' : 'Existing debit, m³/h',
+        key: 'existingDebit',
+        width: 16,
+      },
+      {
+        header: ua ? 'Водоносний горизонт' : 'Aquifer info',
+        key: 'hasAquiferInfo',
+        width: 12,
+      },
+      {
+        header: ua ? 'Дані конструкції' : 'Design info',
+        key: 'hasDesignInfo',
+        width: 12,
+      },
       { header: ua ? 'Паспорт' : 'Passport', key: 'hasPassport', width: 10 },
-      { header: ua ? 'Розташування старої' : 'Old location', key: 'oldLocation', width: 28 },
+      {
+        header: ua ? 'Розташування старої' : 'Old location',
+        key: 'oldLocation',
+        width: 28,
+      },
       { header: ua ? 'Примітки' : 'Notes', key: 'notes', width: 28 },
     ];
 
@@ -218,20 +320,44 @@ export class XlsxExportService {
   // Sheet 3: Towers
   // ══════════════════════════════════════════════════════════════
 
-  private buildTowersSheet(wb: ExcelJS.Workbook, forms: WashForm[], lang: Lang): void {
+  private buildTowersSheet(
+    wb: ExcelJS.Workbook,
+    forms: WashForm[],
+    lang: Lang,
+  ): void {
     const ua = lang === 'ua';
     const columns: ColSpec[] = [
       { header: ua ? 'ID башти' : 'Tower ID', key: 'id', width: 38 },
       { header: 'form_id', key: 'formId', width: 38 },
       { header: '#', key: 'sortOrder', width: 5 },
       { header: ua ? 'Область' : 'Region', key: 'region', width: 20 },
-      { header: ua ? 'Організація' : 'Organization', key: 'organizationName', width: 28 },
+      {
+        header: ua ? 'Організація' : 'Organization',
+        key: 'organizationName',
+        width: 28,
+      },
       { header: ua ? 'Тип башти' : 'Tower type', key: 'towerType', width: 22 },
       { header: ua ? 'Висота' : 'Height', key: 'towerHeight', width: 14 },
-      { header: ua ? 'Фундамент' : 'Foundation', key: 'hasFoundation', width: 12 },
-      { header: ua ? 'Фундамент придатний' : 'Foundation suitable', key: 'isFoundationSuitable', width: 14 },
-      { header: ua ? 'Реконструкція' : 'Needs reconstruction', key: 'needsFoundationReconstruction', width: 14 },
-      { header: ua ? 'Своїми силами' : 'Self reconstruct', key: 'canSelfReconstruct', width: 14 },
+      {
+        header: ua ? 'Фундамент' : 'Foundation',
+        key: 'hasFoundation',
+        width: 12,
+      },
+      {
+        header: ua ? 'Фундамент придатний' : 'Foundation suitable',
+        key: 'isFoundationSuitable',
+        width: 14,
+      },
+      {
+        header: ua ? 'Реконструкція' : 'Needs reconstruction',
+        key: 'needsFoundationReconstruction',
+        width: 14,
+      },
+      {
+        header: ua ? 'Своїми силами' : 'Self reconstruct',
+        key: 'canSelfReconstruct',
+        width: 14,
+      },
       { header: ua ? 'Кран' : 'Crane', key: 'canProvideCrane', width: 10 },
       { header: ua ? 'Примітки' : 'Notes', key: 'notes', width: 28 },
     ];
@@ -251,7 +377,10 @@ export class XlsxExportService {
           towerHeight: labelTowerHeight(t.towerHeight, t.customHeight, lang),
           hasFoundation: labelBool(t.hasFoundation, lang),
           isFoundationSuitable: labelBool(t.isFoundationSuitable, lang),
-          needsFoundationReconstruction: labelBool(t.needsFoundationReconstruction, lang),
+          needsFoundationReconstruction: labelBool(
+            t.needsFoundationReconstruction,
+            lang,
+          ),
           canSelfReconstruct: labelBool(t.canSelfReconstruct, lang),
           canProvideCrane: labelBool(t.canProvideCrane, lang),
           notes: t.notes ?? '',
@@ -266,20 +395,44 @@ export class XlsxExportService {
   // Sheet 4: Purifications
   // ══════════════════════════════════════════════════════════════
 
-  private buildPurificationsSheet(wb: ExcelJS.Workbook, forms: WashForm[], lang: Lang): void {
+  private buildPurificationsSheet(
+    wb: ExcelJS.Workbook,
+    forms: WashForm[],
+    lang: Lang,
+  ): void {
     const ua = lang === 'ua';
     const columns: ColSpec[] = [
       { header: ua ? 'ID системи' : 'Purification ID', key: 'id', width: 38 },
       { header: 'form_id', key: 'formId', width: 38 },
       { header: '#', key: 'sortOrder', width: 5 },
       { header: ua ? 'Область' : 'Region', key: 'region', width: 20 },
-      { header: ua ? 'Організація' : 'Organization', key: 'organizationName', width: 28 },
+      {
+        header: ua ? 'Організація' : 'Organization',
+        key: 'organizationName',
+        width: 28,
+      },
       { header: ua ? 'Приміщення' : 'Room', key: 'hasRoom', width: 10 },
-      { header: ua ? 'Температура' : 'Temperature', key: 'hasTemperatureControl', width: 12 },
-      { header: ua ? 'Водопостачання/дренаж' : 'Water / drainage', key: 'hasWaterInletDrainage', width: 14 },
+      {
+        header: ua ? 'Температура' : 'Temperature',
+        key: 'hasTemperatureControl',
+        width: 12,
+      },
+      {
+        header: ua ? 'Водопостачання/дренаж' : 'Water / drainage',
+        key: 'hasWaterInletDrainage',
+        width: 14,
+      },
       { header: ua ? 'Електрика' : 'Power', key: 'hasPowerSupply', width: 10 },
-      { header: ua ? 'Обслуговування' : 'Maintenance', key: 'canMaintainSystem', width: 12 },
-      { header: ua ? 'Надання води' : 'Provide water', key: 'willingToProvideWater', width: 12 },
+      {
+        header: ua ? 'Обслуговування' : 'Maintenance',
+        key: 'canMaintainSystem',
+        width: 12,
+      },
+      {
+        header: ua ? 'Надання води' : 'Provide water',
+        key: 'willingToProvideWater',
+        width: 12,
+      },
       { header: ua ? 'Примітки' : 'Notes', key: 'notes', width: 28 },
     ];
 
@@ -312,22 +465,46 @@ export class XlsxExportService {
   // Sheet 5: Pumps
   // ══════════════════════════════════════════════════════════════
 
-  private buildPumpsSheet(wb: ExcelJS.Workbook, forms: WashForm[], lang: Lang): void {
+  private buildPumpsSheet(
+    wb: ExcelJS.Workbook,
+    forms: WashForm[],
+    lang: Lang,
+  ): void {
     const ua = lang === 'ua';
     const columns: ColSpec[] = [
       { header: ua ? 'ID насоса' : 'Pump ID', key: 'id', width: 38 },
       { header: 'form_id', key: 'formId', width: 38 },
       { header: '#', key: 'sortOrder', width: 5 },
       { header: ua ? 'Область' : 'Region', key: 'region', width: 20 },
-      { header: ua ? 'Організація' : 'Organization', key: 'organizationName', width: 28 },
+      {
+        header: ua ? 'Організація' : 'Organization',
+        key: 'organizationName',
+        width: 28,
+      },
       { header: ua ? 'Призначення' : 'Purpose', key: 'purpose', width: 22 },
-      { header: ua ? 'Уточнення' : 'Purpose details', key: 'purposeOther', width: 24 },
+      {
+        header: ua ? 'Уточнення' : 'Purpose details',
+        key: 'purposeOther',
+        width: 24,
+      },
       { header: ua ? 'Бренд' : 'Brand', key: 'brand', width: 16 },
       { header: ua ? 'Модель' : 'Model', key: 'model', width: 28 },
-      { header: ua ? 'Потужність, кВт' : 'Power, kW', key: 'powerKw', width: 14 },
-      { header: ua ? 'Продуктивність, м³/год' : 'Flow rate, m³/h', key: 'flowRateM3h', width: 16 },
+      {
+        header: ua ? 'Потужність, кВт' : 'Power, kW',
+        key: 'powerKw',
+        width: 14,
+      },
+      {
+        header: ua ? 'Продуктивність, м³/год' : 'Flow rate, m³/h',
+        key: 'flowRateM3h',
+        width: 16,
+      },
       { header: ua ? 'Напір, м' : 'Head, m', key: 'headM', width: 10 },
-      { header: ua ? 'Діаметр, дюйм' : 'Diameter, inch', key: 'diameterInches', width: 12 },
+      {
+        header: ua ? 'Діаметр, дюйм' : 'Diameter, inch',
+        key: 'diameterInches',
+        width: 12,
+      },
       { header: ua ? 'Напруга' : 'Voltage', key: 'voltage', width: 12 },
       { header: ua ? 'Фази' : 'Phases', key: 'phases', width: 8 },
       { header: ua ? 'Кількість' : 'Quantity', key: 'quantity', width: 10 },
@@ -352,7 +529,8 @@ export class XlsxExportService {
           powerKw: p.powerKw != null ? Number(p.powerKw) : '',
           flowRateM3h: p.flowRateM3h != null ? Number(p.flowRateM3h) : '',
           headM: p.headM != null ? Number(p.headM) : '',
-          diameterInches: p.diameterInches != null ? Number(p.diameterInches) : '',
+          diameterInches:
+            p.diameterInches != null ? Number(p.diameterInches) : '',
           voltage: p.voltage ?? '',
           phases: p.phases ?? '',
           quantity: p.quantity,
@@ -368,14 +546,22 @@ export class XlsxExportService {
   // Sheet 6: Equipment
   // ══════════════════════════════════════════════════════════════
 
-  private buildEquipmentSheet(wb: ExcelJS.Workbook, forms: WashForm[], lang: Lang): void {
+  private buildEquipmentSheet(
+    wb: ExcelJS.Workbook,
+    forms: WashForm[],
+    lang: Lang,
+  ): void {
     const ua = lang === 'ua';
     const columns: ColSpec[] = [
       { header: ua ? 'ID рядка' : 'Row ID', key: 'id', width: 38 },
       { header: 'form_id', key: 'formId', width: 38 },
       { header: '#', key: 'sortOrder', width: 5 },
       { header: ua ? 'Область' : 'Region', key: 'region', width: 20 },
-      { header: ua ? 'Організація' : 'Organization', key: 'organizationName', width: 28 },
+      {
+        header: ua ? 'Організація' : 'Organization',
+        key: 'organizationName',
+        width: 28,
+      },
       { header: ua ? 'Категорія' : 'Category', key: 'category', width: 24 },
       { header: ua ? 'Код LTA' : 'LTA code', key: 'ltaCode', width: 10 },
       { header: ua ? 'Позиція' : 'Item', key: 'itemName', width: 40 },
@@ -427,13 +613,21 @@ export class XlsxExportService {
     }));
 
     const headerRow = sheet.getRow(1);
-    headerRow.font = { bold: true, color: { argb: HEADER_TEXT_COLOR }, size: 11 };
+    headerRow.font = {
+      bold: true,
+      color: { argb: HEADER_TEXT_COLOR },
+      size: 11,
+    };
     headerRow.fill = {
       type: 'pattern',
       pattern: 'solid',
       fgColor: { argb: headerBgColor },
     };
-    headerRow.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+    headerRow.alignment = {
+      vertical: 'middle',
+      horizontal: 'left',
+      wrapText: true,
+    };
     headerRow.height = 28;
   }
 

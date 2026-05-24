@@ -5,7 +5,11 @@
 
 type Lang = 'ua' | 'en';
 
-function pick(map: Record<string, [string, string]>, key: string | null | undefined, lang: Lang): string {
+function pick(
+  map: Record<string, [string, string]>,
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   if (!key) return '';
   const pair = map[key];
   if (!pair) return String(key);
@@ -47,23 +51,38 @@ export const EQUIPMENT_UNIT_LABELS: Record<string, [string, string]> = {
   kg: ['кг', 'kg'],
 };
 
-export function labelStatus(key: string | null | undefined, lang: Lang): string {
+export function labelStatus(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(STATUS_LABELS, key, lang);
 }
 
-export function labelBoreholeWorkType(key: string | null | undefined, lang: Lang): string {
+export function labelBoreholeWorkType(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(BOREHOLE_WORK_TYPE_LABELS, key, lang);
 }
 
-export function labelTowerType(key: string | null | undefined, lang: Lang): string {
+export function labelTowerType(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(TOWER_TYPE_LABELS, key, lang);
 }
 
-export function labelPumpPurpose(key: string | null | undefined, lang: Lang): string {
+export function labelPumpPurpose(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(PUMP_PURPOSE_LABELS, key, lang);
 }
 
-export function labelEquipmentUnit(key: string | null | undefined, lang: Lang): string {
+export function labelEquipmentUnit(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(EQUIPMENT_UNIT_LABELS, key, lang);
 }
 

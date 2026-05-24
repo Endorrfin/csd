@@ -1,4 +1,11 @@
-import { IsInt, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 
 /** Matches WashFormItem entity. */
 export class CreateWashFormItemDto {

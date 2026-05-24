@@ -1,4 +1,4 @@
-// CHANGED: load .env BEFORE assertRequiredEnv() — ConfigModule loads dotenv
+// load .env BEFORE assertRequiredEnv() — ConfigModule loads dotenv
 // only as part of Nest bootstrap, which is too late for pre-bootstrap checks.
 // Lambda runtime sets env vars itself, so lambda.ts does NOT need this import.
 import 'dotenv/config';
@@ -7,7 +7,6 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { DataSource } from 'typeorm';
 import { runSeeds } from './database/run-seeds';
-// CHANGED: fail-fast on missing/weak JWT_SECRET before Nest spins up
 import { assertRequiredEnv } from './common/assert-required-env';
 
 async function bootstrap() {
@@ -18,15 +17,15 @@ async function bootstrap() {
 
   // CORS — allows the Angular dev server to access the API
   app.enableCors({
-    origin: ['http://localhost:4200'], // Angular dev server
+    origin: ['http://localhost:4200'],
     credentials: true,
   });
 
   // Global DTO validation — rejects requests with invalid data
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Removes fields that are not in the DTO
-      forbidNonWhitelisted: true, // Error if extra fields are received
+      whitelist: true,
+      forbidNonWhitelisted: true,
       transform: true, // Automatic type conversion
     }),
   );
@@ -36,4 +35,4 @@ async function bootstrap() {
   const dataSource = app.get(DataSource);
   await runSeeds(dataSource);
 }
-bootstrap();
+void bootstrap();

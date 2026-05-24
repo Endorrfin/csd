@@ -11,7 +11,7 @@ import {
   Req,
   ParseUUIDPipe,
   UsePipes,
-  Query, // CHANGED: added
+  Query,
 } from '@nestjs/common';
 import { ProcurementService } from './procurement.service';
 import { CreateProcurementDto } from './dto/create-procurement.dto';
@@ -23,18 +23,17 @@ import { UserRole } from '../users/entities/user.entity';
 import { SanitizeHtmlPipe } from '../../common/pipes/sanitize-html.pipe';
 import { UpdateProcurementStatusDto } from './dto/update-status.dto';
 import { AdminProcurementQueryDto } from './dto/admin-query.dto';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('procurement')
 export class ProcurementController {
   constructor(private readonly service: ProcurementService) {}
 
-  // Public: published procurements only
   @Get()
   findAll() {
     return this.service.findAllPublic();
   }
 
-  // CHANGED: paginated + filtered admin endpoint (replaces /admin/all)
   @Get('admin/list')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
@@ -51,8 +50,8 @@ export class ProcurementController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UsePipes(SanitizeHtmlPipe)
-  create(@Body() dto: CreateProcurementDto, @Req() req: any) {
-    return this.service.create(dto, req.user.id as string);
+  create(@Body() dto: CreateProcurementDto, @Req() req: AuthenticatedRequest) {
+    return this.service.create(dto, req.user.id);
   }
 
   @Patch(':id')

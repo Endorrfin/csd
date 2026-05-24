@@ -8,7 +8,7 @@ import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
-import { User } from '../users/entities/user.entity';
+import { AuthenticatedUser } from '../../common/types/authenticated-request';
 
 @Injectable()
 export class BlogService {
@@ -55,7 +55,6 @@ export class BlogService {
 
     if (featured) return featured;
 
-    // fallback: newest published — so hero is never empty
     return this.postRepository
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
@@ -77,7 +76,7 @@ export class BlogService {
     return post;
   }
 
-  async create(dto: CreatePostDto, author: User): Promise<Post> {
+  async create(dto: CreatePostDto, author: AuthenticatedUser): Promise<Post> {
     const existing = await this.postRepository.findOne({
       where: { slug: dto.slug },
     });
@@ -108,9 +107,10 @@ export class BlogService {
     // with all properties present (set to undefined for those not in body),
     // and Object.assign propagates undefined onto the entity, breaking the
     // response payload (DB is fine — TypeORM save() skips undefined).
+    const writable = post as Record<keyof UpdatePostDto, unknown>;
     for (const key of Object.keys(dto) as (keyof UpdatePostDto)[]) {
       if (dto[key] !== undefined) {
-        (post as any)[key] = dto[key];
+        writable[key] = dto[key];
       }
     }
 
