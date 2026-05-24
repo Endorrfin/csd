@@ -25,12 +25,7 @@ export const ALL_SECTION_KEYS: AboutSectionKey[] = [
   'DOCUMENTS_INTRO',
 ];
 
-export type AboutDocumentType =
-  | 'POLICY'
-  | 'PROCEDURE'
-  | 'REGULATION'
-  | 'CODE'
-  | 'REPORT';
+export type AboutDocumentType = 'POLICY' | 'PROCEDURE' | 'REGULATION' | 'CODE' | 'REPORT';
 
 export const ALL_DOCUMENT_TYPES: AboutDocumentType[] = [
   'POLICY',

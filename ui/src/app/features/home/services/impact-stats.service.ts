@@ -69,5 +69,4 @@ export class ImpactStatsService {
     regions: this.regionsCount(),
     donors: this.donorsCount(),
   }));
-
 }

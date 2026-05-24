@@ -35,10 +35,7 @@ export interface SelectedEquipmentRow {
 // WASH Activities — arrays of items now (one per array entry).
 // ══════════════════════════════════════════════════════════════
 
-export type BoreholeWorkType =
-  | 'new_drilling'
-  | 'repair_cleaning'
-  | 'new_near_existing';
+export type BoreholeWorkType = 'new_drilling' | 'repair_cleaning' | 'new_near_existing';
 
 export interface CreateBoreholePayload {
   workType: BoreholeWorkType;
@@ -55,15 +52,7 @@ export interface CreateBoreholePayload {
 
 export type WaterTowerType = 'vbr_15' | 'vbr_25' | 'vbr_50' | 'vbr_over_50';
 
-export type WaterTowerHeight =
-  | '8'
-  | '10'
-  | '12'
-  | '15'
-  | '18'
-  | '20'
-  | '25'
-  | 'over_25';
+export type WaterTowerHeight = '8' | '10' | '12' | '15' | '18' | '20' | '25' | 'over_25';
 
 export interface CreateTowerPayload {
   towerType: WaterTowerType;

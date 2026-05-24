@@ -20,12 +20,13 @@ const AUTOPLAY_INTERVAL_MS = 5000; // 5s autoplay
         <button class="carousel__btn carousel__btn--next" (click)="next()">›</button>
         <div class="carousel__dots">
           @for (img of images; track img; let i = $index) {
-            <span
+            <button
+              type="button"
               class="carousel__dot"
               [class.carousel__dot--active]="i === currentIndex()"
               (click)="goTo(i)"
-            >
-            </span>
+              [attr.aria-label]="'Go to slide ' + (i + 1)"
+            ></button>
           }
         </div>
       }
@@ -90,6 +91,8 @@ const AUTOPLAY_INTERVAL_MS = 5000; // 5s autoplay
         background: rgba(255, 255, 255, 0.5);
         cursor: pointer;
         transition: background 0.2s;
+        padding: 0;
+        border: none;
       }
       .carousel__dot--active {
         background: white;

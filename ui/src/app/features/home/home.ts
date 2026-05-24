@@ -1,4 +1,3 @@
-// path: ui/src/app/features/home/home.ts
 import { Component, inject, OnInit, signal, computed, PLATFORM_ID } from '@angular/core'; // + computed
 import { TranslateModule } from '@ngx-translate/core';
 import { QuillModule } from 'ngx-quill';
@@ -18,10 +17,27 @@ import { DOCUMENT } from '@angular/common';
 import { QUILL_MODULES } from '../../shared/config/quill.config';
 import { ImpactStatsComponent } from './components/impact-stats/impact-stats';
 import { HeroFeaturedComponent } from './components/hero-featured/hero-featured';
+import { BlogPost } from '../blog/blog.interfaces';
+
+// Editable shape backing the create/edit form.
+interface BlogPostForm {
+  slug: string;
+  titleUa: string;
+  titleEn: string;
+  contentUa: string;
+  contentEn: string;
+  excerptUa: string;
+  excerptEn: string;
+  images: string[];
+  videoUrl: string;
+  category: string;
+  publishedAt: string;
+  isFeatured: boolean;
+}
 
 // response envelope from paginated /blog endpoint
 interface PaginatedPosts {
-  items: any[];
+  items: BlogPost[];
   total: number;
   page: number;
   limit: number;
@@ -140,7 +156,8 @@ interface PaginatedPosts {
             />
           </label>
 
-          <label
+          <!-- label wraps a conditional custom control (quill/textarea); use a styled caption span instead -->
+          <span class="news-form__label"
             >{{ isUa() ? 'Детальний опис (UA)' : 'Content (UA)' }} *
             @if (isBrowser) {
               <quill-editor
@@ -157,9 +174,10 @@ interface PaginatedPosts {
                 rows="13"
               ></textarea>
             }
-          </label>
+          </span>
 
-          <label
+          <!-- label wraps a conditional custom control (quill/textarea); use a styled caption span instead -->
+          <span class="news-form__label"
             >{{ isUa() ? 'Детальний опис (EN)' : 'Content (EN)' }} *
             @if (isBrowser) {
               <quill-editor
@@ -177,10 +195,13 @@ interface PaginatedPosts {
                 rows="13"
               ></textarea>
             }
-          </label>
+          </span>
 
           <div class="news-form__images">
-            <label>{{ isUa() ? 'Зображення (до 5 фото)' : 'Images (up to 5 photos)' }}</label>
+            <!-- caption for a list of file inputs, not a single control; use span -->
+            <span class="news-form__label">{{
+              isUa() ? 'Зображення (до 5 фото)' : 'Images (up to 5 photos)'
+            }}</span>
             @for (img of form().images; track $index; let i = $index) {
               <div class="news-form__image-row">
                 <input
@@ -395,7 +416,7 @@ interface PaginatedPosts {
 
           <!-- lazy on cover image to defer offscreen network -->
           @if (post.images?.length) {
-            <app-carousel [images]="post.images" />
+            <app-carousel [images]="post.images ?? []" />
           } @else if (post.coverImage) {
             <img
               [src]="post.coverImage"
@@ -530,7 +551,8 @@ interface PaginatedPosts {
         opacity: 0.5;
         cursor: not-allowed;
       }
-      .news-form label {
+      .news-form label,
+      .news-form__label {
         display: block;
         margin-bottom: 0.75rem;
         font-weight: 500;
@@ -552,7 +574,8 @@ interface PaginatedPosts {
       .news-form__images {
         margin-bottom: 0.75rem;
       }
-      .news-form__images > label {
+      .news-form__images > label,
+      .news-form__images > .news-form__label {
         margin-bottom: 0.5rem;
       }
       .news-form__image-row {
@@ -872,12 +895,12 @@ export class HomeComponent implements OnInit {
   // skeleton placeholder count
   readonly skeletonItems = [1, 2, 3];
 
-  posts = signal<any[]>([]);
+  posts = signal<BlogPost[]>([]);
   showForm = signal(false);
   formError = signal('');
   editingPostId = signal<string | null>(null);
   form = signal(this.emptyForm());
-  featuredPost = signal<any | null>(null);
+  featuredPost = signal<BlogPost | null>(null);
   featuredLoading = signal(true);
 
   uploadingImages = signal<boolean[]>(Array(5).fill(false));
@@ -910,7 +933,7 @@ export class HomeComponent implements OnInit {
 
   private loadFeatured(): void {
     this.featuredLoading.set(true);
-    this.api.get<any | null>('blog/featured').subscribe({
+    this.api.get<BlogPost | null>('blog/featured').subscribe({
       next: (post) => {
         this.featuredPost.set(post);
         this.featuredLoading.set(false);
@@ -971,12 +994,12 @@ export class HomeComponent implements OnInit {
     });
   }
 
-  getPostDate(post: any): Date {
-    return post.publishedAt ? new Date(post.publishedAt) : new Date(post.createdAt);
+  getPostDate(post: BlogPost): Date {
+    return post.publishedAt ? new Date(post.publishedAt) : new Date(post.createdAt ?? '');
   }
 
   // prefill publishedAt as YYYY-MM-DD (not raw ISO) so <input type="date"> shows it
-  openEditForm(post: any): void {
+  openEditForm(post: BlogPost): void {
     this.editingPostId.set(post.slug);
     this.form.set({
       slug: post.slug,
@@ -1000,7 +1023,7 @@ export class HomeComponent implements OnInit {
     }
   }
 
-  deletePost(post: any): void {
+  deletePost(post: BlogPost): void {
     const message = this.isUa() ? `Видалити "${post.titleUa}"?` : `Delete "${post.titleEn}"?`;
     if (confirm(message)) {
       this.api.delete(`blog/${post.slug}`).subscribe({
@@ -1123,22 +1146,22 @@ export class HomeComponent implements OnInit {
     return this.shownVideos().has(postId);
   }
 
-  private getArticleUrl(post: any): string {
+  private getArticleUrl(post: BlogPost): string {
     if (!isPlatformBrowser(this.platformId)) {
       return `https://www.csd-fund.org/blog/${post.slug}`;
     }
     return `${this.document.location.origin}/blog/${post.slug}`;
   }
 
-  getFacebookShareUrl(post: any): string {
+  getFacebookShareUrl(post: BlogPost): string {
     return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(this.getArticleUrl(post))}`;
   }
 
-  getLinkedInShareUrl(post: any): string {
+  getLinkedInShareUrl(post: BlogPost): string {
     return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(this.getArticleUrl(post))}`;
   }
 
-  getXShareUrl(post: any): string {
+  getXShareUrl(post: BlogPost): string {
     const title = this.isUa() ? post.titleUa : post.titleEn;
     return `https://x.com/intent/tweet?url=${encodeURIComponent(this.getArticleUrl(post))}&text=${encodeURIComponent(title)}`;
   }
@@ -1168,9 +1191,10 @@ export class HomeComponent implements OnInit {
     return true;
   }
 
-  private cleanBody(): any {
-    const body: any = { ...this.form() };
-    body.images = body.images.filter((url: string) => url.trim() !== '');
+  // typed payload (optional keys may be stripped before send)
+  private cleanBody(): Partial<BlogPostForm> {
+    const body: Partial<BlogPostForm> = { ...this.form() };
+    body.images = (body.images ?? []).filter((url: string) => url.trim() !== '');
     if (!body.videoUrl) delete body.videoUrl;
     if (!body.excerptUa) delete body.excerptUa;
     if (!body.excerptEn) delete body.excerptEn;
@@ -1181,7 +1205,7 @@ export class HomeComponent implements OnInit {
     return body;
   }
 
-  private emptyForm() {
+  private emptyForm(): BlogPostForm {
     return {
       slug: '',
       titleUa: '',

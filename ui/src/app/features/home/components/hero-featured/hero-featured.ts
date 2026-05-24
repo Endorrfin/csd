@@ -2,6 +2,7 @@ import { Component, input, computed, inject, signal, OnInit, OnDestroy } from '@
 import { TranslateModule, TranslateService, LangChangeEvent } from '@ngx-translate/core';
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { BlogPost } from '../../../blog/blog.interfaces'; // CHANGED: typed post input instead of any
 
 /**
  * Hero block on the home page, driven by the "featured" post.
@@ -23,13 +24,7 @@ import { Subscription } from 'rxjs';
     <section class="hero" [class.hero--loading]="loading()">
       <!-- Background image rendered when present; gradient overlay sits on top -->
       @if (backgroundUrl(); as url) {
-        <img
-          [src]="url"
-          [alt]="title()"
-          class="hero__image"
-          loading="eager"
-          decoding="async"
-        />
+        <img [src]="url" [alt]="title()" class="hero__image" loading="eager" decoding="async" />
       }
       <div class="hero__overlay"></div>
 
@@ -203,7 +198,7 @@ import { Subscription } from 'rxjs';
 export class HeroFeaturedComponent implements OnInit, OnDestroy {
   private readonly translate = inject(TranslateService);
 
-  readonly post = input<any | null>(null);
+  readonly post = input<BlogPost | null>(null); // CHANGED: was input<any | null>
   readonly loading = input<boolean>(false);
 
   // track current language as a signal so computed title()

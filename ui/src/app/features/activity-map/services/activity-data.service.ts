@@ -1,11 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import {
-  Activity,
-  ActivityMapData,
-  TypeId,
-} from '../activity-map.interfaces';
+import { Activity, ActivityMapData, TypeId } from '../activity-map.interfaces';
 
 @Injectable({ providedIn: 'root' })
 export class ActivityDataService {

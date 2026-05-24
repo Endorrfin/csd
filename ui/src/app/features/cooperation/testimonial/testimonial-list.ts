@@ -92,9 +92,9 @@ import { TestimonialItem } from './testimonial.interfaces';
       }
 
       @if (lightbox()) {
-        <div class="lightbox" (click)="closeLightbox()">
+        <button type="button" class="lightbox" (click)="closeLightbox()">
           <img [src]="lightbox()!" alt="" />
-        </div>
+        </button>
       }
     </div>
   `,
@@ -196,6 +196,8 @@ import { TestimonialItem } from './testimonial.interfaces';
         position: fixed;
         inset: 0;
         background: rgba(0, 0, 0, 0.85);
+        border: none;
+        width: 100%;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -234,7 +236,6 @@ export class TestimonialListComponent implements OnInit {
 
   protected items = signal<TestimonialItem[]>([]);
   protected loading = signal(true);
-  // === evidence lightbox (null = closed) ===
   protected lightbox = signal<string | null>(null);
 
   protected openLightbox(url: string): void {

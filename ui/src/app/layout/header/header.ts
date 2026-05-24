@@ -109,7 +109,13 @@ import { Router } from '@angular/router';
 
     <!-- overlay to close menu on outside click -->
     @if (isMenuOpen()) {
-      <div class="header__overlay" (click)="closeMenu()"></div>
+      <!-- converted div to button for keyboard support + focusability -->
+      <button
+        type="button"
+        class="header__overlay"
+        (click)="closeMenu()"
+        [attr.aria-label]="isUa() ? 'Закрити меню' : 'Close menu'"
+      ></button>
     }
   `,
   styles: [
@@ -251,6 +257,11 @@ import { Router } from '@angular/router';
         inset: 0;
         background: rgba(0, 0, 0, 0.4);
         z-index: 1199;
+        /* button resets so the overlay button matches former div appearance */
+        border: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
       }
 
       /* ── Mobile breakpoint ── */

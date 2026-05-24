@@ -16,19 +16,14 @@ import { ActivityFilterService } from './services/activity-filter.service';
 
       <main class="main">
         <header class="main__bar">
-          <button
-            type="button"
-            class="main__filter-btn"
-            (click)="filter.toggleMobileDrawer()"
-          >
+          <button type="button" class="main__filter-btn" (click)="filter.toggleMobileDrawer()">
             ☰ {{ 'ACTIVITY_MAP.SIDEBAR.TITLE' | translate }}
           </button>
           <h1 class="main__title">{{ 'ACTIVITY_MAP.TITLE' | translate }}</h1>
           <span class="main__counter">
             {{
               'ACTIVITY_MAP.VISIBLE'
-                | translate
-                  : { count: filter.visibleActivities().length, total: data.totalCount() }
+                | translate: { count: filter.visibleActivities().length, total: data.totalCount() }
             }}
           </span>
         </header>

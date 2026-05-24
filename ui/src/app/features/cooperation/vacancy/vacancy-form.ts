@@ -36,6 +36,29 @@ interface VacancyPayload {
   status: VacancyStatus;
 }
 
+interface VacancyResponse {
+  titleUa: string;
+  titleEn: string;
+  descriptionUa: string;
+  descriptionEn: string;
+  requirementsUa?: string | null;
+  requirementsEn?: string | null;
+  employmentType: EmploymentType;
+  applicationDeadline?: string | null;
+  salary?: string | null;
+  publishedAt?: string | null;
+  region?: string | null;
+  regionEn?: string | null;
+  district?: string | null;
+  districtEn?: string | null;
+  community?: string | null;
+  communityEn?: string | null;
+  communityCode?: string | null;
+  settlement?: string | null;
+  settlementEn?: string | null;
+  settlementCode?: string | null;
+}
+
 @Component({
   selector: 'app-vacancy-form',
   standalone: true,
@@ -60,15 +83,15 @@ interface VacancyPayload {
         <!-- Title UA / EN -->
         <div class="form-row">
           <div class="form-field">
-            <label>{{ 'vacancy.form.titleUa' | translate }} *</label>
-            <input formControlName="titleUa" type="text" />
+            <label for="titleUa">{{ 'vacancy.form.titleUa' | translate }} *</label>
+            <input id="titleUa" formControlName="titleUa" type="text" />
             @if (form.get('titleUa')?.invalid && form.get('titleUa')?.touched) {
               <span class="err">Required</span>
             }
           </div>
           <div class="form-field">
-            <label>{{ 'vacancy.form.titleEn' | translate }} *</label>
-            <input formControlName="titleEn" type="text" />
+            <label for="titleEn">{{ 'vacancy.form.titleEn' | translate }} *</label>
+            <input id="titleEn" formControlName="titleEn" type="text" />
             @if (form.get('titleEn')?.invalid && form.get('titleEn')?.touched) {
               <span class="err">Required</span>
             }
@@ -77,8 +100,8 @@ interface VacancyPayload {
 
         <!-- Employment type -->
         <div class="form-field">
-          <label>{{ 'vacancy.form.employmentType' | translate }} *</label>
-          <select formControlName="employmentType">
+          <label for="employmentType">{{ 'vacancy.form.employmentType' | translate }} *</label>
+          <select id="employmentType" formControlName="employmentType">
             @for (type of employmentTypes; track type) {
               <option [value]="type">
                 {{ 'vacancy.employmentType.' + type | translate }}
@@ -89,7 +112,7 @@ interface VacancyPayload {
 
         <!-- Description UA -->
         <div class="form-field">
-          <label>{{ 'vacancy.form.descriptionUa' | translate }} *</label>
+          <span class="field-label">{{ 'vacancy.form.descriptionUa' | translate }} *</span>
           @if (isBrowser) {
             <quill-editor
               formControlName="descriptionUa"
@@ -104,7 +127,7 @@ interface VacancyPayload {
 
         <!-- Description EN -->
         <div class="form-field">
-          <label>{{ 'vacancy.form.descriptionEn' | translate }} *</label>
+          <span class="field-label">{{ 'vacancy.form.descriptionEn' | translate }} *</span>
           @if (isBrowser) {
             <quill-editor
               formControlName="descriptionEn"
@@ -119,7 +142,7 @@ interface VacancyPayload {
 
         <!-- Requirements UA -->
         <div class="form-field">
-          <label>{{ 'vacancy.form.requirementsUa' | translate }}</label>
+          <span class="field-label">{{ 'vacancy.form.requirementsUa' | translate }}</span>
           @if (isBrowser) {
             <quill-editor formControlName="requirementsUa" [modules]="quillModules"> </quill-editor>
           } @else {
@@ -129,7 +152,7 @@ interface VacancyPayload {
 
         <!-- Requirements EN -->
         <div class="form-field">
-          <label>{{ 'vacancy.form.requirementsEn' | translate }}</label>
+          <span class="field-label">{{ 'vacancy.form.requirementsEn' | translate }}</span>
           @if (isBrowser) {
             <quill-editor formControlName="requirementsEn" [modules]="quillModules"> </quill-editor>
           } @else {
@@ -139,19 +162,22 @@ interface VacancyPayload {
 
         <!-- Location -->
         <div class="form-field">
-          <label>{{ 'vacancy.detail.location' | translate }}</label>
+          <span class="field-label">{{ 'vacancy.detail.location' | translate }}</span>
           <app-location-selector formControlName="location" [isUa]="lang === 'ua'" />
         </div>
 
         <!-- Deadline + Salary -->
         <div class="form-row">
           <div class="form-field">
-            <label>{{ 'vacancy.form.applicationDeadline' | translate }}</label>
-            <input formControlName="applicationDeadline" type="date" />
+            <label for="applicationDeadline">{{
+              'vacancy.form.applicationDeadline' | translate
+            }}</label>
+            <input id="applicationDeadline" formControlName="applicationDeadline" type="date" />
           </div>
           <div class="form-field">
-            <label>{{ 'vacancy.form.salary' | translate }}</label>
+            <label for="salary">{{ 'vacancy.form.salary' | translate }}</label>
             <input
+              id="salary"
               formControlName="salary"
               type="text"
               [placeholder]="'vacancy.form.salaryPlaceholder' | translate"
@@ -161,8 +187,8 @@ interface VacancyPayload {
 
         <!-- Historical publication date -->
         <div class="form-field">
-          <label>{{ 'vacancy.form.publishedAt' | translate }}</label>
-          <input formControlName="publishedAt" type="date" />
+          <label for="publishedAt">{{ 'vacancy.form.publishedAt' | translate }}</label>
+          <input id="publishedAt" formControlName="publishedAt" type="date" />
         </div>
 
         <!-- Actions -->
@@ -223,7 +249,8 @@ interface VacancyPayload {
         display: flex;
         flex-direction: column;
         gap: 0.375rem;
-        label {
+        label,
+        .field-label {
           font-size: 0.875rem;
           font-weight: 500;
           color: #334155;
@@ -329,7 +356,7 @@ export class VacancyFormComponent implements OnInit {
     this.isEdit = !!this.editId;
 
     if (this.isEdit) {
-      this.api.get<any>(`vacancies/${this.editId}`).subscribe((v) => {
+      this.api.get<VacancyResponse>(`vacancies/${this.editId}`).subscribe((v) => {
         this.form.patchValue({
           titleUa: v.titleUa,
           titleEn: v.titleEn,
@@ -341,7 +368,6 @@ export class VacancyFormComponent implements OnInit {
           applicationDeadline: v.applicationDeadline ? v.applicationDeadline.substring(0, 10) : '',
           salary: v.salary ?? '',
           publishedAt: v.publishedAt ? v.publishedAt.substring(0, 10) : '',
-          // Restore location from flat entity fields
           location: v.region
             ? {
                 regionUa: v.region,

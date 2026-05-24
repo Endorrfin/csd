@@ -1,4 +1,3 @@
-// ui/src/app/features/forgot-password/forgot-password.ts
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -51,8 +50,10 @@ import { ApiService } from '../../core/services/api.service';
 
           <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
             <div class="form-field">
-              <label>Email <span class="req">*</span></label>
+              <!-- associate label with input via for/id -->
+              <label for="forgot-email">Email <span class="req">*</span></label>
               <input
+                id="forgot-email"
                 type="email"
                 formControlName="email"
                 placeholder="email&#64;example.com"

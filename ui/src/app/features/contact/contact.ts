@@ -1,4 +1,3 @@
-// ui/src/app/features/contact/contact.ts
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -79,7 +78,7 @@ type GuideItemKey = 'GENERAL' | 'TESTIMONIAL' | 'COMPLAINT' | 'VACANCY' | 'PROCU
       <section class="contact-section" aria-labelledby="channels-heading">
         <h2 id="channels-heading">{{ 'CONTACT.CHANNELS.HEADING' | translate }}</h2>
         <p class="section-intro">{{ 'CONTACT.CHANNELS.INTRO' | translate }}</p>
-      
+
         <div class="channels-grid">
           @for (ch of channels; track ch.key) {
             <a [routerLink]="ch.route" class="channel-card">
@@ -102,14 +101,9 @@ type GuideItemKey = 'GENERAL' | 'TESTIMONIAL' | 'COMPLAINT' | 'VACANCY' | 'PROCU
       <!-- ───── Social ───── -->
       <section class="contact-section" aria-labelledby="social-heading">
         <h2 id="social-heading">{{ 'CONTACT.SOCIAL.HEADING' | translate }}</h2>
-      
+
         <div class="social-row">
-          <a
-            [href]="facebookUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="social-link"
-          >
+          <a [href]="facebookUrl" target="_blank" rel="noopener noreferrer" class="social-link">
             <span aria-hidden="true">📘</span>
             {{ 'CONTACT.SOCIAL.FACEBOOK' | translate }}
           </a>
@@ -241,7 +235,9 @@ type GuideItemKey = 'GENERAL' | 'TESTIMONIAL' | 'COMPLAINT' | 'VACANCY' | 'PROCU
         text-decoration: none;
         color: inherit;
         box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-        transition: border-color 0.15s ease, transform 0.15s ease;
+        transition:
+          border-color 0.15s ease,
+          transform 0.15s ease;
       }
       .channel-card:hover {
         border-color: #2b6cb0;
@@ -367,18 +363,17 @@ type GuideItemKey = 'GENERAL' | 'TESTIMONIAL' | 'COMPLAINT' | 'VACANCY' | 'PROCU
   ],
 })
 export class ContactComponent {
-  // константи в класі — single source of truth, не в i18n (це не переклади)
   readonly email = 'office.ua.csd@gmail.com';
   readonly facebookUrl = 'https://www.facebook.com/profile.php?id=61566893468669';
 
-  readonly channels: ReadonlyArray<ContactChannel> = [
+  readonly channels: readonly ContactChannel[] = [
     { key: 'PROCUREMENT', route: '/cooperation/procurement', icon: '🛒' },
     { key: 'VACANCY', route: '/cooperation/vacancy', icon: '💼' },
     { key: 'TESTIMONIAL', route: '/cooperation/testimonial', icon: '💬' },
     { key: 'COMPLAINT', route: '/cooperation/complaint', icon: '🛡️' },
   ];
 
-  readonly guideItems: ReadonlyArray<GuideItemKey> = [
+  readonly guideItems: readonly GuideItemKey[] = [
     'GENERAL',
     'TESTIMONIAL',
     'COMPLAINT',

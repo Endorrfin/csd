@@ -65,24 +65,24 @@ interface PresignedPostResponse {
         <form [formGroup]="form" class="edit__form" novalidate>
           <div class="row">
             <div class="field">
-              <label>{{ isUa ? 'Автор' : 'Author' }} *</label>
-              <input formControlName="authorName" type="text" />
+              <label for="authorName">{{ isUa ? 'Автор' : 'Author' }} *</label>
+              <input id="authorName" formControlName="authorName" type="text" />
             </div>
             <div class="field">
-              <label>{{ isUa ? 'Організація' : 'Organization' }}</label>
-              <input formControlName="organization" type="text" />
+              <label for="organization">{{ isUa ? 'Організація' : 'Organization' }}</label>
+              <input id="organization" formControlName="organization" type="text" />
             </div>
           </div>
 
           <div class="field">
-            <label>{{ isUa ? 'Текст' : 'Text' }} *</label>
-            <textarea formControlName="text" rows="5"></textarea>
+            <label for="text">{{ isUa ? 'Текст' : 'Text' }} *</label>
+            <textarea id="text" formControlName="text" rows="5"></textarea>
           </div>
 
           <div class="row">
             <div class="field">
-              <label>{{ isUa ? 'Оцінка' : 'Rating' }}</label>
-              <select formControlName="rating">
+              <label for="rating">{{ isUa ? 'Оцінка' : 'Rating' }}</label>
+              <select id="rating" formControlName="rating">
                 <option [ngValue]="0">{{ isUa ? 'Без оцінки' : 'No rating' }}</option>
                 @for (n of [1, 2, 3, 4, 5]; track n) {
                   <option [ngValue]="n">{{ n }}</option>
@@ -90,8 +90,8 @@ interface PresignedPostResponse {
               </select>
             </div>
             <div class="field">
-              <label>{{ isUa ? 'Статус' : 'Status' }}</label>
-              <select formControlName="status">
+              <label for="status">{{ isUa ? 'Статус' : 'Status' }}</label>
+              <select id="status" formControlName="status">
                 @for (s of statuses; track s) {
                   <option [ngValue]="s">{{ 'testimonial.status.' + s | translate }}</option>
                 }
@@ -106,13 +106,13 @@ interface PresignedPostResponse {
           </div>
 
           <div class="field">
-            <label>{{ isUa ? 'Локація' : 'Location' }}</label>
+            <span class="field-label">{{ isUa ? 'Локація' : 'Location' }}</span>
             <app-location-selector formControlName="location" [isUa]="isUa" />
           </div>
 
           <!-- Assistance types -->
           <div class="field">
-            <label>{{ 'testimonial.form.assistanceTypes' | translate }}</label>
+            <span class="field-label">{{ 'testimonial.form.assistanceTypes' | translate }}</span>
             <div class="checks">
               @for (a of assistanceTypes; track a) {
                 <label class="check">
@@ -139,7 +139,7 @@ interface PresignedPostResponse {
 
           <!-- Evidence photos -->
           <div class="field">
-            <label>{{ 'testimonial.form.evidence' | translate }}</label>
+            <span class="field-label">{{ 'testimonial.form.evidence' | translate }}</span>
             @if (photos().length > 0) {
               <div class="photos">
                 @for (p of photos(); track p.url; let i = $index) {
@@ -187,8 +187,8 @@ interface PresignedPostResponse {
           </div>
 
           <div class="field">
-            <label>{{ isUa ? 'Примітки менеджера' : 'Manager notes' }}</label>
-            <textarea formControlName="managerNotes" rows="3"></textarea>
+            <label for="managerNotes">{{ isUa ? 'Примітки менеджера' : 'Manager notes' }}</label>
+            <textarea id="managerNotes" formControlName="managerNotes" rows="3"></textarea>
           </div>
 
           <div class="actions">
@@ -244,7 +244,8 @@ interface PresignedPostResponse {
       .field--check {
         justify-content: flex-end;
       }
-      .field label {
+      .field label,
+      .field-label {
         font-size: 0.85rem;
         font-weight: 500;
         color: #334155;
@@ -623,7 +624,6 @@ export class AdminTestimonialEditComponent implements OnInit {
         assistance.includes(AssistanceType.OTHER) && this.assistanceOther.trim()
           ? this.assistanceOther.trim()
           : null,
-      // Flat location fields
       region: loc?.regionUa || null,
       regionEn: loc?.regionEn || null,
       district: loc?.districtUa || null,

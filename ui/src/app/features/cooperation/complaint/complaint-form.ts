@@ -45,8 +45,8 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
         <form [formGroup]="form" class="cf__form" novalidate>
           <!-- Category -->
           <div class="form-field">
-            <label>{{ 'complaint.form.category' | translate }} *</label>
-            <select formControlName="category">
+            <label for="category">{{ 'complaint.form.category' | translate }} *</label>
+            <select id="category" formControlName="category">
               <option value="" disabled>—</option>
               @for (cat of categories; track cat) {
                 <option [value]="cat">
@@ -61,8 +61,8 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
 
           <!-- Description -->
           <div class="form-field">
-            <label>{{ 'complaint.form.description' | translate }} *</label>
-            <textarea formControlName="description" rows="6"></textarea>
+            <label for="description">{{ 'complaint.form.description' | translate }} *</label>
+            <textarea id="description" formControlName="description" rows="6"></textarea>
             @if (form.get('description')?.invalid && form.get('description')?.touched) {
               <span class="err">Required</span>
             }
@@ -70,16 +70,23 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
 
           <!-- Expected resolution -->
           <div class="form-field">
-            <label>{{ 'complaint.form.expectedResolution' | translate }}</label>
-            <textarea formControlName="expectedResolution" rows="3"></textarea>
+            <label for="expectedResolution">{{
+              'complaint.form.expectedResolution' | translate
+            }}</label>
+            <textarea
+              id="expectedResolution"
+              formControlName="expectedResolution"
+              rows="3"
+            ></textarea>
           </div>
 
           <!-- add phone field (optional) -->
           <div class="form-field">
-            <label>{{ 'complaint.form.phone' | translate }}</label>
+            <label for="phone">{{ 'complaint.form.phone' | translate }}</label>
             <div class="cf__phone-wrapper">
               <span class="cf__phone-prefix">+38</span>
               <input
+                id="phone"
                 formControlName="phone"
                 type="tel"
                 maxlength="10"
@@ -95,8 +102,8 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
 
           <!-- Email (optional) -->
           <div class="form-field">
-            <label>{{ 'complaint.form.email' | translate }}</label>
-            <input formControlName="email" type="email" />
+            <label for="email">{{ 'complaint.form.email' | translate }}</label>
+            <input id="email" formControlName="email" type="email" />
             <span class="hint">{{ 'complaint.form.emailHint' | translate }}</span>
             @if (form.get('email')?.hasError('email') && form.get('email')?.touched) {
               <span class="err">Invalid email</span>
@@ -105,13 +112,14 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
 
           <!-- Location (optional) -->
           <div class="form-field">
-            <label>{{ 'complaint.form.location' | translate }}</label>
+            <span class="field-label">{{ 'complaint.form.location' | translate }}</span>
             <app-location-selector formControlName="location" [isUa]="lang === 'ua'" />
           </div>
 
           <!-- Attachments (S3/Drive links) -->
           <div class="form-field">
-            <label>{{ 'complaint.form.attachments' | translate }}</label>
+            <!-- group caption (dynamic attachment rows) → span -->
+            <span class="field-label">{{ 'complaint.form.attachments' | translate }}</span>
 
             @for (ctrl of attachmentsArray.controls; track $index; let i = $index) {
               <div [formGroup]="asGroup(ctrl)" class="cf__attachment-row">
@@ -136,8 +144,9 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
 
           <!-- Historical submission date -->
           <div class="form-field">
-            <label>{{ 'complaint.form.submittedAt' | translate }}</label>
-            <input formControlName="submittedAt" type="date" />
+            <!-- a11y label/control association -->
+            <label for="submittedAt">{{ 'complaint.form.submittedAt' | translate }}</label>
+            <input id="submittedAt" formControlName="submittedAt" type="date" />
           </div>
 
           <!-- Actions -->
@@ -253,7 +262,9 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
         display: flex;
         flex-direction: column;
         gap: 0.375rem;
-        label {
+        /* .field-label shares label styling for group captions converted from <label> */
+        label,
+        .field-label {
           font-size: 0.875rem;
           font-weight: 500;
           color: #334155;

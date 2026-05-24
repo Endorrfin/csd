@@ -9,8 +9,7 @@ import { createPresignedPost } from '@aws-sdk/s3-presigned-post';
 import { ConfigService } from '@nestjs/config';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const PRESIGNED_URL_EXPIRES_IN = 300; // 5 minutes
-// === hard cap for anonymous testimonial evidence uploads ===
+const PRESIGNED_URL_EXPIRES_IN = 300;
 const TESTIMONIAL_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 
 const MIME_EXT: Record<string, string> = {

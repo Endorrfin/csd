@@ -25,8 +25,9 @@ import { AuthService } from '../../core/services/auth.service';
 
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
           <div class="form-field">
-            <label>Email <span class="req">*</span></label>
+            <label for="login-email">Email <span class="req">*</span></label>
             <input
+              id="login-email"
               type="email"
               formControlName="email"
               placeholder="email&#64;example.com"
@@ -41,12 +42,15 @@ import { AuthService } from '../../core/services/auth.service';
 
           <div class="form-field">
             <div class="label-row">
-              <label>{{ isUa ? 'Пароль' : 'Password' }} <span class="req">*</span></label>
+              <label for="login-password"
+                >{{ isUa ? 'Пароль' : 'Password' }} <span class="req">*</span></label
+              >
               <a routerLink="/forgot-password" class="forgot-link">
                 {{ isUa ? 'Забули пароль?' : 'Forgot password?' }}
               </a>
             </div>
             <input
+              id="login-password"
               type="password"
               formControlName="password"
               [placeholder]="isUa ? 'Ваш пароль' : 'Your password'"

@@ -48,8 +48,8 @@ interface PresignedPostResponse {
 
           <!-- 1. Author -->
           <div class="form-field">
-            <label>{{ 'testimonial.form.authorName' | translate }} *</label>
-            <input formControlName="authorName" type="text" />
+            <label for="authorName">{{ 'testimonial.form.authorName' | translate }} *</label>
+            <input id="authorName" formControlName="authorName" type="text" />
             @if (form.get('authorName')?.invalid && form.get('authorName')?.touched) {
               <span class="err">Required</span>
             }
@@ -57,19 +57,19 @@ interface PresignedPostResponse {
 
           <!-- 2. Organization -->
           <div class="form-field">
-            <label>{{ 'testimonial.form.organization' | translate }}</label>
-            <input formControlName="organization" type="text" />
+            <label for="organization">{{ 'testimonial.form.organization' | translate }}</label>
+            <input id="organization" formControlName="organization" type="text" />
           </div>
 
           <!-- 3. Location (optional) -->
           <div class="form-field">
-            <label>{{ 'testimonial.form.location' | translate }}</label>
+            <span class="field-label">{{ 'testimonial.form.location' | translate }}</span>
             <app-location-selector formControlName="location" [isUa]="lang === 'ua'" />
           </div>
 
           <!-- 4. Assistance types (multi-select) -->
           <div class="form-field">
-            <label>{{ 'testimonial.form.assistanceTypes' | translate }}</label>
+            <span class="field-label">{{ 'testimonial.form.assistanceTypes' | translate }}</span>
             <div class="tf__checks">
               @for (a of assistanceTypes; track a) {
                 <label class="tf__check">
@@ -96,7 +96,7 @@ interface PresignedPostResponse {
 
           <!-- 5. Evidence photos (upload + link, max 3) -->
           <div class="form-field">
-            <label>{{ 'testimonial.form.evidence' | translate }}</label>
+            <span class="field-label">{{ 'testimonial.form.evidence' | translate }}</span>
             <p class="tf__hint">{{ 'testimonial.form.evidenceHint' | translate }}</p>
 
             @if (photos().length > 0) {
@@ -154,8 +154,8 @@ interface PresignedPostResponse {
 
           <!-- 6. Text -->
           <div class="form-field">
-            <label>{{ 'testimonial.form.text' | translate }} *</label>
-            <textarea formControlName="text" rows="5"></textarea>
+            <label for="text">{{ 'testimonial.form.text' | translate }} *</label>
+            <textarea id="text" formControlName="text" rows="5"></textarea>
             @if (form.get('text')?.invalid && form.get('text')?.touched) {
               <span class="err">Required</span>
             }
@@ -163,7 +163,7 @@ interface PresignedPostResponse {
 
           <!-- 7. Rating -->
           <div class="form-field">
-            <label>{{ 'testimonial.form.rating' | translate }}</label>
+            <span class="field-label">{{ 'testimonial.form.rating' | translate }}</span>
             <div class="tf__stars">
               @for (n of [1, 2, 3, 4, 5]; track n) {
                 <button
@@ -183,8 +183,8 @@ interface PresignedPostResponse {
 
           <!-- 8. Testimonial date -->
           <div class="form-field">
-            <label>{{ 'testimonial.form.publishedAt' | translate }}</label>
-            <input formControlName="publishedAt" type="date" />
+            <label for="publishedAt">{{ 'testimonial.form.publishedAt' | translate }}</label>
+            <input id="publishedAt" formControlName="publishedAt" type="date" />
           </div>
 
           <!-- Actions -->
@@ -271,7 +271,8 @@ interface PresignedPostResponse {
         display: flex;
         flex-direction: column;
         gap: 0.375rem;
-        label {
+        label,
+        .field-label {
           font-size: 0.875rem;
           font-weight: 500;
           color: #334155;
@@ -490,7 +491,7 @@ export class TestimonialFormComponent {
   protected async onPhotoSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    input.value = ''; // allow re-selecting the same file
+    input.value = '';
     if (!file) return;
 
     this.photoError.set(null);
@@ -588,7 +589,6 @@ export class TestimonialFormComponent {
       ...(this.photos().length > 0 && { photos: this.photos() }),
       ...(assistance.length > 0 && { assistanceTypes: assistance }),
       ...(otherText && { assistanceTypeOther: otherText }),
-      // Map LocationValue → flat entity fields
       ...(loc && {
         region: loc.regionUa,
         regionEn: loc.regionEn,

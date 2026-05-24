@@ -194,8 +194,20 @@ interface RejectModalState {
 
     <!-- Reject reason modal -->
     @if (rejectModal()) {
-      <div class="modal-overlay" (click)="closeRejectModal()">
-        <div class="modal" (click)="$event.stopPropagation()">
+      <div
+        class="modal-overlay"
+        role="button"
+        tabindex="0"
+        (click)="closeRejectModal()"
+        (keydown.enter)="closeRejectModal()"
+        (keydown.space)="closeRejectModal(); $event.preventDefault()"
+      >
+        <div
+          class="modal"
+          tabindex="-1"
+          (click)="$event.stopPropagation()"
+          (keydown)="$event.stopPropagation()"
+        >
           <h3>{{ isUa ? 'Причина відхилення' : 'Rejection reason' }}</h3>
           <p class="modal-hint">
             {{

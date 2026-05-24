@@ -1,4 +1,3 @@
-// ui/src/app/features/register/register.ts
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -30,8 +29,11 @@ import { AuthService } from '../../core/services/auth.service';
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="auth-form">
           <div class="form-row">
             <div class="form-field">
-              <label>{{ isUa ? "Ім'я" : 'First name' }} <span class="req">*</span></label>
+              <label for="reg-firstName"
+                >{{ isUa ? "Ім'я" : 'First name' }} <span class="req">*</span></label
+              >
               <input
+                id="reg-firstName"
                 formControlName="firstName"
                 [placeholder]="isUa ? 'Іван' : 'John'"
                 autocomplete="given-name"
@@ -43,8 +45,11 @@ import { AuthService } from '../../core/services/auth.service';
               }
             </div>
             <div class="form-field">
-              <label>{{ isUa ? 'Прізвище' : 'Last name' }} <span class="req">*</span></label>
+              <label for="reg-lastName"
+                >{{ isUa ? 'Прізвище' : 'Last name' }} <span class="req">*</span></label
+              >
               <input
+                id="reg-lastName"
                 formControlName="lastName"
                 [placeholder]="isUa ? 'Петренко' : 'Doe'"
                 autocomplete="family-name"
@@ -58,8 +63,9 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
 
           <div class="form-field">
-            <label>Email <span class="req">*</span></label>
+            <label for="reg-email">Email <span class="req">*</span></label>
             <input
+              id="reg-email"
               type="email"
               formControlName="email"
               placeholder="email&#64;example.com"
@@ -73,8 +79,11 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
 
           <div class="form-field">
-            <label>{{ isUa ? 'Пароль' : 'Password' }} <span class="req">*</span></label>
+            <label for="reg-password"
+              >{{ isUa ? 'Пароль' : 'Password' }} <span class="req">*</span></label
+            >
             <input
+              id="reg-password"
               type="password"
               formControlName="password"
               [placeholder]="isUa ? 'Мінімум 6 символів' : 'Min 6 characters'"
@@ -88,11 +97,12 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
 
           <div class="form-field">
-            <label
+            <label for="reg-confirmPassword"
               >{{ isUa ? 'Підтвердити пароль' : 'Confirm password' }}
               <span class="req">*</span></label
             >
             <input
+              id="reg-confirmPassword"
               type="password"
               formControlName="confirmPassword"
               [placeholder]="isUa ? 'Повторіть пароль' : 'Repeat password'"
