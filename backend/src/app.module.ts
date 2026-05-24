@@ -16,6 +16,7 @@ import { ProcurementModule } from './modules/procurement/procurement.module';
 import { VacancyModule } from './modules/vacancy/vacancy.module';
 import { TestimonialModule } from './modules/testimonial/testimonial.module';
 import { ComplaintModule } from './modules/complaint/complaint.module';
+import { InquiryModule } from './modules/inquiry/inquiry.module'; // CHANGED: register contact-form inquiries module
 import { AboutModule } from './modules/about/about.module';
 
 @Module({
@@ -59,6 +60,7 @@ import { AboutModule } from './modules/about/about.module';
     VacancyModule,
     TestimonialModule,
     ComplaintModule,
+    InquiryModule, // CHANGED: contact-form inquiries
     AboutModule,
   ],
   controllers: [AppController],
