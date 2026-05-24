@@ -2,6 +2,8 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+// CHANGED: general contact/inquiry form on the Contacts page
+import { InquiryFormComponent } from './inquiry-form';
 
 interface ContactChannel {
   readonly key: 'PROCUREMENT' | 'VACANCY' | 'TESTIMONIAL' | 'COMPLAINT';
@@ -27,7 +29,7 @@ type GuideItemKey = 'GENERAL' | 'TESTIMONIAL' | 'COMPLAINT' | 'VACANCY' | 'PROCU
 @Component({
   selector: 'app-contact',
   standalone: true,
-  imports: [CommonModule, RouterLink, TranslateModule],
+  imports: [CommonModule, RouterLink, TranslateModule, InquiryFormComponent], // CHANGED: add InquiryFormComponent
   template: `
     <div class="contact-page">
       <header class="page-header">
@@ -97,7 +99,13 @@ type GuideItemKey = 'GENERAL' | 'TESTIMONIAL' | 'COMPLAINT' | 'VACANCY' | 'PROCU
         </div>
       </section>
 
-      <!-- ───── Social ───── -->
+      <!-- === ADDED: general inquiry form === -->
+      <section class="contact-section" aria-labelledby="form-heading">
+        <h2 id="form-heading">{{ 'CONTACT.FORM.HEADING' | translate }}</h2>
+        <p class="section-intro">{{ 'CONTACT.FORM.INTRO' | translate }}</p>
+        <app-inquiry-form />
+      </section>
+
       <!-- ───── Social ───── -->
       <section class="contact-section" aria-labelledby="social-heading">
         <h2 id="social-heading">{{ 'CONTACT.SOCIAL.HEADING' | translate }}</h2>
