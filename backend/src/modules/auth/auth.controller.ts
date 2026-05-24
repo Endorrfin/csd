@@ -13,6 +13,11 @@ import { RegisterDto } from './dto/register.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import type {
+  AuthenticatedRequest,
+  AuthenticatedUser,
+} from '../../common/types/authenticated-request';
+import type { User } from '../users/entities/user.entity';
 
 @Controller('auth')
 export class AuthController {
@@ -25,13 +30,13 @@ export class AuthController {
 
   @UseGuards(AuthGuard('local'))
   @Post('login')
-  login(@Request() req: any) {
+  login(@Request() req: { user: User }) {
     return this.authService.login(req.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req: any) {
+  getProfile(@Request() req: AuthenticatedRequest): AuthenticatedUser {
     return req.user;
   }
 

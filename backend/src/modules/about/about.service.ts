@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import sanitizeHtml from 'sanitize-html';
@@ -9,14 +13,31 @@ import { UpdateAboutSectionDto } from './dto/update-about-section.dto';
 import { CreateAboutDocumentDto } from './dto/create-about-document.dto';
 import { UpdateAboutDocumentDto } from './dto/update-about-document.dto';
 
-// CHANGED: aligned with existing Quill content elsewhere (blog/content) — XSS hardening
+// aligned with existing Quill content elsewhere (blog/content) — XSS hardening
 const QUILL_SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: [
-    'p', 'br', 'strong', 'em', 'u', 's', 'blockquote', 'code', 'pre',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'ul', 'ol', 'li',
-    'a', 'img',
-    'span', 'div',
+    'p',
+    'br',
+    'strong',
+    'em',
+    'u',
+    's',
+    'blockquote',
+    'code',
+    'pre',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'ul',
+    'ol',
+    'li',
+    'a',
+    'img',
+    'span',
+    'div',
   ],
   allowedAttributes: {
     a: ['href', 'target', 'rel'],
@@ -74,9 +95,13 @@ export class AboutService {
   }
 
   async createSection(dto: CreateAboutSectionDto): Promise<AboutSection> {
-    const existing = await this.sectionRepo.findOne({ where: { key: dto.key } });
+    const existing = await this.sectionRepo.findOne({
+      where: { key: dto.key },
+    });
     if (existing) {
-      throw new ConflictException(`Section with key "${dto.key}" already exists`);
+      throw new ConflictException(
+        `Section with key "${dto.key}" already exists`,
+      );
     }
 
     const section = this.sectionRepo.create({
@@ -87,12 +112,15 @@ export class AboutService {
     return this.sectionRepo.save(section);
   }
 
-  async updateSection(id: string, dto: UpdateAboutSectionDto): Promise<AboutSection> {
+  async updateSection(
+    id: string,
+    dto: UpdateAboutSectionDto,
+  ): Promise<AboutSection> {
     const section = await this.findSectionById(id);
 
     Object.assign(section, {
       ...dto,
-      // CHANGED: only sanitize content fields when present in DTO (preserve existing on partial update)
+      // only sanitize content fields when present in DTO (preserve existing on partial update)
       ...(dto.contentUa !== undefined && {
         contentUa: this.sanitizeNullable(dto.contentUa),
       }),

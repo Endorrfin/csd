@@ -11,7 +11,7 @@ import {
   Req,
   ParseUUIDPipe,
   UsePipes,
-  Query, // CHANGED: added for admin query DTO
+  Query,
 } from '@nestjs/common';
 import { VacancyService } from './vacancy.service';
 import { CreateVacancyDto } from './dto/create-vacancy.dto';
@@ -23,20 +23,18 @@ import { UserRole } from '../users/entities/user.entity';
 import { VacancyStatus } from './entities/vacancy.entity';
 import { SanitizeHtmlPipe } from '../../common/pipes/sanitize-html.pipe';
 import { UpdateVacancyStatusDto } from './dto/update-status.dto';
-// CHANGED: new admin query DTO
 import { AdminVacancyQueryDto } from './dto/admin-query.dto';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('vacancies')
 export class VacancyController {
   constructor(private readonly service: VacancyService) {}
 
-  // CHANGED: now returns every non-draft record (not only published)
   @Get()
   findAll() {
     return this.service.findAllPublic();
   }
 
-  // CHANGED: paginated + filtered admin endpoint (replaces /admin/all)
   @Get('admin/list')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
@@ -53,8 +51,8 @@ export class VacancyController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UsePipes(SanitizeHtmlPipe)
-  create(@Body() dto: CreateVacancyDto, @Req() req: any) {
-    return this.service.create(dto, req.user.id as string);
+  create(@Body() dto: CreateVacancyDto, @Req() req: AuthenticatedRequest) {
+    return this.service.create(dto, req.user.id);
   }
 
   @Patch(':id')
@@ -90,7 +88,7 @@ export class VacancyController {
     return this.service.updateStatus(id, dto.status);
   }
 
-  // CHANGED: DELETE lowered from ADMIN+ to MANAGER+ (draft-only rule enforced in service)
+  // DELETE lowered from ADMIN+ to MANAGER+ (draft-only rule enforced in service)
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)

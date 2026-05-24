@@ -15,8 +15,18 @@ describe('AppController', () => {
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(appController.getHello()).toBe('Hello World!');
+    // CHANGED: assert the actual greeting returned by AppService, not the stale default
+    it('should return the CSD web-portal greeting', () => {
+      expect(appController.getHello()).toBe('🙋‍♂️🙋🏼‍♀️ Hello CSD web-portal');
+    });
+  });
+
+  // === ADDED: cover the health probe used by the deploy smoke test ===
+  describe('health', () => {
+    it('should report status ok with an ISO timestamp', () => {
+      const result = appController.getHealth();
+      expect(result.status).toBe('ok');
+      expect(result.timestamp).toBe(new Date(result.timestamp).toISOString());
     });
   });
 });

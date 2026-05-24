@@ -59,7 +59,7 @@ export class AuthService {
     return this.generateToken(user);
   }
 
-  async login(user: User): Promise<{ accessToken: string }> {
+  login(user: User): Promise<{ accessToken: string }> {
     return this.generateToken(user);
   }
 
@@ -119,8 +119,8 @@ export class AuthService {
     return { message: 'Password has been reset successfully.' };
   }
 
-  private generateToken(user: User): { accessToken: string } {
+  private async generateToken(user: User): Promise<{ accessToken: string }> {
     const payload = { sub: user.id, email: user.email, role: user.role };
-    return { accessToken: this.jwtService.sign(payload) };
+    return { accessToken: await this.jwtService.signAsync(payload) };
   }
 }

@@ -58,7 +58,8 @@ export class ExpandStatusEnums1777200000000 implements MigrationInterface {
     );
   }
 
-  public async down(_queryRunner: QueryRunner): Promise<void> {
+  // drop unused param (down is a no-op) — satisfies no-unused-vars
+  public async down(): Promise<void> {
     // PostgreSQL does not support ALTER TYPE ... DROP VALUE.
     // Down is a no-op for the enum changes themselves; the values remain
     // in the type but are unused by application code.
