@@ -93,6 +93,15 @@ import { AuthService } from '../../core/services/auth.service';
             >
               {{ isUa ? 'Про нас' : 'About' }}
             </a>
+            <!-- Inquiries: admin+ (general contact-form submissions) -->
+            <a
+              routerLink="inquiries"
+              routerLinkActive="active"
+              class="admin-nav-item"
+              (click)="closeSidebar()"
+            >
+              {{ isUa ? 'Звернення' : 'Inquiries' }}
+            </a>
           </nav>
         }
 

@@ -406,6 +406,31 @@
   "wash_form_pumps_title": "Насоси",
   "wash_form_pumps_hint": "Вкажіть потребу в насосах — глибинних, поверхневих, дренажних або інших.",
   "wash_form_pumps_coming_soon": "Цей крок буде активовано в наступному оновленні.",
+  "inquiry": {
+    "status": {
+      "new": "Нове",
+      "read": "Прочитано",
+      "replied": "Відповіли",
+      "archived": "Архів"
+    },
+    "reason": {
+      "partnership": "Партнерство / донорство",
+      "volunteering": "Волонтерство",
+      "press": "Журналісти / медіа",
+      "general": "Загальне питання",
+      "other": "Інше"
+    },
+    "messenger": {
+      "telegram": "Telegram",
+      "viber": "Viber",
+      "whatsapp": "WhatsApp",
+      "other": "Інше"
+    },
+    "lang": {
+      "ua": "Українська",
+      "en": "Англійська"
+    }
+  },
   "CONTACT": {
     "PAGE": {
       "TITLE": "Контакти",

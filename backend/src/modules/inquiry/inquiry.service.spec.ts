@@ -16,6 +16,7 @@ const repoMock = () => ({
   findOne: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
+  createQueryBuilder: jest.fn(),
 });
 
 describe('InquiryService', () => {
@@ -52,6 +53,41 @@ describe('InquiryService', () => {
       expect(repo.create).toHaveBeenCalledWith(dto);
       expect(repo.save).toHaveBeenCalledWith(built);
       expect(result).toEqual(saved);
+    });
+  });
+
+  describe('exportCsv', () => {
+    it('builds a CSV with a header row and quotes fields containing commas', async () => {
+      const record = {
+        createdAt: new Date('2026-05-24T10:00:00Z'),
+        status: InquiryStatus.NEW,
+        reason: InquiryReason.GENERAL,
+        reasonOther: null,
+        name: 'Olha',
+        email: 'olha@example.com',
+        phone: null,
+        messengerType: null,
+        messengerHandle: null,
+        preferredLang: InquiryLang.UA,
+        message: 'Hello, world', // comma → must be quoted
+        consent: true,
+        managerNotes: null,
+      } as Inquiry;
+
+      const qb = {
+        andWhere: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([record]),
+      };
+      repo.createQueryBuilder.mockReturnValue(qb);
+
+      const csv = await service.exportCsv({ lang: 'en' });
+      const lines = csv.split('\n');
+
+      expect(lines[0].startsWith('#,Created,Status,Reason')).toBe(true);
+      expect(lines[1]).toContain('general');
+      expect(lines[1]).toContain('"Hello, world"'); // comma-bearing field quoted
+      expect(lines[1]).toContain('yes'); // consent rendered
     });
   });
 

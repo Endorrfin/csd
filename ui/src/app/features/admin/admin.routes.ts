@@ -52,6 +52,14 @@ export const adminRoutes: Routes = [
     canActivate: [adminGuard],
   },
 
+  // Inquiries admin (contact-form submissions; admin+ only)
+  {
+    path: 'inquiries',
+    loadComponent: () =>
+      import('./inquiries/inquiries-list').then((m) => m.AdminInquiriesListComponent),
+    canActivate: [adminGuard],
+  },
+
   {
     path: 'about',
     loadChildren: () => import('./about/about.routes').then((m) => m.aboutRoutes),
