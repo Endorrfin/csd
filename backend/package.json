@@ -27,8 +27,7 @@
     "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
     "migration:show": "npm run typeorm -- migration:show -d src/database/data-source.ts",
     "seed:super-admin": "ts-node -r tsconfig-paths/register src/database/seed-super-admin.ts",
-    "seed:about-documents": "ts-node -r tsconfig-paths/register src/database/seed-about-documents-standalone.ts",
-    "verify:prod-baseline": "ts-node -r tsconfig-paths/register scripts/verify-baseline-against-prod-schema.ts"
+    "verify:prod-baseline": "ts-node -r tsconfig-paths/register scripts/verify-baseline-against-prod-schema.ts",
     "seed:about-documents": "ts-node -r tsconfig-paths/register src/database/seed-about-documents-standalone.ts"
   },
   "dependencies": {
@@ -64,8 +63,6 @@
     "@nestjs/cli": "^11.0.0",
     "@nestjs/schematics": "^11.0.0",
     "@nestjs/testing": "^11.0.1",
-    "@testcontainers/postgresql": "^12.0.1",
-    "@types/aws-lambda": "^8.10.162",
     "@testcontainers/postgresql": "^12.0.1",
     "@types/aws-lambda": "^8.10.162",
     "@types/bcrypt": "^6.0.0",
