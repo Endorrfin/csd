@@ -36,6 +36,7 @@ pids/
 *.seed
 
 jest-*.json
+!test/jest-e2e.json
 .cache/
 *.local
 
