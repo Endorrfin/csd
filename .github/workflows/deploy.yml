@@ -301,11 +301,15 @@ jobs:
           for i in 1 2 3 4 5 6; do
             echo "Attempt $i: GET ${SMOKE_URL}/"
             HTTP_CODE=$(curl -s -o /tmp/index.html -w "%{http_code}" "${SMOKE_URL}/" || echo "000")
-            if [ "$HTTP_CODE" = "200" ] && grep -q "<app-root>" /tmp/index.html; then
-              echo "✅ Frontend healthy: HTTP 200 + <app-root> present"
+            # literal "<app-root>" only matched the CSR shell — the SSR-rendered
+            # tag carries attributes (<app-root ng-server-context="ssr" ...>), so the old
+            # check fails exactly when SSR starts working (audit P0-3). Now we require the
+            # server-render marker itself (matches both "ssr" and future "ssg").
+            if [ "$HTTP_CODE" = "200" ] && grep -q 'ng-server-context' /tmp/index.html; then
+              echo "✅ Frontend healthy: HTTP 200 + server-rendered content (ng-server-context)"
               exit 0
             fi
-            echo "⚠️  HTTP $HTTP_CODE, app-root present: $(grep -c "<app-root>" /tmp/index.html || echo 0). Retrying in 15s..."
+            echo "⚠️  HTTP $HTTP_CODE, SSR marker present: $(grep -c 'ng-server-context' /tmp/index.html || echo 0). Retrying in 15s..."
             sleep 15
           done
           echo "❌ Frontend smoke test failed after 6 attempts"
