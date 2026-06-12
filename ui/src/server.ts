@@ -37,6 +37,24 @@ app.use(
 );
 
 /**
+ * restore the public hostname behind API Gateway (audit P0-3).
+ * Behind CloudFront → API Gateway the request arrives with the execute-api
+ * hostname. Angular SSR host validation (SSRF protection) rejects it and
+ * silently falls back to a CSR shell — no server-rendered content, no SEO.
+ * PUBLIC_HOST is set only in ui/serverless.yml (prod Lambda); locally this
+ * middleware is a no-op.
+ */
+const publicHost = process.env['PUBLIC_HOST'];
+if (publicHost) {
+  app.use((req, _res, next) => {
+    req.headers['host'] = publicHost;
+    req.headers['x-forwarded-host'] = publicHost;
+    req.headers['x-forwarded-proto'] ??= 'https'; // API GW terminates TLS
+    next();
+  });
+}
+
+/**
  * Handle all other requests by rendering the Angular application.
  */
 app.use((req, res, next) => {

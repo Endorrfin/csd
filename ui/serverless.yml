@@ -10,6 +10,9 @@ provider:
   timeout: 29
   environment:
     NODE_ENV: production
+    # public hostname for SSR — restores Host behind API Gateway so
+    # Angular host validation passes and absolute URLs are correct (audit P0-3)
+    PUBLIC_HOST: www.csd-fund.org
 
 functions:
   ssr:
