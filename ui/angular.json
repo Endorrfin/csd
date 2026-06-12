@@ -1,10 +1,11 @@
-
 {
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "schematicCollections": ["angular-eslint"]
+    "schematicCollections": [
+      "angular-eslint"
+    ]
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -44,13 +45,24 @@
             "server": "src/main.server.ts",
             "outputMode": "server",
             "security": {
-              "allowedHosts": []
+              "allowedHosts": [
+                "www.csd-fund.org",
+                "csd-fund.org",
+                "localhost"
+              ]
             },
             "ssr": {
               "entry": "src/server.ts"
             },
-            "polyfills": ["@angular/localize/init"],
-            "allowedCommonJsDependencies": ["quill-delta", "quill", "leaflet", "leaflet.markercluster"]
+            "polyfills": [
+              "@angular/localize/init"
+            ],
+            "allowedCommonJsDependencies": [
+              "quill-delta",
+              "quill",
+              "leaflet",
+              "leaflet.markercluster"
+            ]
           },
           "configurations": {
             "production": {
@@ -100,7 +112,10 @@
         "lint": {
           "builder": "@angular-eslint/builder:lint",
           "options": {
-            "lintFilePatterns": ["src/**/*.ts", "src/**/*.html"]
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
           }
         }
       }
