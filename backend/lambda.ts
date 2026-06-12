@@ -3,14 +3,30 @@ import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import serverlessExpress from '@codegenie/serverless-express';
+// precise Lambda types instead of implicit `any` (fixes no-unsafe-* ESLint)
+import type {
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+  Callback,
+  Context,
+} from 'aws-lambda';
 import express from 'express';
 import { AppModule } from './src/app.module';
-// fail-fast on missing/weak JWT_SECRET at cold-start
 import { assertRequiredEnv } from './src/common/assert-required-env';
+// explicit CORS allowlist parsed from FRONTEND_URL (audit P0-1)
+import { getFrontendOrigins } from './src/common/frontend-urls';
 
-let cachedServer: any;
+// typed handler signature — serverless-express generics default to `any`,
+// so we pin event/result types once here and stay type-safe downstream
+type ApiHandler = (
+  event: APIGatewayProxyEvent,
+  context: Context,
+  callback?: Callback<APIGatewayProxyResult>,
+) => Promise<APIGatewayProxyResult>;
 
-async function bootstrap() {
+let cachedServer: ApiHandler | undefined;
+
+async function bootstrap(): Promise<ApiHandler> {
   assertRequiredEnv();
   const expressApp = express();
   const adapter = new ExpressAdapter(expressApp);
@@ -18,13 +34,20 @@ async function bootstrap() {
     logger: ['error', 'warn'],
   });
 
+  // was `origin: process.env.FRONTEND_URL || '*'` + `credentials: true` —
+  // an unset/empty env silently allowed any origin (audit P0-1). Now an explicit
+  // allowlist; `credentials` dropped — auth is a Bearer header, no cookies in use.
   app.enableCors({
-    origin: process.env.FRONTEND_URL || '*',
-    credentials: true,
+    origin: getFrontendOrigins(),
   });
 
   app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, transform: true }),
+    // added forbidNonWhitelisted to match main.ts (audit P1 #8 — prod/local drift)
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
   );
 
   // add global prefix to match main.ts
@@ -32,7 +55,9 @@ async function bootstrap() {
 
   await app.init();
   // tell the adapter which response content types to base64-encode
-  return serverlessExpress({
+  // explicit generics + single boundary cast (return type narrows
+  // `void | Promise<Result>` to `Promise<Result>`, which PROMISE mode guarantees)
+  return serverlessExpress<APIGatewayProxyEvent, APIGatewayProxyResult>({
     app: expressApp,
     binarySettings: {
       contentTypes: [
@@ -40,13 +65,12 @@ async function bootstrap() {
         'application/octet-stream',
       ],
     },
-  });
+  }) as ApiHandler;
 }
 
-export const handler = async (event: any, context: any, callback: any) => {
+// was `(event: any, context: any, callback: any)`
+export const handler: ApiHandler = async (event, context, callback) => {
   // Reuse the bootstrap result across warm invocations
-  if (!cachedServer) {
-    cachedServer = await bootstrap();
-  }
+  cachedServer ??= await bootstrap();
   return cachedServer(event, context, callback);
 };
