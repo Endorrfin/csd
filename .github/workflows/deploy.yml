@@ -295,9 +295,12 @@ jobs:
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
         run: |
           set -euo pipefail
+          # FRONTEND_URL is now a comma-separated CORS allowlist (audit P0-1);
+          # smoke-test the canonical (first) origin only.
+          SMOKE_URL="${FRONTEND_URL%%,*}"
           for i in 1 2 3 4 5 6; do
-            echo "Attempt $i: GET ${FRONTEND_URL}/"
-            HTTP_CODE=$(curl -s -o /tmp/index.html -w "%{http_code}" "${FRONTEND_URL}/" || echo "000")
+            echo "Attempt $i: GET ${SMOKE_URL}/"
+            HTTP_CODE=$(curl -s -o /tmp/index.html -w "%{http_code}" "${SMOKE_URL}/" || echo "000")
             if [ "$HTTP_CODE" = "200" ] && grep -q "<app-root>" /tmp/index.html; then
               echo "✅ Frontend healthy: HTTP 200 + <app-root> present"
               exit 0

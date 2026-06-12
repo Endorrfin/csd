@@ -6,10 +6,12 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+// FRONTEND_URL is now a comma-separated allowlist — reset links must use
+// the canonical (first) origin, not the raw env value (audit P0-1)
+import { getCanonicalFrontendUrl } from '../../common/frontend-urls';
 import { UsersService } from '../users/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { User } from '../users/entities/user.entity';
@@ -24,7 +26,6 @@ export class AuthService {
   constructor(
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<User> {
@@ -82,11 +83,8 @@ export class AuthService {
         resetTokenExpiry,
       );
 
-      const frontendUrl = this.configService.get<string>(
-        'FRONTEND_URL',
-        'http://localhost:4200',
-      );
-      const resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+      // canonical (first) origin from the FRONTEND_URL allowlist
+      const resetLink = `${getCanonicalFrontendUrl()}/reset-password?token=${resetToken}`;
 
       // TODO: Replace with EmailService when SMTP is configured
       this.logger.log(`\n🔑 Password reset link for ${email}:\n${resetLink}\n`);

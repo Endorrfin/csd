@@ -34,7 +34,10 @@ provider:
     DB_PASSWORD: ${env:DB_PASSWORD}
     DB_NAME: ${env:DB_NAME}
     JWT_SECRET: ${env:JWT_SECRET}
-    FRONTEND_URL: ${env:FRONTEND_URL, ''}
+    # no '' default — an empty value silently enabled CORS '*' in lambda.ts
+    # (audit P0-1). Missing env now fails `serverless deploy` in CI, before prod.
+    # Format: comma-separated allowlist, canonical origin first.
+    FRONTEND_URL: ${env:FRONTEND_URL}
     AWS_S3_MEDIA_BUCKET: csd-media
 
 functions:

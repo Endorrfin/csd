@@ -8,6 +8,8 @@ import { AppModule } from './app.module';
 import { DataSource } from 'typeorm';
 import { runSeeds } from './database/run-seeds';
 import { assertRequiredEnv } from './common/assert-required-env';
+// shared FRONTEND_URL parsing — same allowlist source as lambda.ts (audit P0-1)
+import { getFrontendOrigins } from './common/frontend-urls';
 
 async function bootstrap() {
   assertRequiredEnv();
@@ -16,9 +18,10 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
 
   // CORS — allows the Angular dev server to access the API
+  // allowlist from FRONTEND_URL (defaults to http://localhost:4200);
+  // `credentials` dropped — auth is a Bearer header, no cookies in use (audit P0-1)
   app.enableCors({
-    origin: ['http://localhost:4200'],
-    credentials: true,
+    origin: getFrontendOrigins(),
   });
 
   // Global DTO validation — rejects requests with invalid data
