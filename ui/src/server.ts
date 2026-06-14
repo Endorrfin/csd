@@ -11,11 +11,11 @@ import { join } from 'node:path';
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
-// Angular 21.2.x hardened SSRF protection (CVE-2026-27739) now strips ALL
-// X-Forwarded-* by default, so the x-forwarded-host we inject below (PUBLIC_HOST) is
-// ignored and SSR silently deoptimizes to a CSR shell behind CloudFront → API Gateway.
-// Trust only host+proto (NOT x-forwarded-prefix — the CVE's open-redirect vector);
-// allowedHosts in angular.json remains the host-injection backstop.
+// Angular 21.2.x SSRF hardening (CVE-2026-27739): sanitizeRequestHeaders() flips
+// deoptToCSR=true on ANY untrusted X-Forwarded-* header → the engine silently serves the
+// CSR shell (no error logged). Default already trusts only x-forwarded-host/-proto; we keep
+// that explicit AND strip the untrusted ones (x-forwarded-for/-port from API GW) in the
+// middleware below. allowedHosts (angular.json) stays the host-injection backstop.
 const angularApp = new AngularNodeAppEngine({
   trustProxyHeaders: ['x-forwarded-host', 'x-forwarded-proto'],
 });
@@ -54,11 +54,15 @@ app.use(
 const publicHost = process.env['PUBLIC_HOST'];
 if (publicHost) {
   app.use((req, _res, next) => {
+    // CHANGED: drop untrusted X-Forwarded-* (API GW sends x-forwarded-for/-port) — ANY of
+    // them makes Angular SSR deopt to a CSR shell. Dropping x-forwarded-prefix also closes
+    // the CVE-2026-27739 vector. Then pin host/proto to the trusted public values.
+    delete req.headers['x-forwarded-for'];
+    delete req.headers['x-forwarded-port'];
+    delete req.headers['x-forwarded-prefix'];
     req.headers['host'] = publicHost;
     req.headers['x-forwarded-host'] = publicHost;
-    // force https (was ??=) — we now trust x-forwarded-proto, so a direct
-    // API-GW caller must not be able to spoof it; prod is always TLS-terminated.
-    req.headers['x-forwarded-proto'] = 'https';
+    req.headers['x-forwarded-proto'] = 'https'; // prod is always TLS-terminated by API GW
     next();
   });
 }
