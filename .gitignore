@@ -46,3 +46,4 @@ jest-*.json
 **/.serverless/
 docs/invoices
 docs/audit/
+docs/audit/AUDIT-2026-06.md
