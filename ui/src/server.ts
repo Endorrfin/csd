@@ -11,7 +11,14 @@ import { join } from 'node:path';
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
-const angularApp = new AngularNodeAppEngine();
+// Angular 21.2.x hardened SSRF protection (CVE-2026-27739) now strips ALL
+// X-Forwarded-* by default, so the x-forwarded-host we inject below (PUBLIC_HOST) is
+// ignored and SSR silently deoptimizes to a CSR shell behind CloudFront → API Gateway.
+// Trust only host+proto (NOT x-forwarded-prefix — the CVE's open-redirect vector);
+// allowedHosts in angular.json remains the host-injection backstop.
+const angularApp = new AngularNodeAppEngine({
+  trustProxyHeaders: ['x-forwarded-host', 'x-forwarded-proto'],
+});
 
 /**
  * Example Express Rest API endpoints can be defined here.
@@ -49,7 +56,9 @@ if (publicHost) {
   app.use((req, _res, next) => {
     req.headers['host'] = publicHost;
     req.headers['x-forwarded-host'] = publicHost;
-    req.headers['x-forwarded-proto'] ??= 'https'; // API GW terminates TLS
+    // force https (was ??=) — we now trust x-forwarded-proto, so a direct
+    // API-GW caller must not be able to spoof it; prod is always TLS-terminated.
+    req.headers['x-forwarded-proto'] = 'https';
     next();
   });
 }
