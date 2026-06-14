@@ -3,7 +3,6 @@ import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import serverlessExpress from '@codegenie/serverless-express';
-// precise Lambda types instead of implicit `any` (fixes no-unsafe-* ESLint)
 import type {
   APIGatewayProxyEvent,
   APIGatewayProxyResult,
@@ -15,6 +14,8 @@ import { AppModule } from './src/app.module';
 import { assertRequiredEnv } from './src/common/assert-required-env';
 // explicit CORS allowlist parsed from FRONTEND_URL (audit P0-1)
 import { getFrontendOrigins } from './src/common/frontend-urls';
+// Batch 1 — centralised security headers (helmet)
+import { securityHeaders } from './src/common/security-headers';
 
 // typed handler signature — serverless-express generics default to `any`,
 // so we pin event/result types once here and stay type-safe downstream
@@ -33,6 +34,9 @@ async function bootstrap(): Promise<ApiHandler> {
   const app = await NestFactory.create(AppModule, adapter, {
     logger: ['error', 'warn'],
   });
+
+  // Batch 1 — security headers (helmet) registered before CORS/routing
+  app.use(securityHeaders());
 
   // was `origin: process.env.FRONTEND_URL || '*'` + `credentials: true` —
   // an unset/empty env silently allowed any origin (audit P0-1). Now an explicit

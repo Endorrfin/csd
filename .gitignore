@@ -43,6 +43,7 @@ jest-*.json
 .cache/
 *.local
 
+# docs
 **/.serverless/
 docs/invoices
 docs/audit/
