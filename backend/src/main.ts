@@ -10,10 +10,15 @@ import { runSeeds } from './database/run-seeds';
 import { assertRequiredEnv } from './common/assert-required-env';
 // shared FRONTEND_URL parsing — same allowlist source as lambda.ts (audit P0-1)
 import { getFrontendOrigins } from './common/frontend-urls';
+// Batch 1 — centralised security headers (helmet)
+import { securityHeaders } from './common/security-headers';
 
 async function bootstrap() {
   assertRequiredEnv();
   const app = await NestFactory.create(AppModule);
+
+  // Batch 1 — security headers (helmet) registered before CORS/routing
+  app.use(securityHeaders());
 
   app.setGlobalPrefix('api');
 
