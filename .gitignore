@@ -48,3 +48,5 @@ jest-*.json
 docs/invoices
 docs/audit/
 docs/audit/AUDIT-2026-06.md
+csd-feature-tasks.xlsx
+csd-junior-tasks.xlsx
