@@ -124,7 +124,489 @@ Routes are defined in `app.routes.ts` (public) and `features/admin/admin.routes.
 
 ---
 
-## 4. Where to go next
+## 4. Local development setup
+
+> **For interns and junior developers.** This section walks you through everything you need — from a brand-new laptop to a fully running local environment with both the backend API and the Angular frontend.
+
+### What you will run locally
+
+| Process | URL | Folder | Start command |
+| --- | --- | --- | --- |
+| Backend API (NestJS) | `http://localhost:3000` | `backend/` | `npm run start:dev` |
+| Frontend (Angular) | `http://localhost:4200` | `ui/` | `npm start` |
+| PostgreSQL database | `localhost:5432` (macOS) / `localhost:5433` (Windows Docker) | — | managed by OS / Docker |
+
+Both processes must be running at the same time. The Angular dev server is pre-configured to call the backend at `http://localhost:3000` via `src/environments/environment.ts`.
+
+---
+
+### 4.1 macOS setup (MacBook)
+
+#### Step 1 — Install Xcode Command Line Tools *(one-time)*
+
+```bash
+xcode-select --install
+```
+
+A dialog will appear — click **Install**. This provides `git`, `make`, and other compiler tools.
+
+#### Step 2 — Install Homebrew *(one-time)*
+
+[Homebrew](https://brew.sh) is the package manager used to install everything else.
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+After installation, follow the printed instructions to add Homebrew to your `PATH` (usually adding two lines to `~/.zshrc`). Then reload your shell:
+
+```bash
+source ~/.zshrc
+brew --version   # should print a version number
+```
+
+#### Step 3 — Install Node.js 22 via fnm *(one-time)*
+
+[fnm](https://github.com/Schniz/fnm) is a fast Node version manager. It reads `.nvmrc` files automatically so you always get the right Node version per project.
+
+```bash
+brew install fnm
+
+# Add fnm to your shell (append to ~/.zshrc):
+echo 'eval "$(fnm env --use-on-cd --shell zsh)"' >> ~/.zshrc
+source ~/.zshrc
+
+# Install the required Node version (pinned in .nvmrc at the repo root):
+fnm install 22.17.0
+fnm use 22.17.0
+
+# Verify:
+node --version   # must print v22.17.0
+npm --version    # must print 10.x
+```
+
+#### Step 4 — Set up PostgreSQL *(one-time)*
+
+Choose **one** option. Option A (Homebrew) is simpler if you prefer native tooling; Option B (Docker) keeps your OS clean.
+
+**Option A — Homebrew (native)**
+
+```bash
+brew install postgresql@16
+echo 'export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+
+brew services start postgresql@16
+
+# Verify the server is listening:
+pg_isready -h localhost -p 5432   # should print "localhost:5432 - accepting connections"
+```
+
+**Option B — Docker Desktop**
+
+```bash
+brew install --cask docker
+# Launch Docker Desktop from /Applications and wait for the whale icon to appear in the menu bar.
+
+docker run -d \
+  --name csd-pg \
+  --restart unless-stopped \
+  -e POSTGRES_USER=csd_user \
+  -e POSTGRES_PASSWORD=csd_password \
+  -e POSTGRES_DB=csd_db \
+  -p 5433:5432 \
+  postgres:16
+
+# Verify:
+docker exec csd-pg psql -U csd_user -d csd_db -c "SELECT version();"
+```
+
+> ⚠ Docker maps container port 5432 to **host port 5433** to avoid conflicts with any local PostgreSQL. Remember this when setting `DB_PORT` in `.env` (Step 7).
+
+#### Step 5 — Create the database and user *(Homebrew only — skip if you used Docker)*
+
+Docker already created the database and user via the `POSTGRES_*` environment variables in Step 4. If you used Homebrew, run:
+
+```bash
+# Connect as the default superuser (your macOS username):
+psql postgres -c "CREATE USER csd_user WITH PASSWORD 'csd_password';"
+createdb -O csd_user csd_db
+psql csd_db -c "GRANT ALL PRIVILEGES ON DATABASE csd_db TO csd_user;"
+
+# Verify you can connect as the app user:
+psql -U csd_user -d csd_db -c "SELECT 1 AS ok;"
+```
+
+#### Step 6 — Clone the repository
+
+```bash
+mkdir -p ~/projects && cd ~/projects
+git clone https://github.com/Endorrfin/csd.git csd-fund
+cd csd-fund
+```
+
+#### Step 7 — Configure and start the backend
+
+```bash
+cd backend
+
+# 1. Create your local .env from the template:
+cp .env.example .env
+```
+
+Open `.env` in your editor and fill in the following values:
+
+```dotenv
+DB_HOST=localhost
+DB_PORT=5432          # Homebrew → 5432 | Docker → 5433
+DB_USERNAME=csd_user
+DB_PASSWORD=csd_password
+DB_NAME=csd_db
+
+# Generate a strong secret (run this in your terminal and paste the output):
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+JWT_SECRET=<paste-the-generated-value-here>
+
+FRONTEND_URL=http://localhost:4200
+```
+
+```bash
+# 2. Install dependencies:
+npm install
+
+# 3. Apply all database migrations:
+npm run migration:run
+
+# 4. Confirm every migration ran successfully (each line should show [X]):
+npm run migration:show
+
+# 5. Start the dev server with hot-reload:
+npm run start:dev
+```
+
+The API is now available at `http://localhost:3000`. Quick smoke test:
+
+```bash
+curl http://localhost:3000/api/health
+# Expected: {"status":"ok"}
+```
+
+#### Step 8 — Seed the super-admin account *(first time only)*
+
+The super-admin is the first staff account that lets you access `/admin`. Run this once, then store the credentials in your password manager.
+
+```bash
+# The leading space prevents the command from being saved to shell history.
+# Replace the values below with your own email and a strong password
+# (min 16 chars, mix of upper/lower/digit/symbol):
+ SUPER_ADMIN_EMAIL="you@example.com" \
+ SUPER_ADMIN_PASSWORD="YourStr0ng!Password" \
+ npm run seed:super-admin
+```
+
+#### Step 9 — Set up and start the frontend
+
+Open a **second terminal tab** (leave the backend running in the first):
+
+```bash
+cd ~/projects/csd-fund/ui
+
+npm install
+npm start
+```
+
+Angular DevServer starts at `http://localhost:4200`. It proxies API calls to `http://localhost:3000` via `environment.ts`.
+
+#### Step 10 — Verify the full stack
+
+1. Open `http://localhost:4200` in a browser — the homepage should load.
+2. Go to `http://localhost:4200/login` and sign in with the super-admin credentials from Step 8.
+3. Navigate to `http://localhost:4200/admin` — the admin panel should be visible.
+4. Open DevTools → Network tab and confirm API requests go to `localhost:3000/api/…` with HTTP 200.
+
+---
+
+### 4.2 Windows setup
+
+#### Step 1 — Install Git for Windows *(one-time)*
+
+Download and run the installer from <https://git-scm.com/download/win>.
+
+Recommended options during setup:
+- **Adjusting your PATH**: *Git from the command line and also from 3rd-party software*
+- **Line ending conversions**: *Checkout as-is, commit Unix-style line endings*
+- **Terminal emulator**: *Use Windows' default console window* (or MinTTY if you prefer)
+
+After installation, open **PowerShell** (or Git Bash) and configure line endings:
+
+```powershell
+git config --global core.autocrlf input
+```
+
+#### Step 2 — Enable long paths *(one-time, requires Admin)*
+
+`node_modules` can exceed Windows' default 260-character path limit. Enable long-path support **before** running `npm install`.
+
+```powershell
+# Open PowerShell as Administrator, then run:
+git config --system core.longpaths true
+
+Set-ItemProperty `
+  -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+  -Name "LongPathsEnabled" `
+  -Value 1
+```
+
+Restart your terminal after this step.
+
+#### Step 3 — Install Node.js 22 via fnm *(one-time)*
+
+```powershell
+# Install fnm via winget (Windows Package Manager, built into Windows 10/11):
+winget install Schniz.fnm
+
+# Restart PowerShell, then:
+fnm install 22.17.0
+fnm use 22.17.0
+
+# Verify:
+node --version   # must print v22.17.0
+npm --version    # must print 10.x
+```
+
+> If `winget` is not available, download fnm from <https://github.com/Schniz/fnm/releases> and add it to your `PATH` manually. Alternatively download Node.js 22.17.0 directly from <https://nodejs.org>.
+
+#### Step 4 — Install Docker Desktop and start PostgreSQL *(one-time)*
+
+Docker is the recommended way to run PostgreSQL on Windows — no manual user/DB creation needed.
+
+1. Download **Docker Desktop** from <https://www.docker.com/products/docker-desktop/>.
+2. During install, enable the **WSL 2 backend** when prompted (recommended).
+3. Launch Docker Desktop and wait until the whale icon in the system tray shows *"Docker Desktop is running"*.
+
+Then start a PostgreSQL 16 container:
+
+```powershell
+docker run -d `
+  --name csd-pg `
+  --restart unless-stopped `
+  -e POSTGRES_USER=csd_user `
+  -e POSTGRES_PASSWORD=csd_password `
+  -e POSTGRES_DB=csd_db `
+  -p 5433:5432 `
+  postgres:16
+
+# Verify:
+docker exec csd-pg psql -U csd_user -d csd_db -c "SELECT version();"
+```
+
+> The container is mapped to **host port 5433** (not 5432) so it does not conflict with any other PostgreSQL that may be installed. Set `DB_PORT=5433` in your `.env` in the next step.
+
+#### Step 5 — Clone the repository
+
+```powershell
+New-Item -ItemType Directory -Path "$HOME\projects" -Force
+cd "$HOME\projects"
+git clone https://github.com/Endorrfin/csd.git csd-fund
+cd csd-fund
+```
+
+#### Step 6 — Configure and start the backend
+
+```powershell
+cd backend
+
+# Copy the environment template:
+Copy-Item .env.example .env
+# Or in Git Bash: cp .env.example .env
+```
+
+Open `.env` in VS Code (`code .env`) and set:
+
+```dotenv
+DB_HOST=localhost
+DB_PORT=5433          # Docker mapping
+DB_USERNAME=csd_user
+DB_PASSWORD=csd_password
+DB_NAME=csd_db
+
+# Generate a strong secret:
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+JWT_SECRET=<paste-here>
+
+FRONTEND_URL=http://localhost:4200
+```
+
+```powershell
+# Install dependencies:
+npm install
+
+# Run all pending migrations:
+npm run migration:run
+
+# Confirm all migrations ran ([X] next to each):
+npm run migration:show
+
+# Start the API with hot-reload:
+npm run start:dev
+```
+
+Smoke test (open a second PowerShell tab):
+
+```powershell
+curl http://localhost:3000/api/health
+# Expected: {"status":"ok"}
+```
+
+#### Step 7 — Seed the super-admin account *(first time only)*
+
+**PowerShell:**
+
+```powershell
+$env:SUPER_ADMIN_EMAIL = "you@example.com"
+$env:SUPER_ADMIN_PASSWORD = "YourStr0ng!Password"
+npm run seed:super-admin
+
+# Clear sensitive env vars immediately:
+Remove-Item Env:SUPER_ADMIN_EMAIL
+Remove-Item Env:SUPER_ADMIN_PASSWORD
+```
+
+**Git Bash (alternative):**
+
+```bash
+ SUPER_ADMIN_EMAIL="you@example.com" \
+ SUPER_ADMIN_PASSWORD="YourStr0ng!Password" \
+ npm run seed:super-admin
+```
+
+#### Step 8 — Set up and start the frontend
+
+Open a **new PowerShell tab** (keep the backend running):
+
+```powershell
+cd "$HOME\projects\csd-fund\ui"
+npm install
+npm start
+```
+
+#### Step 9 — Verify the full stack
+
+1. Open `http://localhost:4200` — homepage loads.
+2. Sign in at `/login` with the super-admin credentials.
+3. Navigate to `/admin` — admin panel visible.
+4. DevTools → Network: API calls return 200 from `localhost:3000/api/…`.
+
+---
+
+### 4.3 Recommended VS Code extensions
+
+Install these to get linting, formatting, and Angular template support working in the editor:
+
+| Extension | ID | Purpose |
+| --- | --- | --- |
+| Angular Language Service | `angular.ng-template` | Template autocomplete and type-checking |
+| ESLint | `dbaeumer.vscode-eslint` | Inline lint errors (both `eslint.config.mjs` files) |
+| Prettier | `esbenp.prettier-vscode` | Auto-format on save (shared `.prettierrc`) |
+| Error Lens | `usernamehw.errorlens` | Inline error messages without hovering |
+| GitLens | `eamodio.gitlens` | Git blame, history, branch visualization |
+| DotENV | `mikestead.dotenv` | Syntax highlighting for `.env` files |
+| REST Client | `humao.rest-client` | Test API endpoints from `.http` files |
+
+**Recommended VS Code workspace settings** — add to `.vscode/settings.json` at the repo root:
+
+```json
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[html]": {
+    "editor.defaultFormatter": "angular.ng-template"
+  },
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "eslint.workingDirectories": ["backend", "ui"]
+}
+```
+
+---
+
+### 4.4 Day-to-day workflow
+
+```bash
+# 1. Get the latest code:
+git pull origin main          # or: git pull origin <your-branch>
+
+# 2. Check for new backend dependencies or migrations:
+cd backend
+npm install                   # safe to re-run; skips if nothing changed
+npm run migration:show        # look for any [ ] (un-run) entries
+npm run migration:run         # run if there are pending migrations
+
+# 3. Check for new frontend dependencies:
+cd ../ui && npm install
+
+# 4. Start both servers (two terminal tabs):
+#   Tab 1 → backend/:  npm run start:dev
+#   Tab 2 → ui/:       npm start
+
+# 5. Before committing your changes (from the relevant app directory):
+npm run lint                  # must pass with zero errors
+npm test                      # must pass
+```
+
+---
+
+### 4.5 Troubleshooting
+
+**`Error: JWT_SECRET must be at least 32 characters`**
+The backend refuses to start if `JWT_SECRET` is missing or short. Generate one:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+Paste the output into `.env` under `JWT_SECRET=`.
+
+**`connect ECONNREFUSED 127.0.0.1:5432` (or 5433)**
+The database is not running.
+- Homebrew (macOS): `brew services restart postgresql@16`
+- Docker: `docker start csd-pg`
+
+**`relation "migrations" does not exist`**
+Migrations have never been run. Execute `npm run migration:run` inside `backend/`.
+
+**`EADDRINUSE: address already in use :::3000`**
+Another process is on port 3000. Find and stop it:
+```bash
+# macOS / Git Bash:
+lsof -ti :3000 | xargs kill -9
+
+# Windows PowerShell:
+Get-Process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess | Stop-Process
+```
+
+**`EADDRINUSE: address already in use :::4200`**
+Same issue on the frontend port:
+```bash
+# macOS / Git Bash:
+lsof -ti :4200 | xargs kill -9
+
+# Windows PowerShell:
+Get-Process -Id (Get-NetTCPConnection -LocalPort 4200).OwningProcess | Stop-Process
+```
+
+**Infinite spinner on `http://localhost:4200`**
+The backend is not running or the frontend cannot reach it. Check that `npm run start:dev` is running in `backend/` and that `curl http://localhost:3000/api/health` returns `{"status":"ok"}`.
+
+**`npm install` fails with path-length errors on Windows**
+Long paths are not enabled. Follow Step 2 of the Windows setup and restart your terminal.
+
+**`node --version` shows the wrong version**
+fnm is not activating automatically. Run `fnm use 22.17.0` manually, or confirm `eval "$(fnm env --use-on-cd ...)"` is in your shell profile.
+
+---
+
+## 5. Where to go next
 
 - **Backend setup, migrations, common issues** → [`backend/README.md`](./backend/README.md)
 - **Frontend Angular CLI commands** → [`ui/README.md`](./ui/README.md)
