@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Engineering — CSD Curriculum Tracker</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f6f7f9; --card:#ffffff; --ink:#1a1d21; --muted:#5b6470; --line:#e6e9ee;
+  --accent:#d24a2e; --accent-soft:#fbeae5; --done:#1f9d57; --done-soft:#eaf7f0;
+  --shadow:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:22px 16px;}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-size:21px;margin:0 0 3px;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+.overall{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 18px;box-shadow:var(--shadow);margin-bottom:8px}
+.overall .row{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.pct{font-size:22px;font-weight:750}
+.bar{height:10px;background:#eef1f5;border-radius:999px;overflow:hidden;margin-top:9px}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#e8714f);transition:width .35s ease}
+.bar.full>i{background:linear-gradient(90deg,var(--done),#34c47b)}
+.phase{margin:22px 2px 9px;font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:750}
+.card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 15px;box-shadow:var(--shadow);margin-bottom:11px}
+.card.complete{border-color:#bfe6cf;background:var(--done-soft)}
+.chead{display:flex;align-items:center;gap:11px;cursor:pointer;user-select:none}
+.wk{flex:0 0 auto;width:30px;height:30px;border-radius:8px;background:var(--accent-soft);color:var(--accent);
+  font-weight:750;display:flex;align-items:center;justify-content:center;font-size:13px}
+.card.complete .wk{background:#d4efe0;color:var(--done)}
+.ctitle{flex:1;font-weight:650;font-size:15px}
+.cright{display:flex;align-items:center;gap:9px}
+.count{font-size:12px;color:var(--muted);white-space:nowrap}
+.chev{color:#aab2bd;font-size:11px;transition:transform .2s}
+.chev.open{transform:rotate(90deg)}
+.goal{font-size:12.5px;color:var(--muted);margin:8px 2px 2px;padding-left:41px}
+ul.items{margin:6px 0 2px;padding:0;list-style:none}
+ul.items.collapsed{display:none}
+.items li{display:flex;gap:10px;align-items:flex-start;padding:8px 4px 8px 41px;border-top:1px solid var(--line)}
+.items li:first-child{border-top:none}
+.items input{margin:2px 0 0;width:17px;height:17px;accent-color:var(--accent);flex:0 0 auto;cursor:pointer}
+.items label{cursor:pointer;font-size:14px}
+.items li.done label{color:#9aa3ad;text-decoration:line-through}
+footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;color:var(--muted);font-size:12px;gap:12px;flex-wrap:wrap}
+button.reset{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 13px;cursor:pointer;color:var(--muted);font:inherit}
+button.reset:hover{border-color:var(--accent);color:var(--accent)}
+.tip{font-size:12px;color:var(--muted);margin:2px 2px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>AI Engineering — CSD Curriculum Tracker</h1>
+  <p class="sub">10 тижнів · пісочниця: CSD Platform · ~5–6 год/тиж · прогрес зберігається у браузері</p>
+
+  <div class="overall">
+    <div class="row">
+      <span><b id="doneCount">0</b> / <span id="totalCount">0</span> кроків · <span id="weeksDone">0</span>/10 тижнів завершено</span>
+      <span class="pct" id="pct">0%</span>
+    </div>
+    <div class="bar" id="bar"><i></i></div>
+  </div>
+  <p class="tip">Натисни на тиждень, щоб згорнути/розгорнути. Відмічай кроки в міру виконання — стан зберігається автоматично.</p>
+
+  <div id="weeks"></div>
+
+  <footer>
+    <span id="stamp"></span>
+    <button class="reset" id="reset">Скинути прогрес</button>
+  </footer>
+</div>
+
+<script>
+const DATA = [
+  {n:1, phase:"Фаза 1 · Фундамент (тижні 1–3)", title:"Foundations: setup, agentic loop, продуктивність",
+   goal:"Працювати в Claude Code на CSD упевнено вже цього тижня.",
+   items:["Налаштувати .claude/settings.json (permissions + model)","Виконати 3 реальні задачі через plan mode (DTO, ESLint-фікс, пояснення компонента)","Завести LEARNING-LOG.md","Скласти cheat-sheet топ-команд"]},
+  {n:2, title:"L1 Memory: CLAUDE.md + context engineering",
+   goal:"Зробити так, щоб агент «розумів» CSD з першого рядка.",
+   items:["Написати ./CLAUDE.md ≤200 рядків під стек CSD","Винести деталі в docs/ і підключити через @-imports","Додати ~/.claude/CLAUDE.md з особистими преференсами"]},
+  {n:3, title:"Теорія: механіка LLM під капотом",
+   goal:"Розуміти, чому агент так поводиться (промптінг, галюцинації, вартість).",
+   items:["Експерименти: temperature, токени/вартість, спровокована галюцинація","docs/notes/LLM-internals.md","Особистий hallucination-defense чеклист"]},
+  {n:4, phase:"Фаза 2 · Розширюваність (тижні 4–7)", title:"L2 Knowledge: Skills",
+   goal:"Закодувати повторювані патерни CSD як skills.",
+   items:["Skill: nestjs-resource (controller+service+DTO+spec)","Skill: angular-signal-component","Skill: pr-description (зі скриптом у scripts/)"]},
+  {n:5, title:"L3 Guardrail: Hooks + custom commands",
+   goal:"Детерміновані guardrails для якості й безпеки.",
+   items:["PreToolUse hook: block-dangerous-bash.sh","PostToolUse hook: format-on-write.sh (prettier+eslint)","SessionStart hook: гілка + нагадування конвенцій","Команди /spec і /commit"]},
+  {n:6, title:"L4 Delegation: Subagents",
+   goal:"Делегувати багатослівну роботу в ізольований контекст.",
+   items:["Субагент code-reviewer.md","Субагент test-runner.md (Haiku)","Субагент explorer.md (read-only)"]},
+  {n:7, title:"MCP: Model Context Protocol",
+   goal:"Під'єднати зовнішні інструменти й зробити власний MCP.",
+   items:["Postgres MCP (read-only) до локальної БД CSD","Playwright MCP: smoke-E2E логіну","Власний MCP-сервер ~50 рядків (TS)"]},
+  {n:8, phase:"Фаза 3 · SDLC (тижні 8–9)", title:"Spec-Driven Development фічі на CSD",
+   goal:"Провести одну реальну фічу через spec→plan→implement→verify.",
+   items:["specs/feature-x/spec.md + plan.md","TDD: NestJS endpoint + TypeORM міграція","Angular signal-компонент","Тести unit+integration+E2E — зелені","Рев'ю-субагент по diff пройдено"]},
+  {n:9, title:"Quality gates: review, CI/CD, evals, headless",
+   goal:"Автоматизувати якість і навчитись довіряти агенту через evals.",
+   items:["GitHub Action: @claude рев'ю на PR","evals/ з 20 trace-задач (with vs without skill)","Headless fan-out скрипт (claude -p по N файлах)","Автоген README/ADR/changelog"]},
+  {n:10, phase:"Фаза 4 · Масштаб і запуск (тиждень 10)", title:"Scale, distribution, production: ship CSD MVP",
+   goal:"Масштабувати, запакувати в plugin, задеплоїти MVP.",
+   items:["harness-plugin (plugin.json) з skills+agents+hooks","Worktree fan-out: 2–3 паралельні задачі + лог","Деплой CSD MVP (Serverless v4 + GitHub Actions)","Оновити резюме/LinkedIn секцією AI-engineering"]}
+];
+
+const KEY = "csd-ai-curriculum-progress-v1";
+const COLLKEY = "csd-ai-curriculum-collapsed-v1";
+let state = {};
+let collapsed = {};
+try { state = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch(e){ state = {}; }
+try { collapsed = JSON.parse(localStorage.getItem(COLLKEY) || "{}"); } catch(e){ collapsed = {}; }
+
+const save = () => localStorage.setItem(KEY, JSON.stringify(state));
+const saveColl = () => localStorage.setItem(COLLKEY, JSON.stringify(collapsed));
+
+const weeksEl = document.getElementById("weeks");
+
+function weekDone(w){ return w.items.every((_,i)=>state[`w${w.n}-${i}`]); }
+
+function render(){
+  weeksEl.innerHTML = "";
+  DATA.forEach(w=>{
+    if(w.phase){
+      const p=document.createElement("div"); p.className="phase"; p.textContent=w.phase; weeksEl.appendChild(p);
+    }
+    const done = w.items.filter((_,i)=>state[`w${w.n}-${i}`]).length;
+    const isColl = !!collapsed[w.n];
+    const card=document.createElement("div");
+    card.className="card"+(weekDone(w)?" complete":"");
+    card.innerHTML =
+      `<div class="chead" data-week="${w.n}">
+         <div class="wk">${weekDone(w)?"✓":w.n}</div>
+         <div class="ctitle">Тиждень ${w.n}. ${w.title}</div>
+         <div class="cright"><span class="count">${done}/${w.items.length}</span><span class="chev ${isColl?'':'open'}">▶</span></div>
+       </div>
+       <div class="goal">${w.goal}</div>
+       <ul class="items ${isColl?'collapsed':''}">
+         ${w.items.map((t,i)=>{
+            const id=`w${w.n}-${i}`; const ck=state[id]?'checked':'';
+            return `<li class="${state[id]?'done':''}"><input type="checkbox" id="${id}" ${ck}><label for="${id}">${t}</label></li>`;
+         }).join("")}
+       </ul>`;
+    weeksEl.appendChild(card);
+  });
+  bindHeads();
+  updateTotals();
+}
+
+function bindHeads(){
+  document.querySelectorAll(".chead").forEach(h=>{
+    h.addEventListener("click", e=>{
+      if(e.target.tagName==="INPUT") return;
+      const n=h.getAttribute("data-week");
+      collapsed[n]=!collapsed[n]; saveColl(); render();
+    });
+  });
+}
+
+function updateTotals(){
+  const total = DATA.reduce((s,w)=>s+w.items.length,0);
+  const done = Object.keys(state).filter(k=>state[k]).length;
+  const wd = DATA.filter(weekDone).length;
+  const pct = total? Math.round(done/total*100):0;
+  document.getElementById("doneCount").textContent=done;
+  document.getElementById("totalCount").textContent=total;
+  document.getElementById("weeksDone").textContent=wd;
+  document.getElementById("pct").textContent=pct+"%";
+  const bar=document.getElementById("bar");
+  bar.querySelector("i").style.width=pct+"%";
+  bar.classList.toggle("full", pct===100);
+}
+
+weeksEl.addEventListener("change", e=>{
+  if(e.target.tagName!=="INPUT") return;
+  state[e.target.id]=e.target.checked; save();
+  e.target.closest("li").classList.toggle("done", e.target.checked);
+  // refresh week card (count + complete state)
+  render();
+});
+
+document.getElementById("reset").addEventListener("click", ()=>{
+  if(confirm("Скинути весь прогрес курсу?")){ state={}; save(); render(); }
+});
+
+const d=new Date();
+document.getElementById("stamp").textContent =
+  "CSD Platform · AI Engineering · оновлено "+d.toLocaleDateString("uk-UA");
+
+render();
+</script>
+</body>
+</html>

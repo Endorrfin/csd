@@ -97,7 +97,7 @@ These override generic Claude defaults. They apply everywhere in the repo.
   - `about` exists but `README` doesn't mention it
 - `backend/lambda.ts` lives at `backend/lambda.ts` (repo root of the backend), **not** in `backend/src/`.
 - `partners` route on the frontend is currently commented out in `ui/src/app/app.routes.ts` even though the feature folder exists.
-- `backend/README.md` mentions Homebrew `postgresql@14` on port 5432; `backend/.env.example` actually defaults to `DB_PORT=5433` (different local setups in use).
+- `backend/.env.example` defaults to `DB_PORT=5432` (Homebrew `postgresql@14`, matching `backend/README.md`); `5433` appears only in that file's comment as the Docker host:container-mapping alternative.
 
 When in doubt: open the actual `.ts`/`.yml`/`package.json`. Don't quote the docs as authoritative.
 
