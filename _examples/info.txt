@@ -1,0 +1,78 @@
+
+Agentic Engineering
+1. Module 1: Claude Code
+    1. Встановлення Claude Code та IDE-інтеграція
+    2. Конфігурація: моделі, дозволи, settings.json
+    3. Сесії та контекст: як Claude «бачить» твій проект    4. Compaction: коли і навіщо стискати контекст    5. Permissions та sandboxing у щоденній роботі    6. Git worktrees та Undo для версіонування
+    7. RESULT: Claude Code встановлений і налаштований. Перша задача виконана на реальному проекті.
+2. Module 2: Prompt & Context Engineering
+    1. Принципи промптінгу для розробників    2. Few-shot, Chain of Thought, системні промпти    3. Context Engineering: @ згадки, файли, скріншоти    4. CLAUDE.md: project / local / machine рівні    5. Crafting великого CLAUDE.md для свого стеку    6. Plan Mode та Think Mode: коли і як    7. Контроль контексту: Escape, Compact, Clear    8. Робота з legacy кодом та галюцинаціями
+    9. RESULT: Студент вміє писати промпти, які дають потрібний результат. CLAUDE.md створений. Може працювати з legacy кодом і розпізнавати помилки AI.
+3. Module 3: Extensibility — Skills, Commands, Hooks, Plugins
+    1. Custom Commands: власні prompt-темплейти    2. Agent Skills: що це і як налаштувати    3. Hooks: Pre/Post Tool Use — контроль поведінки    4. Практика Hooks: type checker, security, дедуплікація    5. Plugins: встановлення та огляд кращих
+    6. RESULT: Claude повністю налаштований під твій стек. Власні commands, hooks і plugins у роботі.
+4. Module 4: SDLC Phase 1 — Підготовка проекту з Claude
+    1. Від ідеї до SPEC-файлу: brain storming з Claude    2. C4-архітектура через Mermaid    3. Проектування бази даних та міграцій    4. Scaffold проекту: структура, залежності, конфіги    5. CLAUDE.md як «пам'ять проекту»    6. Swagger/OpenAPI документація з Claude
+    7. RESULT: Проект ініціалізований - є SPEC, архітектура, DB schema, scaffold, документація. Можна починати кодити.
+5. Module 5: SDLC Phase 2 — Розробка фічей з Claude
+    1. Workflow розробки: задача → plan → code → test → PR    2. GSD Framework: discuss → plan → execute → verify    3. Побудова backend: API endpoint від початку до кінця    4. Побудова frontend: UI компонент з Figma через Claude    5. Тести: TDD підхід з Claude (unit, integration, E2E)    6. Feedback loops: скріншоти, browser access, автотести
+    7. RESULT: Перша повноцінна фіча готова - backend, frontend, тести
+6. Module 6: MCP — Model Context Protocol
+    1. Що таке MCP: архітектура клієнт-сервер    2. MCP-примітиви: Tools, Resources, Prompts    3. Підключення MCP-серверів до Claude Code    4. Playwright MCP: browser automation    5. Context7: документація в контексті    6. Створення власного MCP-сервера (Python/TS)    7. MCP Inspector: дебаг та тестування
+    8. RESULT: Студент підключив MCP сервери і створив свій
+7. Module 7: SDLC Phase 3 — Code Review, PRs, CI/CD
+    1. Git workflow з Claude: branches, commits, merge 
+    2. Pull Requests: створення та автоматизація    3. Code Review з Claude: автоматичний та ручний 
+    4. GitHub / GitLab: @Claude в PR та Issues    5. CI/CD pipeline з Claude    6. Автогенерація README, ADR, changelog
+    7. RESULT: Повний командний workflow з Claude налаштований і задокументований.
+8. Module 8: Agent Teams та Advanced Patterns
+    1. Subagents: розподіл задач між агентами 
+    2. Custom Subagents: спеціалізовані агенти    3. Agent Teams: паралельний запуск та координація    4. Claude Code в loop: Ralph loops та headless mode    5. Agentic Debugging: систематичний підхід
+    6. Claude Code Web/Cloud: remote control
+    7. RESULT: Оркеструєш кілька агентів для складних задач. Headless workflow налаштований.9. Module 9: Production, масштабування та наступні кроки
+    1. Безпека: .env, secrets, що не відправляти в AI    2. Cost management: моделі, токени, оптимізація    3. Claude API: інтеграція у власні додатки    4. Claude для команди: onboarding та стандарти    5. Деплой SaaS-проекту в production    6. AI-навички в резюме та LinkedIn
+    7. RESULT: SaaS MVP задеплоєний. Портфоліо AI-навичок оформлене.10. Extra module #1: Як працюють LLM — механіка під капотом
+    1. Токени: як текст перетворюється на числа і чому це важливо    2. Input vs Output токени: різниця в ціні та лімітах    3. Контекстне вікно: що це, вигорання контексту, переповнення    4. Стохастичність: temperature, top_p та інші параметри — чому один    5. промпт дає різні результати    6. Галюцинації: чому LLM впевнено бреше і як з цим жити    7. Attention mechanism — спрощено для розробників    8. Stateless природа LLM: модель не пам'ятає між сесіями    9. Training vs Inference: що знає модель vs що ти їй даєш    10. Embedding та векторні представлення: як модель "розуміє" текст    11. Reasoning models vs Standard: коли потрібно "думання"    12. Вартість: скільки коштує працювати з Claude щодня
+11. Extra module #2: Екосистема Claude
+    1. Tool Use / Function Calling: як LLM виконує дії у реальному світі    2. Coding Assistant = LLM + Tool Use. Анатомія    3. Agentic Loop: архітектура observe → think → act → repeat    4. System prompt vs User prompt: роль системного промпту    5. Fine-tuning vs Prompting vs RAG: 3 способи адаптації моделі    6. Prompt injection: як зловмисники маніпулюють LLM    7. Data privacy: що відправляється на сервер і хто це бачить    8. AI Fluency Framework 4D (Delegation, Description, Discernment, Diligence)    9. Mindset: від "напиши код" до "керуй агентом"    10. Розробник як оркестратор - нова роль в AI
+
+
+Опануйте мультиагентну AI-розробку і Spec-Driven Development
+1. System Design
+    1. Harness: 4 компоненти + 5-фазний workflow
+        1. perception-gap аудит
+        2. CLAUDE.md v1
+        3. surface map
+    2. Skills Layer: постійні інструкції між сесіями
+        1. 3+ Skills
+        2. CLAUDE.md ≤200 рядків
+        3. /spec /plan /commit
+2. Agent Topology
+    1. Ізоляція контексту: Hub-and-Spoke vs Peer Mesh
+        1. 5 subagents
+        2. dispatch matrix
+        3. cost-per-topology звіт
+    2. MCP інтеграція: зовнішні сервіси за єдиним протоколом
+        1. custom MCP server ~50 рядків
+        2. token budget аудит
+        3. hybrid Skill+MCP
+3. CI Pipeline
+    1. Spec-Driven Development: spec → plan → implement → verify
+        1. spec.md + plan.md
+        2. feature за $17.42
+        3. retro-spec
+    2. Quality Gates: hooks → TDD → plan-verifier → evals
+        1. 3 hooks
+        2. plan-verifier у CI
+        3. 20-trace eval
+        4. mutation report
+4. Масштаб + Production
+    1. Паралельний fan-out: worktree × 3 агенти + migration playbook
+        1. working migration
+        2. fan-out log
+        3. cost delta звіт
+    2. Plugin packaging + CI agents + 30-day rollout
+        1. FINAL BUNDLE: harness plugin
+        2. CI agent
+        3. deployed DevDigest v1
+
