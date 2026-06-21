@@ -115,4 +115,12 @@ export const routes: Routes = [
     redirectTo: 'needs/wash-form',
     pathMatch: 'full',
   },
+
+  // === ADDED: wildcard route for 404 page ===
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
+  // === END ADDED ===
 ];
