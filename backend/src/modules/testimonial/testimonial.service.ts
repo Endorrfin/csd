@@ -33,7 +33,11 @@ export class TestimonialService {
   async findAllForAdmin(
     query: AdminTestimonialQueryDto,
   ): Promise<PaginatedTestimonials> {
-    const qb = this.repo.createQueryBuilder('t').orderBy('t.createdAt', 'DESC');
+    // honor query.sort direction (default 'desc') instead of hardcoded DESC
+    const direction = query.sort === 'asc' ? 'ASC' : 'DESC';
+    const qb = this.repo
+      .createQueryBuilder('t')
+      .orderBy('t.createdAt', direction);
 
     if (query.status) {
       qb.andWhere('t.status = :status', { status: query.status });

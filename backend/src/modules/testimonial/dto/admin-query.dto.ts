@@ -1,30 +1,10 @@
 // backend/src/modules/testimonial/dto/admin-query.dto.ts
-import {
-  IsBooleanString,
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  Max,
-  Min,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+// extend reusable PaginationQueryDto (page/limit/sort); drop duplicated page/limit
+import { IsBooleanString, IsEnum, IsOptional, IsString } from 'class-validator';
+import { PaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 import { TestimonialStatus } from '../entities/testimonial.entity';
 
-export class AdminTestimonialQueryDto {
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  page: number = 1;
-
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit: number = 20;
-
+export class AdminTestimonialQueryDto extends PaginationQueryDto {
   @IsOptional()
   @IsEnum(TestimonialStatus)
   status?: TestimonialStatus;
