@@ -24,9 +24,7 @@ tmp/
 
 *.tsbuildinfo
 
-.vscode
 .vscode/
-.idea
 .idea/
 *.iml
 *.sublime-workspace
@@ -52,3 +50,7 @@ docs/audit/AUDIT-2026-06.md
 csd-feature-tasks.xlsx
 csd-junior-tasks.xlsx
 _examples/
+
+#AI
+docs/learning/
+docs/learning/LEARNING-LOG.md
