@@ -1,6 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
   selector: 'app-needs',
@@ -140,8 +141,16 @@ import { TranslateService } from '@ngx-translate/core';
     `,
   ],
 })
-export class NeedsComponent {
+export class NeedsComponent implements OnInit {
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
+
+  ngOnInit(): void {
+    this.pageTitle.setTitle('NAV.NEEDS');
+  }
+
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
   }

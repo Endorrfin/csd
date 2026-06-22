@@ -6,6 +6,7 @@ import { LanguageService } from '../../core/services/language.service';
 import { ApiService } from '../../core/services/api.service';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
 import { AboutDocument, AboutDocumentType, AboutSection } from '../admin/about/about.interfaces';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 interface PublicAboutResponse {
   sections: AboutSection[];
@@ -308,6 +309,9 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
 })
 export class AboutComponent implements OnInit {
   private readonly api = inject(ApiService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   // ----- State -----
   loading = signal(true);
@@ -330,6 +334,7 @@ export class AboutComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadAbout();
+    this.pageTitle.setTitle('about.page.title');
   }
 
   private loadAbout(): void {

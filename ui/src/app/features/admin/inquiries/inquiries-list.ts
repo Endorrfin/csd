@@ -12,6 +12,7 @@ import {
   PaginatedInquiries,
 } from './inquiry.interfaces';
 import { InquiryDrawerComponent } from './inquiry-drawer';
+import { PageTitleService } from '../../../core/services/page-title.service';
 
 const STATUSES: InquiryStatus[] = [
   InquiryStatus.NEW,
@@ -564,6 +565,10 @@ export class AdminInquiriesListComponent implements OnInit {
   readonly statuses = STATUSES;
   readonly reasons = REASONS;
 
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
+
   items = signal<InquiryItem[]>([]);
   total = signal(0);
   totalPages = signal(1);
@@ -586,6 +591,7 @@ export class AdminInquiriesListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadItems();
+    this.pageTitle.setTitle('admin_titles.inquiries', true);
   }
 
   loadItems(): void {
