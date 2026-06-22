@@ -12,6 +12,7 @@ import {
   ProcurementMethod,
   ProcurementStatus,
 } from '../../cooperation/procurement/procurement.interfaces';
+import { PageTitleService } from '../../../core/services/page-title.service';
 
 // Active statuses available in admin UI dropdown (CLOSED is legacy, hidden)
 const ACTIVE_STATUSES: ProcurementStatus[] = [
@@ -490,6 +491,9 @@ export class AdminProcurementsListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   readonly activeStatuses = ACTIVE_STATUSES;
 
@@ -516,6 +520,7 @@ export class AdminProcurementsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadItems();
+    this.pageTitle.setTitle('admin_titles.procurements', true);
   }
 
   loadItems(): void {

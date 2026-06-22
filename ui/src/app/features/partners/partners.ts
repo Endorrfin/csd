@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ApiService } from '../../core/services/api.service';
 import { TranslateService } from '@ngx-translate/core';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 interface Partner {
   id: string;
@@ -46,12 +47,17 @@ interface Partner {
 export class PartnersComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
-  partners: Partner[] = [];
-  get isUa() {
-    return (this.translate.currentLang || 'ua') === 'ua';
-  }
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   ngOnInit() {
     this.api.get<Partner[]>('partners').subscribe((data) => (this.partners = data));
+    this.pageTitle.setTitle('NAV.PARTNERS');
+  }
+
+  partners: Partner[] = [];
+  get isUa() {
+    return (this.translate.currentLang || 'ua') === 'ua';
   }
 }

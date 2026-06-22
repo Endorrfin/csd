@@ -11,6 +11,7 @@ import {
 } from '../../cooperation/complaint/complaint.interfaces';
 import { ComplaintDrawerComponent } from './complaint-drawer';
 import { environment } from '../../../../environments/environment';
+import { PageTitleService } from '../../../core/services/page-title.service';
 
 const STATUSES: ComplaintStatus[] = [
   ComplaintStatus.NEW,
@@ -607,6 +608,10 @@ export class AdminComplaintsListComponent implements OnInit {
   readonly statuses = STATUSES;
   readonly categories = CATEGORIES;
 
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
+
   items = signal<ComplaintItem[]>([]);
   total = signal(0);
   totalPages = signal(1);
@@ -633,6 +638,7 @@ export class AdminComplaintsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadItems();
+    this.pageTitle.setTitle('admin_titles.complaints', true);
   }
 
   loadItems(): void {

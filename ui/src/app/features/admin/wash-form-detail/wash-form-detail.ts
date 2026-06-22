@@ -8,6 +8,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { WashFormComponent } from '../../needs/wash-form/wash-form';
+import { PageTitleService } from '../../../core/services/page-title.service';
+
 import {
   WashFormDetail,
   UpdateWashFormFullPayload,
@@ -930,6 +932,9 @@ export class WashFormDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   readonly getUnitLabel = getUnitLabel;
 
@@ -958,6 +963,7 @@ export class WashFormDetailComponent implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) this.loadForm(id);
+    this.pageTitle.setTitle('admin_titles.wash_form_detail', true);
   }
 
   private loadForm(id: string): void {

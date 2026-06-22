@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
+import { PageTitleService } from '../../../core/services/page-title.service';
 import {
   EmploymentType,
   PaginatedVacancies,
@@ -446,6 +447,9 @@ const ACTIVE_STATUSES: VacancyStatus[] = [
 export class AdminVacanciesListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   readonly activeStatuses = ACTIVE_STATUSES;
 
@@ -472,6 +476,7 @@ export class AdminVacanciesListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadItems();
+    this.pageTitle.setTitle('admin_titles.vacancies', true);
   }
 
   loadItems(): void {

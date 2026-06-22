@@ -6,7 +6,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
 import { environment } from '../../../../environments/environment';
-
+import { PageTitleService } from '../../../core/services/page-title.service';
 // typed status + sortable field keys
 type FormStatus = 'new' | 'in_review' | 'approved' | 'rejected' | 'in_progress' | 'completed';
 
@@ -529,6 +529,9 @@ export class WashFormsListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
@@ -580,6 +583,7 @@ export class WashFormsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadForms();
+    this.pageTitle.setTitle('admin_titles.wash_forms', true);
   }
 
   // URLSearchParams (safer encoding) + sort + date range params
