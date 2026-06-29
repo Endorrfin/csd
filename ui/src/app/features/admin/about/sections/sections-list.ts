@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../../core/services/api.service';
 import { AboutSection, ALL_SECTION_KEYS } from '../about.interfaces';
+import { PageTitleService } from '../../../../core/services/page-title.service';
 
 @Component({
   selector: 'app-admin-about-sections-list',
@@ -295,6 +296,9 @@ import { AboutSection, ALL_SECTION_KEYS } from '../about.interfaces';
 export class AdminAboutSectionsListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   items = signal<AboutSection[]>([]);
   loading = signal(true);
@@ -308,6 +312,7 @@ export class AdminAboutSectionsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadItems();
+    this.pageTitle.setTitle('admin_titles.about', true);
   }
 
   // if all 10 enum keys are used, hide create button (key is unique constraint)

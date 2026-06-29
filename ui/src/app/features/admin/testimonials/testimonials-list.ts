@@ -10,6 +10,7 @@ import {
   TestimonialItem,
   TestimonialStatus,
 } from '../../cooperation/testimonial/testimonial.interfaces';
+import { PageTitleService } from '../../../core/services/page-title.service';
 
 // Active statuses shown in dropdown
 const ACTIVE_STATUSES: TestimonialStatus[] = [
@@ -587,6 +588,9 @@ interface RejectModalState {
 export class AdminTestimonialsListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   readonly activeStatuses = ACTIVE_STATUSES;
 
@@ -615,6 +619,7 @@ export class AdminTestimonialsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadItems();
+    this.pageTitle.setTitle('admin_titles.testimonials', true);
   }
 
   loadItems(): void {

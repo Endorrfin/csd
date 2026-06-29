@@ -1,9 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
   selector: 'app-forgot-password',
@@ -213,10 +214,13 @@ import { ApiService } from '../../core/services/api.service';
     `,
   ],
 })
-export class ForgotPasswordComponent {
+export class ForgotPasswordComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
@@ -238,6 +242,10 @@ export class ForgotPasswordComponent {
   resetState(): void {
     this.sent.set(false);
     this.form.reset();
+  }
+
+  ngOnInit(): void {
+    this.pageTitle.setTitle('auth.forgot.title');
   }
 
   onSubmit(): void {

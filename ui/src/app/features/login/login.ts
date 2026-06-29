@@ -1,11 +1,12 @@
 // ui/src/app/features/login/login.ts
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
   selector: 'app-login',
@@ -199,12 +200,15 @@ import { AuthService } from '../../core/services/auth.service';
     `,
   ],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
@@ -221,6 +225,10 @@ export class LoginComponent {
   showError(field: string): boolean {
     const c = this.form.get(field);
     return !!(c && c.invalid && c.touched);
+  }
+
+  ngOnInit(): void {
+    this.pageTitle.setTitle('NAV.LOGIN');
   }
 
   onSubmit(): void {

@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
   selector: 'app-cooperation',
@@ -97,4 +98,12 @@ import { TranslateModule } from '@ngx-translate/core';
     `,
   ],
 })
-export class CooperationComponent {}
+export class CooperationComponent implements OnInit {
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
+
+  ngOnInit() {
+    this.pageTitle.setTitle('NAV.COOPERATION');
+  }
+}

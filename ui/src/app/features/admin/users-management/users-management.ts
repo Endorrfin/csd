@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PageTitleService } from '../../../core/services/page-title.service';
 
 interface UserRow {
   id: string;
@@ -291,6 +292,9 @@ export class UsersManagementComponent implements OnInit {
   private readonly api = inject(ApiService);
   readonly auth = inject(AuthService);
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
@@ -306,6 +310,7 @@ export class UsersManagementComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsers();
+    this.pageTitle.setTitle('admin_titles.users', true);
   }
 
   filteredUsers(): UserRow[] {

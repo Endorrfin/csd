@@ -1,9 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 // CHANGED: general contact/inquiry form on the Contacts page
 import { InquiryFormComponent } from './inquiry-form';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 interface ContactChannel {
   readonly key: 'PROCUREMENT' | 'VACANCY' | 'TESTIMONIAL' | 'COMPLAINT';
@@ -370,9 +371,12 @@ type GuideItemKey = 'GENERAL' | 'TESTIMONIAL' | 'COMPLAINT' | 'VACANCY' | 'PROCU
     `,
   ],
 })
-export class ContactComponent {
+export class ContactComponent implements OnInit {
   readonly email = 'office.ua.csd@gmail.com';
   readonly facebookUrl = 'https://www.facebook.com/profile.php?id=61566893468669';
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   readonly channels: readonly ContactChannel[] = [
     { key: 'PROCUREMENT', route: '/cooperation/procurement', icon: '🛒' },
@@ -388,4 +392,8 @@ export class ContactComponent {
     'VACANCY',
     'PROCUREMENT',
   ];
+
+  ngOnInit() {
+    this.pageTitle.setTitle('CONTACT.PAGE.TITLE');
+  }
 }

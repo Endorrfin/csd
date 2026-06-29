@@ -4,6 +4,7 @@ import { LanguageService } from '../../core/services/language.service';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BlogPost } from './blog.interfaces'; // CHANGED: typed posts instead of any
+import { PageTitleService } from '../../core/services/page-title.service';
 
 interface PaginatedPosts {
   items: BlogPost[];
@@ -98,6 +99,9 @@ interface PaginatedPosts {
 })
 export class BlogComponent implements OnInit {
   private readonly api = inject(ApiService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   private readonly PAGE_SIZE = 20;
   posts = signal<BlogPost[]>([]); // CHANGED: was signal<any[]>
@@ -109,6 +113,7 @@ export class BlogComponent implements OnInit {
 
   ngOnInit() {
     this.loadPosts(1);
+    this.pageTitle.setTitle('NAV.BLOG');
   }
 
   loadPosts(page: number) {
