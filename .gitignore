@@ -1,9 +1,10 @@
 node_modules/
 dist/
 coverage/
+# env: ignore real env files, keep the committed template
 .env
-.env.example
-.env.* # keep .env.example committed, ignore actual env files
+.env.*
+!.env.example
 *.env.local
 *.env.test
 npm-debug.log*
@@ -23,9 +24,7 @@ tmp/
 
 *.tsbuildinfo
 
-.vscode
 .vscode/
-.idea
 .idea/
 *.iml
 *.sublime-workspace
@@ -50,3 +49,8 @@ docs/audit/
 docs/audit/AUDIT-2026-06.md
 csd-feature-tasks.xlsx
 csd-junior-tasks.xlsx
+_examples/
+
+#AI
+docs/learning/
+docs/learning/LEARNING-LOG.md

@@ -3,6 +3,7 @@
 > **Location:** `docs/ARCHITECTURE.md`
 > **Audience:** Primarily developers joining the project. Also useful for CSD fund management, donor compliance reviewers (GIZ, UNICEF), and future open-source contributors.
 > **Last updated:** May 2026 (sync pass against actual code; see CLAUDE.md for ongoing drift policy)
+> **Last verified against code:** 2026-06-21 (commit 25468a6)
 
 ---
 
@@ -129,6 +130,8 @@ graph TB
 | Local DB | PostgreSQL (Homebrew `postgresql@14` on 5432, or Docker `postgres:16` mapped to host 5433) | 14.x / 16.x |
 | ORM | TypeORM | 0.3.28 |
 | Auth | `@nestjs/jwt` + `passport` + `passport-jwt` + `passport-local` | 11.x / 0.7.x / 4.x / 1.x |
+| Password hashing | `bcrypt` (login compare + registration; super-admin seed uses 12 rounds) | 6.x |
+| Security headers | `helmet` (applied in both `main.ts` and `lambda.ts` via `common/security-headers.ts`) | 8.x |
 | Validation | `class-validator` + `class-transformer` | 0.15.x / 0.5.x |
 | Sanitization | `sanitize-html` | 2.17.x |
 | Lambda adapter | `@codegenie/serverless-express` | 4.17.x |
@@ -173,8 +176,13 @@ graph TB
 csd-fund/
 ├── README.md                    # High-level intro + link to this doc
 ├── CLAUDE.md                    # Repo-wide rules for AI-assisted work
+├── CONTRIBUTING.md              # Contribution workflow & PR conventions
 ├── docs/
 │   └── ARCHITECTURE.md          # This file
+├── infra/                       # Infra config not owned by Serverless
+│   ├── SECURITY-HEADERS.md      # CloudFront security-headers rationale
+│   ├── cloudfront-response-headers-policy.json
+│   └── s3-csd-media-cors.json   # CORS rules for the csd-media bucket
 ├── .github/
 │   ├── CODEOWNERS               # @Kirnadz is default reviewer
 │   └── workflows/
@@ -208,6 +216,7 @@ csd-fund/
 │           ├── content/         # /api/pages
 │           ├── cooperation/     # /api/cooperation — umbrella metadata
 │           ├── equipment-catalog/   # /api/equipment-catalog
+│           ├── inquiry/         # /api/inquiries — general contact-form submissions
 │           ├── needs/           # /api/needs-forms — WASH assessment
 │           ├── partners/        # /api/partners
 │           ├── procurement/     # /api/procurement
@@ -267,19 +276,23 @@ csd-fund/
 
 ```mermaid
 erDiagram
-    USER ||--o{ PROCUREMENT : "creates"
-    USER ||--o{ VACANCY : "creates"
-    USER ||--o{ WASH_FORM : "submits (optional)"
+    USER ||--o{ PROCUREMENT : "creates (SET NULL)"
+    USER ||--o{ VACANCY : "creates (SET NULL)"
     USER ||--o{ POST : "authors"
     USER ||--o{ TESTIMONIAL : "submits (optional)"
+    USER ||--o{ WASH_FORM_AUDIT_LOG : "changed by (optional)"
 
     WASH_FORM ||--o{ WASH_FORM_ITEM : "contains"
-    WASH_FORM ||--o| BOREHOLE_DRILLING : "has"
-    WASH_FORM ||--o| WATER_TOWER : "has"
-    WASH_FORM ||--o| PURIFICATION_SYSTEM : "has"
-    WASH_FORM_ITEM }o--|| EQUIPMENT_ITEM : "references"
+    WASH_FORM ||--o{ WASH_FORM_BOREHOLE : "has many"
+    WASH_FORM ||--o{ WASH_FORM_TOWER : "has many"
+    WASH_FORM ||--o{ WASH_FORM_PURIFICATION : "has many"
+    WASH_FORM ||--o{ WASH_FORM_PUMP : "has many"
+    WASH_FORM ||--o{ WASH_FORM_AUDIT_LOG : "audited by"
+    WASH_FORM_ITEM }o--|| EQUIPMENT_ITEM : "references (RESTRICT)"
 
     EQUIPMENT_CATEGORY ||--o{ EQUIPMENT_ITEM : "groups"
+
+    ABOUT_SECTION }o--o{ ABOUT_DOCUMENT : "About page content (no FK)"
 
     USER {
         uuid id PK
@@ -296,11 +309,19 @@ erDiagram
         string slug UK
         string titleUa
         string titleEn
-        text bodyUa
-        text bodyEn
+        text contentUa
+        text contentEn
+        text excerptUa
+        text excerptEn
+        string category "default 'news'"
+        string coverImage
+        jsonb images "string[]"
+        string videoUrl
         boolean isPublished
-        timestamp publishedAt
-        uuid createdById FK
+        boolean isFeatured
+        timestamptz publishedAt
+        timestamp createdAt
+        User author "ManyToOne, eager"
     }
 
     PARTNER {
@@ -357,14 +378,27 @@ erDiagram
         string authorName
         string organization
         text text
-        int rating
+        int rating "1-5, nullable"
         string photoUrl
+        jsonb photos "TestimonialPhoto[] (max 3)"
+        enum assistanceTypes "array, nullable"
+        string assistanceTypeOther
         string region
+        string regionEn
+        string district
+        string districtEn
+        string community
+        string communityEn
+        string communityCode
+        string settlement
+        string settlementEn
+        string settlementCode
         boolean isVerified
         enum status "pending|approved|rejected"
         timestamptz publishedAt
         text managerNotes
-        uuid createdById FK
+        uuid createdById FK "col created_by_id, SET NULL"
+        timestamp createdAt
     }
 
     COMPLAINT {
@@ -374,35 +408,62 @@ erDiagram
         string phone
         string email
         string region
+        string regionEn
+        string district
+        string districtEn
+        string community
+        string communityEn
+        string communityCode
+        string settlement
+        string settlementEn
+        string settlementCode
         jsonb attachments
         text expectedResolution
         enum status "new|in_review|resolved|closed"
         timestamptz submittedAt
         text managerNotes
+        timestamp createdAt
     }
 
     WASH_FORM {
         uuid id PK
         string region
+        string regionEn
+        string district
+        string districtEn
+        string community
+        string communityEn
+        string communityCode
+        string settlement
+        string settlementEn
+        string settlementCode
         string organizationName
         string headName
+        string headPhone
         string email
         string objectName
         int dependentPopulation
+        text socialFacilities
+        string installationDeadline
+        text replacementReason
         enum status "new|in_review|approved|rejected|in_progress|completed"
+        text managerNotes
         timestamp createdAt
+        timestamp updatedAt
     }
 
     WASH_FORM_ITEM {
         uuid id PK
         uuid washFormId FK
         uuid equipmentItemId FK
-        int quantity
+        decimal quantity
         text notes
+        int sortOrder
     }
 
     EQUIPMENT_CATEGORY {
         uuid id PK
+        string code UK
         string nameUa
         string nameEn
         int sortOrder
@@ -411,38 +472,156 @@ erDiagram
     EQUIPMENT_ITEM {
         uuid id PK
         uuid categoryId FK
+        int ltaCode UK
         string nameUa
         string nameEn
-        string unit
-        string specifications
+        enum unit "pcs|meters|kg"
+        text specifications
+        int sortOrder
     }
 
-    BOREHOLE_DRILLING {
+    WASH_FORM_BOREHOLE {
         uuid id PK
         uuid washFormId FK
-        int depthMeters
-        int expectedYield
+        enum workType "new_drilling|repair_cleaning|new_near_existing"
+        int expectedFlowRate "m3/h"
+        boolean hasAquiferInfo
+        int existingDepth
+        int existingDebit
+        boolean hasDesignInfo
+        boolean hasPassport
+        text oldLocation
         text notes
+        int sortOrder
     }
 
-    WATER_TOWER {
+    WASH_FORM_TOWER {
         uuid id PK
         uuid washFormId FK
-        int capacityCubicMeters
-        int heightMeters
+        enum towerType "vbr_15|vbr_25|vbr_50|vbr_over_50"
+        enum towerHeight "8|10|12|15|18|20|25|over_25"
+        int customHeight
+        boolean hasFoundation
+        boolean isFoundationSuitable
+        boolean needsFoundationReconstruction
+        boolean canSelfReconstruct
+        boolean canProvideCrane
         text notes
+        int sortOrder
     }
 
-    PURIFICATION_SYSTEM {
+    WASH_FORM_PURIFICATION {
         uuid id PK
         uuid washFormId FK
-        int capacityCubicMetersPerHour
-        text technologyType
+        boolean hasRoom
+        boolean hasTemperatureControl
+        boolean hasWaterInletDrainage
+        boolean hasPowerSupply
+        boolean canMaintainSystem
+        boolean willingToProvideWater
         text notes
+        int sortOrder
+    }
+
+    WASH_FORM_PUMP {
+        uuid id PK
+        uuid washFormId FK
+        enum purpose "borehole|surface|drainage_sewage|other"
+        string purposeOther
+        string brand
+        string model
+        decimal powerKw
+        decimal flowRateM3h
+        decimal headM
+        decimal diameterInches
+        string voltage
+        int phases
+        int quantity
+        text notes
+        int sortOrder
+    }
+
+    WASH_FORM_AUDIT_LOG {
+        uuid id PK
+        uuid washFormId FK
+        uuid changedById FK "SET NULL"
+        string changedByEmail "snapshot, survives user deletion"
+        enum action "created|updated|status_changed|deleted"
+        string fieldName
+        text oldValue
+        text newValue
+        jsonb metadata
+        timestamp createdAt
+    }
+
+    INQUIRY {
+        uuid id PK
+        enum reason "partnership|volunteering|press|general|other"
+        string reasonOther
+        string name
+        string email
+        string phone
+        enum messengerType "telegram|viber|whatsapp|other"
+        string messengerHandle
+        enum preferredLang "ua|en"
+        text message
+        boolean consent
+        enum status "new|read|replied|archived"
+        text managerNotes
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    ABOUT_SECTION {
+        uuid id PK
+        enum key UK "INTRO|MISSION|VISION|VALUES|DIRECTIONS|KEY_FACTS|RESULTS|TEAM_INTRO|CONTACTS_INTRO|DOCUMENTS_INTRO"
+        string titleUa
+        string titleEn
+        text contentUa "Quill HTML"
+        text contentEn "Quill HTML"
+        jsonb metadata
+        boolean isPublished
+        int sortOrder
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    ABOUT_DOCUMENT {
+        uuid id PK
+        string titleUa
+        string titleEn
+        text descriptionUa
+        text descriptionEn
+        enum documentType "POLICY|PROCEDURE|REGULATION|CODE|REPORT"
+        string fileUrl
+        date lastReviewDate
+        string version
+        boolean isPublished
+        int sortOrder
+        timestamp createdAt
+        timestamp updatedAt
+    }
+
+    COOPERATION {
+        uuid id PK
+        enum type "vacancy|tender|initiative"
+        enum status "open|closed"
+        string titleUa
+        string titleEn
+        text descriptionUa
+        text descriptionEn
+        text requirementsUa
+        text requirementsEn
+        string location
+        timestamptz deadline
+        string contactEmail
+        boolean isPublished
+        timestamp createdAt
+        timestamp updatedAt
     }
 ```
 
-> The actual database has 20+ tables. The diagram above shows core business entities; less critical tables (session-like entities, transient state) are omitted for readability.
+> The codebase defines 21 `@Entity` classes (run `grep -rl "@Entity" backend/src` to list them). The diagram above covers all business entities except the standalone CMS `PAGE` entity (`content/entities/page.entity.ts`) and the relation-only `PARTNER` table, which carry no foreign keys. Relation cardinalities and `onDelete` behaviour are noted where they exist in the entity files.
 
 ---
 
@@ -455,7 +634,7 @@ erDiagram
 - Blog (`/blog`, `/blog/:slug`) with Quill-formatted posts in UA/EN; post detail uses a route resolver.
 - Activity map (`/activity-map`) — Leaflet map with marker clustering, category sidebar, signal-based filtering; data sourced from `ui/src/assets/data/activities.json`.
 - Partners (`/partners`) — ⚠ **FROZEN**: route and header link are commented out until the fund provides partner logos & data. `PartnersComponent` and backend `GET /api/partners` are ready; to re-enable, uncomment the block in `ui/src/app/app.routes.ts` (search "FROZEN") and the matching nav link in `ui/src/app/layout/header/header.ts`.
-- Contact page (`/contact`).
+- Contact page (`/contact`) — general contact form posting to `POST /api/inquiries` (see Inquiries below).
 - Public Cooperation pages:
     - Procurement tenders (`/cooperation/procurement`)
     - Vacancies (`/cooperation/vacancy`)
@@ -512,6 +691,8 @@ Four sibling modules, all accessible under `/cooperation/*` publicly and `/admin
 | Vacancy | `/cooperation/vacancy` | draft → published → extended → on_hold → hired (or suspended/cancelled). Legacy `closed` still exists in the PG enum but is `@deprecated` — use `hired`. | Employment types, application deadline tracking |
 | Testimonial | `/cooperation/testimonial` | pending → approved (or rejected) | Rating 1-5, verification toggle, moderation flow |
 | Complaint | — (private) | new → in_review → resolved → closed | Confidential, anonymous submission, PII toggle in admin, CSV export with UTF-8 BOM |
+
+**Inquiries (general contact channel).** Separate from the four cooperation modules. `InquiryController` (`@Controller('inquiries')` → `/api/inquiries`) accepts public, unauthenticated contact-form submissions via `POST /api/inquiries` (no auth, like complaints). Submitters pick a reason (`partnership`, `volunteering`, `press`, `general`, `other`), a preferred language (`ua`/`en`), and at least one contact method (email / phone / messenger — `telegram`, `viber`, `whatsapp`, `other`). Admin+ endpoints (`admin/list`, `admin/export`, `:id`, `:id/status`, delete) are guarded by `JwtAuthGuard + RolesGuard` (`ADMIN`, `SUPER_ADMIN`); CSV export streams with a UTF-8 BOM. Status lifecycle: new → read → replied → archived.
 
 ### 7.5 Admin Panel
 
@@ -749,6 +930,8 @@ Full provisioning + rotation runbook (including prod against RDS): see [`backend
 | `npm run start:dev` | Nest dev server with hot reload |
 | `npm run start:prod` | Run compiled dist (matches Lambda) |
 | `npm run build` | Compile TypeScript to `dist/` |
+| `npm run typecheck` | `tsc --noEmit` — type-check without emitting |
+| `npm run verify` | Pre-commit gate: `typecheck` + `lint` + `test` |
 | `npm run lint` | ESLint with `--fix` |
 | `npm run format` | Prettier on `src/` and `test/` |
 | `npm run test` | Jest unit tests |
@@ -767,6 +950,8 @@ Full provisioning + rotation runbook (including prod against RDS): see [`backend
 | `npm run build` | Production build (both browser + SSR bundles) |
 | `npm run watch` | Development build in watch mode |
 | `npm run serve:ssr:ui` | Run the compiled SSR server locally |
+| `npm run typecheck` | `ngc --noEmit` — type-check without emitting |
+| `npm run verify` | Pre-commit gate: `typecheck` + `lint` + `format:check` + `test:ci` |
 | `npm run lint` | Run `ng lint` |
 | `npm run lint:fix` | `ng lint --fix` |
 | `npm run format` | Prettier on TS/HTML/SCSS |
@@ -798,7 +983,7 @@ In practice, both are triggered by GitHub Actions on merge to `main`.
     - **NOT** on direct push — direct pushes to `main` are blocked by branch protection; even if one slipped through, the workflow wouldn't fire.
 - **Pipeline order:**
     1. Backend job: checkout → `npm ci` (backend) → `migration:show` → conditional `migration:run` if pending → `nest build` → `serverless deploy --stage prod` → smoke test `GET /api/health` (5 retries with backoff) → success/failure summary with CloudWatch links.
-    2. Frontend job (`needs: deploy-backend` — only runs if backend succeeded): checkout → `npm ci` (ui) → `ng build --configuration production` → `aws s3 sync` for hashed assets (1y immutable cache) + HTML (no-cache) → `serverless deploy --stage prod` for SSR Lambda → `aws cloudfront create-invalidation --paths "/*"` → smoke test `GET /` checking `<app-root>` presence (6 retries) → success/failure summary.
+    2. Frontend job (`needs: deploy-backend` — only runs if backend succeeded): checkout → `npm ci` (ui) → `ng build --configuration production` → `aws s3 sync` for hashed assets (1y immutable cache) + HTML (no-cache) → `serverless deploy --stage prod` for SSR Lambda → `aws cloudfront create-invalidation --paths "/*"` → smoke test `GET /` checking for the `ng-server-context` marker (confirms server-rendered output, not just the CSR shell; 6 retries) → success/failure summary.
 - **Secrets** sourced from GitHub Secrets, injected as job env vars: `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `SERVERLESS_ACCESS_KEY`, `DB_*`, `JWT_SECRET`, `FRONTEND_URL`, `BACKEND_URL`.
 - **Rollback:** re-run the deploy workflow at a previous commit SHA via `workflow_dispatch`, or use Serverless Framework's `rollback` feature (`npx serverless rollback --timestamp <ts>` from `backend/` or `ui/`).
 - **Zero downtime** achieved through Lambda versioning — new version deploys and the API Gateway / CloudFront mapping switches atomically.
@@ -842,7 +1027,7 @@ Handled automatically by GitHub Actions before deploy. Manual override:
 ```bash
 cd backend
 # With production .env (via AWS SSM or similar):
-DATABASE_HOST=******** DATABASE_PASSWORD=******** npm run migration:run
+DB_HOST=******** DB_PASSWORD=******** npm run migration:run
 ```
 
 ---
@@ -955,9 +1140,9 @@ These are conscious decisions, not bugs:
 - **No soft-delete anywhere.** We use `@deprecated` enum values and `cancelled` status instead. Hard deletes are strictly gated (only `draft` procurement/vacancy, only `rejected` testimonial, only `closed` complaint). Simpler, less edge-case risk.
 - **Legacy `/publish`, `/approve`, `/reject` endpoints kept** for backward compat until UI fully uses `/status`. To be removed after stabilization.
 - **Quill HTML stored as raw string, not JSON delta.** Simpler rendering, but editing requires the exact same Quill version. Acceptable for current needs.
-- **No audit log.** Status changes don't record who changed what when. `createdBy` captures creation; updates are not logged. May add this if donor compliance requires it.
+- **Audit log is WASH-only.** A dedicated `wash_form_audit_log` table (`wash-form-audit-log.entity.ts`) records WASH form changes: `action` (created/updated/status_changed/deleted), `changedById` + `changedByEmail` snapshot, `fieldName`, `oldValue`, `newValue`, and a `metadata` JSONB. Procurement, vacancy, testimonial, and complaint status changes are still **not** audited (only `createdBy` captures creation there). Extend the audit log to those modules if donor compliance requires it.
 - **JWT in localStorage, not httpOnly cookies.** Accepted XSS risk in exchange for simpler cross-origin dev setup and serverless-friendliness. If XSS controls prove inadequate, migrate to cookies.
-- **No CSP header on frontend.** Currently relies on sanitization alone. CSP would be an additional defense layer.
+- **Security headers are split between CloudFront and the API.** The backend API applies `helmet` (in `common/security-headers.ts`, used by both `main.ts` and `lambda.ts`) — locking its own CSP to `default-src 'none'` since it serves only JSON. The browser-facing security headers for `www.csd-fund.org` (HSTS, X-Content-Type-Options, X-Frame-Options=SAMEORIGIN, Referrer-Policy) are set by a CloudFront response-headers policy (`infra/cloudfront-response-headers-policy.json`). The frontend CSP currently ships as **`Content-Security-Policy-Report-Only`** (not yet enforcing) — promotion to an enforced `Content-Security-Policy` is still pending, so the SSR HTML continues to rely on sanitization as the primary control.
 
 ---
 
@@ -1079,11 +1264,11 @@ Preferred: log in as an existing super_admin and use `/admin/users` UI.
 
 ```bash
 cd backend
-DATABASE_HOST=******** \
-DATABASE_USER=******** \
-DATABASE_PASSWORD=******** \
-DATABASE_NAME=csd \
-DATABASE_SSL=true \
+DB_HOST=******** \
+DB_USERNAME=******** \
+DB_PASSWORD=******** \
+DB_NAME=csd \
+NODE_ENV=production \
 npm run migration:run
 ```
 
