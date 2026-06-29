@@ -33,6 +33,11 @@
       "HINT": "Only one post can be featured. Setting it here automatically unsets the previous one."
     }
   },
+  "NOT_FOUND": {
+    "TITLE": "Page not found",
+    "TEXT": "Sorry, but this page does not exist.",
+    "LINK": "Back to home"
+  },
   "about": {
     "admin": {
       "nav": {
