@@ -5,6 +5,7 @@ import { CategorySidebarComponent } from './components/category-sidebar/category
 import { MapViewComponent } from './components/map-view/map-view';
 import { ActivityDataService } from './services/activity-data.service';
 import { ActivityFilterService } from './services/activity-filter.service';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
   selector: 'app-activity-map',
@@ -120,6 +121,9 @@ import { ActivityFilterService } from './services/activity-filter.service';
 export class ActivityMapComponent implements OnInit {
   readonly data = inject(ActivityDataService);
   readonly filter = inject(ActivityFilterService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   constructor() {
     effect(() => {
@@ -132,5 +136,6 @@ export class ActivityMapComponent implements OnInit {
 
   ngOnInit(): void {
     this.data.load().subscribe();
+    this.pageTitle.setTitle('ACTIVITY_MAP.TITLE');
   }
 }

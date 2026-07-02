@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
   selector: 'app-reset-password',
@@ -232,7 +233,9 @@ export class ResetPasswordComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly translate = inject(TranslateService);
-
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
   }
@@ -249,6 +252,7 @@ export class ResetPasswordComponent implements OnInit {
 
   ngOnInit(): void {
     this.token = this.route.snapshot.queryParamMap.get('token') ?? '';
+    this.pageTitle.setTitle('auth.reset.title');
   }
 
   showError(field: string): boolean {

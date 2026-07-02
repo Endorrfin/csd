@@ -1,10 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../core/services/api.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
   selector: 'app-register',
@@ -250,12 +251,15 @@ import { AuthService } from '../../core/services/auth.service';
     `,
   ],
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   get isUa(): boolean {
     return (this.translate.currentLang || 'ua') === 'ua';
@@ -281,6 +285,10 @@ export class RegisterComponent {
     const pw = this.form.get('password');
     const cpw = this.form.get('confirmPassword');
     return !!(cpw?.touched && pw?.value && cpw?.value && pw.value !== cpw.value);
+  }
+
+  ngOnInit(): void {
+    this.pageTitle.setTitle('NAV.REGISTER');
   }
 
   onSubmit(): void {

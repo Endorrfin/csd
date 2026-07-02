@@ -18,6 +18,7 @@ import { QUILL_MODULES } from '../../shared/config/quill.config';
 import { ImpactStatsComponent } from './components/impact-stats/impact-stats';
 import { HeroFeaturedComponent } from './components/hero-featured/hero-featured';
 import { BlogPost } from '../blog/blog.interfaces';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 // Editable shape backing the create/edit form.
 interface BlogPostForm {
@@ -895,6 +896,10 @@ export class HomeComponent implements OnInit {
   // skeleton placeholder count
   readonly skeletonItems = [1, 2, 3];
 
+  // === ADDED: Page title service for SEO ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
+
   posts = signal<BlogPost[]>([]);
   showForm = signal(false);
   formError = signal('');
@@ -929,6 +934,7 @@ export class HomeComponent implements OnInit {
     this.impactStats.ensureLoaded();
     this.loadFeatured();
     this.loadPosts(1);
+    this.pageTitle.setTitle('HOME.TITLE');
   }
 
   private loadFeatured(): void {

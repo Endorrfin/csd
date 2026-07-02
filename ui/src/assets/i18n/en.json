@@ -8,7 +8,8 @@
     "COOPERATION": "Cooperation",
     "NEEDS": "Needs",
     "CONTACT": "Contacts",
-    "LOGIN": "Login"
+    "LOGIN": "Login",
+    "REGISTER": "Register"
   },
   "HOME": {
     "TITLE": "«Charitable Fund «Centre for Support and Development»»",
@@ -31,6 +32,11 @@
       "LABEL": "Make this post featured (hero)",
       "HINT": "Only one post can be featured. Setting it here automatically unsets the previous one."
     }
+  },
+  "NOT_FOUND": {
+    "TITLE": "Page not found",
+    "TEXT": "Sorry, but this page does not exist.",
+    "LINK": "Back to home"
   },
   "about": {
     "admin": {
@@ -140,7 +146,7 @@
     "LOAD_ERROR": "Failed to load activities",
     "MAP_COMING_SOON": "Map coming in next step",
     "SIDEBAR": {
-      "TITLE": "Filters",
+      "TITLE": "Filters", 
       "NO_COORDS": "No coordinates available"
     },
     "MAP_LOAD_ERROR": "Failed to load map"
@@ -526,5 +532,24 @@
       "HEADING": "Privacy notice",
       "BODY": "We process your communications in accordance with our privacy policy. Confidential reports are stored and reviewed with personal data protection principles in mind."
     }
+  },
+  "auth": {
+  "forgot": {
+    "title": "Forgot Password"
+  },
+  "reset": {
+    "title": "Reset Password"
+  }
+},
+  "admin_titles": {
+    "vacancies": "Vacancies Management",
+    "wash_forms": "WASH Applications",
+    "wash_form_detail": "WASH Application Details",
+    "users": "User Management",
+    "testimonials": "Testimonials Management",
+    "procurements": "Procurements",
+    "inquiries": "Inquiries",
+    "complaints": "Complaints",
+    "about": "About us"
   }
 }
