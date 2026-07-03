@@ -34,9 +34,9 @@ backend/
     ├── database/
     │   ├── data-source.ts          # Standalone DataSource for TypeORM CLI (entities glob: src/**/*.entity.ts)
     │   ├── migrations/             # Timestamped, transactional ("each"). NEVER edit after applied.
-    │   ├── run-seeds.ts            # Called from main.ts after listen() — currently seeds equipment catalog
+    │   ├── run-seeds.ts            # Called from main.ts after listen() — runs ONLY seedEquipmentCatalog()
     │   ├── seed-equipment.ts
-    │   └── seed-super-admin.ts
+    │   └── seed-super-admin.ts     # Standalone, NOT auto-run — via `npm run seed:super-admin`
     └── modules/
         ├── auth/        users/     content/    blog/      partners/
         ├── cooperation/ procurement/ vacancy/  testimonial/ complaint/
