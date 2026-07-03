@@ -10,6 +10,7 @@ Web portal for the Charitable Fund **"Centre for Support and Development"** (WAS
 csd-fund/
 ├── backend/                       # NestJS 11 REST API   → Lambda + API Gateway + RDS
 ├── ui/                            # Angular 21 SSR app   → Lambda + S3 + CloudFront
+├── convertors/                    # Python CSV/XLSX → JSON converters (feed ui/src/assets/data/, run manually)
 ├── docs/ARCHITECTURE.md           # Long-form architecture & runbook (treat as reference, may drift — see below)
 ├── .github/workflows/deploy.yml   # CI/CD pipeline for both apps
 └── .prettierrc / .prettierignore  # Shared formatter config
