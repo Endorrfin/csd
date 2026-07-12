@@ -212,7 +212,7 @@ import { QuillHtmlPipe } from '../../../shared/pipes/quill-html.pipe';
             <h2>{{ 'procurement.steps.attachments' | translate }}</h2>
             <div class="pd__attachments">
               @for (a of item()!.attachments; track $index) {
-                <a [href]="a.url" target="_blank" rel="noopener" class="pd__attachment">
+                <a [href]="a.url" target="_blank" rel="noopener noreferrer" class="pd__attachment">
                   📎 {{ a.name }}
                   @if (a.fileType) {
                     <span class="pd__filetype">{{ a.fileType }}</span>

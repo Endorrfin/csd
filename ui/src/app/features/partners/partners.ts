@@ -22,7 +22,7 @@ interface Partner {
         <h3>{{ isUa ? p.nameUa : p.nameEn }}</h3>
         <p>{{ isUa ? p.descriptionUa : p.descriptionEn }}</p>
         @if (p.websiteUrl) {
-          <a [href]="p.websiteUrl" target="_blank">Website</a>
+          <a [href]="p.websiteUrl" target="_blank">Website rel="noopener noreferrer"</a>
         }
       </div>
     }

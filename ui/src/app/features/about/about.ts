@@ -97,7 +97,12 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
                           </span>
                         }
                         @if (doc.fileUrl) {
-                          <a [href]="doc.fileUrl" target="_blank" rel="noopener" class="doc-link">
+                          <a
+                            [href]="doc.fileUrl"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="doc-link"
+                          >
                             📄 {{ 'about.page.viewFile' | translate }}
                           </a>
                         }
