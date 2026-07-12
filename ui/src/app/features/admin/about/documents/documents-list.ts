@@ -65,7 +65,12 @@ import { AboutDocument } from '../about.interfaces';
                 </td>
                 <td>
                   @if (item.fileUrl) {
-                    <a [href]="item.fileUrl" target="_blank" rel="noopener" class="file-link">
+                    <a
+                      [href]="item.fileUrl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="file-link"
+                    >
                       📄 {{ isUa ? 'Відкрити' : 'Open' }}
                     </a>
                   } @else {
