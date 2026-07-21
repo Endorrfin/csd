@@ -1,4 +1,3 @@
-// Recovery form service (create / admin CRUD / business rules)
 import {
   BadRequestException,
   Injectable,
@@ -21,6 +20,8 @@ import {
 import { AuditActor, stringify } from './audit-log.service';
 import { NeedsAuditLogService } from './needs-audit-log.service';
 import { FormNumberService } from './form-number.service';
+// presigned GET for the admin detail view
+import { UploadService } from '../upload/upload.service';
 import {
   AttachmentKind,
   DAMAGE_ELEMENT_UNITS,
@@ -41,6 +42,12 @@ export interface PaginatedRecoveryForms {
 
 export type RecoveryFormDetail = RecoveryForm & {
   attachments: NeedsFormAttachment[];
+};
+
+// attachment enriched with a short-lived presigned GET url.
+export type AttachmentWithUrl = NeedsFormAttachment & { url: string | null };
+export type RecoveryFormWithUrls = RecoveryForm & {
+  attachments: AttachmentWithUrl[];
 };
 
 /** Scalar fields tracked in audit diffs (child arrays are logged as counts). */
@@ -65,6 +72,7 @@ export class RecoveryService {
     private readonly auditLog: NeedsAuditLogService,
     private readonly formNumber: FormNumberService,
     private readonly dataSource: DataSource,
+    private readonly uploadService: UploadService,
   ) {}
 
   // ══════════════════════════════════════════════════════════════
@@ -190,6 +198,34 @@ export class RecoveryService {
     });
 
     return Object.assign(form, { attachments });
+  }
+
+  /**
+   * Admin detail read: same as findById but each attachment is enriched with a
+   * short-lived presigned GET `url` (files live in the private bucket, so this
+   * is the only way to view them). Kept separate from findById so mutations
+   * (update/remove) stay DB-only and don't depend on S3. URL generation is
+   * best-effort per file — an S3 hiccup yields url:null, not a failed request.
+   */
+  async findByIdWithUrls(id: string): Promise<RecoveryFormWithUrls> {
+    const detail = await this.findById(id);
+
+    const attachments: AttachmentWithUrl[] = await Promise.all(
+      detail.attachments.map(async (a) => {
+        let url: string | null = null;
+        try {
+          url = await this.uploadService.getNeedsFileUrl(a.s3Key);
+        } catch (err) {
+          console.error(
+            `[recovery] failed to presign GET for ${a.s3Key}:`,
+            err,
+          );
+        }
+        return Object.assign(a, { url });
+      }),
+    );
+
+    return Object.assign(detail, { attachments });
   }
 
   async getAuditLog(id: string) {

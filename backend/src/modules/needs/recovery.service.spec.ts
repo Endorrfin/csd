@@ -12,6 +12,7 @@ import { NeedsAuditLogService } from './needs-audit-log.service';
 import { FormNumberService } from './form-number.service';
 import { CreateRecoveryFormDto } from './dto/create-recovery-form.dto';
 import { AuditActor } from './audit-log.service';
+import { UploadService } from '../upload/upload.service';
 
 const actor: AuditActor = { userId: null, email: null };
 
@@ -118,6 +119,12 @@ describe('RecoveryService', () => {
   const formNumber = {
     nextTrackingNumber: jest.fn().mockResolvedValue('CSD-R-2026-0001'),
   };
+  // UploadService mock (presigned GET for admin detail view)
+  const uploadService = {
+    getNeedsFileUrl: jest
+      .fn()
+      .mockResolvedValue('https://private.example/signed'),
+  };
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -136,6 +143,7 @@ describe('RecoveryService', () => {
         { provide: NeedsAuditLogService, useValue: auditLog },
         { provide: FormNumberService, useValue: formNumber },
         { provide: DataSource, useValue: dataSource },
+        { provide: UploadService, useValue: uploadService },
       ],
     }).compile();
 
@@ -327,6 +335,48 @@ describe('RecoveryService', () => {
       await expect(service.findById('missing')).rejects.toThrow(
         NotFoundException,
       );
+    });
+  });
+
+  // admin detail view enriches attachments with presigned GETs
+  describe('findByIdWithUrls', () => {
+    it('adds a presigned GET url to each attachment', async () => {
+      formRepo.findOne.mockResolvedValue({
+        id: 'form-1',
+        status: FormStatus.NEW,
+      });
+      attachmentRepo.find.mockResolvedValue([
+        { s3Key: 'media/needs/recovery/photo/p-1.jpg', kind: 'photo' },
+        { s3Key: 'media/needs/recovery/doc/act.pdf', kind: 'document' },
+      ]);
+
+      const result = await service.findByIdWithUrls('form-1');
+
+      expect(uploadService.getNeedsFileUrl).toHaveBeenCalledTimes(2);
+      expect(
+        result.attachments.every(
+          (a) => a.url === 'https://private.example/signed',
+        ),
+      ).toBe(true);
+    });
+
+    it('returns url:null for a file whose presign fails, without throwing', async () => {
+      formRepo.findOne.mockResolvedValue({
+        id: 'form-1',
+        status: FormStatus.NEW,
+      });
+      attachmentRepo.find.mockResolvedValue([
+        { s3Key: 'media/needs/recovery/photo/p-1.jpg', kind: 'photo' },
+      ]);
+      uploadService.getNeedsFileUrl.mockRejectedValueOnce(new Error('s3 down'));
+      const consoleErrorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+
+      const result = await service.findByIdWithUrls('form-1');
+
+      expect(result.attachments[0].url).toBeNull();
+      consoleErrorSpy.mockRestore();
     });
   });
 });
