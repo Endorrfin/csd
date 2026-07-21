@@ -1,10 +1,10 @@
 // ui/src/app/features/needs/recovery-form/recovery-form.ts
 // === ADDED: PR-3 public Recovery form ("Ремонт і відновлення соціальної
 // інфраструктури"). Steps 1–4 (applicant, object+damage, beneficiaries,
-// budget). Files (step 5), review + consent + Turnstile + submit (step 6) land
-// in PR-4. Reactive Forms with per-step validation + conditional validators;
+// budget). PR-4 adds files (step 5) + review/consent/Turnstile/submit (step 6)
+// → thank-you with tracking number. Reactive Forms with per-step validation;
 // localStorage draft autosave. Zoneless-safe i18n via signal LanguageService. ===
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -15,10 +15,17 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { debounceTime } from 'rxjs';
+import { debounceTime, firstValueFrom } from 'rxjs';
 import { LanguageService } from '../../../core/services/language.service';
 import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
 import { LocationValue } from '../../../shared/interfaces/location.interfaces';
+import { ApiService } from '../../../core/services/api.service';
+import { environment } from '../../../../environments/environment';
+import {
+  FileUploadComponent,
+  UploadedFile,
+} from '../../../shared/components/file-upload/file-upload';
+import { TurnstileComponent } from '../../../shared/components/turnstile/turnstile';
 import {
   FormStep,
   FormStepperComponent,
@@ -44,6 +51,9 @@ import {
   OWNERSHIP_TYPE_OPTIONS,
   ObjectType,
   REMOTE_OPERATION_OPTIONS,
+  CreateRecoveryFormPayload,
+  LabeledOption,
+  RecoveryAttachmentPayload,
   RecoveryDamagePayload,
   RecoveryDataPayload,
   SHELTER_STATUS_OPTIONS,
@@ -78,7 +88,13 @@ const RECOVERY_STEPS: readonly FormStep[] = [
 @Component({
   selector: 'app-recovery-form',
   standalone: true,
-  imports: [ReactiveFormsModule, LocationSelectorComponent, FormStepperComponent],
+  imports: [
+    ReactiveFormsModule,
+    LocationSelectorComponent,
+    FormStepperComponent,
+    FileUploadComponent,
+    TurnstileComponent,
+  ],
   templateUrl: './recovery-form.html',
   styleUrl: './recovery-form.scss',
 })
@@ -87,6 +103,38 @@ export class RecoveryFormComponent implements OnInit {
   private readonly draft = inject(RecoveryFormDraftService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly isUa = inject(LanguageService).isUa;
+  private readonly api = inject(ApiService);
+
+  /** Cloudflare Turnstile SITE key (public). */
+  protected readonly siteKey = environment.turnstileSiteKey;
+
+  @ViewChild(TurnstileComponent) private turnstile?: TurnstileComponent;
+
+  // File limits (mirror recovery.constants.ts / CreateRecoveryFormDto).
+  protected readonly PHOTOS_MIN = 3;
+  protected readonly PHOTOS_MAX = 10;
+  protected readonly DOCUMENTS_MAX = 5;
+  protected readonly PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+  protected readonly DOCUMENT_MAX_BYTES = 15 * 1024 * 1024;
+  protected readonly photoAccept = ['image/jpeg', 'image/png', 'image/webp'];
+  protected readonly documentAccept = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip',
+  ];
+
+  protected readonly photos = signal<UploadedFile[]>([]);
+  protected readonly documents = signal<UploadedFile[]>([]);
+
+  protected readonly submitting = signal(false);
+  protected readonly submitError = signal(false);
+  protected readonly submitted = signal(false);
+  protected readonly trackingNumber = signal('');
+
+  /** Supplies a fresh Turnstile token per guarded call (upload + submit). */
+  protected readonly tokenProvider = (): Promise<string> =>
+    this.turnstile ? this.turnstile.getToken() : Promise.reject(new Error('Turnstile not ready'));
 
   // Option catalogs exposed to the template (single source = interfaces file).
   protected readonly applicantCategories = APPLICANT_CATEGORY_OPTIONS;
@@ -227,6 +275,9 @@ export class RecoveryFormComponent implements OnInit {
     otherDonorsDetails: [''],
     asbestosPresence: ['', [Validators.required]],
     cloudLink: ['', [Validators.pattern(/^https?:\/\/.+/i)]],
+
+    // ── Step 6: consent ──
+    consentGiven: [false, [Validators.requiredTrue]],
   });
 
   /** Required controls (or validated groups) per step index. Steps 5–6 (files,
@@ -289,8 +340,8 @@ export class RecoveryFormComponent implements OnInit {
       'asbestosPresence',
       'cloudLink',
     ],
-    [], // step 5 — files (PR-4)
-    [], // step 6 — review + consent (PR-4)
+    [], // step 5 — files (validated by count in validateCurrentStep)
+    ['consentGiven'], // step 6 — review + consent
   ];
 
   ngOnInit(): void {
@@ -303,7 +354,12 @@ export class RecoveryFormComponent implements OnInit {
 
     this.form.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.draft.save(this.form.getRawValue()));
+      .subscribe(() => {
+        // Never persist consent — the applicant must actively re-consent.
+        const value = this.form.getRawValue() as Record<string, unknown>;
+        delete value['consentGiven'];
+        this.draft.save(value);
+      });
 
     this.loadDraftBanner();
   }
@@ -414,7 +470,8 @@ export class RecoveryFormComponent implements OnInit {
   }
 
   private validateCurrentStep(): boolean {
-    const fields = this.stepFields[this.currentStep()] ?? [];
+    const step = this.currentStep();
+    const fields = this.stepFields[step] ?? [];
     let valid = true;
     for (const f of fields) {
       const c = this.form.get(f);
@@ -423,6 +480,8 @@ export class RecoveryFormComponent implements OnInit {
       if ('controls' in c) (c as FormGroup).markAllAsTouched();
       if (c.invalid) valid = false;
     }
+    // Step 5 — files are component state, not form controls.
+    if (step === 4 && !this.filesValid()) valid = false;
     this.stepInvalid.set(!valid);
     return valid;
   }
@@ -598,5 +657,74 @@ export class RecoveryFormComponent implements OnInit {
     const v = (this.form.get(name)?.value ?? '') as string;
     const t = v.trim();
     return t || undefined;
+  }
+
+  // ── Files (step 5) + submit (step 6) — PR-4 ──
+
+  protected onPhotosChanged(files: UploadedFile[]): void {
+    this.photos.set(files);
+    if (this.currentStep() === 4) this.stepInvalid.set(false);
+  }
+
+  protected onDocumentsChanged(files: UploadedFile[]): void {
+    this.documents.set(files);
+  }
+
+  protected filesValid(): boolean {
+    const p = this.photos().length;
+    return (
+      p >= this.PHOTOS_MIN && p <= this.PHOTOS_MAX && this.documents().length <= this.DOCUMENTS_MAX
+    );
+  }
+
+  protected canSubmit(): boolean {
+    return this.filesValid() && this.form.get('consentGiven')!.value === true;
+  }
+
+  /** Bilingual label for a select/radio value (review step). */
+  protected label(options: readonly LabeledOption<string>[], value: unknown): string {
+    const o = options.find((x) => x.value === value);
+    return o ? (this.isUa() ? o.ua : o.en) : '—';
+  }
+
+  private buildFullPayload(): CreateRecoveryFormPayload {
+    const withSort = (f: UploadedFile, i: number): RecoveryAttachmentPayload => ({
+      ...f,
+      sortOrder: i,
+    });
+    const documents = this.documents();
+    return {
+      ...this.buildPayload(),
+      photos: this.photos().map(withSort),
+      ...(documents.length ? { documents: documents.map(withSort) } : {}),
+      consentGiven: true,
+    };
+  }
+
+  protected async submit(): Promise<void> {
+    this.form.get('consentGiven')!.markAsTouched();
+    if (this.submitting() || !this.canSubmit()) {
+      this.stepInvalid.set(true);
+      return;
+    }
+    this.submitting.set(true);
+    this.submitError.set(false);
+    try {
+      const token = await this.tokenProvider();
+      const res = await firstValueFrom(
+        this.api.post<{ id: string; trackingNumber: string }>(
+          'needs-forms/recovery',
+          this.buildFullPayload(),
+          { 'x-turnstile-token': token },
+        ),
+      );
+      this.trackingNumber.set(res.trackingNumber);
+      this.submitted.set(true);
+      this.draft.clear();
+    } catch {
+      this.submitError.set(true);
+    } finally {
+      this.submitting.set(false);
+    }
   }
 }
