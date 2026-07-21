@@ -25,12 +25,13 @@ import { UserRole } from '../users/entities/user.entity';
 import { AuditActor } from './audit-log.service';
 import { XlsxExportService } from './xlsx-export.service';
 import { BulkUpdateStatusDto } from './dto/bulk-update-status.dto';
-// Recovery form ===
 import { RecoveryService } from './recovery.service';
 import { CreateRecoveryFormDto } from './dto/create-recovery-form.dto';
 import { UpdateRecoveryFormDto } from './dto/update-recovery-form.dto';
 import { UpdateRecoveryFormFullDto } from './dto/update-recovery-form-full.dto';
 import { RecoveryAdminQueryDto } from './dto/recovery-admin-query.dto';
+// Turnstile anti-spam on the public recovery submit
+import { TurnstileGuard } from '../../common/guards/turnstile.guard';
 
 /**
  * Shape of req.user injected by JwtAuthGuard. Keep narrow — we only need
@@ -196,14 +197,15 @@ export class NeedsFormsController {
   }
 
   // ══════════════════════════════════════════════════════════════
-  // Recovery form routes
+  // === ADDED: PR-1 Recovery form routes ===
   // ══════════════════════════════════════════════════════════════
 
   /**
-   * Public — submit a Recovery needs form. Anonymous allowed.
-   * TurnstileGuard is added in PR-2 (before the public UI ships).
+   * Public — submit a Recovery needs form. Anonymous, Turnstile-guarded.
+   * Client sends the Turnstile token in the `x-turnstile-token` header.
    */
   @Post('recovery')
+  @UseGuards(TurnstileGuard)
   createRecovery(@Body() dto: CreateRecoveryFormDto, @Req() req: Request) {
     return this.recoveryService.create(dto, resolveActor(req));
   }
@@ -234,12 +236,15 @@ export class NeedsFormsController {
     });
   }
 
-  /** Manager/Admin — single form incl. damages + attachments. */
+  /**
+   * Manager/Admin — single form incl. damages + attachments.
+   * Attachments come back with short-lived presigned GET urls (private bucket).
+   */
   @Get('recovery/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN)
   findRecoveryById(@Param('id', ParseUUIDPipe) id: string) {
-    return this.recoveryService.findById(id);
+    return this.recoveryService.findByIdWithUrls(id);
   }
 
   /** Manager/Admin — audit log for one form. */

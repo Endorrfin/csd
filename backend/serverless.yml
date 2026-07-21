@@ -3,6 +3,13 @@ org: csd2019
 service: csd-api
 useDotenv: true
 
+# private media bucket name in one place (env override wins),
+# reused by both the IAM resource ARN and the AWS_S3_PRIVATE_BUCKET env var so
+# they can never drift. Vasyl must CREATE this bucket (private, no public
+# policy, CORS allowing POST from the site origin) before recovery uploads go live.
+custom:
+  privateMediaBucket: ${env:AWS_S3_PRIVATE_BUCKET, 'csd-media-private'}
+
 provider:
   name: aws
   runtime: nodejs22.x
@@ -24,6 +31,13 @@ provider:
           Action:
             - s3:PutObject
           Resource: "arn:aws:s3:::csd-media/*"
+        # private recovery bucket: upload (POST/PUT) + read
+        # (presigned GET for the admin detail view). GetObject also covers HEAD.
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource: "arn:aws:s3:::${self:custom.privateMediaBucket}/*"
 
     # ENVIRONMENT
   environment:
@@ -39,6 +53,13 @@ provider:
     # Format: comma-separated allowlist, canonical origin first.
     FRONTEND_URL: ${env:FRONTEND_URL}
     AWS_S3_MEDIA_BUCKET: csd-media
+    # private bucket for recovery uploads (PII: defect acts).
+    AWS_S3_PRIVATE_BUCKET: ${self:custom.privateMediaBucket}
+    # CHANGED: PR-2 — Cloudflare Turnstile secret. '' default keeps deploy green
+    # if the GitHub secret isn't set yet; the guard fails closed (403) on the
+    # recovery endpoints until it's provisioned — the rest of the API is
+    # unaffected (we intentionally do NOT gate app boot on this).
+    TURNSTILE_SECRET_KEY: ${env:TURNSTILE_SECRET_KEY, ''}
 
 functions:
   api:
