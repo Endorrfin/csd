@@ -342,3 +342,118 @@
     max-width: none;
   }
 }
+
+/* === PR-4 — submit button, review, consent, thank-you === */
+.btn-submit {
+  background: #38a169;
+  color: #fff;
+  font-weight: 600;
+  padding: 0.7rem 1.75rem;
+}
+.btn-submit:hover:not(:disabled) {
+  background: #2f855a;
+}
+.btn-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.review-block {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.review-block h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1a365d;
+  margin: 0 0 0.75rem;
+}
+.review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1rem;
+}
+.review-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+.review-label {
+  font-size: 0.72rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.review-value {
+  font-size: 0.9rem;
+  color: #1e293b;
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #334155;
+  line-height: 1.45;
+}
+.consent input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: #2b6cb0;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.turnstile-note {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0.75rem 0 0;
+}
+
+.thankyou-card {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  background: #f0fff4;
+  border: 1px solid #c6f6d5;
+  border-radius: 12px;
+}
+.thankyou-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+}
+.thankyou-card h2 {
+  color: #276749;
+  margin: 0 0 0.75rem;
+  font-size: 1.4rem;
+}
+.thankyou-num {
+  font-size: 1.05rem;
+  color: #1a365d;
+  margin: 0 0 0.75rem;
+}
+.thankyou-num strong {
+  font-size: 1.15rem;
+  color: #2b6cb0;
+  letter-spacing: 0.03em;
+}
+.thankyou-text {
+  color: #2f855a;
+  max-width: 460px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+}
