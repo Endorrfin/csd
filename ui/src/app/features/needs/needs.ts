@@ -1,6 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+// CHANGED: language via signal-based LanguageService (app is zoneless — a
+// translate.currentLang getter is not reactive to language toggles).
+import { LanguageService } from '../../core/services/language.service';
 import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
@@ -10,10 +12,10 @@ import { PageTitleService } from '../../core/services/page-title.service';
   template: `
     <div class="needs-layout">
       <div class="needs-header">
-        <!-- <h1>{{ isUa ? 'Потреби' : 'Needs' }}</h1> -->
+        <!-- <h1>{{ isUa() ? 'Потреби' : 'Needs' }}</h1> -->
         <p class="needs-subtitle">
           {{
-            isUa
+            isUa()
               ? 'Форми для збору потреб та їх подальшої оцінки і верифікації'
               : 'Forms for collecting needs and their subsequent assessment and verification'
           }}
@@ -23,19 +25,19 @@ import { PageTitleService } from '../../core/services/page-title.service';
       <nav class="needs-tabs">
         <a routerLink="wash-form" routerLinkActive="active" class="needs-tab">
           <span class="tab-icon">💧</span>
-          {{ isUa ? 'WASH (ВСГ)' : 'WASH' }}
+          {{ isUa() ? 'WASH (ВСГ)' : 'WASH' }}
         </a>
 
-        <a class="needs-tab disabled" title="{{ isUa ? 'Скоро' : 'Coming soon' }}">
+        <!-- CHANGED: PR-3 — Recovery tab activated (was disabled/coming-soon). -->
+        <a routerLink="recovery-form" routerLinkActive="active" class="needs-tab">
           <span class="tab-icon">🏗️</span>
-          {{ isUa ? 'Відновлення' : 'Recovery' }}
-          <span class="badge">{{ isUa ? 'скоро' : 'soon' }}</span>
+          {{ isUa() ? 'Відновлення' : 'Recovery' }}
         </a>
 
-        <a class="needs-tab disabled" title="{{ isUa ? 'Скоро' : 'Coming soon' }}">
+        <a class="needs-tab disabled" title="{{ isUa() ? 'Скоро' : 'Coming soon' }}">
           <span class="tab-icon">🏠</span>
-          {{ isUa ? 'Укриття' : 'Shelters' }}
-          <span class="badge">{{ isUa ? 'скоро' : 'soon' }}</span>
+          {{ isUa() ? 'Укриття' : 'Shelters' }}
+          <span class="badge">{{ isUa() ? 'скоро' : 'soon' }}</span>
         </a>
       </nav>
 
@@ -142,16 +144,13 @@ import { PageTitleService } from '../../core/services/page-title.service';
   ],
 })
 export class NeedsComponent implements OnInit {
-  private readonly translate = inject(TranslateService);
+  // CHANGED: reactive language flag (call as isUa() in the template).
+  protected readonly isUa = inject(LanguageService).isUa;
   // === ADDED: Page title service for SEO ===
   private readonly pageTitle = inject(PageTitleService);
   // === END ADDED ===
 
   ngOnInit(): void {
     this.pageTitle.setTitle('NAV.NEEDS');
-  }
-
-  get isUa(): boolean {
-    return (this.translate.currentLang || 'ua') === 'ua';
   }
 }

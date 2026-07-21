@@ -1,0 +1,602 @@
+// ui/src/app/features/needs/recovery-form/recovery-form.ts
+// === ADDED: PR-3 public Recovery form ("Ремонт і відновлення соціальної
+// інфраструктури"). Steps 1–4 (applicant, object+damage, beneficiaries,
+// budget). Files (step 5), review + consent + Turnstile + submit (step 6) land
+// in PR-4. Reactive Forms with per-step validation + conditional validators;
+// localStorage draft autosave. Zoneless-safe i18n via signal LanguageService. ===
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
+import { debounceTime } from 'rxjs';
+import { LanguageService } from '../../../core/services/language.service';
+import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
+import { LocationValue } from '../../../shared/interfaces/location.interfaces';
+import {
+  FormStep,
+  FormStepperComponent,
+} from '../../../shared/components/form-stepper/form-stepper';
+import { RecoveryFormDraftService } from './recovery-form-draft.service';
+import {
+  ACCESSIBILITY_FEATURE_OPTIONS,
+  APPLICANT_CATEGORY_OPTIONS,
+  ASBESTOS_OPTIONS,
+  AccessibilityFeature,
+  COFINANCING_OPTIONS,
+  COST_BASIS_OPTIONS,
+  DAMAGE_CATEGORY_OPTIONS,
+  DAMAGE_CAUSE_OPTIONS,
+  DAMAGE_ELEMENTS,
+  DESIRED_TIMELINE_OPTIONS,
+  DOCS_AVAILABLE_OPTIONS,
+  DocsAvailableOption,
+  EDUCATION_MODE_OPTIONS,
+  FUNCTIONING_STATUS_OPTIONS,
+  HEALTH_FACILITY_KIND_OPTIONS,
+  OBJECT_TYPE_OPTIONS,
+  OWNERSHIP_TYPE_OPTIONS,
+  ObjectType,
+  REMOTE_OPERATION_OPTIONS,
+  RecoveryDamagePayload,
+  RecoveryDataPayload,
+  SHELTER_STATUS_OPTIONS,
+  SHELTER_TYPE_OPTIONS,
+  URGENCY_OPTIONS,
+  WORK_CATEGORY_OPTIONS,
+  WorkCategory,
+} from './recovery-form.interfaces';
+
+/** Group-level: at least one boolean child is true (checkbox groups). */
+function atLeastOneBooleanChecked(group: AbstractControl): ValidationErrors | null {
+  const val = (group.value ?? {}) as Record<string, boolean>;
+  return Object.values(val).some(Boolean) ? null : { required: true };
+}
+
+/** Group-level: at least one damage row is checked. */
+function atLeastOneDamageChecked(group: AbstractControl): ValidationErrors | null {
+  const val = (group.value ?? {}) as Record<string, { checked?: boolean }>;
+  return Object.values(val).some((row) => !!row?.checked) ? null : { required: true };
+}
+
+/** Six-step journey. Steps 5–6 (files, review) render placeholders in PR-3. */
+const RECOVERY_STEPS: readonly FormStep[] = [
+  { key: 'applicant', labelUa: 'Заявник', labelEn: 'Applicant', group: 'primary' },
+  { key: 'object', labelUa: 'Обʼєкт', labelEn: 'Object', group: 'primary' },
+  { key: 'beneficiaries', labelUa: 'Бенефіціари', labelEn: 'Beneficiaries', group: 'primary' },
+  { key: 'budget', labelUa: 'Бюджет', labelEn: 'Budget', group: 'primary' },
+  { key: 'files', labelUa: 'Файли', labelEn: 'Files', group: 'primary' },
+  { key: 'review', labelUa: 'Перевірка', labelEn: 'Review', group: 'review' },
+];
+
+@Component({
+  selector: 'app-recovery-form',
+  standalone: true,
+  imports: [ReactiveFormsModule, LocationSelectorComponent, FormStepperComponent],
+  templateUrl: './recovery-form.html',
+  styleUrl: './recovery-form.scss',
+})
+export class RecoveryFormComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly draft = inject(RecoveryFormDraftService);
+  private readonly destroyRef = inject(DestroyRef);
+  protected readonly isUa = inject(LanguageService).isUa;
+
+  // Option catalogs exposed to the template (single source = interfaces file).
+  protected readonly applicantCategories = APPLICANT_CATEGORY_OPTIONS;
+  protected readonly objectTypes = OBJECT_TYPE_OPTIONS;
+  protected readonly workCategoryOptions = WORK_CATEGORY_OPTIONS;
+  protected readonly ownershipTypes = OWNERSHIP_TYPE_OPTIONS;
+  protected readonly damageElements = DAMAGE_ELEMENTS;
+  protected readonly damageCauses = DAMAGE_CAUSE_OPTIONS;
+  protected readonly damageCategories = DAMAGE_CATEGORY_OPTIONS;
+  protected readonly functioningStatuses = FUNCTIONING_STATUS_OPTIONS;
+  protected readonly accessibilityFeatureOptions = ACCESSIBILITY_FEATURE_OPTIONS;
+  protected readonly educationModes = EDUCATION_MODE_OPTIONS;
+  protected readonly shelterStatuses = SHELTER_STATUS_OPTIONS;
+  protected readonly shelterTypes = SHELTER_TYPE_OPTIONS;
+  protected readonly healthFacilityKinds = HEALTH_FACILITY_KIND_OPTIONS;
+  protected readonly remoteOperationOptions = REMOTE_OPERATION_OPTIONS;
+  protected readonly costBases = COST_BASIS_OPTIONS;
+  protected readonly cofinancingOptions = COFINANCING_OPTIONS;
+  protected readonly docsAvailableOptions = DOCS_AVAILABLE_OPTIONS;
+  protected readonly desiredTimelines = DESIRED_TIMELINE_OPTIONS;
+  protected readonly urgencyOptions = URGENCY_OPTIONS;
+  protected readonly asbestosOptions = ASBESTOS_OPTIONS;
+
+  protected readonly steps: readonly FormStep[] = RECOVERY_STEPS;
+
+  protected readonly currentStep = signal(0);
+  protected readonly stepInvalid = signal(false);
+  protected readonly descLen = signal(0);
+
+  protected readonly draftFound = signal(false);
+  protected readonly draftSavedAt = signal(0);
+  private pendingDraftValue: Record<string, unknown> | null = null;
+
+  protected readonly form: FormGroup = this.fb.group({
+    // ── Step 1: applicant + contacts ──
+    location: [null as LocationValue | null, [Validators.required]],
+    applicantCategory: ['', [Validators.required]],
+    applicantCategoryOther: [''],
+    organizationName: ['', [Validators.required, Validators.minLength(3)]],
+    contactName: ['', [Validators.required, Validators.minLength(2)]],
+    contactPosition: ['', [Validators.required, Validators.minLength(2)]],
+    phoneDigits: ['', [Validators.required, Validators.pattern(/^0\d{9}$/)]],
+    email: ['', [Validators.required, Validators.email]],
+    messenger: [''],
+    altContactName: ['', [Validators.minLength(2)]],
+    altContactPhoneDigits: ['', [Validators.pattern(/^0\d{9}$/)]],
+    website: ['', [Validators.pattern(/^https?:\/\/.+/i)]],
+
+    // ── Step 2: object + damage ──
+    objectName: ['', [Validators.required, Validators.minLength(3)]],
+    objectType: ['', [Validators.required]],
+    objectTypeOther: [''],
+    streetAddress: [''],
+    ownershipType: [''],
+    ownershipTypeOther: [''],
+    onApplicantBalance: [''],
+    buildYear: [null as number | null, [Validators.min(1800), Validators.max(2026)]],
+    totalArea: [null as number | null, [Validators.min(1), Validators.max(1_000_000)]],
+    floors: [null as number | null, [Validators.min(1), Validators.max(30)]],
+    workCategories: this.fb.group(
+      {
+        building_repair: [false],
+        shelter_arrangement: [false],
+        utilities: [false],
+        equipment: [false],
+      },
+      { validators: atLeastOneBooleanChecked },
+    ),
+    damages: this.fb.group(
+      {
+        roof: this.damageRow(),
+        windows: this.damageRow(),
+        doors: this.damageRow(),
+        facade: this.damageRow(),
+        interior: this.damageRow(),
+        heating: this.damageRow(),
+        water_sewage: this.damageRow(),
+        electricity: this.damageRow(),
+        shelter: this.damageRow(),
+      },
+      { validators: atLeastOneDamageChecked },
+    ),
+    damageDescription: [
+      '',
+      [Validators.required, Validators.minLength(100), Validators.maxLength(1500)],
+    ],
+    damageCause: ['', [Validators.required]],
+    damageCauseOther: [''],
+    damageDate: ['', [Validators.pattern(/^\d{4}-(0[1-9]|1[0-2])$/)]],
+    damageCategory: ['', [Validators.required]],
+    functioningStatus: ['', [Validators.required]],
+    accessibilityFeatures: this.fb.group({
+      ramp: [false],
+      accessible_wc: [false],
+      wide_doors: [false],
+      elevator: [false],
+      none: [false],
+    }),
+
+    // ── Step 3: beneficiaries + conditional education/health ──
+    directBeneficiaries: [null as number | null, [Validators.required, Validators.min(1)]],
+    idpCount: [null as number | null, [Validators.required, Validators.min(0)]],
+    childrenCount: [null as number | null, [Validators.required, Validators.min(0)]],
+    pwdCount: [null as number | null, [Validators.required, Validators.min(0)]],
+    elderlyCount: [null as number | null, [Validators.required, Validators.min(0)]],
+    femaleCount: [null as number | null, [Validators.min(0)]],
+    maleCount: [null as number | null, [Validators.min(0)]],
+    indirectBeneficiaries: [null as number | null, [Validators.min(0)]],
+    staffCount: [null as number | null, [Validators.min(0)]],
+    canOperateRemotely: [''],
+    educationMode: [''],
+    shelterStatus: [''],
+    shelterType: [''],
+    shelterCapacity: [null as number | null, [Validators.min(1), Validators.max(10_000)]],
+    healthFacilityKind: [''],
+    suspendedServices: ['', [Validators.maxLength(1000)]],
+    declarationsCount: [null as number | null, [Validators.min(0)]],
+
+    // ── Step 4: budget / docs / timeline ──
+    estimatedCost: [null as number | null, [Validators.required, Validators.min(1)]],
+    costBasis: ['', [Validators.required]],
+    cofinancing: ['', [Validators.required]],
+    cofinancingDetails: [''],
+    docsAvailable: this.fb.group(
+      {
+        survey_act_326: [false],
+        defect_act: [false],
+        cost_estimate: [false],
+        design_docs: [false],
+        design_expertise: [false],
+        none: [false],
+      },
+      { validators: atLeastOneBooleanChecked },
+    ),
+    desiredTimeline: [''],
+    urgency: [''],
+    otherDonors: ['', [Validators.required]],
+    otherDonorsDetails: [''],
+    asbestosPresence: ['', [Validators.required]],
+    cloudLink: ['', [Validators.pattern(/^https?:\/\/.+/i)]],
+  });
+
+  /** Required controls (or validated groups) per step index. Steps 5–6 (files,
+   *  review) carry no controls in PR-3. */
+  private readonly stepFields: string[][] = [
+    [
+      'location',
+      'applicantCategory',
+      'applicantCategoryOther',
+      'organizationName',
+      'contactName',
+      'contactPosition',
+      'phoneDigits',
+      'email',
+      'altContactName',
+      'altContactPhoneDigits',
+      'website',
+    ],
+    [
+      'objectName',
+      'objectType',
+      'objectTypeOther',
+      'ownershipTypeOther',
+      'buildYear',
+      'totalArea',
+      'floors',
+      'workCategories',
+      'damages',
+      'damageDescription',
+      'damageCause',
+      'damageCauseOther',
+      'damageDate',
+      'damageCategory',
+      'functioningStatus',
+    ],
+    [
+      'directBeneficiaries',
+      'idpCount',
+      'childrenCount',
+      'pwdCount',
+      'elderlyCount',
+      'femaleCount',
+      'maleCount',
+      'indirectBeneficiaries',
+      'staffCount',
+      'educationMode',
+      'shelterStatus',
+      'shelterCapacity',
+      'healthFacilityKind',
+      'declarationsCount',
+    ],
+    [
+      'estimatedCost',
+      'costBasis',
+      'cofinancing',
+      'cofinancingDetails',
+      'docsAvailable',
+      'otherDonors',
+      'otherDonorsDetails',
+      'asbestosPresence',
+      'cloudLink',
+    ],
+    [], // step 5 — files (PR-4)
+    [], // step 6 — review + consent (PR-4)
+  ];
+
+  ngOnInit(): void {
+    this.wireConditionalValidators();
+
+    this.form
+      .get('damageDescription')!
+      .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((v) => this.descLen.set(((v as string) || '').length));
+
+    this.form.valueChanges
+      .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.draft.save(this.form.getRawValue()));
+
+    this.loadDraftBanner();
+  }
+
+  private damageRow(): FormGroup {
+    return this.fb.group({
+      checked: [false],
+      volume: [null as number | null, [Validators.min(0.01), Validators.max(1_000_000)]],
+    });
+  }
+
+  // ── Conditional validators (mirror ValidateIf in CreateRecoveryFormDto) ──
+
+  private wireConditionalValidators(): void {
+    const req2: ValidatorFn[] = [Validators.required, Validators.minLength(2)];
+    const changes$ = (name: string) =>
+      this.form.get(name)!.valueChanges.pipe(takeUntilDestroyed(this.destroyRef));
+
+    changes$('applicantCategory').subscribe((v) =>
+      this.applyConditional('applicantCategoryOther', v === 'other', req2),
+    );
+    changes$('ownershipType').subscribe((v) =>
+      this.applyConditional('ownershipTypeOther', v === 'other', req2),
+    );
+    changes$('damageCause').subscribe((v) =>
+      this.applyConditional('damageCauseOther', v === 'other', req2),
+    );
+    changes$('objectType').subscribe((v) => {
+      this.applyConditional('objectTypeOther', v === 'other', req2);
+      this.applyConditional('educationMode', v === 'education', [Validators.required]);
+      this.applyConditional('shelterStatus', v === 'education', [Validators.required]);
+      this.applyConditional('healthFacilityKind', v === 'healthcare', [Validators.required]);
+    });
+    changes$('cofinancing').subscribe((v) =>
+      this.applyConditional('cofinancingDetails', !!v && v !== 'no', req2),
+    );
+    changes$('otherDonors').subscribe((v) =>
+      this.applyConditional('otherDonorsDetails', v === 'yes', [
+        Validators.required,
+        Validators.minLength(3),
+      ]),
+    );
+  }
+
+  /** Toggle a conditional control's validators; clears its value when hidden. */
+  private applyConditional(name: string, active: boolean, validators: ValidatorFn[]): void {
+    const c = this.form.get(name);
+    if (!c) return;
+    if (active) {
+      c.setValidators(validators);
+    } else {
+      c.clearValidators();
+      c.setValue('', { emitEvent: false });
+    }
+    c.updateValueAndValidity({ emitEvent: false });
+  }
+
+  // ── Draft banner ──
+
+  private loadDraftBanner(): void {
+    const existing = this.draft.load();
+    if (!existing) return;
+    this.pendingDraftValue = existing.value;
+    this.draftSavedAt.set(existing.savedAt);
+    this.draftFound.set(true);
+  }
+
+  restoreDraft(): void {
+    if (this.pendingDraftValue) {
+      this.form.patchValue(this.pendingDraftValue);
+      this.form.markAsPristine();
+    }
+    this.pendingDraftValue = null;
+    this.draftFound.set(false);
+  }
+
+  discardDraft(): void {
+    this.draft.clear();
+    this.pendingDraftValue = null;
+    this.draftFound.set(false);
+  }
+
+  protected draftSavedLabel(): string {
+    const ts = this.draftSavedAt();
+    if (!ts) return '';
+    return new Date(ts).toLocaleString(this.isUa() ? 'uk-UA' : 'en-GB');
+  }
+
+  // ── Navigation ──
+
+  protected goToStep(s: number): void {
+    if (s < this.currentStep()) {
+      this.stepInvalid.set(false);
+      this.currentStep.set(s);
+    }
+  }
+
+  protected nextStep(): void {
+    if (this.validateCurrentStep()) {
+      this.stepInvalid.set(false);
+      this.currentStep.update((s) => Math.min(s + 1, this.steps.length - 1));
+    }
+  }
+
+  protected prevStep(): void {
+    this.stepInvalid.set(false);
+    this.currentStep.update((s) => Math.max(s - 1, 0));
+  }
+
+  private validateCurrentStep(): boolean {
+    const fields = this.stepFields[this.currentStep()] ?? [];
+    let valid = true;
+    for (const f of fields) {
+      const c = this.form.get(f);
+      if (!c) continue;
+      c.markAsTouched();
+      if ('controls' in c) (c as FormGroup).markAllAsTouched();
+      if (c.invalid) valid = false;
+    }
+    this.stepInvalid.set(!valid);
+    return valid;
+  }
+
+  // ── Template error helpers ──
+
+  protected showError(name: string): boolean {
+    const c = this.form.get(name);
+    return !!(c && c.invalid && (c.touched || c.dirty));
+  }
+
+  protected showGroupError(name: string): boolean {
+    const c = this.form.get(name);
+    return !!(c && c.hasError('required') && c.touched);
+  }
+
+  protected objectTypeIs(value: ObjectType): boolean {
+    return this.form.get('objectType')!.value === value;
+  }
+
+  // ── Payload mapping (data portion; files + consent added in PR-4) ──
+
+  buildPayload(): RecoveryDataPayload {
+    const raw = this.form.getRawValue() as Record<string, unknown>;
+    const loc = (raw['location'] ?? null) as LocationValue | null;
+    const objectType = raw['objectType'] as ObjectType;
+
+    return {
+      applicantCategory: raw['applicantCategory'] as RecoveryDataPayload['applicantCategory'],
+      ...(raw['applicantCategory'] === 'other'
+        ? { applicantCategoryOther: this.str('applicantCategoryOther') }
+        : {}),
+      organizationName: this.str('organizationName') ?? '',
+
+      region: loc?.regionUa ?? '',
+      regionEn: loc?.regionEn ?? '',
+      district: loc?.districtUa ?? '',
+      districtEn: loc?.districtEn ?? '',
+      community: loc?.communityUa ?? '',
+      communityEn: loc?.communityEn ?? '',
+      communityCode: loc?.communityCode ?? '',
+      settlement: loc?.settlementUa || undefined,
+      settlementEn: loc?.settlementEn || undefined,
+      settlementCode: loc?.settlementCode || undefined,
+
+      contactName: this.str('contactName') ?? '',
+      contactPosition: this.str('contactPosition') ?? '',
+      phone: `+38${raw['phoneDigits'] as string}`,
+      email: this.str('email') ?? '',
+      messenger: this.str('messenger'),
+      altContactName: this.str('altContactName'),
+      altContactPhone: raw['altContactPhoneDigits']
+        ? `+38${raw['altContactPhoneDigits'] as string}`
+        : undefined,
+      website: this.str('website'),
+
+      objectName: this.str('objectName') ?? '',
+      objectType,
+      ...(objectType === 'other' ? { objectTypeOther: this.str('objectTypeOther') } : {}),
+      streetAddress: this.str('streetAddress'),
+      ownershipType: (raw['ownershipType'] || undefined) as RecoveryDataPayload['ownershipType'],
+      ...(raw['ownershipType'] === 'other'
+        ? { ownershipTypeOther: this.str('ownershipTypeOther') }
+        : {}),
+      onApplicantBalance: this.triState(raw['onApplicantBalance'] as string),
+      buildYear: this.num('buildYear'),
+      totalArea: this.num('totalArea'),
+      floors: this.num('floors'),
+      workCategories: this.checkedKeys<WorkCategory>('workCategories'),
+      damages: this.collectDamages(),
+      damageDescription: this.str('damageDescription') ?? '',
+      damageCause: raw['damageCause'] as RecoveryDataPayload['damageCause'],
+      ...(raw['damageCause'] === 'other' ? { damageCauseOther: this.str('damageCauseOther') } : {}),
+      damageDate: this.str('damageDate'),
+      damageCategory: raw['damageCategory'] as RecoveryDataPayload['damageCategory'],
+      functioningStatus: raw['functioningStatus'] as RecoveryDataPayload['functioningStatus'],
+      accessibilityFeatures: this.optionalArray(
+        this.checkedKeys<AccessibilityFeature>('accessibilityFeatures'),
+      ),
+
+      ...(objectType === 'education'
+        ? {
+            educationMode: (raw['educationMode'] ||
+              undefined) as RecoveryDataPayload['educationMode'],
+            shelterStatus: (raw['shelterStatus'] ||
+              undefined) as RecoveryDataPayload['shelterStatus'],
+            shelterType: (raw['shelterType'] || undefined) as RecoveryDataPayload['shelterType'],
+            shelterCapacity: this.num('shelterCapacity'),
+          }
+        : {}),
+      ...(objectType === 'healthcare'
+        ? {
+            healthFacilityKind: (raw['healthFacilityKind'] ||
+              undefined) as RecoveryDataPayload['healthFacilityKind'],
+            suspendedServices: this.str('suspendedServices'),
+            declarationsCount: this.num('declarationsCount'),
+          }
+        : {}),
+
+      directBeneficiaries: Number(raw['directBeneficiaries']),
+      idpCount: Number(raw['idpCount']),
+      childrenCount: Number(raw['childrenCount']),
+      pwdCount: Number(raw['pwdCount']),
+      elderlyCount: Number(raw['elderlyCount']),
+      femaleCount: this.num('femaleCount'),
+      maleCount: this.num('maleCount'),
+      indirectBeneficiaries: this.num('indirectBeneficiaries'),
+      staffCount: this.num('staffCount'),
+      canOperateRemotely: (raw['canOperateRemotely'] ||
+        undefined) as RecoveryDataPayload['canOperateRemotely'],
+
+      estimatedCost: Number(raw['estimatedCost']),
+      costBasis: raw['costBasis'] as RecoveryDataPayload['costBasis'],
+      cofinancing: raw['cofinancing'] as RecoveryDataPayload['cofinancing'],
+      ...(raw['cofinancing'] && raw['cofinancing'] !== 'no'
+        ? { cofinancingDetails: this.str('cofinancingDetails') }
+        : {}),
+      docsAvailable: this.checkedKeys<DocsAvailableOption>('docsAvailable'),
+      desiredTimeline: (raw['desiredTimeline'] ||
+        undefined) as RecoveryDataPayload['desiredTimeline'],
+      urgency: (raw['urgency'] || undefined) as RecoveryDataPayload['urgency'],
+      otherDonors: raw['otherDonors'] === 'yes',
+      ...(raw['otherDonors'] === 'yes'
+        ? { otherDonorsDetails: this.str('otherDonorsDetails') }
+        : {}),
+      asbestosPresence: raw['asbestosPresence'] as RecoveryDataPayload['asbestosPresence'],
+      cloudLink: this.str('cloudLink'),
+    };
+  }
+
+  private collectDamages(): RecoveryDamagePayload[] {
+    const group = (this.form.get('damages')?.value ?? {}) as Record<
+      string,
+      { checked?: boolean; volume?: number | null }
+    >;
+    const out: RecoveryDamagePayload[] = [];
+    let sort = 0;
+    for (const d of DAMAGE_ELEMENTS) {
+      const row = group[d.element];
+      if (!row?.checked) continue;
+      out.push({
+        element: d.element,
+        ...(row.volume != null ? { volume: Number(row.volume) } : {}),
+        sortOrder: sort++,
+      });
+    }
+    return out;
+  }
+
+  private checkedKeys<T extends string>(groupName: string): T[] {
+    const group = (this.form.get(groupName)?.value ?? {}) as Record<string, boolean>;
+    return Object.entries(group)
+      .filter(([, checked]) => checked)
+      .map(([key]) => key as T);
+  }
+
+  private optionalArray<T>(arr: T[]): T[] | undefined {
+    return arr.length ? arr : undefined;
+  }
+
+  private triState(value: string): boolean | undefined {
+    if (value === 'yes') return true;
+    if (value === 'no') return false;
+    return undefined;
+  }
+
+  private num(name: string): number | undefined {
+    const v = this.form.get(name)?.value;
+    return v === null || v === '' || v === undefined ? undefined : Number(v);
+  }
+
+  private str(name: string): string | undefined {
+    const v = (this.form.get(name)?.value ?? '') as string;
+    const t = v.trim();
+    return t || undefined;
+  }
+}
