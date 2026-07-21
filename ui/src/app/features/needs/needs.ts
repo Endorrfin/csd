@@ -35,6 +35,12 @@ import { PageTitleService } from '../../core/services/page-title.service';
         </a>
 
         <a class="needs-tab disabled" title="{{ isUa() ? 'Скоро' : 'Coming soon' }}">
+          <span class="tab-icon">❄️</span>
+          {{ isUa() ? 'Підготовка до зими' : 'Winterization' }}
+          <span class="badge">{{ isUa() ? 'скоро' : 'soon' }}</span>
+        </a>
+
+        <a class="needs-tab disabled" title="{{ isUa() ? 'Скоро' : 'Coming soon' }}">
           <span class="tab-icon">🏠</span>
           {{ isUa() ? 'Укриття' : 'Shelters' }}
           <span class="badge">{{ isUa() ? 'скоро' : 'soon' }}</span>

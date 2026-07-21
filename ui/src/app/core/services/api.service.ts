@@ -12,8 +12,9 @@ export class ApiService {
     return this.http.get<T>(`${this.baseUrl}/${path}`);
   }
 
-  post<T>(path: string, body: unknown): Observable<T> {
-    return this.http.post<T>(`${this.baseUrl}/${path}`, body);
+  // CHANGED: PR-4 — optional headers (e.g. x-turnstile-token on guarded public POSTs).
+  post<T>(path: string, body: unknown, headers?: Record<string, string>): Observable<T> {
+    return this.http.post<T>(`${this.baseUrl}/${path}`, body, headers ? { headers } : undefined);
   }
 
   patch<T>(path: string, body: unknown): Observable<T> {
