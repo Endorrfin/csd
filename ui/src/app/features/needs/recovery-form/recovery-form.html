@@ -1,0 +1,691 @@
+<!-- ui/src/app/features/needs/recovery-form/recovery-form.html -->
+<!-- === ADDED: PR-3 Recovery form UI (steps 1–4). Steps 5–6 are placeholders
+     filled in PR-4. Inline bilingual via signal isUa() (zoneless-safe). === -->
+
+@if (draftFound()) {
+  <div class="draft-banner" role="status">
+    <span class="draft-text">
+      {{ isUa() ? 'Знайдено збережену чернетку від' : 'Found a saved draft from' }}
+      {{ draftSavedLabel() }}
+    </span>
+    <div class="draft-actions">
+      <button type="button" class="btn btn-primary btn-sm" (click)="restoreDraft()">
+        {{ isUa() ? 'Відновити' : 'Restore' }}
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm" (click)="discardDraft()">
+        {{ isUa() ? 'Почати заново' : 'Start fresh' }}
+      </button>
+    </div>
+  </div>
+}
+
+<app-form-stepper
+  [steps]="steps"
+  [current]="currentStep()"
+  (stepClick)="goToStep($event)"
+></app-form-stepper>
+
+<form [formGroup]="form" class="recovery-form">
+  <!-- ══════════ STEP 1: Applicant & contacts ══════════ -->
+  @if (currentStep() === 0) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'I. Заявник і контакти' : 'I. Applicant & contacts' }}</h2>
+
+      <div class="location-block">
+        <app-location-selector formControlName="location" [isUa]="isUa()" [required]="true">
+        </app-location-selector>
+        @if (showError('location')) {
+          <span class="error">{{ isUa() ? 'Оберіть хоча б область' : 'Select at least a region' }}</span>
+        }
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="applicantCategory">
+            {{ isUa() ? 'Категорія заявника' : 'Applicant category' }} <span class="req">*</span>
+          </label>
+          <select id="applicantCategory" formControlName="applicantCategory">
+            <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+            @for (o of applicantCategories; track o.value) {
+              <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+            }
+          </select>
+          @if (showError('applicantCategory')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+
+        @if (form.get('applicantCategory')?.value === 'other') {
+          <div class="form-field">
+            <label for="applicantCategoryOther">
+              {{ isUa() ? 'Уточніть категорію' : 'Specify category' }} <span class="req">*</span>
+            </label>
+            <input id="applicantCategoryOther" formControlName="applicantCategoryOther" />
+            @if (showError('applicantCategoryOther')) {
+              <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+            }
+          </div>
+        }
+
+        <div class="form-field full-width">
+          <label for="organizationName">
+            {{ isUa() ? 'Назва організації / установи' : 'Organization / institution name' }}
+            <span class="req">*</span>
+          </label>
+          <input
+            id="organizationName"
+            formControlName="organizationName"
+            [placeholder]="isUa() ? 'Напр. Ліцей №1 Прилуцької міської ради' : 'e.g. Lyceum No. 1'"
+          />
+          @if (showError('organizationName')) {
+            <span class="error">{{ isUa() ? 'Мінімум 3 символи' : 'Min 3 characters' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="contactName">{{ isUa() ? 'Контактна особа (ПІБ)' : 'Contact person' }} <span class="req">*</span></label>
+          <input id="contactName" formControlName="contactName" [placeholder]="isUa() ? 'Прізвище Імʼя По батькові' : 'Full name'" />
+          @if (showError('contactName')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="contactPosition">{{ isUa() ? 'Посада' : 'Position' }} <span class="req">*</span></label>
+          <input id="contactPosition" formControlName="contactPosition" />
+          @if (showError('contactPosition')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="phoneDigits">{{ isUa() ? 'Телефон' : 'Phone' }} <span class="req">*</span></label>
+          <div class="phone-input">
+            <span class="phone-prefix">+38</span>
+            <input id="phoneDigits" type="tel" inputmode="numeric" maxlength="10" formControlName="phoneDigits" placeholder="0501234567" />
+          </div>
+          <span class="hint">{{ isUa() ? 'Формат: 0XXXXXXXXX (10 цифр)' : 'Format: 0XXXXXXXXX (10 digits)' }}</span>
+          @if (showError('phoneDigits')) {
+            <span class="error">{{ isUa() ? 'Введіть 10 цифр, починаючи з 0' : 'Enter 10 digits starting with 0' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="email">Email <span class="req">*</span></label>
+          <input id="email" type="email" formControlName="email" placeholder="email&#64;example.com" />
+          @if (showError('email')) {
+            <span class="error">{{ isUa() ? 'Некоректний email' : 'Invalid email' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="messenger">{{ isUa() ? 'Месенджер (необовʼязково)' : 'Messenger (optional)' }}</label>
+          <input id="messenger" formControlName="messenger" [placeholder]="isUa() ? 'Telegram / Viber / Signal' : 'Telegram / Viber / Signal'" />
+        </div>
+
+        <div class="form-field">
+          <label for="altContactName">{{ isUa() ? 'Додатковий контакт (ПІБ)' : 'Alternate contact' }}</label>
+          <input id="altContactName" formControlName="altContactName" />
+          @if (showError('altContactName')) {
+            <span class="error">{{ isUa() ? 'Мінімум 2 символи' : 'Min 2 characters' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="altPhoneDigits">{{ isUa() ? 'Додатковий телефон' : 'Alternate phone' }}</label>
+          <div class="phone-input">
+            <span class="phone-prefix">+38</span>
+            <input id="altPhoneDigits" type="tel" inputmode="numeric" maxlength="10" formControlName="altContactPhoneDigits" placeholder="0501234567" />
+          </div>
+          @if (showError('altContactPhoneDigits')) {
+            <span class="error">{{ isUa() ? 'Введіть 10 цифр, починаючи з 0' : 'Enter 10 digits starting with 0' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="website">{{ isUa() ? 'Вебсайт (необовʼязково)' : 'Website (optional)' }}</label>
+          <input id="website" formControlName="website" placeholder="https://" />
+          @if (showError('website')) {
+            <span class="error">{{ isUa() ? 'Вкажіть повне посилання (https://...)' : 'Enter a full URL (https://...)' }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ STEP 2: Object & damage ══════════ -->
+  @if (currentStep() === 1) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'II. Обʼєкт і пошкодження' : 'II. Object & damage' }}</h2>
+
+      <div class="form-grid">
+        <div class="form-field full-width">
+          <label for="objectName">{{ isUa() ? 'Назва обʼєкта' : 'Object name' }} <span class="req">*</span></label>
+          <input id="objectName" formControlName="objectName" [placeholder]="isUa() ? 'Напр. Спортивна зала ліцею' : 'e.g. School gym'" />
+          @if (showError('objectName')) {
+            <span class="error">{{ isUa() ? 'Мінімум 3 символи' : 'Min 3 characters' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="objectType">{{ isUa() ? 'Тип обʼєкта' : 'Object type' }} <span class="req">*</span></label>
+          <select id="objectType" formControlName="objectType">
+            <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+            @for (o of objectTypes; track o.value) {
+              <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+            }
+          </select>
+          @if (showError('objectType')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+
+        @if (form.get('objectType')?.value === 'other') {
+          <div class="form-field">
+            <label for="objectTypeOther">{{ isUa() ? 'Уточніть тип' : 'Specify type' }} <span class="req">*</span></label>
+            <input id="objectTypeOther" formControlName="objectTypeOther" />
+            @if (showError('objectTypeOther')) {
+              <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+            }
+          </div>
+        }
+
+        <div class="form-field full-width">
+          <label for="streetAddress">{{ isUa() ? 'Адреса обʼєкта (вулиця, №)' : 'Object address' }}</label>
+          <input id="streetAddress" formControlName="streetAddress" />
+        </div>
+
+        <div class="form-field">
+          <span class="field-label">{{ isUa() ? 'Форма власності' : 'Ownership' }}</span>
+          <div class="radio-group">
+            @for (o of ownershipTypes; track o.value) {
+              <label class="radio"><input type="radio" formControlName="ownershipType" [value]="o.value" />{{ isUa() ? o.ua : o.en }}</label>
+            }
+          </div>
+        </div>
+
+        @if (form.get('ownershipType')?.value === 'other') {
+          <div class="form-field">
+            <label for="ownershipTypeOther">{{ isUa() ? 'Уточніть' : 'Specify' }} <span class="req">*</span></label>
+            <input id="ownershipTypeOther" formControlName="ownershipTypeOther" />
+            @if (showError('ownershipTypeOther')) {
+              <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+            }
+          </div>
+        }
+
+        <div class="form-field">
+          <span class="field-label">{{ isUa() ? 'На балансі заявника?' : 'On applicant balance?' }}</span>
+          <div class="radio-group">
+            <label class="radio"><input type="radio" formControlName="onApplicantBalance" value="yes" />{{ isUa() ? 'Так' : 'Yes' }}</label>
+            <label class="radio"><input type="radio" formControlName="onApplicantBalance" value="no" />{{ isUa() ? 'Ні' : 'No' }}</label>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label for="buildYear">{{ isUa() ? 'Рік побудови' : 'Build year' }}</label>
+          <input id="buildYear" type="number" formControlName="buildYear" min="1800" max="2026" placeholder="1985" />
+          @if (showError('buildYear')) {
+            <span class="error">{{ isUa() ? 'Рік у діапазоні 1800–2026' : 'Year 1800–2026' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="totalArea">{{ isUa() ? 'Площа, м²' : 'Total area, m²' }}</label>
+          <input id="totalArea" type="number" formControlName="totalArea" min="1" step="any" />
+          @if (showError('totalArea')) {
+            <span class="error">{{ isUa() ? 'Некоректне значення' : 'Invalid value' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="floors">{{ isUa() ? 'Поверховість' : 'Floors' }}</label>
+          <input id="floors" type="number" formControlName="floors" min="1" max="30" />
+          @if (showError('floors')) {
+            <span class="error">{{ isUa() ? '1–30' : '1–30' }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Категорії робіт' : 'Work categories' }} <span class="req">*</span></span>
+        <div class="checklist" formGroupName="workCategories">
+          @for (o of workCategoryOptions; track o.value) {
+            <label class="checklist-item">
+              <input type="checkbox" [formControlName]="o.value" />
+              <span class="checklist-text">{{ isUa() ? o.ua : o.en }}</span>
+            </label>
+          }
+        </div>
+        @if (showGroupError('workCategories')) {
+          <span class="error">{{ isUa() ? 'Оберіть хоча б одну категорію' : 'Select at least one' }}</span>
+        }
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Пошкоджені елементи (обсяг — за наявності обмірів)' : 'Damaged elements (volume if measured)' }} <span class="req">*</span></span>
+        <div class="checklist" formGroupName="damages">
+          @for (d of damageElements; track d.element) {
+            <div class="checklist-item-wrap" [formGroupName]="d.element">
+              <label class="checklist-item">
+                <input type="checkbox" formControlName="checked" />
+                <span class="checklist-text">{{ isUa() ? d.ua : d.en }}</span>
+              </label>
+              @if (d.unit && form.get(['damages', d.element, 'checked'])?.value) {
+                <div class="damage-volume">
+                  <label [attr.for]="'vol-' + d.element">{{ isUa() ? 'Обсяг' : 'Volume' }}, {{ isUa() ? d.unitUa : d.unitEn }}</label>
+                  <input [id]="'vol-' + d.element" type="number" formControlName="volume" min="0" step="any" [placeholder]="isUa() ? 'напр. 120' : 'e.g. 120'" />
+                </div>
+              }
+            </div>
+          }
+        </div>
+        @if (showGroupError('damages')) {
+          <span class="error">{{ isUa() ? 'Оберіть хоча б один пошкоджений елемент' : 'Select at least one damaged element' }}</span>
+        }
+      </div>
+
+      <div class="form-field full-width">
+        <label for="damageDescription">{{ isUa() ? 'Опис пошкоджень' : 'Damage description' }} <span class="req">*</span></label>
+        <textarea id="damageDescription" formControlName="damageDescription" rows="4" [placeholder]="isUa() ? 'Опишіть характер і масштаб пошкоджень (мінімум 100 символів)' : 'Describe the damage (min 100 characters)'"></textarea>
+        <span class="hint" [class.hint-warn]="descLen() < 100">{{ descLen() }}/1500</span>
+        @if (showError('damageDescription')) {
+          <span class="error">{{ isUa() ? 'Від 100 до 1500 символів' : '100–1500 characters' }}</span>
+        }
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="damageCause">{{ isUa() ? 'Причина пошкодження' : 'Damage cause' }} <span class="req">*</span></label>
+          <select id="damageCause" formControlName="damageCause">
+            <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+            @for (o of damageCauses; track o.value) {
+              <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+            }
+          </select>
+          @if (showError('damageCause')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+
+        @if (form.get('damageCause')?.value === 'other') {
+          <div class="form-field">
+            <label for="damageCauseOther">{{ isUa() ? 'Уточніть причину' : 'Specify cause' }} <span class="req">*</span></label>
+            <input id="damageCauseOther" formControlName="damageCauseOther" />
+            @if (showError('damageCauseOther')) {
+              <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+            }
+          </div>
+        }
+
+        <div class="form-field">
+          <label for="damageDate">{{ isUa() ? 'Дата пошкодження' : 'Damage date' }}</label>
+          <input id="damageDate" type="month" formControlName="damageDate" />
+        </div>
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Категорія пошкодження (Методика №65)' : 'Damage category (Methodology No. 65)' }} <span class="req">*</span></span>
+        <div class="radio-list">
+          @for (o of damageCategories; track o.value) {
+            <label class="radio-card">
+              <input type="radio" formControlName="damageCategory" [value]="o.value" />
+              <span class="radio-card-body">
+                <span class="radio-card-title">{{ isUa() ? o.ua : o.en }}</span>
+                <span class="radio-card-hint">{{ isUa() ? o.hintUa : o.hintEn }}</span>
+              </span>
+            </label>
+          }
+        </div>
+        @if (showError('damageCategory')) {
+          <span class="error">{{ isUa() ? 'Оберіть категорію' : 'Select a category' }}</span>
+        }
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Стан функціонування' : 'Functioning status' }} <span class="req">*</span></span>
+        <div class="radio-group">
+          @for (o of functioningStatuses; track o.value) {
+            <label class="radio"><input type="radio" formControlName="functioningStatus" [value]="o.value" />{{ isUa() ? o.ua : o.en }}</label>
+          }
+        </div>
+        @if (showError('functioningStatus')) {
+          <span class="error">{{ isUa() ? 'Оберіть стан' : 'Select a status' }}</span>
+        }
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Елементи доступності (необовʼязково)' : 'Accessibility features (optional)' }}</span>
+        <div class="checklist checklist-inline" formGroupName="accessibilityFeatures">
+          @for (o of accessibilityFeatureOptions; track o.value) {
+            <label class="checklist-item">
+              <input type="checkbox" [formControlName]="o.value" />
+              <span class="checklist-text">{{ isUa() ? o.ua : o.en }}</span>
+            </label>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ STEP 3: Beneficiaries & impact ══════════ -->
+  @if (currentStep() === 2) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'III. Бенефіціари та вплив' : 'III. Beneficiaries & impact' }}</h2>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="directBeneficiaries">{{ isUa() ? 'Прямі бенефіціари' : 'Direct beneficiaries' }} <span class="req">*</span></label>
+          <input id="directBeneficiaries" type="number" formControlName="directBeneficiaries" min="1" />
+          @if (showError('directBeneficiaries')) {
+            <span class="error">{{ isUa() ? 'Вкажіть число ≥ 1' : 'Enter a number ≥ 1' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="idpCount">{{ isUa() ? 'з них ВПО' : 'incl. IDPs' }} <span class="req">*</span></label>
+          <input id="idpCount" type="number" formControlName="idpCount" min="0" />
+          @if (showError('idpCount')) {
+            <span class="error">{{ isUa() ? 'Число ≥ 0' : 'Number ≥ 0' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="childrenCount">{{ isUa() ? 'з них діти' : 'incl. children' }} <span class="req">*</span></label>
+          <input id="childrenCount" type="number" formControlName="childrenCount" min="0" />
+          @if (showError('childrenCount')) {
+            <span class="error">{{ isUa() ? 'Число ≥ 0' : 'Number ≥ 0' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="pwdCount">{{ isUa() ? 'з них особи з інвалідністю' : 'incl. persons with disability' }} <span class="req">*</span></label>
+          <input id="pwdCount" type="number" formControlName="pwdCount" min="0" />
+          @if (showError('pwdCount')) {
+            <span class="error">{{ isUa() ? 'Число ≥ 0' : 'Number ≥ 0' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="elderlyCount">{{ isUa() ? 'з них 60+' : 'incl. 60+' }} <span class="req">*</span></label>
+          <input id="elderlyCount" type="number" formControlName="elderlyCount" min="0" />
+          @if (showError('elderlyCount')) {
+            <span class="error">{{ isUa() ? 'Число ≥ 0' : 'Number ≥ 0' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="femaleCount">{{ isUa() ? 'Жінки' : 'Female' }}</label>
+          <input id="femaleCount" type="number" formControlName="femaleCount" min="0" />
+        </div>
+        <div class="form-field">
+          <label for="maleCount">{{ isUa() ? 'Чоловіки' : 'Male' }}</label>
+          <input id="maleCount" type="number" formControlName="maleCount" min="0" />
+        </div>
+        <div class="form-field">
+          <label for="indirectBeneficiaries">{{ isUa() ? 'Непрямі бенефіціари' : 'Indirect beneficiaries' }}</label>
+          <input id="indirectBeneficiaries" type="number" formControlName="indirectBeneficiaries" min="0" />
+        </div>
+        <div class="form-field">
+          <label for="staffCount">{{ isUa() ? 'Персонал закладу' : 'Facility staff' }}</label>
+          <input id="staffCount" type="number" formControlName="staffCount" min="0" />
+        </div>
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Чи може заклад працювати дистанційно?' : 'Can the facility operate remotely?' }}</span>
+        <div class="radio-group">
+          @for (o of remoteOperationOptions; track o.value) {
+            <label class="radio"><input type="radio" formControlName="canOperateRemotely" [value]="o.value" />{{ isUa() ? o.ua : o.en }}</label>
+          }
+        </div>
+      </div>
+
+      @if (objectTypeIs('education')) {
+        <div class="conditional-block">
+          <h3 class="block-title">{{ isUa() ? 'Освіта' : 'Education' }}</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="educationMode">{{ isUa() ? 'Формат навчання' : 'Education mode' }} <span class="req">*</span></label>
+              <select id="educationMode" formControlName="educationMode">
+                <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+                @for (o of educationModes; track o.value) {
+                  <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+                }
+              </select>
+              @if (showError('educationMode')) {
+                <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+              }
+            </div>
+            <div class="form-field">
+              <label for="shelterStatus">{{ isUa() ? 'Статус укриття' : 'Shelter status' }} <span class="req">*</span></label>
+              <select id="shelterStatus" formControlName="shelterStatus">
+                <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+                @for (o of shelterStatuses; track o.value) {
+                  <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+                }
+              </select>
+              @if (showError('shelterStatus')) {
+                <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+              }
+            </div>
+            <div class="form-field">
+              <label for="shelterType">{{ isUa() ? 'Тип укриття' : 'Shelter type' }}</label>
+              <select id="shelterType" formControlName="shelterType">
+                <option value="">{{ isUa() ? '-- Не вказано --' : '-- Not specified --' }}</option>
+                @for (o of shelterTypes; track o.value) {
+                  <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+                }
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="shelterCapacity">{{ isUa() ? 'Місткість укриття (осіб)' : 'Shelter capacity' }}</label>
+              <input id="shelterCapacity" type="number" formControlName="shelterCapacity" min="1" />
+            </div>
+          </div>
+        </div>
+      }
+
+      @if (objectTypeIs('healthcare')) {
+        <div class="conditional-block">
+          <h3 class="block-title">{{ isUa() ? 'Охорона здоровʼя' : 'Healthcare' }}</h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="healthFacilityKind">{{ isUa() ? 'Тип закладу' : 'Facility kind' }} <span class="req">*</span></label>
+              <select id="healthFacilityKind" formControlName="healthFacilityKind">
+                <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+                @for (o of healthFacilityKinds; track o.value) {
+                  <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+                }
+              </select>
+              @if (showError('healthFacilityKind')) {
+                <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+              }
+            </div>
+            <div class="form-field">
+              <label for="declarationsCount">{{ isUa() ? 'Кількість декларацій' : 'Declarations count' }}</label>
+              <input id="declarationsCount" type="number" formControlName="declarationsCount" min="0" />
+            </div>
+          </div>
+          <div class="form-field full-width">
+            <label for="suspendedServices">{{ isUa() ? 'Призупинені послуги' : 'Suspended services' }}</label>
+            <textarea id="suspendedServices" formControlName="suspendedServices" rows="2"></textarea>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ══════════ STEP 4: Budget, docs, timeline ══════════ -->
+  @if (currentStep() === 3) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'IV. Бюджет, документація, терміни' : 'IV. Budget, documentation, timeline' }}</h2>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="estimatedCost">{{ isUa() ? 'Орієнтовна вартість, грн' : 'Estimated cost, UAH' }} <span class="req">*</span></label>
+          <input id="estimatedCost" type="number" formControlName="estimatedCost" min="1" step="any" />
+          @if (showError('estimatedCost')) {
+            <span class="error">{{ isUa() ? 'Вкажіть суму > 0' : 'Enter an amount > 0' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="costBasis">{{ isUa() ? 'Підстава оцінки' : 'Cost basis' }} <span class="req">*</span></label>
+          <select id="costBasis" formControlName="costBasis">
+            <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+            @for (o of costBases; track o.value) {
+              <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+            }
+          </select>
+          @if (showError('costBasis')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Співфінансування' : 'Co-financing' }} <span class="req">*</span></span>
+        <div class="radio-group">
+          @for (o of cofinancingOptions; track o.value) {
+            <label class="radio"><input type="radio" formControlName="cofinancing" [value]="o.value" />{{ isUa() ? o.ua : o.en }}</label>
+          }
+        </div>
+        @if (showError('cofinancing')) {
+          <span class="error">{{ isUa() ? 'Оберіть варіант' : 'Select an option' }}</span>
+        }
+      </div>
+
+      @if (form.get('cofinancing')?.value && form.get('cofinancing')?.value !== 'no') {
+        <div class="form-field full-width">
+          <label for="cofinancingDetails">{{ isUa() ? 'Деталі співфінансування (сума або %)' : 'Co-financing details (amount or %)' }} <span class="req">*</span></label>
+          <input id="cofinancingDetails" formControlName="cofinancingDetails" />
+          @if (showError('cofinancingDetails')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+      }
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Наявна документація' : 'Available documentation' }} <span class="req">*</span></span>
+        <div class="checklist" formGroupName="docsAvailable">
+          @for (o of docsAvailableOptions; track o.value) {
+            <label class="checklist-item">
+              <input type="checkbox" [formControlName]="o.value" />
+              <span class="checklist-text">{{ isUa() ? o.ua : o.en }}</span>
+            </label>
+          }
+        </div>
+        @if (showGroupError('docsAvailable')) {
+          <span class="error">{{ isUa() ? 'Оберіть хоча б один пункт' : 'Select at least one' }}</span>
+        }
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="desiredTimeline">{{ isUa() ? 'Бажані терміни' : 'Desired timeline' }}</label>
+          <select id="desiredTimeline" formControlName="desiredTimeline">
+            <option value="">{{ isUa() ? '-- Не вказано --' : '-- Not specified --' }}</option>
+            @for (o of desiredTimelines; track o.value) {
+              <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Терміновість' : 'Urgency' }}</span>
+        <div class="radio-group">
+          @for (o of urgencyOptions; track o.value) {
+            <label class="radio"><input type="radio" formControlName="urgency" [value]="o.value" />{{ isUa() ? o.ua : o.en }}</label>
+          }
+        </div>
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{ isUa() ? 'Чи звертались до інших донорів?' : 'Applied to other donors?' }} <span class="req">*</span></span>
+        <div class="radio-group">
+          <label class="radio"><input type="radio" formControlName="otherDonors" value="yes" />{{ isUa() ? 'Так' : 'Yes' }}</label>
+          <label class="radio"><input type="radio" formControlName="otherDonors" value="no" />{{ isUa() ? 'Ні' : 'No' }}</label>
+        </div>
+        @if (showError('otherDonors')) {
+          <span class="error">{{ isUa() ? 'Оберіть варіант' : 'Select an option' }}</span>
+        }
+      </div>
+
+      @if (form.get('otherDonors')?.value === 'yes') {
+        <div class="form-field full-width">
+          <label for="otherDonorsDetails">{{ isUa() ? 'Хто, коли, що саме' : 'Who, when, what exactly' }} <span class="req">*</span></label>
+          <textarea id="otherDonorsDetails" formControlName="otherDonorsDetails" rows="2"></textarea>
+          @if (showError('otherDonorsDetails')) {
+            <span class="error">{{ isUa() ? 'Мінімум 3 символи' : 'Min 3 characters' }}</span>
+          }
+        </div>
+      }
+
+      <div class="form-field full-width">
+        <label for="asbestosPresence">{{ isUa() ? 'Наявність азбестовмісних матеріалів (АВМ)' : 'Asbestos-containing materials' }} <span class="req">*</span></label>
+        <select id="asbestosPresence" formControlName="asbestosPresence">
+          <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+          @for (o of asbestosOptions; track o.value) {
+            <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+          }
+        </select>
+        <span class="hint">{{ isUa() ? 'АВМ (напр. шифер) впливають на бюджет утилізації — вимога екоскринінгу ECHO.' : 'Asbestos (e.g. slate) affects disposal budget — ECHO environmental screening.' }}</span>
+        @if (showError('asbestosPresence')) {
+          <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+        }
+      </div>
+
+      <div class="form-field full-width">
+        <label for="cloudLink">{{ isUa() ? 'Посилання на хмару (великі архіви фото/відео)' : 'Cloud link (large photo/video archives)' }}</label>
+        <input id="cloudLink" formControlName="cloudLink" placeholder="https://" />
+        @if (showError('cloudLink')) {
+          <span class="error">{{ isUa() ? 'Вкажіть повне посилання (https://...)' : 'Enter a full URL (https://...)' }}</span>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ STEP 5: Files (PR-4 placeholder) ══════════ -->
+  @if (currentStep() === 4) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'V. Фото та документи' : 'V. Photos & documents' }}</h2>
+      <div class="placeholder-card">
+        {{ isUa()
+          ? 'Завантаження фото (3–10) і документів зʼявиться в наступному оновленні форми.'
+          : 'Photo (3–10) and document upload will appear in the next form update.' }}
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ STEP 6: Review & consent (PR-4 placeholder) ══════════ -->
+  @if (currentStep() === 5) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'VI. Перевірка та згода' : 'VI. Review & consent' }}</h2>
+      <div class="placeholder-card">
+        {{ isUa()
+          ? 'Перегляд даних, згода на обробку персональних даних, захист від спаму і подання заявки зʼявляться в наступному оновленні.'
+          : 'Data review, personal-data consent, anti-spam and submission will appear in the next update.' }}
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ Navigation ══════════ -->
+  <div class="form-nav">
+    @if (currentStep() > 0) {
+      <button type="button" class="btn btn-secondary" (click)="prevStep()">{{ isUa() ? 'Назад' : 'Back' }}</button>
+    } @else {
+      <div></div>
+    }
+    <div class="form-nav-right">
+      @if (currentStep() < steps.length - 1) {
+        <button type="button" class="btn btn-primary" (click)="nextStep()">{{ isUa() ? 'Далі' : 'Next' }}</button>
+      } @else {
+        <span class="nav-note">{{ isUa() ? 'Подання буде додано в наступному оновленні' : 'Submission arrives in the next update' }}</span>
+      }
+    </div>
+  </div>
+
+  @if (stepInvalid()) {
+    <div class="error-banner">
+      {{ isUa()
+        ? 'Заповніть усі обовʼязкові поля (позначені *) перед тим як перейти далі.'
+        : 'Please fill in all required fields (marked with *) before continuing.' }}
+    </div>
+  }
+</form>
