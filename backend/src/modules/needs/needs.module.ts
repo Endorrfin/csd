@@ -11,6 +11,16 @@ import { NeedsService } from './needs.service';
 import { NeedsFormsController } from './needs.controller';
 import { AuditLogService } from './audit-log.service';
 import { XlsxExportService } from './xlsx-export.service';
+// Recovery form + shared needs infrastructure
+import { RecoveryForm } from './entities/recovery-form.entity';
+import { RecoveryFormDamage } from './entities/recovery-form-damage.entity';
+import { NeedsFormAttachment } from './entities/needs-form-attachment.entity';
+import { NeedsFormAuditLog } from './entities/needs-form-audit-log.entity';
+import { FormNumberSequence } from './entities/form-number-sequence.entity';
+import { RecoveryService } from './recovery.service';
+import { NeedsAuditLogService } from './needs-audit-log.service';
+import { FormNumberService } from './form-number.service';
+// === END ADDED ===
 
 @Module({
   imports: [
@@ -22,10 +32,23 @@ import { XlsxExportService } from './xlsx-export.service';
       WashFormPurification,
       WashFormPump,
       WashFormAuditLog,
+      // recovery + shared needs entities
+      RecoveryForm,
+      RecoveryFormDamage,
+      NeedsFormAttachment,
+      NeedsFormAuditLog,
+      FormNumberSequence,
     ]),
   ],
   controllers: [NeedsFormsController],
   // register AuditLogService so the controller can request the log.
-  providers: [NeedsService, AuditLogService, XlsxExportService],
+  providers: [
+    NeedsService,
+    AuditLogService,
+    XlsxExportService,
+    RecoveryService,
+    NeedsAuditLogService,
+    FormNumberService,
+  ],
 })
 export class NeedsModule {}
