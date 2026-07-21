@@ -1,5 +1,5 @@
 // ui/src/app/shared/components/file-upload/file-upload.ts
-// === ADDED: PR-4 — shared presigned-upload dropzone. Client validates
+// shared presigned-upload dropzone. Client validates
 // type/size/count, then uploads each file SEQUENTIALLY to the PRIVATE bucket:
 // tokenProvider() → POST upload/needs-presigned (x-turnstile-token) → direct S3
 // POST. Emits {s3Key,originalName,mimeType,sizeBytes} for done files. Previews

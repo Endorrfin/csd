@@ -1,7 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-// CHANGED: language via signal-based LanguageService (app is zoneless — a
-// translate.currentLang getter is not reactive to language toggles).
 import { LanguageService } from '../../core/services/language.service';
 import { PageTitleService } from '../../core/services/page-title.service';
 
@@ -28,7 +26,7 @@ import { PageTitleService } from '../../core/services/page-title.service';
           {{ isUa() ? 'WASH (ВСГ)' : 'WASH' }}
         </a>
 
-        <!-- CHANGED: PR-3 — Recovery tab activated (was disabled/coming-soon). -->
+        <!-- Recovery tab activated (was disabled/coming-soon). -->
         <a routerLink="recovery-form" routerLinkActive="active" class="needs-tab">
           <span class="tab-icon">🏗️</span>
           {{ isUa() ? 'Відновлення' : 'Recovery' }}
@@ -150,11 +148,8 @@ import { PageTitleService } from '../../core/services/page-title.service';
   ],
 })
 export class NeedsComponent implements OnInit {
-  // CHANGED: reactive language flag (call as isUa() in the template).
   protected readonly isUa = inject(LanguageService).isUa;
-  // === ADDED: Page title service for SEO ===
   private readonly pageTitle = inject(PageTitleService);
-  // === END ADDED ===
 
   ngOnInit(): void {
     this.pageTitle.setTitle('NAV.NEEDS');

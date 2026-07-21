@@ -1,7 +1,7 @@
 // ui/src/app/features/needs/recovery-form/recovery-form.scss
-// === ADDED: PR-3 Recovery form styles. Visual language reused from
+// Recovery form styles. Visual language reused from
 // wash-form.scss (form grid, fields, checklist, phone input, nav, buttons);
-// stepper styles now live in the shared FormStepperComponent. ===
+// stepper styles now live in the shared FormStepperComponent.
 
 .draft-banner {
   display: flex;
@@ -343,7 +343,7 @@
   }
 }
 
-/* === PR-4 — submit button, review, consent, thank-you === */
+/* submit button, review, consent, thank-you */
 .btn-submit {
   background: #38a169;
   color: #fff;
