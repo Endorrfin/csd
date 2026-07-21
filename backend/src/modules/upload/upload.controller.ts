@@ -5,6 +5,9 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
 import { TestimonialUploadDto } from './dto/testimonial-upload.dto';
+// === ADDED: PR-2 recovery/needs presigned upload ===
+import { NeedsUploadDto } from './dto/needs-upload.dto';
+import { TurnstileGuard } from '../../common/guards/turnstile.guard';
 
 @Controller('upload')
 export class UploadController {
@@ -29,5 +32,18 @@ export class UploadController {
     publicUrl: string;
   }> {
     return this.uploadService.getTestimonialPresignedPost(dto.contentType);
+  }
+
+  // === ADDED: PR-2 — public recovery/needs upload (photos + documents) ===
+  // Turnstile-guarded (anti-spam); files land in the PRIVATE bucket. The
+  // returned s3Key is echoed back on form submit and re-validated there.
+  @Post('needs-presigned')
+  @UseGuards(TurnstileGuard)
+  getNeedsPresignedPost(@Body() dto: NeedsUploadDto): Promise<{
+    url: string;
+    fields: Record<string, string>;
+    s3Key: string;
+  }> {
+    return this.uploadService.getNeedsPresignedPost(dto.kind, dto.contentType);
   }
 }

@@ -11,7 +11,6 @@ import { NeedsService } from './needs.service';
 import { NeedsFormsController } from './needs.controller';
 import { AuditLogService } from './audit-log.service';
 import { XlsxExportService } from './xlsx-export.service';
-// Recovery form + shared needs infrastructure
 import { RecoveryForm } from './entities/recovery-form.entity';
 import { RecoveryFormDamage } from './entities/recovery-form-damage.entity';
 import { NeedsFormAttachment } from './entities/needs-form-attachment.entity';
@@ -20,7 +19,9 @@ import { FormNumberSequence } from './entities/form-number-sequence.entity';
 import { RecoveryService } from './recovery.service';
 import { NeedsAuditLogService } from './needs-audit-log.service';
 import { FormNumberService } from './form-number.service';
-// === END ADDED ===
+// UploadModule (presigned GET) + Turnstile guard
+import { UploadModule } from '../upload/upload.module';
+import { TurnstileGuard } from '../../common/guards/turnstile.guard';
 
 @Module({
   imports: [
@@ -32,13 +33,13 @@ import { FormNumberService } from './form-number.service';
       WashFormPurification,
       WashFormPump,
       WashFormAuditLog,
-      // recovery + shared needs entities
       RecoveryForm,
       RecoveryFormDamage,
       NeedsFormAttachment,
       NeedsFormAuditLog,
       FormNumberSequence,
     ]),
+    UploadModule, // RecoveryService injects UploadService
   ],
   controllers: [NeedsFormsController],
   // register AuditLogService so the controller can request the log.
@@ -46,9 +47,12 @@ import { FormNumberService } from './form-number.service';
     NeedsService,
     AuditLogService,
     XlsxExportService,
+    // recovery services
     RecoveryService,
     NeedsAuditLogService,
     FormNumberService,
+    // Turnstile guard for the public recovery submit
+    TurnstileGuard,
   ],
 })
 export class NeedsModule {}
