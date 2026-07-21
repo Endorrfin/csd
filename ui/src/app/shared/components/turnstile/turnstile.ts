@@ -1,9 +1,9 @@
 // ui/src/app/shared/components/turnstile/turnstile.ts
-// === ADDED: PR-4 — Cloudflare Turnstile wrapper (shared). SSR-safe: the CF
+// Cloudflare Turnstile wrapper (shared). SSR-safe: the CF
 // script + widget render only in the browser (afterNextRender). Exposes a
 // token provider: getToken() keeps ONE token pre-fetched and resets the widget
 // after each use, because CF tokens are single-use and BOTH guarded endpoints
-// (needs-presigned per file + recovery submit) each need a fresh one. ===
+// (needs-presigned per file + recovery submit) each need a fresh one.
 import {
   Component,
   ElementRef,
