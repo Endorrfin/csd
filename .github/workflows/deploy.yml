@@ -148,6 +148,9 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+          # CHANGED: pass Turnstile secret into serverless deploy → Lambda env
+          # (guard is fail-closed in prod; empty secret = 403 on recovery upload+submit)
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
         run: npx serverless deploy --stage prod
 
       - name: Smoke test backend
