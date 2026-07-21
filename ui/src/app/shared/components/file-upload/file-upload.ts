@@ -6,6 +6,7 @@
 // come from local object URLs (private bucket returns no public URL). ===
 import { Component, EventEmitter, Input, OnDestroy, Output, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ApiService } from '../../../core/services/api.service';
 import { LanguageService } from '../../../core/services/language.service';
 
@@ -360,29 +361,118 @@ export class FileUploadComponent implements OnDestroy {
   }
 
   private async uploadOne(entry: UploadEntry): Promise<void> {
+    // 1) Fresh single-use Turnstile token (both guarded endpoints need one).
+    let token: string;
     try {
-      const token = await this.tokenProvider();
-      const presigned = await firstValueFrom(
+      token = await this.tokenProvider();
+    } catch (e) {
+      this.failEntry(
+        entry,
+        'turnstile',
+        0,
+        this.isUa()
+          ? 'Перевірку безпеки не пройдено (Turnstile). Оновіть сторінку.'
+          : 'Security check failed (Turnstile). Refresh the page.',
+        e,
+      );
+      return;
+    }
+
+    // 2) Backend presigned POST — guarded, so may 403 (Turnstile) / 500 (config).
+    let presigned: NeedsPresignedResponse;
+    try {
+      presigned = await firstValueFrom(
         this.api.post<NeedsPresignedResponse>(
           'upload/needs-presigned',
           { kind: this.kind, contentType: entry.mimeType },
           { 'x-turnstile-token': token },
         ),
       );
+    } catch (e) {
+      const status = e instanceof HttpErrorResponse ? e.status : 0;
+      this.failEntry(entry, 'presign', status, this.presignMessage(status), e);
+      return;
+    }
+
+    // 3) Direct-to-S3 POST — may fail on CORS / bucket policy / signature.
+    let res: Response;
+    try {
       const formData = new FormData();
       Object.entries(presigned.fields).forEach(([k, v]) => formData.append(k, v));
       formData.append('file', entry.file);
-      const res = await fetch(presigned.url, { method: 'POST', body: formData });
-      if (!res.ok) throw new Error(`S3 upload failed: ${res.status}`);
-      this.patchEntry(entry.id, { status: 'done', s3Key: presigned.s3Key });
-    } catch {
-      this.patchEntry(entry.id, {
-        status: 'error',
-        error: this.isUa() ? 'Помилка завантаження' : 'Upload failed',
-      });
-    } finally {
-      this.emitChange();
+      res = await fetch(presigned.url, { method: 'POST', body: formData });
+    } catch (e) {
+      // fetch rejects only on network / CORS failures (not on HTTP 4xx/5xx).
+      this.failEntry(
+        entry,
+        's3-network',
+        0,
+        this.isUa()
+          ? 'S3 недоступний — імовірно CORS або мережа.'
+          : 'S3 unreachable — likely CORS or network.',
+        e,
+      );
+      return;
     }
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      this.failEntry(entry, 's3', res.status, this.s3Message(res.status, body), body);
+      return;
+    }
+
+    this.patchEntry(entry.id, { status: 'done', s3Key: presigned.s3Key, error: null });
+    this.emitChange();
+  }
+
+  /** Log the real failure (stage + HTTP status) and surface a specific message. */
+  private failEntry(
+    entry: UploadEntry,
+    stage: string,
+    status: number,
+    uiMessage: string,
+    detail: unknown,
+  ): void {
+    console.error(
+      `[recovery-upload] "${entry.name}" (${this.kind}) failed at ${stage}` +
+        (status ? ` — HTTP ${status}` : ''),
+      detail,
+    );
+    this.patchEntry(entry.id, { status: 'error', error: uiMessage });
+    this.emitChange();
+  }
+
+  private presignMessage(status: number): string {
+    const ua = this.isUa();
+    if (status === 403) {
+      return ua
+        ? 'Перевірку безпеки відхилено (403). Оновіть сторінку і спробуйте ще раз.'
+        : 'Security check rejected (403). Refresh and retry.';
+    }
+    if (status === 400) {
+      return ua
+        ? 'Сервер відхилив файл (400 — тип або розмір).'
+        : 'Server rejected the file (400 — type or size).';
+    }
+    if (status === 0) {
+      return ua ? 'Сервер недоступний (мережа або CORS).' : 'Server unreachable (network or CORS).';
+    }
+    if (status >= 500) {
+      return ua ? `Помилка сервера (${status}).` : `Server error (${status}).`;
+    }
+    return ua ? `Помилка завантаження (${status}).` : `Upload failed (${status}).`;
+  }
+
+  private s3Message(status: number, body: string): string {
+    const ua = this.isUa();
+    const code = /<Code>([^<]+)<\/Code>/.exec(body)?.[1] ?? '';
+    const suffix = code ? ` · ${code}` : '';
+    if (status === 403) {
+      return ua ? `S3 відхилив файл (403${suffix}).` : `S3 rejected the file (403${suffix}).`;
+    }
+    if (status === 400) {
+      return ua ? `S3: некоректний запит (400${suffix}).` : `S3 bad request (400${suffix}).`;
+    }
+    return ua ? `S3: помилка ${status}${suffix}.` : `S3 error ${status}${suffix}.`;
   }
 
   protected retry(id: string): void {
