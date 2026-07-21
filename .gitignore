@@ -45,6 +45,7 @@ jest-*.json
 # docs
 **/.serverless/
 docs/invoices
+docs/forms
 docs/audit/
 docs/audit/AUDIT-2026-06.md
 docs/AUDIT_PLAN.md
@@ -58,3 +59,4 @@ _examples/
 #AI
 docs/learning/
 docs/learning/LEARNING-LOG.md
+/docs/AUDIT_PLAN.md

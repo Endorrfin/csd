@@ -5,6 +5,7 @@ import {
   Patch,
   Delete,
   Param,
+  ParseUUIDPipe,
   Body,
   Query,
   UseGuards,
@@ -24,6 +25,12 @@ import { UserRole } from '../users/entities/user.entity';
 import { AuditActor } from './audit-log.service';
 import { XlsxExportService } from './xlsx-export.service';
 import { BulkUpdateStatusDto } from './dto/bulk-update-status.dto';
+// Recovery form ===
+import { RecoveryService } from './recovery.service';
+import { CreateRecoveryFormDto } from './dto/create-recovery-form.dto';
+import { UpdateRecoveryFormDto } from './dto/update-recovery-form.dto';
+import { UpdateRecoveryFormFullDto } from './dto/update-recovery-form-full.dto';
+import { RecoveryAdminQueryDto } from './dto/recovery-admin-query.dto';
 
 /**
  * Shape of req.user injected by JwtAuthGuard. Keep narrow — we only need
@@ -53,6 +60,7 @@ export class NeedsFormsController {
   constructor(
     private readonly needsService: NeedsService,
     private readonly xlsxExport: XlsxExportService,
+    private readonly recoveryService: RecoveryService,
   ) {}
 
   /** Public — submit a WASH needs form. Anonymous allowed. */
@@ -185,5 +193,92 @@ export class NeedsFormsController {
   @Roles(UserRole.ADMIN)
   remove(@Param('id') id: string, @Req() req: Request) {
     return this.needsService.remove(id, resolveActor(req));
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // Recovery form routes
+  // ══════════════════════════════════════════════════════════════
+
+  /**
+   * Public — submit a Recovery needs form. Anonymous allowed.
+   * TurnstileGuard is added in PR-2 (before the public UI ships).
+   */
+  @Post('recovery')
+  createRecovery(@Body() dto: CreateRecoveryFormDto, @Req() req: Request) {
+    return this.recoveryService.create(dto, resolveActor(req));
+  }
+
+  /** Manager/Admin — paginated list with filters. */
+  @Get('recovery')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  findAllRecovery(@Query() query: RecoveryAdminQueryDto) {
+    return this.recoveryService.findAll(query);
+  }
+
+  /**
+   * Manager/Admin — bulk status change.
+   * NOTE: literal 'recovery/bulk' must stay registered BEFORE 'recovery/:id'
+   * (same gotcha as wash/export-xlsx above).
+   */
+  @Patch('recovery/bulk')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  bulkUpdateRecoveryStatus(
+    @Body() dto: BulkUpdateStatusDto,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.recoveryService.bulkUpdateStatus(dto.ids, dto.status, {
+      userId: req.user.id,
+      email: req.user.email,
+    });
+  }
+
+  /** Manager/Admin — single form incl. damages + attachments. */
+  @Get('recovery/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  findRecoveryById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.recoveryService.findById(id);
+  }
+
+  /** Manager/Admin — audit log for one form. */
+  @Get('recovery/:id/audit-log')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  getRecoveryAuditLog(@Param('id', ParseUUIDPipe) id: string) {
+    return this.recoveryService.getAuditLog(id);
+  }
+
+  /** Manager/Admin — quick status/notes change. */
+  @Patch('recovery/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  updateRecovery(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateRecoveryFormDto,
+    @Req() req: Request,
+  ) {
+    return this.recoveryService.update(id, dto, resolveActor(req));
+  }
+
+  /** Manager/Admin — full-form edit (replace semantics for arrays). */
+  @Patch('recovery/:id/full')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  updateRecoveryFull(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateRecoveryFormFullDto,
+    @Req() req: Request,
+  ) {
+    return this.recoveryService.updateFull(id, dto, resolveActor(req));
+  }
+
+  /** Admin — delete form (attachments rows removed; S3 cleanup is Phase 2). */
+  @Delete('recovery/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  removeRecovery(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+    return this.recoveryService.remove(id, resolveActor(req));
   }
 }
