@@ -1,5 +1,5 @@
 // ui/src/app/features/needs/recovery-form/recovery-form.ts
-// === ADDED: PR-3 public Recovery form ("Ремонт і відновлення соціальної
+// public Recovery form ("Ремонт і відновлення соціальної
 // інфраструктури"). Steps 1–4 (applicant, object+damage, beneficiaries,
 // budget). PR-4 adds files (step 5) + review/consent/Turnstile/submit (step 6)
 // → thank-you with tracking number. Reactive Forms with per-step validation;
