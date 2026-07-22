@@ -68,11 +68,27 @@ functions:
       - http:
           method: ANY
           path: /
-          cors: true
+          cors:
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Turnstile-Token
       - http:
           method: ANY
           path: /{proxy+}
-          cors: true
+          cors:
+            headers:
+              - Content-Type
+              - X-Amz-Date
+              - Authorization
+              - X-Api-Key
+              - X-Amz-Security-Token
+              - X-Amz-User-Agent
+              - X-Turnstile-Token
 
 package:
   patterns:
