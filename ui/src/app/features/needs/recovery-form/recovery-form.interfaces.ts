@@ -459,3 +459,176 @@ export interface RecoveryDraft {
   savedAt: number;
   value: Record<string, unknown>;
 }
+
+// ══════════════════════════════════════════════════════════════
+// Admin detail / edit types (PR-5) — mirror backend RecoveryForm +
+// RecoveryFormWithUrls (recovery.service.ts). NUMERIC columns come back from
+// Postgres as strings, so numeric fields are typed `number | string` and
+// coerced with Number() at the point of use.
+// ══════════════════════════════════════════════════════════════
+
+export type RecoveryFormStatus =
+  | 'new'
+  | 'in_review'
+  | 'approved'
+  | 'rejected'
+  | 'in_progress'
+  | 'completed';
+
+export type AttachmentKind = 'photo' | 'document';
+
+/** One damage-checklist row as stored (child of recovery_forms). */
+export interface RecoveryDamageFull {
+  id: string;
+  element: DamageElement;
+  volume: number | string | null;
+  unit: string | null;
+  notes: string | null;
+  sortOrder: number;
+}
+
+/** One attachment row, enriched with a short-lived presigned GET `url`. */
+export interface RecoveryAttachmentFull {
+  id: string;
+  formType: string;
+  formId: string;
+  kind: AttachmentKind;
+  s3Key: string;
+  publicUrl: string | null;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  sortOrder: number;
+  createdAt: string;
+  /** Presigned GET (private bucket) — null if presign failed. */
+  url: string | null;
+}
+
+/** Full Recovery form as returned by GET /needs-forms/recovery/:id. */
+export interface RecoveryFormDetail {
+  id: string;
+  trackingNumber: string;
+
+  applicantCategory: ApplicantCategory;
+  applicantCategoryOther: string | null;
+  organizationName: string;
+
+  region: string;
+  regionEn: string;
+  district: string;
+  districtEn: string;
+  community: string;
+  communityEn: string;
+  communityCode: string;
+  settlement: string | null;
+  settlementEn: string | null;
+  settlementCode: string | null;
+
+  contactName: string;
+  contactPosition: string;
+  phone: string;
+  email: string;
+  messenger: string | null;
+  altContactName: string | null;
+  altContactPhone: string | null;
+  website: string | null;
+
+  objectName: string;
+  objectType: ObjectType;
+  objectTypeOther: string | null;
+  streetAddress: string | null;
+  ownershipType: OwnershipType | null;
+  ownershipTypeOther: string | null;
+  onApplicantBalance: boolean | null;
+  buildYear: number | null;
+  totalArea: number | string | null;
+  floors: number | null;
+  workCategories: WorkCategory[];
+  damageDescription: string;
+  damageCause: DamageCause;
+  damageCauseOther: string | null;
+  damageDate: string | null;
+  damageCategory: DamageCategory;
+  functioningStatus: FunctioningStatus;
+  accessibilityFeatures: AccessibilityFeature[] | null;
+
+  educationMode: EducationMode | null;
+  shelterStatus: ShelterStatus | null;
+  shelterType: ShelterType | null;
+  shelterCapacity: number | null;
+
+  healthFacilityKind: HealthFacilityKind | null;
+  suspendedServices: string | null;
+  declarationsCount: number | null;
+
+  directBeneficiaries: number;
+  idpCount: number;
+  childrenCount: number;
+  pwdCount: number;
+  elderlyCount: number;
+  femaleCount: number | null;
+  maleCount: number | null;
+  indirectBeneficiaries: number | null;
+  staffCount: number | null;
+  canOperateRemotely: RemoteOperationOption | null;
+
+  estimatedCost: number | string;
+  costBasis: CostBasis;
+  cofinancing: CofinancingOption;
+  cofinancingDetails: string | null;
+  docsAvailable: DocsAvailableOption[];
+  desiredTimeline: DesiredTimeline | null;
+  urgency: UrgencyOption | null;
+  otherDonors: boolean;
+  otherDonorsDetails: string | null;
+  asbestosPresence: AsbestosOption;
+  cloudLink: string | null;
+
+  status: RecoveryFormStatus;
+  managerNotes: string | null;
+  consentGiven: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+  damages: RecoveryDamageFull[];
+  attachments: RecoveryAttachmentFull[];
+}
+
+/** Row shape for the admin list (GET /needs-forms/recovery). */
+export interface RecoveryFormSummary {
+  id: string;
+  trackingNumber: string;
+  organizationName: string;
+  objectName: string;
+  region: string;
+  regionEn: string;
+  community: string;
+  communityEn: string;
+  objectType: ObjectType;
+  damageCategory: DamageCategory;
+  estimatedCost: number | string;
+  urgency: UrgencyOption | null;
+  status: RecoveryFormStatus;
+  createdAt: string;
+}
+
+/** Payload for PATCH /needs-forms/recovery/:id/full — same shape as create,
+ *  all optional. The admin edit omits photos/documents/consentGiven so the
+ *  backend leaves attachments and the consent snapshot untouched. */
+export type UpdateRecoveryFormFullPayload = Partial<CreateRecoveryFormPayload>;
+
+/** One audit-log entry (GET /needs-forms/recovery/:id/audit-log).
+ *  Matches NeedsFormAuditLog entity (shared needs_form_audit_log table). */
+export interface RecoveryAuditLogEntry {
+  id: string;
+  formType: string;
+  formId: string;
+  action: 'created' | 'updated' | 'status_changed' | 'deleted';
+  changedById: string | null;
+  changedByEmail: string | null;
+  fieldName: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}

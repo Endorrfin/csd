@@ -4,7 +4,17 @@
 // budget). PR-4 adds files (step 5) + review/consent/Turnstile/submit (step 6)
 // → thank-you with tracking number. Reactive Forms with per-step validation;
 // localStorage draft autosave. Zoneless-safe i18n via signal LanguageService. ===
-import { Component, DestroyRef, OnInit, ViewChild, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -53,12 +63,15 @@ import {
   REMOTE_OPERATION_OPTIONS,
   CreateRecoveryFormPayload,
   LabeledOption,
+  RecoveryAttachmentFull,
   RecoveryAttachmentPayload,
   RecoveryDamagePayload,
   RecoveryDataPayload,
+  RecoveryFormDetail,
   SHELTER_STATUS_OPTIONS,
   SHELTER_TYPE_OPTIONS,
   URGENCY_OPTIONS,
+  UpdateRecoveryFormFullPayload,
   WORK_CATEGORY_OPTIONS,
   WorkCategory,
 } from './recovery-form.interfaces';
@@ -104,6 +117,29 @@ export class RecoveryFormComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly isUa = inject(LanguageService).isUa;
   private readonly api = inject(ApiService);
+
+  // ── Mode (PR-5): 'create' = public submit; 'edit' = admin edit (emits
+  //    `saved` instead of POST; no Turnstile, no file upload, no draft). ──
+
+  /** 'create' = public submit; 'edit' = admin full-edit (recovery-form-detail). */
+  @Input() mode: 'create' | 'edit' = 'create';
+
+  /** Existing record to hydrate the reactive form with when mode === 'edit'. */
+  @Input() initialData: RecoveryFormDetail | null = null;
+
+  /** Parent's PATCH /full in-flight state — disables Save during the request. */
+  @Input() externalSaving = false;
+
+  /** Edit mode: emitted on Save — parent calls PATCH /full. Files/consent are
+   *  intentionally excluded from the payload (attachments stay untouched). */
+  @Output() saved = new EventEmitter<UpdateRecoveryFormFullPayload>();
+
+  /** Edit mode: emitted when the admin clicks Cancel. */
+  @Output() cancelled = new EventEmitter<void>();
+
+  protected get isEdit(): boolean {
+    return this.mode === 'edit';
+  }
 
   /** Cloudflare Turnstile SITE key (public). */
   protected readonly siteKey = environment.turnstileSiteKey;
@@ -352,6 +388,16 @@ export class RecoveryFormComponent implements OnInit {
       .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((v) => this.descLen.set(((v as string) || '').length));
 
+    // Edit mode (admin): hydrate from the existing record; no drafts, no files.
+    if (this.mode === 'edit') {
+      if (this.initialData) {
+        // Defer a microtask so LocationSelector (CVA) can accept the value.
+        Promise.resolve().then(() => this.patchFromInitialData(this.initialData!));
+      }
+      return;
+    }
+
+    // Create mode (public): localStorage draft autosave + restore banner.
     this.form.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -446,6 +492,142 @@ export class RecoveryFormComponent implements OnInit {
     const ts = this.draftSavedAt();
     if (!ts) return '';
     return new Date(ts).toLocaleString(this.isUa() ? 'uk-UA' : 'en-GB');
+  }
+
+  // ── Edit mode (admin): hydrate reactive state from an existing record ──
+
+  /** Existing photos (read-only on the files step in edit mode). */
+  protected get existingPhotos(): RecoveryAttachmentFull[] {
+    return (this.initialData?.attachments ?? []).filter((a) => a.kind === 'photo');
+  }
+
+  /** Existing documents (read-only on the files step in edit mode). */
+  protected get existingDocuments(): RecoveryAttachmentFull[] {
+    return (this.initialData?.attachments ?? []).filter((a) => a.kind === 'document');
+  }
+
+  private boolToRadio(v: boolean | null | undefined): string {
+    if (v === true) return 'yes';
+    if (v === false) return 'no';
+    return '';
+  }
+
+  /** '+380XXXXXXXXX' → '0XXXXXXXXX' (10 digits) for the phoneDigits control. */
+  private stripPhonePrefix(v: string | null | undefined): string {
+    if (!v) return '';
+    return v.startsWith('+38') ? v.slice(3) : v;
+  }
+
+  /** Build a {optionValue: boolean} map for a checkbox FormGroup. */
+  private checkboxGroupValue<T extends string>(
+    all: readonly LabeledOption<T>[],
+    selected: readonly T[] | null | undefined,
+  ): Record<T, boolean> {
+    const set = new Set(selected ?? []);
+    const out = {} as Record<T, boolean>;
+    for (const o of all) out[o.value] = set.has(o.value);
+    return out;
+  }
+
+  private patchFromInitialData(d: RecoveryFormDetail): void {
+    this.form.patchValue({
+      location: {
+        regionUa: d.region,
+        regionEn: d.regionEn,
+        districtUa: d.district,
+        districtEn: d.districtEn,
+        communityUa: d.community,
+        communityEn: d.communityEn,
+        communityCode: d.communityCode,
+        settlementUa: d.settlement ?? '',
+        settlementEn: d.settlementEn ?? '',
+        settlementCode: d.settlementCode ?? '',
+      },
+      applicantCategory: d.applicantCategory,
+      applicantCategoryOther: d.applicantCategoryOther ?? '',
+      organizationName: d.organizationName,
+      contactName: d.contactName,
+      contactPosition: d.contactPosition,
+      phoneDigits: this.stripPhonePrefix(d.phone),
+      email: d.email,
+      messenger: d.messenger ?? '',
+      altContactName: d.altContactName ?? '',
+      altContactPhoneDigits: this.stripPhonePrefix(d.altContactPhone),
+      website: d.website ?? '',
+
+      objectName: d.objectName,
+      objectType: d.objectType,
+      objectTypeOther: d.objectTypeOther ?? '',
+      streetAddress: d.streetAddress ?? '',
+      ownershipType: d.ownershipType ?? '',
+      ownershipTypeOther: d.ownershipTypeOther ?? '',
+      onApplicantBalance: this.boolToRadio(d.onApplicantBalance),
+      buildYear: d.buildYear,
+      totalArea: d.totalArea != null ? Number(d.totalArea) : null,
+      floors: d.floors,
+      workCategories: this.checkboxGroupValue(WORK_CATEGORY_OPTIONS, d.workCategories),
+      damageDescription: d.damageDescription,
+      damageCause: d.damageCause,
+      damageCauseOther: d.damageCauseOther ?? '',
+      damageDate: d.damageDate ?? '',
+      damageCategory: d.damageCategory,
+      functioningStatus: d.functioningStatus,
+      accessibilityFeatures: this.checkboxGroupValue(
+        ACCESSIBILITY_FEATURE_OPTIONS,
+        d.accessibilityFeatures,
+      ),
+
+      educationMode: d.educationMode ?? '',
+      shelterStatus: d.shelterStatus ?? '',
+      shelterType: d.shelterType ?? '',
+      shelterCapacity: d.shelterCapacity,
+      healthFacilityKind: d.healthFacilityKind ?? '',
+      suspendedServices: d.suspendedServices ?? '',
+      declarationsCount: d.declarationsCount,
+
+      directBeneficiaries: d.directBeneficiaries,
+      idpCount: d.idpCount,
+      childrenCount: d.childrenCount,
+      pwdCount: d.pwdCount,
+      elderlyCount: d.elderlyCount,
+      femaleCount: d.femaleCount,
+      maleCount: d.maleCount,
+      indirectBeneficiaries: d.indirectBeneficiaries,
+      staffCount: d.staffCount,
+      canOperateRemotely: d.canOperateRemotely ?? '',
+
+      estimatedCost: d.estimatedCost != null ? Number(d.estimatedCost) : null,
+      costBasis: d.costBasis,
+      cofinancing: d.cofinancing,
+      cofinancingDetails: d.cofinancingDetails ?? '',
+      docsAvailable: this.checkboxGroupValue(DOCS_AVAILABLE_OPTIONS, d.docsAvailable),
+      desiredTimeline: d.desiredTimeline ?? '',
+      urgency: d.urgency ?? '',
+      otherDonors: this.boolToRadio(d.otherDonors),
+      otherDonorsDetails: d.otherDonorsDetails ?? '',
+      asbestosPresence: d.asbestosPresence,
+      cloudLink: d.cloudLink ?? '',
+
+      // Consent was captured at submit time; keep the form valid without asking
+      // the admin to re-consent (it is never sent back in the edit payload).
+      consentGiven: true,
+    });
+
+    // Damage checklist is a fixed 9-row FormGroup {checked, volume}. Replace-map
+    // from the stored children.
+    const byElement = new Map(d.damages.map((r) => [r.element, r]));
+    const damagesPatch: Record<string, { checked: boolean; volume: number | null }> = {};
+    for (const def of DAMAGE_ELEMENTS) {
+      const row = byElement.get(def.element);
+      damagesPatch[def.element] = {
+        checked: !!row,
+        volume: row && row.volume != null ? Number(row.volume) : null,
+      };
+    }
+    this.form.get('damages')!.patchValue(damagesPatch);
+
+    this.descLen.set((d.damageDescription || '').length);
+    this.form.updateValueAndValidity();
   }
 
   // ── Navigation ──
@@ -726,5 +908,25 @@ export class RecoveryFormComponent implements OnInit {
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  // ── Edit mode (admin) — emit the full payload; parent owns PATCH /full ──
+
+  /** Validate every field and emit the payload. `buildPayload()` already
+   *  excludes photos/documents/consent, so PATCH /full leaves attachments and
+   *  the consent snapshot untouched (replace-semantics only for damages). */
+  protected save(): void {
+    if (this.externalSaving) return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.stepInvalid.set(true);
+      return;
+    }
+    this.stepInvalid.set(false);
+    this.saved.emit(this.buildPayload());
+  }
+
+  protected cancel(): void {
+    this.cancelled.emit();
   }
 }

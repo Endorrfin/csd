@@ -44,6 +44,14 @@ import { AuthService } from '../../core/services/auth.service';
             {{ isUa ? 'WASH Заявки' : 'WASH Forms' }}
           </a>
           <a
+            routerLink="recovery-forms"
+            routerLinkActive="active"
+            class="admin-nav-item"
+            (click)="closeSidebar()"
+          >
+            {{ isUa ? 'Форми: Відновлення' : 'Recovery Forms' }}
+          </a>
+          <a
             routerLink="procurements"
             routerLinkActive="active"
             class="admin-nav-item"

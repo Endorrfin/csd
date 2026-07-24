@@ -20,7 +20,7 @@
   </div>
 } @else {
 
-@if (draftFound()) {
+@if (!isEdit && draftFound()) {
   <div class="draft-banner" role="status">
     <span class="draft-text">
       {{ isUa() ? 'Знайдено збережену чернетку від' : 'Found a saved draft from' }}
@@ -664,48 +664,91 @@
     <div class="form-section">
       <h2 class="section-title">{{ isUa() ? 'V. Фото та документи' : 'V. Photos & documents' }}</h2>
 
-      <div class="form-field full-width">
-        <span class="field-label"
-          >{{ isUa() ? 'Фотографії (3–10)' : 'Photos (3–10)' }} <span class="req">*</span></span
-        >
-        <app-file-upload
-          kind="photo"
-          [tokenProvider]="tokenProvider"
-          [max]="PHOTOS_MAX"
-          [maxBytes]="PHOTO_MAX_BYTES"
-          [accept]="photoAccept"
-          [hintUa]="'JPG / PNG / WEBP · до 5 МБ · від 3 до 10 фото'"
-          [hintEn]="'JPG / PNG / WEBP · up to 5 MB · 3 to 10 photos'"
-          (changed)="onPhotosChanged($event)"
-        ></app-file-upload>
-        <span class="hint">{{
-          isUa()
-            ? 'Фотографуйте будівлю та пошкодження. Не завантажуйте фото з упізнаваними людьми.'
-            : 'Photograph the building and the damage. Do not upload photos with identifiable people.'
-        }}</span>
-        @if (stepInvalid() && photos().length < PHOTOS_MIN) {
-          <span class="error">{{ isUa() ? 'Потрібно щонайменше 3 фото' : 'At least 3 photos required' }}</span>
-        }
-      </div>
+      @if (isEdit) {
+        <!-- Admin edit: uploads to the private bucket need a public Turnstile
+             token, unavailable here — attachments stay read-only and are kept
+             untouched by PATCH /full. -->
+        <div class="edit-files-note">
+          {{
+            isUa()
+              ? 'Файли не редагуються в цьому режимі. Наявні фото та документи залишаться без змін; переглянути й завантажити їх можна в режимі перегляду заявки.'
+              : 'Files are not editable here. Existing photos and documents stay unchanged; view and download them from the form detail view.'
+          }}
+        </div>
 
-      <div class="form-field full-width">
-        <span class="field-label">{{
-          isUa() ? 'Документи (до 5, необовʼязково)' : 'Documents (up to 5, optional)'
-        }}</span>
-        <app-file-upload
-          kind="document"
-          [tokenProvider]="tokenProvider"
-          [max]="DOCUMENTS_MAX"
-          [maxBytes]="DOCUMENT_MAX_BYTES"
-          [accept]="documentAccept"
-          [hintUa]="'PDF / DOCX / XLSX / ZIP · до 15 МБ · до 5 файлів'"
-          [hintEn]="'PDF / DOCX / XLSX / ZIP · up to 15 MB · up to 5 files'"
-          (changed)="onDocumentsChanged($event)"
-        ></app-file-upload>
-        <span class="hint">{{
-          isUa() ? 'Дефектний акт, кошторис, акт обстеження тощо.' : 'Defect act, cost estimate, survey act, etc.'
-        }}</span>
-      </div>
+        <div class="form-field full-width">
+          <span class="field-label"
+            >{{ isUa() ? 'Фотографії' : 'Photos' }} ({{ existingPhotos.length }})</span
+          >
+          @if (existingPhotos.length) {
+            <ul class="edit-files-list">
+              @for (a of existingPhotos; track a.id) {
+                <li>{{ a.originalName }}</li>
+              }
+            </ul>
+          } @else {
+            <span class="hint">{{ isUa() ? 'Немає' : 'None' }}</span>
+          }
+        </div>
+
+        <div class="form-field full-width">
+          <span class="field-label"
+            >{{ isUa() ? 'Документи' : 'Documents' }} ({{ existingDocuments.length }})</span
+          >
+          @if (existingDocuments.length) {
+            <ul class="edit-files-list">
+              @for (a of existingDocuments; track a.id) {
+                <li>{{ a.originalName }}</li>
+              }
+            </ul>
+          } @else {
+            <span class="hint">{{ isUa() ? 'Немає' : 'None' }}</span>
+          }
+        </div>
+      } @else {
+        <div class="form-field full-width">
+          <span class="field-label"
+            >{{ isUa() ? 'Фотографії (3–10)' : 'Photos (3–10)' }} <span class="req">*</span></span
+          >
+          <app-file-upload
+            kind="photo"
+            [tokenProvider]="tokenProvider"
+            [max]="PHOTOS_MAX"
+            [maxBytes]="PHOTO_MAX_BYTES"
+            [accept]="photoAccept"
+            [hintUa]="'JPG / PNG / WEBP · до 5 МБ · від 3 до 10 фото'"
+            [hintEn]="'JPG / PNG / WEBP · up to 5 MB · 3 to 10 photos'"
+            (changed)="onPhotosChanged($event)"
+          ></app-file-upload>
+          <span class="hint">{{
+            isUa()
+              ? 'Фотографуйте будівлю та пошкодження. Не завантажуйте фото з упізнаваними людьми.'
+              : 'Photograph the building and the damage. Do not upload photos with identifiable people.'
+          }}</span>
+          @if (stepInvalid() && photos().length < PHOTOS_MIN) {
+            <span class="error">{{ isUa() ? 'Потрібно щонайменше 3 фото' : 'At least 3 photos required' }}</span>
+          }
+        </div>
+
+        <div class="form-field full-width">
+          <span class="field-label">{{
+            isUa() ? 'Документи (до 5, необовʼязково)' : 'Documents (up to 5, optional)'
+          }}</span>
+          <app-file-upload
+            kind="document"
+            [tokenProvider]="tokenProvider"
+            [max]="DOCUMENTS_MAX"
+            [maxBytes]="DOCUMENT_MAX_BYTES"
+            [accept]="documentAccept"
+            [hintUa]="'PDF / DOCX / XLSX / ZIP · до 15 МБ · до 5 файлів'"
+            [hintEn]="'PDF / DOCX / XLSX / ZIP · up to 15 MB · up to 5 files'"
+            (changed)="onDocumentsChanged($event)"
+          ></app-file-upload>
+          <span class="hint">{{
+            isUa() ? 'Дефектний акт, кошторис, акт обстеження тощо.' : 'Defect act, cost estimate, survey act, etc.'
+          }}</span>
+        </div>
+      }
     </div>
   }
 
@@ -744,19 +787,25 @@
         </div>
       </div>
 
-      <label class="consent">
-        <input type="checkbox" formControlName="consentGiven" />
-        <span>{{
-          isUa()
-            ? 'Я підтверджую згоду на обробку персональних даних та їх передачу міжнародним донорам у межах гуманітарних програм.'
-            : 'I consent to the processing of personal data and its transfer to international donors within humanitarian programs.'
-        }}</span>
-      </label>
-      @if (form.get('consentGiven')?.touched && form.get('consentGiven')?.invalid) {
-        <span class="error">{{ isUa() ? 'Потрібна згода для подання заявки' : 'Consent is required to submit' }}</span>
-      }
+      @if (!isEdit) {
+        <label class="consent">
+          <input type="checkbox" formControlName="consentGiven" />
+          <span>{{
+            isUa()
+              ? 'Я підтверджую згоду на обробку персональних даних та їх передачу міжнародним донорам у межах гуманітарних програм.'
+              : 'I consent to the processing of personal data and its transfer to international donors within humanitarian programs.'
+          }}</span>
+        </label>
+        @if (form.get('consentGiven')?.touched && form.get('consentGiven')?.invalid) {
+          <span class="error">{{ isUa() ? 'Потрібна згода для подання заявки' : 'Consent is required to submit' }}</span>
+        }
 
-      <p class="turnstile-note">{{ isUa() ? 'Форму захищено Cloudflare Turnstile.' : 'Protected by Cloudflare Turnstile.' }}</p>
+        <p class="turnstile-note">{{ isUa() ? 'Форму захищено Cloudflare Turnstile.' : 'Protected by Cloudflare Turnstile.' }}</p>
+      } @else {
+        <p class="edit-review-note">{{
+          isUa() ? 'Перевірте зміни та натисніть «Зберегти зміни».' : 'Review the changes and click “Save changes”.'
+        }}</p>
+      }
 
       @if (submitError()) {
         <div class="error-banner">{{
@@ -768,8 +817,11 @@
     </div>
   }
 
-  <!-- Managed Turnstile (mostly invisible) — fresh token per upload + submit. -->
-  <app-turnstile [siteKey]="siteKey"></app-turnstile>
+  <!-- Managed Turnstile (mostly invisible) — public submit only; the admin
+       edit is JWT-authed and never calls the Turnstile-guarded endpoints. -->
+  @if (!isEdit) {
+    <app-turnstile [siteKey]="siteKey"></app-turnstile>
+  }
 
   <!-- ══════════ Navigation ══════════ -->
   <div class="form-nav">
@@ -779,8 +831,28 @@
       <div></div>
     }
     <div class="form-nav-right">
+      @if (isEdit) {
+        <button type="button" class="btn btn-secondary" (click)="cancel()">{{ isUa() ? 'Скасувати' : 'Cancel' }}</button>
+      }
       @if (currentStep() < steps.length - 1) {
         <button type="button" class="btn btn-primary" (click)="nextStep()">{{ isUa() ? 'Далі' : 'Next' }}</button>
+      } @else if (isEdit) {
+        <button
+          type="button"
+          class="btn btn-submit"
+          [disabled]="externalSaving"
+          (click)="save()"
+        >
+          {{
+            externalSaving
+              ? isUa()
+                ? 'Збереження…'
+                : 'Saving…'
+              : isUa()
+                ? 'Зберегти зміни'
+                : 'Save changes'
+          }}
+        </button>
       } @else {
         <button
           type="button"
