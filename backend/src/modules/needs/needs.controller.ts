@@ -30,6 +30,7 @@ import { CreateRecoveryFormDto } from './dto/create-recovery-form.dto';
 import { UpdateRecoveryFormDto } from './dto/update-recovery-form.dto';
 import { UpdateRecoveryFormFullDto } from './dto/update-recovery-form-full.dto';
 import { RecoveryAdminQueryDto } from './dto/recovery-admin-query.dto';
+import { RecoveryXlsxExportService } from './recovery-xlsx-export.service';
 // Turnstile anti-spam on the public recovery submit
 import { TurnstileGuard } from '../../common/guards/turnstile.guard';
 
@@ -62,6 +63,7 @@ export class NeedsFormsController {
     private readonly needsService: NeedsService,
     private readonly xlsxExport: XlsxExportService,
     private readonly recoveryService: RecoveryService,
+    private readonly recoveryXlsxExport: RecoveryXlsxExportService,
   ) {}
 
   /** Public — submit a WASH needs form. Anonymous allowed. */
@@ -234,6 +236,55 @@ export class NeedsFormsController {
       userId: req.user.id,
       email: req.user.email,
     });
+  }
+
+  /**
+   * Manager/Admin — export Recovery forms as a 3-sheet XLSX
+   * (Applications / Damages / Files).
+   *
+   * Query params mirror the recovery list filters: status, region, objectType,
+   * applicantCategory, urgency, search, dateFrom, dateTo, plus lang ('ua'|'en',
+   * defaults to 'en').
+   *
+   * IMPORTANT: must be registered BEFORE `recovery/:id` (ParseUUIDPipe) so the
+   * literal path wins over the :id matcher.
+   */
+  @Get('recovery/export-xlsx')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  async exportRecoveryXlsx(
+    @Res() res: Response,
+    @Query('status') status?: FormStatus,
+    @Query('region') region?: string,
+    @Query('objectType') objectType?: string,
+    @Query('applicantCategory') applicantCategory?: string,
+    @Query('urgency') urgency?: string,
+    @Query('search') search?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('lang') lang?: string,
+  ): Promise<void> {
+    const buffer = await this.recoveryXlsxExport.buildWorkbook({
+      status,
+      region,
+      objectType,
+      applicantCategory,
+      urgency,
+      search,
+      dateFrom,
+      dateTo,
+      lang: lang === 'ua' ? 'ua' : 'en',
+    });
+
+    const date = new Date().toISOString().slice(0, 10);
+    const filename = `recovery-forms-${date}.xlsx`;
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
   }
 
   /**
