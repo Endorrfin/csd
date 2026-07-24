@@ -17,6 +17,7 @@ import { NeedsFormAttachment } from './entities/needs-form-attachment.entity';
 import { NeedsFormAuditLog } from './entities/needs-form-audit-log.entity';
 import { FormNumberSequence } from './entities/form-number-sequence.entity';
 import { RecoveryService } from './recovery.service';
+import { RecoveryXlsxExportService } from './recovery-xlsx-export.service';
 import { NeedsAuditLogService } from './needs-audit-log.service';
 import { FormNumberService } from './form-number.service';
 // UploadModule (presigned GET) + Turnstile guard
@@ -49,6 +50,7 @@ import { TurnstileGuard } from '../../common/guards/turnstile.guard';
     XlsxExportService,
     // recovery services
     RecoveryService,
+    RecoveryXlsxExportService,
     NeedsAuditLogService,
     FormNumberService,
     // Turnstile guard for the public recovery submit

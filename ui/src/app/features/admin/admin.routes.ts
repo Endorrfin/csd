@@ -17,6 +17,22 @@ export const adminRoutes: Routes = [
       import('./wash-form-detail/wash-form-detail').then((m) => m.WashFormDetailComponent),
   },
 
+  // Recovery forms (PR-5)
+  {
+    path: 'recovery-forms',
+    loadComponent: () =>
+      import('./recovery-forms-list/recovery-forms-list').then(
+        (m) => m.RecoveryFormsListComponent,
+      ),
+  },
+  {
+    path: 'recovery-forms/:id',
+    loadComponent: () =>
+      import('./recovery-form-detail/recovery-form-detail').then(
+        (m) => m.RecoveryFormDetailComponent,
+      ),
+  },
+
   // Procurements admin (placeholder — replaced in Step 4)
   {
     path: 'procurements',
