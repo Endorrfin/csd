@@ -54,7 +54,9 @@ interface PaginatedResponse {
     <!-- Filters -->
     <div class="filters">
       <input
-        [placeholder]="isUa() ? 'Пошук: № заявки, обʼєкт, організація...' : 'Search: tracking №, object, org...'"
+        [placeholder]="
+          isUa() ? 'Пошук: № заявки, обʼєкт, організація...' : 'Search: tracking №, object, org...'
+        "
         [(ngModel)]="searchQuery"
         (input)="onSearchChange()"
         class="filter-input filter-search"
@@ -85,7 +87,12 @@ interface PaginatedResponse {
       />
       <label class="filter-date">
         <span>{{ isUa() ? 'Від' : 'From' }}</span>
-        <input type="date" [(ngModel)]="dateFrom" (change)="onFilterChange()" class="filter-input" />
+        <input
+          type="date"
+          [(ngModel)]="dateFrom"
+          (change)="onFilterChange()"
+          class="filter-input"
+        />
       </label>
       <label class="filter-date">
         <span>{{ isUa() ? 'До' : 'To' }}</span>
@@ -154,7 +161,8 @@ interface PaginatedResponse {
                 {{ isUa() ? 'Статус' : 'Status' }}{{ sortIndicator('status') }}
               </th>
               <th class="sortable" (click)="toggleSort('region')">
-                {{ isUa() ? 'Область / громада' : 'Region / community' }}{{ sortIndicator('region') }}
+                {{ isUa() ? 'Область / громада' : 'Region / community'
+                }}{{ sortIndicator('region') }}
               </th>
               <th>{{ isUa() ? 'Обʼєкт' : 'Object' }}</th>
               <th>{{ isUa() ? 'Тип' : 'Type' }}</th>
@@ -221,7 +229,11 @@ interface PaginatedResponse {
 
         @if (totalPages() > 1) {
           <div class="pager">
-            <button class="btn btn-sm" [disabled]="currentPage <= 1" (click)="goPage(currentPage - 1)">
+            <button
+              class="btn btn-sm"
+              [disabled]="currentPage <= 1"
+              (click)="goPage(currentPage - 1)"
+            >
               {{ isUa() ? 'Попередня' : 'Previous' }}
             </button>
             <span class="page-info">{{ currentPage }} / {{ totalPages() }}</span>
@@ -758,20 +770,18 @@ export class RecoveryFormsListComponent implements OnInit {
     if (!confirm(confirmMsg)) return;
 
     this.bulkApplying.set(true);
-    this.api
-      .patch<{ updated: number }>('needs-forms/recovery/bulk', { ids, status })
-      .subscribe({
-        next: () => {
-          this.bulkApplying.set(false);
-          this.bulkStatus = '';
-          this.clearSelection();
-          this.loadForms();
-        },
-        error: (err: HttpErrorResponse) => {
-          this.bulkApplying.set(false);
-          alert((this.isUa() ? 'Помилка: ' : 'Error: ') + (err.error?.message ?? err.message));
-        },
-      });
+    this.api.patch<{ updated: number }>('needs-forms/recovery/bulk', { ids, status }).subscribe({
+      next: () => {
+        this.bulkApplying.set(false);
+        this.bulkStatus = '';
+        this.clearSelection();
+        this.loadForms();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.bulkApplying.set(false);
+        alert((this.isUa() ? 'Помилка: ' : 'Error: ') + (err.error?.message ?? err.message));
+      },
+    });
   }
 
   openDetail(id: string): void {

@@ -226,15 +226,27 @@ npm test              # must pass
 npm run format        # auto-formats — commit the result
 ```
 
-A quick combined check:
+A quick combined check — **this is the one command a PR must pass**:
 
 ```bash
 # ui/
-npm run verify        # runs typecheck + lint + format:check + test
+npm run verify        # typecheck (ngc, strictTemplates) + lint + format:check + test + build
 
 # backend/
-npm run verify        # runs typecheck + lint + test
+npm run verify        # typecheck + lint:check + test + build
 ```
+
+Notes:
+
+- `verify` ends with `build` on purpose: `tsc`/`ngc --noEmit` will not catch a
+  bundling or budget failure, and a broken `ng build` is exactly what breaks the
+  deploy workflow.
+- Backend `verify` uses `lint:check` (no `--fix`), so it *reports* violations
+  instead of silently rewriting your files mid-check. `npm run lint` still fixes.
+- `npm test` in `ui/` runs once (`ng test --no-watch`); use `npm run test:watch`
+  for the interactive watcher.
+- Backend e2e (`npm run test:e2e`) is **not** part of `verify` — it needs Docker
+  for Testcontainers. Run it separately when you touch entities or migrations.
 
 ---
 
@@ -244,8 +256,9 @@ npm run verify        # runs typecheck + lint + test
 
 ```bash
 cd ui
-npm test              # run all specs once
-npm run test:ci       # CI mode (no watch, exits with code)
+npm test              # run all specs once (ng test --no-watch)
+npm run test:watch    # interactive watcher
+npm run test:ci       # CI alias of `npm test`
 ```
 
 **Where tests live:** colocated with source as `*.spec.ts` (e.g., `auth.service.spec.ts` next to `auth.service.ts`).

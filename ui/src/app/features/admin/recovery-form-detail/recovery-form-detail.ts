@@ -92,7 +92,11 @@ import {
 
         <!-- Tabs -->
         <div class="tabs">
-          <button class="tab" [class.active]="activeTab() === 'details'" (click)="setTab('details')">
+          <button
+            class="tab"
+            [class.active]="activeTab() === 'details'"
+            (click)="setTab('details')"
+          >
             {{ isUa() ? 'Деталі' : 'Details' }}
           </button>
           <button class="tab" [class.active]="activeTab() === 'audit'" (click)="setTab('audit')">
@@ -128,7 +132,10 @@ import {
             <div class="info-grid">
               <div class="info-item">
                 <span class="info-label">{{ isUa() ? 'Категорія' : 'Category' }}</span>
-                <span>{{ optLabel(applicantCategories, f.applicantCategory) }}{{ f.applicantCategoryOther ? ' · ' + f.applicantCategoryOther : '' }}</span>
+                <span
+                  >{{ optLabel(applicantCategories, f.applicantCategory)
+                  }}{{ f.applicantCategoryOther ? ' · ' + f.applicantCategoryOther : '' }}</span
+                >
               </div>
               <div class="info-item">
                 <span class="info-label">{{ isUa() ? 'Організація' : 'Organization' }}</span>
@@ -176,14 +183,18 @@ import {
               }
               @if (f.altContactName || f.altContactPhone) {
                 <div class="info-item">
-                  <span class="info-label">{{ isUa() ? 'Додатковий контакт' : 'Alternate contact' }}</span>
+                  <span class="info-label">{{
+                    isUa() ? 'Додатковий контакт' : 'Alternate contact'
+                  }}</span>
                   <span>{{ f.altContactName }} {{ f.altContactPhone }}</span>
                 </div>
               }
               @if (f.website) {
                 <div class="info-item">
                   <span class="info-label">{{ isUa() ? 'Вебсайт' : 'Website' }}</span>
-                  <span><a [href]="f.website" target="_blank" rel="noopener">{{ f.website }}</a></span>
+                  <span
+                    ><a [href]="f.website" target="_blank" rel="noopener">{{ f.website }}</a></span
+                  >
                 </div>
               }
             </div>
@@ -199,7 +210,10 @@ import {
               </div>
               <div class="info-item">
                 <span class="info-label">{{ isUa() ? 'Тип' : 'Type' }}</span>
-                <span>{{ optLabel(objectTypes, f.objectType) }}{{ f.objectTypeOther ? ' · ' + f.objectTypeOther : '' }}</span>
+                <span
+                  >{{ optLabel(objectTypes, f.objectType)
+                  }}{{ f.objectTypeOther ? ' · ' + f.objectTypeOther : '' }}</span
+                >
               </div>
               @if (f.streetAddress) {
                 <div class="info-item">
@@ -210,12 +224,17 @@ import {
               @if (f.ownershipType) {
                 <div class="info-item">
                   <span class="info-label">{{ isUa() ? 'Власність' : 'Ownership' }}</span>
-                  <span>{{ optLabel(ownershipTypes, f.ownershipType) }}{{ f.ownershipTypeOther ? ' · ' + f.ownershipTypeOther : '' }}</span>
+                  <span
+                    >{{ optLabel(ownershipTypes, f.ownershipType)
+                    }}{{ f.ownershipTypeOther ? ' · ' + f.ownershipTypeOther : '' }}</span
+                  >
                 </div>
               }
               @if (f.onApplicantBalance !== null) {
                 <div class="info-item">
-                  <span class="info-label">{{ isUa() ? 'На балансі заявника' : 'On applicant balance' }}</span>
+                  <span class="info-label">{{
+                    isUa() ? 'На балансі заявника' : 'On applicant balance'
+                  }}</span>
                   <span>{{ yesNo(f.onApplicantBalance) }}</span>
                 </div>
               }
@@ -243,7 +262,10 @@ import {
               </div>
               <div class="info-item">
                 <span class="info-label">{{ isUa() ? 'Причина' : 'Cause' }}</span>
-                <span>{{ optLabel(damageCauses, f.damageCause) }}{{ f.damageCauseOther ? ' · ' + f.damageCauseOther : '' }}</span>
+                <span
+                  >{{ optLabel(damageCauses, f.damageCause)
+                  }}{{ f.damageCauseOther ? ' · ' + f.damageCauseOther : '' }}</span
+                >
               </div>
               @if (f.damageDate) {
                 <div class="info-item">
@@ -266,14 +288,18 @@ import {
                 </div>
               }
               <div class="info-item full-w">
-                <span class="info-label">{{ isUa() ? 'Опис пошкоджень' : 'Damage description' }}</span>
+                <span class="info-label">{{
+                  isUa() ? 'Опис пошкоджень' : 'Damage description'
+                }}</span>
                 <span class="pre">{{ f.damageDescription }}</span>
               </div>
             </div>
 
             @if (f.damages.length) {
               <div class="subsection">
-                <h4>{{ isUa() ? 'Пошкоджені елементи' : 'Damaged elements' }} ({{ f.damages.length }})</h4>
+                <h4>
+                  {{ isUa() ? 'Пошкоджені елементи' : 'Damaged elements' }} ({{ f.damages.length }})
+                </h4>
                 <table class="mini-table">
                   <thead>
                     <tr>
@@ -340,7 +366,9 @@ import {
               }
               @if (f.canOperateRemotely) {
                 <div class="info-item">
-                  <span class="info-label">{{ isUa() ? 'Дистанційна робота' : 'Remote operation' }}</span>
+                  <span class="info-label">{{
+                    isUa() ? 'Дистанційна робота' : 'Remote operation'
+                  }}</span>
                   <span>{{ optLabel(remoteOperationOptions, f.canOperateRemotely) }}</span>
                 </div>
               }
@@ -396,7 +424,9 @@ import {
                   }
                   @if (f.suspendedServices) {
                     <div class="info-item full-w">
-                      <span class="info-label">{{ isUa() ? 'Призупинені послуги' : 'Suspended services' }}</span>
+                      <span class="info-label">{{
+                        isUa() ? 'Призупинені послуги' : 'Suspended services'
+                      }}</span>
                       <span class="pre">{{ f.suspendedServices }}</span>
                     </div>
                   }
@@ -407,7 +437,9 @@ import {
 
           <!-- IV. Budget & documentation -->
           <div class="section-card">
-            <h3>{{ isUa() ? 'IV. Бюджет, документація, терміни' : 'IV. Budget, docs, timeline' }}</h3>
+            <h3>
+              {{ isUa() ? 'IV. Бюджет, документація, терміни' : 'IV. Budget, docs, timeline' }}
+            </h3>
             <div class="info-grid">
               <div class="info-item">
                 <span class="info-label">{{ isUa() ? 'Вартість, грн' : 'Cost, UAH' }}</span>
@@ -419,7 +451,10 @@ import {
               </div>
               <div class="info-item">
                 <span class="info-label">{{ isUa() ? 'Співфінансування' : 'Co-financing' }}</span>
-                <span>{{ optLabel(cofinancingOptions, f.cofinancing) }}{{ f.cofinancingDetails ? ' · ' + f.cofinancingDetails : '' }}</span>
+                <span
+                  >{{ optLabel(cofinancingOptions, f.cofinancing)
+                  }}{{ f.cofinancingDetails ? ' · ' + f.cofinancingDetails : '' }}</span
+                >
               </div>
               <div class="info-item full-w">
                 <span class="info-label">{{ isUa() ? 'Документація' : 'Documentation' }}</span>
@@ -439,7 +474,10 @@ import {
               }
               <div class="info-item">
                 <span class="info-label">{{ isUa() ? 'Інші донори' : 'Other donors' }}</span>
-                <span>{{ yesNo(f.otherDonors) }}{{ f.otherDonorsDetails ? ' · ' + f.otherDonorsDetails : '' }}</span>
+                <span
+                  >{{ yesNo(f.otherDonors)
+                  }}{{ f.otherDonorsDetails ? ' · ' + f.otherDonorsDetails : '' }}</span
+                >
               </div>
               <div class="info-item">
                 <span class="info-label">{{ isUa() ? 'Азбест (АВМ)' : 'Asbestos' }}</span>
@@ -448,12 +486,18 @@ import {
               @if (f.cloudLink) {
                 <div class="info-item full-w">
                   <span class="info-label">{{ isUa() ? 'Хмарне посилання' : 'Cloud link' }}</span>
-                  <span><a [href]="f.cloudLink" target="_blank" rel="noopener">{{ f.cloudLink }}</a></span>
+                  <span
+                    ><a [href]="f.cloudLink" target="_blank" rel="noopener">{{
+                      f.cloudLink
+                    }}</a></span
+                  >
                 </div>
               }
               @if (f.managerNotes) {
                 <div class="info-item full-w">
-                  <span class="info-label">{{ isUa() ? 'Нотатки менеджера' : 'Manager notes' }}</span>
+                  <span class="info-label">{{
+                    isUa() ? 'Нотатки менеджера' : 'Manager notes'
+                  }}</span>
                   <span class="pre">{{ f.managerNotes }}</span>
                 </div>
               }
@@ -474,7 +518,9 @@ import {
                         <img [src]="p.url" [alt]="p.originalName" loading="lazy" />
                       </button>
                     } @else {
-                      <div class="gallery-thumb gallery-thumb--broken" [title]="p.originalName">⚠</div>
+                      <div class="gallery-thumb gallery-thumb--broken" [title]="p.originalName">
+                        ⚠
+                      </div>
                     }
                   }
                 </div>
@@ -515,7 +561,9 @@ import {
         } @else {
           <!-- ────── Audit log tab ────── -->
           @if (auditLoading()) {
-            <div class="loading">{{ isUa() ? 'Завантаження історії...' : 'Loading history...' }}</div>
+            <div class="loading">
+              {{ isUa() ? 'Завантаження історії...' : 'Loading history...' }}
+            </div>
           } @else if (auditLog().length === 0) {
             <div class="empty">{{ isUa() ? 'Історія порожня' : 'No history yet' }}</div>
           } @else {
@@ -528,7 +576,9 @@ import {
                       <span class="audit-action-badge" [attr.data-action]="entry.action">
                         {{ getActionLabel(entry.action) }}
                       </span>
-                      <span class="audit-time">{{ entry.createdAt | date: 'dd.MM.yyyy HH:mm:ss' }}</span>
+                      <span class="audit-time">{{
+                        entry.createdAt | date: 'dd.MM.yyyy HH:mm:ss'
+                      }}</span>
                     </div>
                     <div class="audit-actor">
                       <span class="audit-actor-label">{{ isUa() ? 'Користувач:' : 'User:' }}</span>
@@ -560,11 +610,11 @@ import {
         role="button"
         tabindex="0"
         [attr.aria-label]="isUa() ? 'Закрити' : 'Close'"
-        (click)="closeLightbox()"
+        (click)="onLightboxBackdropClick($event)"
         (keydown.escape)="closeLightbox()"
         (keydown.enter)="closeLightbox()"
       >
-        <img [src]="url" alt="" (click)="$event.stopPropagation()" />
+        <img [src]="url" alt="" />
         <button class="lightbox-close" (click)="closeLightbox()">✕</button>
       </div>
     }
@@ -1241,6 +1291,10 @@ export class RecoveryFormDetailComponent implements OnInit {
   closeLightbox(): void {
     this.lightbox.set(null);
   }
+  /** CHANGED: close only when the backdrop itself is clicked, not the image. */
+  onLightboxBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) this.closeLightbox();
+  }
 
   // ───── Helpers ─────
   goBack(): void {
@@ -1258,7 +1312,10 @@ export class RecoveryFormDetailComponent implements OnInit {
     return o ? (this.isUa() ? o.ua : o.en) : String(value);
   }
 
-  optLabels(options: readonly LabeledOption<string>[], values: readonly string[] | null | undefined): string {
+  optLabels(
+    options: readonly LabeledOption<string>[],
+    values: readonly string[] | null | undefined,
+  ): string {
     if (!values || !values.length) return '—';
     return values.map((v) => this.optLabel(options, v)).join(', ');
   }
