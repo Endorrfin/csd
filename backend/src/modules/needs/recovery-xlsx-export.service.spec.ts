@@ -265,6 +265,11 @@ describe('RecoveryXlsxExportService', () => {
   });
 
   it('applies the findAll-style filters to the query builder', async () => {
+    // CHANGED: standalone jest.fn()s FIRST, then composed into the repo objects.
+    // Asserting on `damageRepo.find` after the `as unknown as Repository<...>`
+    // cast reads a real class method off a typed object, which trips
+    // @typescript-eslint/unbound-method — same pattern (and same reason) as the
+    // note at the top of recovery.service.spec.ts.
     const qb = {
       andWhere: jest.fn(),
       orderBy: jest.fn(),
@@ -272,14 +277,16 @@ describe('RecoveryXlsxExportService', () => {
     };
     qb.andWhere.mockReturnValue(qb);
     qb.orderBy.mockReturnValue(qb);
+    const damageFind = jest.fn().mockResolvedValue([]);
+    const attachmentFind = jest.fn().mockResolvedValue([]);
     const formRepo = {
       createQueryBuilder: jest.fn().mockReturnValue(qb),
     } as unknown as Repository<RecoveryForm>;
     const damageRepo = {
-      find: jest.fn().mockResolvedValue([]),
+      find: damageFind,
     } as unknown as Repository<RecoveryFormDamage>;
     const attachmentRepo = {
-      find: jest.fn().mockResolvedValue([]),
+      find: attachmentFind,
     } as unknown as Repository<NeedsFormAttachment>;
 
     const service = new RecoveryXlsxExportService(
@@ -302,7 +309,7 @@ describe('RecoveryXlsxExportService', () => {
     // 8 filters applied + createdAt ordering, no child queries on empty result.
     expect(qb.andWhere).toHaveBeenCalledTimes(8);
     expect(qb.orderBy).toHaveBeenCalledWith('f.createdAt', 'DESC');
-    expect(damageRepo.find).not.toHaveBeenCalled();
-    expect(attachmentRepo.find).not.toHaveBeenCalled();
+    expect(damageFind).not.toHaveBeenCalled();
+    expect(attachmentFind).not.toHaveBeenCalled();
   });
 });
