@@ -235,8 +235,12 @@ describe('RecoveryXlsxExportService', () => {
 
   it('uses Ukrainian sheet names + headers when lang="ua" (differs from EN)', async () => {
     const service = makeService();
-    const enWb = await loadWorkbook(await service.buildWorkbook({ lang: 'en' }));
-    const uaWb = await loadWorkbook(await service.buildWorkbook({ lang: 'ua' }));
+    const enWb = await loadWorkbook(
+      await service.buildWorkbook({ lang: 'en' }),
+    );
+    const uaWb = await loadWorkbook(
+      await service.buildWorkbook({ lang: 'ua' }),
+    );
 
     expect(uaWb.worksheets.map((w) => w.name)).toEqual([
       'Заявки',
@@ -244,8 +248,10 @@ describe('RecoveryXlsxExportService', () => {
       'Файли',
     ]);
 
-    const enHeader = enWb.getWorksheet('Applications')?.getRow(1).getCell(1)
-      .value;
+    const enHeader = enWb
+      .getWorksheet('Applications')
+      ?.getRow(1)
+      .getCell(1).value;
     const uaHeader = uaWb.getWorksheet('Заявки')?.getRow(1).getCell(1).value;
 
     expect(enHeader).toBe('Tracking number');
@@ -253,7 +259,9 @@ describe('RecoveryXlsxExportService', () => {
     expect(enHeader).not.toBe(uaHeader);
 
     // enum labels are localized too
-    expect(rowValues(uaWb.getWorksheet('Пошкодження') as ExcelJS.Worksheet, 2)).toContain('Дах');
+    expect(
+      rowValues(uaWb.getWorksheet('Пошкодження') as ExcelJS.Worksheet, 2),
+    ).toContain('Дах');
   });
 
   it('applies the findAll-style filters to the query builder', async () => {

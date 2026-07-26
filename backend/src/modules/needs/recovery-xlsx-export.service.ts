@@ -108,7 +108,9 @@ export class RecoveryXlsxExportService {
     if (opts.region)
       qb.andWhere('f.region ILIKE :region', { region: `%${opts.region}%` });
     if (opts.objectType)
-      qb.andWhere('f.objectType = :objectType', { objectType: opts.objectType });
+      qb.andWhere('f.objectType = :objectType', {
+        objectType: opts.objectType,
+      });
     if (opts.applicantCategory)
       qb.andWhere('f.applicantCategory = :applicantCategory', {
         applicantCategory: opts.applicantCategory,
@@ -176,98 +178,330 @@ export class RecoveryXlsxExportService {
   ): void {
     const ua = lang === 'ua';
     const columns: ColSpec[] = [
-      { header: ua ? 'Номер заявки' : 'Tracking number', key: 'trackingNumber', width: 18 },
-      { header: ua ? 'Дата створення' : 'Created at', key: 'createdAt', width: 18 },
+      {
+        header: ua ? 'Номер заявки' : 'Tracking number',
+        key: 'trackingNumber',
+        width: 18,
+      },
+      {
+        header: ua ? 'Дата створення' : 'Created at',
+        key: 'createdAt',
+        width: 18,
+      },
       { header: ua ? 'Статус' : 'Status', key: 'status', width: 14 },
 
       // ── Location (5W / cluster «Where»): keep BOTH ua & en values ──
-      { header: ua ? 'Область (Oblast)' : 'Oblast / region', key: 'region', width: 20 },
-      { header: ua ? 'Область (EN)' : 'Oblast (EN)', key: 'regionEn', width: 20 },
-      { header: ua ? 'Район (Raion)' : 'Raion / district', key: 'district', width: 20 },
-      { header: ua ? 'Район (EN)' : 'Raion (EN)', key: 'districtEn', width: 20 },
-      { header: ua ? 'Громада (Hromada)' : 'Hromada', key: 'community', width: 22 },
-      { header: ua ? 'Громада (EN)' : 'Hromada (EN)', key: 'communityEn', width: 22 },
-      { header: ua ? 'Код громади (Hromada P-code)' : 'Hromada P-code', key: 'communityCode', width: 16 },
-      { header: ua ? 'Населений пункт (Settlement)' : 'Settlement', key: 'settlement', width: 22 },
-      { header: ua ? 'Населений пункт (EN)' : 'Settlement (EN)', key: 'settlementEn', width: 22 },
-      { header: ua ? 'Код НП (Settlement P-code)' : 'Settlement P-code', key: 'settlementCode', width: 16 },
+      {
+        header: ua ? 'Область (Oblast)' : 'Oblast / region',
+        key: 'region',
+        width: 20,
+      },
+      {
+        header: ua ? 'Область (EN)' : 'Oblast (EN)',
+        key: 'regionEn',
+        width: 20,
+      },
+      {
+        header: ua ? 'Район (Raion)' : 'Raion / district',
+        key: 'district',
+        width: 20,
+      },
+      {
+        header: ua ? 'Район (EN)' : 'Raion (EN)',
+        key: 'districtEn',
+        width: 20,
+      },
+      {
+        header: ua ? 'Громада (Hromada)' : 'Hromada',
+        key: 'community',
+        width: 22,
+      },
+      {
+        header: ua ? 'Громада (EN)' : 'Hromada (EN)',
+        key: 'communityEn',
+        width: 22,
+      },
+      {
+        header: ua ? 'Код громади (Hromada P-code)' : 'Hromada P-code',
+        key: 'communityCode',
+        width: 16,
+      },
+      {
+        header: ua ? 'Населений пункт (Settlement)' : 'Settlement',
+        key: 'settlement',
+        width: 22,
+      },
+      {
+        header: ua ? 'Населений пункт (EN)' : 'Settlement (EN)',
+        key: 'settlementEn',
+        width: 22,
+      },
+      {
+        header: ua ? 'Код НП (Settlement P-code)' : 'Settlement P-code',
+        key: 'settlementCode',
+        width: 16,
+      },
 
       // ── Applicant ──
-      { header: ua ? 'Категорія заявника' : 'Applicant category', key: 'applicantCategory', width: 26 },
-      { header: ua ? 'Категорія (інше)' : 'Applicant category (other)', key: 'applicantCategoryOther', width: 22 },
-      { header: ua ? 'Організація' : 'Organization', key: 'organizationName', width: 28 },
+      {
+        header: ua ? 'Категорія заявника' : 'Applicant category',
+        key: 'applicantCategory',
+        width: 26,
+      },
+      {
+        header: ua ? 'Категорія (інше)' : 'Applicant category (other)',
+        key: 'applicantCategoryOther',
+        width: 22,
+      },
+      {
+        header: ua ? 'Організація' : 'Organization',
+        key: 'organizationName',
+        width: 28,
+      },
 
       // ── Contacts ──
-      { header: ua ? 'Контактна особа' : 'Contact name', key: 'contactName', width: 22 },
+      {
+        header: ua ? 'Контактна особа' : 'Contact name',
+        key: 'contactName',
+        width: 22,
+      },
       { header: ua ? 'Посада' : 'Position', key: 'contactPosition', width: 20 },
       { header: ua ? 'Телефон' : 'Phone', key: 'phone', width: 16 },
       { header: 'Email', key: 'email', width: 24 },
       { header: ua ? 'Месенджер' : 'Messenger', key: 'messenger', width: 16 },
-      { header: ua ? 'Дод. контакт (ПІБ)' : 'Alt contact name', key: 'altContactName', width: 22 },
-      { header: ua ? 'Дод. контакт (тел.)' : 'Alt contact phone', key: 'altContactPhone', width: 16 },
+      {
+        header: ua ? 'Дод. контакт (ПІБ)' : 'Alt contact name',
+        key: 'altContactName',
+        width: 22,
+      },
+      {
+        header: ua ? 'Дод. контакт (тел.)' : 'Alt contact phone',
+        key: 'altContactPhone',
+        width: 16,
+      },
       { header: ua ? 'Вебсайт' : 'Website', key: 'website', width: 24 },
 
       // ── Object ──
-      { header: ua ? 'Назва обʼєкту' : 'Object name', key: 'objectName', width: 28 },
-      { header: ua ? 'Тип обʼєкту' : 'Object type', key: 'objectType', width: 22 },
-      { header: ua ? 'Тип обʼєкту (інше)' : 'Object type (other)', key: 'objectTypeOther', width: 22 },
-      { header: ua ? 'Адреса' : 'Street address', key: 'streetAddress', width: 26 },
-      { header: ua ? 'Форма власності' : 'Ownership type', key: 'ownershipType', width: 18 },
-      { header: ua ? 'Власність (інше)' : 'Ownership (other)', key: 'ownershipTypeOther', width: 20 },
-      { header: ua ? 'На балансі заявника' : 'On applicant balance', key: 'onApplicantBalance', width: 14 },
-      { header: ua ? 'Рік побудови' : 'Build year', key: 'buildYear', width: 12 },
-      { header: ua ? 'Площа, м²' : 'Total area, m²', key: 'totalArea', width: 14 },
+      {
+        header: ua ? 'Назва обʼєкту' : 'Object name',
+        key: 'objectName',
+        width: 28,
+      },
+      {
+        header: ua ? 'Тип обʼєкту' : 'Object type',
+        key: 'objectType',
+        width: 22,
+      },
+      {
+        header: ua ? 'Тип обʼєкту (інше)' : 'Object type (other)',
+        key: 'objectTypeOther',
+        width: 22,
+      },
+      {
+        header: ua ? 'Адреса' : 'Street address',
+        key: 'streetAddress',
+        width: 26,
+      },
+      {
+        header: ua ? 'Форма власності' : 'Ownership type',
+        key: 'ownershipType',
+        width: 18,
+      },
+      {
+        header: ua ? 'Власність (інше)' : 'Ownership (other)',
+        key: 'ownershipTypeOther',
+        width: 20,
+      },
+      {
+        header: ua ? 'На балансі заявника' : 'On applicant balance',
+        key: 'onApplicantBalance',
+        width: 14,
+      },
+      {
+        header: ua ? 'Рік побудови' : 'Build year',
+        key: 'buildYear',
+        width: 12,
+      },
+      {
+        header: ua ? 'Площа, м²' : 'Total area, m²',
+        key: 'totalArea',
+        width: 14,
+      },
       { header: ua ? 'Поверхів' : 'Floors', key: 'floors', width: 10 },
 
       // ── Works & damage ──
-      { header: ua ? 'Категорії робіт' : 'Work categories', key: 'workCategories', width: 34 },
-      { header: ua ? 'Опис пошкоджень' : 'Damage description', key: 'damageDescription', width: 40 },
-      { header: ua ? 'Причина пошкодження' : 'Damage cause', key: 'damageCause', width: 22 },
-      { header: ua ? 'Причина (інше)' : 'Damage cause (other)', key: 'damageCauseOther', width: 22 },
-      { header: ua ? 'Дата пошкодження' : 'Damage date', key: 'damageDate', width: 14 },
-      { header: ua ? 'Категорія пошкодження' : 'Damage category', key: 'damageCategory', width: 24 },
-      { header: ua ? 'Стан функціонування' : 'Functioning status', key: 'functioningStatus', width: 22 },
-      { header: ua ? 'Доступність' : 'Accessibility features', key: 'accessibilityFeatures', width: 30 },
+      {
+        header: ua ? 'Категорії робіт' : 'Work categories',
+        key: 'workCategories',
+        width: 34,
+      },
+      {
+        header: ua ? 'Опис пошкоджень' : 'Damage description',
+        key: 'damageDescription',
+        width: 40,
+      },
+      {
+        header: ua ? 'Причина пошкодження' : 'Damage cause',
+        key: 'damageCause',
+        width: 22,
+      },
+      {
+        header: ua ? 'Причина (інше)' : 'Damage cause (other)',
+        key: 'damageCauseOther',
+        width: 22,
+      },
+      {
+        header: ua ? 'Дата пошкодження' : 'Damage date',
+        key: 'damageDate',
+        width: 14,
+      },
+      {
+        header: ua ? 'Категорія пошкодження' : 'Damage category',
+        key: 'damageCategory',
+        width: 24,
+      },
+      {
+        header: ua ? 'Стан функціонування' : 'Functioning status',
+        key: 'functioningStatus',
+        width: 22,
+      },
+      {
+        header: ua ? 'Доступність' : 'Accessibility features',
+        key: 'accessibilityFeatures',
+        width: 30,
+      },
 
       // ── Conditional: education ──
-      { header: ua ? 'Формат навчання' : 'Education mode', key: 'educationMode', width: 18 },
-      { header: ua ? 'Стан укриття' : 'Shelter status', key: 'shelterStatus', width: 18 },
-      { header: ua ? 'Тип укриття' : 'Shelter type', key: 'shelterType', width: 20 },
-      { header: ua ? 'Місткість укриття' : 'Shelter capacity', key: 'shelterCapacity', width: 14 },
+      {
+        header: ua ? 'Формат навчання' : 'Education mode',
+        key: 'educationMode',
+        width: 18,
+      },
+      {
+        header: ua ? 'Стан укриття' : 'Shelter status',
+        key: 'shelterStatus',
+        width: 18,
+      },
+      {
+        header: ua ? 'Тип укриття' : 'Shelter type',
+        key: 'shelterType',
+        width: 20,
+      },
+      {
+        header: ua ? 'Місткість укриття' : 'Shelter capacity',
+        key: 'shelterCapacity',
+        width: 14,
+      },
 
       // ── Conditional: healthcare ──
-      { header: ua ? 'Тип медзакладу' : 'Health facility kind', key: 'healthFacilityKind', width: 20 },
-      { header: ua ? 'Призупинені послуги' : 'Suspended services', key: 'suspendedServices', width: 30 },
-      { header: ua ? 'Декларацій' : 'Declarations', key: 'declarationsCount', width: 12 },
+      {
+        header: ua ? 'Тип медзакладу' : 'Health facility kind',
+        key: 'healthFacilityKind',
+        width: 20,
+      },
+      {
+        header: ua ? 'Призупинені послуги' : 'Suspended services',
+        key: 'suspendedServices',
+        width: 30,
+      },
+      {
+        header: ua ? 'Декларацій' : 'Declarations',
+        key: 'declarationsCount',
+        width: 12,
+      },
 
       // ── Beneficiaries (SADD) ──
-      { header: ua ? 'Прямі бенефіціари' : 'Direct beneficiaries', key: 'directBeneficiaries', width: 14 },
+      {
+        header: ua ? 'Прямі бенефіціари' : 'Direct beneficiaries',
+        key: 'directBeneficiaries',
+        width: 14,
+      },
       { header: ua ? 'ВПО' : 'IDPs', key: 'idpCount', width: 10 },
       { header: ua ? 'Діти' : 'Children', key: 'childrenCount', width: 10 },
-      { header: ua ? 'Люди з інвалідністю' : 'PwD', key: 'pwdCount', width: 12 },
+      {
+        header: ua ? 'Люди з інвалідністю' : 'PwD',
+        key: 'pwdCount',
+        width: 12,
+      },
       { header: ua ? 'Літні' : 'Elderly', key: 'elderlyCount', width: 10 },
       { header: ua ? 'Жінки' : 'Female', key: 'femaleCount', width: 10 },
       { header: ua ? 'Чоловіки' : 'Male', key: 'maleCount', width: 10 },
-      { header: ua ? 'Непрямі бенефіціари' : 'Indirect beneficiaries', key: 'indirectBeneficiaries', width: 14 },
+      {
+        header: ua ? 'Непрямі бенефіціари' : 'Indirect beneficiaries',
+        key: 'indirectBeneficiaries',
+        width: 14,
+      },
       { header: ua ? 'Персонал' : 'Staff', key: 'staffCount', width: 10 },
-      { header: ua ? 'Дистанційна робота' : 'Can operate remotely', key: 'canOperateRemotely', width: 16 },
+      {
+        header: ua ? 'Дистанційна робота' : 'Can operate remotely',
+        key: 'canOperateRemotely',
+        width: 16,
+      },
 
       // ── Budget / docs / timeline ──
-      { header: ua ? 'Орієнтовна вартість, грн' : 'Estimated cost, UAH', key: 'estimatedCost', width: 18 },
-      { header: ua ? 'Підстава оцінки' : 'Cost basis', key: 'costBasis', width: 22 },
-      { header: ua ? 'Співфінансування' : 'Cofinancing', key: 'cofinancing', width: 16 },
-      { header: ua ? 'Співфінансування (деталі)' : 'Cofinancing details', key: 'cofinancingDetails', width: 24 },
-      { header: ua ? 'Наявні документи' : 'Docs available', key: 'docsAvailable', width: 34 },
-      { header: ua ? 'Бажаний термін' : 'Desired timeline', key: 'desiredTimeline', width: 16 },
+      {
+        header: ua ? 'Орієнтовна вартість, грн' : 'Estimated cost, UAH',
+        key: 'estimatedCost',
+        width: 18,
+      },
+      {
+        header: ua ? 'Підстава оцінки' : 'Cost basis',
+        key: 'costBasis',
+        width: 22,
+      },
+      {
+        header: ua ? 'Співфінансування' : 'Cofinancing',
+        key: 'cofinancing',
+        width: 16,
+      },
+      {
+        header: ua ? 'Співфінансування (деталі)' : 'Cofinancing details',
+        key: 'cofinancingDetails',
+        width: 24,
+      },
+      {
+        header: ua ? 'Наявні документи' : 'Docs available',
+        key: 'docsAvailable',
+        width: 34,
+      },
+      {
+        header: ua ? 'Бажаний термін' : 'Desired timeline',
+        key: 'desiredTimeline',
+        width: 16,
+      },
       { header: ua ? 'Терміновість' : 'Urgency', key: 'urgency', width: 20 },
-      { header: ua ? 'Інші донори' : 'Other donors', key: 'otherDonors', width: 12 },
-      { header: ua ? 'Інші донори (деталі)' : 'Other donors details', key: 'otherDonorsDetails', width: 26 },
-      { header: ua ? 'Азбест' : 'Asbestos', key: 'asbestosPresence', width: 12 },
-      { header: ua ? 'Хмарне посилання' : 'Cloud link', key: 'cloudLink', width: 26 },
+      {
+        header: ua ? 'Інші донори' : 'Other donors',
+        key: 'otherDonors',
+        width: 12,
+      },
+      {
+        header: ua ? 'Інші донори (деталі)' : 'Other donors details',
+        key: 'otherDonorsDetails',
+        width: 26,
+      },
+      {
+        header: ua ? 'Азбест' : 'Asbestos',
+        key: 'asbestosPresence',
+        width: 12,
+      },
+      {
+        header: ua ? 'Хмарне посилання' : 'Cloud link',
+        key: 'cloudLink',
+        width: 26,
+      },
 
       // ── Service fields ──
-      { header: ua ? 'Згода надана' : 'Consent given', key: 'consentGiven', width: 12 },
-      { header: ua ? 'Нотатки менеджера' : 'Manager notes', key: 'managerNotes', width: 32 },
+      {
+        header: ua ? 'Згода надана' : 'Consent given',
+        key: 'consentGiven',
+        width: 12,
+      },
+      {
+        header: ua ? 'Нотатки менеджера' : 'Manager notes',
+        key: 'managerNotes',
+        width: 32,
+      },
       { header: ua ? 'Оновлено' : 'Updated at', key: 'updatedAt', width: 18 },
       { header: ua ? 'ID заявки' : 'Form ID', key: 'id', width: 38 },
     ];
@@ -323,7 +557,10 @@ export class RecoveryXlsxExportService {
         damageDate: f.damageDate ?? '',
         damageCategory: labelDamageCategory(f.damageCategory, lang),
         functioningStatus: labelFunctioningStatus(f.functioningStatus, lang),
-        accessibilityFeatures: labelAccessibilityFeatures(f.accessibilityFeatures, lang),
+        accessibilityFeatures: labelAccessibilityFeatures(
+          f.accessibilityFeatures,
+          lang,
+        ),
 
         educationMode: labelEducationMode(f.educationMode, lang),
         shelterStatus: labelShelterStatus(f.shelterStatus, lang),
@@ -381,7 +618,11 @@ export class RecoveryXlsxExportService {
   ): void {
     const ua = lang === 'ua';
     const columns: ColSpec[] = [
-      { header: ua ? 'Номер заявки' : 'Tracking number', key: 'trackingNumber', width: 18 },
+      {
+        header: ua ? 'Номер заявки' : 'Tracking number',
+        key: 'trackingNumber',
+        width: 18,
+      },
       { header: '#', key: 'sortOrder', width: 5 },
       { header: ua ? 'Елемент' : 'Element', key: 'element', width: 26 },
       { header: ua ? 'Обсяг' : 'Volume', key: 'volume', width: 12 },
@@ -420,12 +661,24 @@ export class RecoveryXlsxExportService {
   ): void {
     const ua = lang === 'ua';
     const columns: ColSpec[] = [
-      { header: ua ? 'Номер заявки' : 'Tracking number', key: 'trackingNumber', width: 18 },
+      {
+        header: ua ? 'Номер заявки' : 'Tracking number',
+        key: 'trackingNumber',
+        width: 18,
+      },
       { header: '#', key: 'sortOrder', width: 5 },
       { header: ua ? 'Тип' : 'Kind', key: 'kind', width: 14 },
-      { header: ua ? 'Назва файлу' : 'Original name', key: 'originalName', width: 34 },
+      {
+        header: ua ? 'Назва файлу' : 'Original name',
+        key: 'originalName',
+        width: 34,
+      },
       { header: ua ? 'MIME-тип' : 'MIME type', key: 'mimeType', width: 28 },
-      { header: ua ? 'Розмір, байт' : 'Size, bytes', key: 'sizeBytes', width: 14 },
+      {
+        header: ua ? 'Розмір, байт' : 'Size, bytes',
+        key: 'sizeBytes',
+        width: 14,
+      },
       { header: ua ? 'Ключ S3' : 'S3 key', key: 's3Key', width: 48 },
     ];
 
@@ -466,7 +719,11 @@ export class RecoveryXlsxExportService {
     }));
 
     const headerRow = sheet.getRow(1);
-    headerRow.font = { bold: true, color: { argb: HEADER_TEXT_COLOR }, size: 11 };
+    headerRow.font = {
+      bold: true,
+      color: { argb: HEADER_TEXT_COLOR },
+      size: 11,
+    };
     headerRow.fill = {
       type: 'pattern',
       pattern: 'solid',

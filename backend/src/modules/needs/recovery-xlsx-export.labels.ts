@@ -32,7 +32,10 @@ function joinList(
 // ── Applicant / object ──
 
 export const APPLICANT_CATEGORY_LABELS: Record<string, [string, string]> = {
-  municipality: ['ОМС / орган місцевого самоврядування', 'Municipality / local self-government'],
+  municipality: [
+    'ОМС / орган місцевого самоврядування',
+    'Municipality / local self-government',
+  ],
   education_institution: ['Заклад освіти', 'Education institution'],
   healthcare_institution: ['Заклад охорони здоровʼя', 'Healthcare institution'],
   utility_company: ['Комунальне підприємство', 'Utility company'],
@@ -203,79 +206,136 @@ export const ATTACHMENT_KIND_LABELS: Record<string, [string, string]> = {
 
 // ── Scalar label functions ──
 
-export function labelApplicantCategory(key: string | null | undefined, lang: Lang): string {
+export function labelApplicantCategory(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(APPLICANT_CATEGORY_LABELS, key, lang);
 }
 
-export function labelObjectType(key: string | null | undefined, lang: Lang): string {
+export function labelObjectType(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(OBJECT_TYPE_LABELS, key, lang);
 }
 
-export function labelOwnershipType(key: string | null | undefined, lang: Lang): string {
+export function labelOwnershipType(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(OWNERSHIP_TYPE_LABELS, key, lang);
 }
 
-export function labelDamageCause(key: string | null | undefined, lang: Lang): string {
+export function labelDamageCause(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(DAMAGE_CAUSE_LABELS, key, lang);
 }
 
-export function labelDamageCategory(key: string | null | undefined, lang: Lang): string {
+export function labelDamageCategory(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(DAMAGE_CATEGORY_LABELS, key, lang);
 }
 
-export function labelFunctioningStatus(key: string | null | undefined, lang: Lang): string {
+export function labelFunctioningStatus(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(FUNCTIONING_STATUS_LABELS, key, lang);
 }
 
-export function labelEducationMode(key: string | null | undefined, lang: Lang): string {
+export function labelEducationMode(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(EDUCATION_MODE_LABELS, key, lang);
 }
 
-export function labelShelterStatus(key: string | null | undefined, lang: Lang): string {
+export function labelShelterStatus(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(SHELTER_STATUS_LABELS, key, lang);
 }
 
-export function labelShelterType(key: string | null | undefined, lang: Lang): string {
+export function labelShelterType(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(SHELTER_TYPE_LABELS, key, lang);
 }
 
-export function labelHealthFacilityKind(key: string | null | undefined, lang: Lang): string {
+export function labelHealthFacilityKind(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(HEALTH_FACILITY_KIND_LABELS, key, lang);
 }
 
-export function labelRemoteOperation(key: string | null | undefined, lang: Lang): string {
+export function labelRemoteOperation(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(REMOTE_OPERATION_LABELS, key, lang);
 }
 
-export function labelCostBasis(key: string | null | undefined, lang: Lang): string {
+export function labelCostBasis(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(COST_BASIS_LABELS, key, lang);
 }
 
-export function labelCofinancing(key: string | null | undefined, lang: Lang): string {
+export function labelCofinancing(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(COFINANCING_LABELS, key, lang);
 }
 
-export function labelDesiredTimeline(key: string | null | undefined, lang: Lang): string {
+export function labelDesiredTimeline(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(DESIRED_TIMELINE_LABELS, key, lang);
 }
 
-export function labelUrgency(key: string | null | undefined, lang: Lang): string {
+export function labelUrgency(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(URGENCY_LABELS, key, lang);
 }
 
-export function labelAsbestos(key: string | null | undefined, lang: Lang): string {
+export function labelAsbestos(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(ASBESTOS_LABELS, key, lang);
 }
 
-export function labelDamageElement(key: string | null | undefined, lang: Lang): string {
+export function labelDamageElement(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(DAMAGE_ELEMENT_LABELS, key, lang);
 }
 
-export function labelDamageUnit(key: string | null | undefined, lang: Lang): string {
+export function labelDamageUnit(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(DAMAGE_UNIT_LABELS, key, lang);
 }
 
-export function labelAttachmentKind(key: string | null | undefined, lang: Lang): string {
+export function labelAttachmentKind(
+  key: string | null | undefined,
+  lang: Lang,
+): string {
   return pick(ATTACHMENT_KIND_LABELS, key, lang);
 }
 

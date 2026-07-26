@@ -5,4 +5,9 @@ export const environment = {
   // key (always passes, visible widget). The local backend bypasses Turnstile
   // when TURNSTILE_SECRET_KEY is unset, so any token is accepted in dev.
   turnstileSiteKey: '1x00000000000000000000AA',
+  // CHANGED: PR-W2 — Winterization «Домогосподарство / ФО» scenario. The card
+  // renders disabled while this is false (implementation-plan §7). This is UX
+  // only: the real gate is the backend env WINTERIZATION_HOUSEHOLD_ENABLED,
+  // which answers 422 regardless of what the UI allows.
+  winterizationHouseholdEnabled: false,
 };
