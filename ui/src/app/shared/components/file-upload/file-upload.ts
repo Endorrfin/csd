@@ -259,6 +259,16 @@ export class FileUploadComponent implements OnDestroy {
   protected readonly isUa = inject(LanguageService).isUa;
 
   @Input({ required: true }) kind: 'photo' | 'document' = 'photo';
+  /**
+   * (PR-W3): which needs-form the file belongs to — it decides the S3
+   * key prefix (`media/needs/<formType>/…`), and the owning service re-validates
+   * that prefix on submit. Values must match NEEDS_UPLOAD_FORM_TYPES in
+   * backend/src/modules/needs/needs-forms.constants.ts.
+   *
+   * Default 'recovery' keeps the Recovery caller byte-identical —
+   * NeedsUploadDto.formType is optional precisely for that.
+   */
+  @Input() formType: 'recovery' | 'winterization' = 'recovery';
   /** Supplies a fresh single-use Turnstile token per upload. */
   @Input({ required: true }) tokenProvider!: () => Promise<string>;
   @Input() max = 10;
@@ -384,7 +394,8 @@ export class FileUploadComponent implements OnDestroy {
       presigned = await firstValueFrom(
         this.api.post<NeedsPresignedResponse>(
           'upload/needs-presigned',
-          { kind: this.kind, contentType: entry.mimeType },
+          // (PR-W3): formType decides the S3 prefix.
+          { kind: this.kind, contentType: entry.mimeType, formType: this.formType },
           { 'x-turnstile-token': token },
         ),
       );
@@ -432,8 +443,10 @@ export class FileUploadComponent implements OnDestroy {
     uiMessage: string,
     detail: unknown,
   ): void {
+    // (PR-W3): form-agnostic prefix — the component now serves both
+    // Recovery and Winterization, so the formType has to be in the log line.
     console.error(
-      `[recovery-upload] "${entry.name}" (${this.kind}) failed at ${stage}` +
+      `[needs-upload:${this.formType}] "${entry.name}" (${this.kind}) failed at ${stage}` +
         (status ? ` — HTTP ${status}` : ''),
       detail,
     );

@@ -1,14 +1,15 @@
 // ui/src/app/features/needs/winterization-form/winterization-form.ts
 // === ADDED: PR-W2 public Winterization form («Підготовка до зими»).
 // Steps 1–5 (applicant, object+heating, winter needs, beneficiaries, budget).
-// Steps 6–7 (files, review/consent/Turnstile/submit → thank-you) land in PR-W3.
+// (PR-W3): steps 6–7 — files (presigned upload with
+// formType='winterization'), review, consent, Turnstile, submit → thank-you.
 // Reactive Forms with per-step validation + localStorage draft autosave.
 // Zoneless-safe i18n via the signal-based LanguageService (no translate getter).
 //
 // The field contract mirrors backend winterization.constants.ts +
 // CreateWinterizationFormDto, NOT §2 of the implementation plan — see §14.3 for
 // the list of places where the implemented contract diverged from the plan. ===
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -20,11 +21,18 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { debounceTime } from 'rxjs';
+import { RouterLink } from '@angular/router';
+import { debounceTime, firstValueFrom } from 'rxjs';
 import { LanguageService } from '../../../core/services/language.service';
 import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
 import { LocationValue } from '../../../shared/interfaces/location.interfaces';
+import { ApiService } from '../../../core/services/api.service';
 import { environment } from '../../../../environments/environment';
+import {
+  FileUploadComponent,
+  UploadedFile,
+} from '../../../shared/components/file-upload/file-upload';
+import { TurnstileComponent } from '../../../shared/components/turnstile/turnstile';
 import {
   FormStep,
   FormStepperComponent,
@@ -33,6 +41,15 @@ import { WinterizationFormDraftService } from './winterization-form-draft.servic
 import {
   APPLICANT_TYPE_OPTIONS,
   BACKUP_POWER_OPTIONS,
+  CreateWinterizationFormPayload,
+  LabeledOption,
+  PHOTO_REQUIRED_CATEGORIES,
+  WINTERIZATION_DOCUMENTS_MAX,
+  WINTERIZATION_DOCUMENT_MAX_BYTES,
+  WINTERIZATION_PHOTOS_MAX,
+  WINTERIZATION_PHOTOS_MIN_FOR_WORKS,
+  WINTERIZATION_PHOTO_MAX_BYTES,
+  WinterizationAttachmentPayload,
   BUILDING_CONDITION_OPTIONS,
   COFINANCING_OPTIONS,
   COST_BASIS_OPTIONS,
@@ -97,7 +114,7 @@ function minRows(min: number): ValidatorFn {
     (control as FormArray).length >= min ? null : { required: true };
 }
 
-/** Seven-step journey. Steps 6–7 render placeholders until PR-W3. */
+/** Seven-step journey; the last one is the review + submit gate. */
 const WINTERIZATION_STEPS: readonly FormStep[] = [
   { key: 'applicant', labelUa: 'Заявник', labelEn: 'Applicant', group: 'primary' },
   { key: 'object', labelUa: 'Обʼєкт', labelEn: 'Object', group: 'primary' },
@@ -111,7 +128,15 @@ const WINTERIZATION_STEPS: readonly FormStep[] = [
 @Component({
   selector: 'app-winterization-form',
   standalone: true,
-  imports: [ReactiveFormsModule, LocationSelectorComponent, FormStepperComponent],
+  imports: [
+    ReactiveFormsModule,
+    LocationSelectorComponent,
+    FormStepperComponent,
+    // CHANGED (PR-W3)
+    FileUploadComponent,
+    TurnstileComponent,
+    RouterLink,
+  ],
   templateUrl: './winterization-form.html',
   styleUrl: './winterization-form.scss',
 })
@@ -120,6 +145,7 @@ export class WinterizationFormComponent implements OnInit {
   private readonly draft = inject(WinterizationFormDraftService);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly isUa = inject(LanguageService).isUa;
+  private readonly api = inject(ApiService); // CHANGED (PR-W3)
 
   /**
    * Households are designed but switched off at launch (implementation-plan §7).
@@ -128,6 +154,43 @@ export class WinterizationFormComponent implements OnInit {
    * WINTERIZATION_HOUSEHOLD_ENABLED — a disabled card guards nothing.
    */
   protected readonly householdEnabled = environment.winterizationHouseholdEnabled;
+
+  // ── CHANGED (PR-W3): files, Turnstile and submit state ──
+
+  /** Cloudflare Turnstile SITE key (public). */
+  protected readonly siteKey = environment.turnstileSiteKey;
+
+  @ViewChild(TurnstileComponent) private turnstile?: TurnstileComponent;
+
+  /**
+   * Supplies a fresh Turnstile token per guarded call (every presigned upload
+   * plus the submit). Tokens are single-use, so this must not be memoised.
+   */
+  protected readonly tokenProvider = (): Promise<string> =>
+    this.turnstile ? this.turnstile.getToken() : Promise.reject(new Error('Turnstile not ready'));
+
+  // Counts mirror winterization.constants.ts; MIME/size rules are re-exported
+  // there from recovery.constants.ts, i.e. identical to Recovery by design.
+  protected readonly PHOTOS_MAX = WINTERIZATION_PHOTOS_MAX;
+  protected readonly DOCUMENTS_MAX = WINTERIZATION_DOCUMENTS_MAX;
+  protected readonly PHOTOS_MIN_FOR_WORKS = WINTERIZATION_PHOTOS_MIN_FOR_WORKS;
+  protected readonly PHOTO_MAX_BYTES = WINTERIZATION_PHOTO_MAX_BYTES;
+  protected readonly DOCUMENT_MAX_BYTES = WINTERIZATION_DOCUMENT_MAX_BYTES;
+  protected readonly photoAccept = ['image/jpeg', 'image/png', 'image/webp'];
+  protected readonly documentAccept = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/zip',
+  ];
+
+  protected readonly photos = signal<UploadedFile[]>([]);
+  protected readonly documents = signal<UploadedFile[]>([]);
+
+  protected readonly submitting = signal(false);
+  protected readonly submitError = signal(false);
+  protected readonly submitted = signal(false);
+  protected readonly trackingNumber = signal('');
 
   // Option catalogs exposed to the template (single source = interfaces file).
   protected readonly applicantTypes = APPLICANT_TYPE_OPTIONS;
@@ -334,12 +397,17 @@ export class WinterizationFormComponent implements OnInit {
       none: [false],
     }),
 
-    // ── Step 7: consent (UI lands in PR-W3, control kept for payload parity) ──
+    // ── Step 6: files ──
+    // CHANGED (PR-W3): photos/documents are component state (they are uploaded
+    // out-of-band), only the cloud link is an actual control. The pattern keeps
+    // it in step with the server's @IsUrl().
+    cloudLink: ['', [Validators.pattern(/^https?:\/\/.+/i)]],
+
+    // ── Step 7: consent ──
     consentGiven: [false, [Validators.requiredTrue]],
   });
 
-  /** Required controls (or validated groups) per step index. Steps 6–7 carry
-   *  no controls until PR-W3 adds files and the consent block. */
+  /** Required controls (or validated groups) per step index. */
   private readonly stepFields: string[][] = [
     [
       'applicantType',
@@ -406,8 +474,10 @@ export class WinterizationFormComponent implements OnInit {
       'cofinancing',
       'cofinancingDetails',
     ],
-    [], // step 6 — files (PR-W3)
-    [], // step 7 — review + consent (PR-W3)
+    // CHANGED (PR-W3): step 6 — photos/documents are component state, checked
+    // by filesValid() in validateCurrentStep(); only cloudLink is a control.
+    ['cloudLink'],
+    ['consentGiven'], // step 7 — review + consent
   ];
 
   ngOnInit(): void {
@@ -722,7 +792,8 @@ export class WinterizationFormComponent implements OnInit {
   }
 
   private validateCurrentStep(): boolean {
-    const fields = this.stepFields[this.currentStep()] ?? [];
+    const step = this.currentStep();
+    const fields = this.stepFields[step] ?? [];
     let valid = true;
     for (const f of fields) {
       const c = this.form.get(f);
@@ -730,6 +801,10 @@ export class WinterizationFormComponent implements OnInit {
       c.markAllAsTouched();
       if (c.invalid) valid = false;
     }
+    // CHANGED (PR-W3): step 6 — files are component state, not form controls.
+    // The ≥3-photo rule lives in WinterizationService, not in the DTO, so a
+    // client that lets this through only fails at submit with a 400.
+    if (step === 5 && !this.filesValid()) valid = false;
     this.stepInvalid.set(!valid);
     return valid;
   }
@@ -1043,5 +1118,119 @@ export class WinterizationFormComponent implements OnInit {
     const v = (this.form.get(name)?.value ?? '') as string;
     const t = v.trim();
     return t || undefined;
+  }
+
+  // ── CHANGED (PR-W3): files (step 6) + review/submit (step 7) ──
+
+  protected onPhotosChanged(files: UploadedFile[]): void {
+    this.photos.set(files);
+    if (this.currentStep() === 5) this.stepInvalid.set(false);
+  }
+
+  protected onDocumentsChanged(files: UploadedFile[]): void {
+    this.documents.set(files);
+  }
+
+  /**
+   * ≥3 photos are demanded ONLY when a works-type category is selected
+   * (PHOTO_REQUIRED_CATEGORIES = heating_system_repair | insulation): there they
+   * are the evidence base for a BoQ, while a fuel or NFI request has nothing
+   * meaningful to photograph. The rule lives in WinterizationService, not in the
+   * DTO, so the applicant would otherwise only learn about it from a 400.
+   */
+  protected get photosRequired(): boolean {
+    return PHOTO_REQUIRED_CATEGORIES.some((c) => this.hasCategory(c));
+  }
+
+  protected filesValid(): boolean {
+    const photos = this.photos().length;
+    if (photos > this.PHOTOS_MAX || this.documents().length > this.DOCUMENTS_MAX) return false;
+    return this.photosRequired ? photos >= this.PHOTOS_MIN_FOR_WORKS : true;
+  }
+
+  protected canSubmit(): boolean {
+    return this.filesValid() && this.form.get('consentGiven')!.value === true;
+  }
+
+  /** Bilingual label for a select/radio value (review step). */
+  protected label(options: readonly LabeledOption<string>[], value: unknown): string {
+    const o = options.find((x) => x.value === value);
+    return o ? (this.isUa() ? o.ua : o.en) : '—';
+  }
+
+  /** Selected need categories as one bilingual line (review step). */
+  protected selectedCategoryLabels(): string {
+    const selected = this.checkedKeys<NeedCategory>('needCategories');
+    if (!selected.length) return '—';
+    return selected.map((c) => this.label(this.needCategoryOptions, c)).join(', ');
+  }
+
+  /** Specification rows the payload will carry — the review step shows the
+   *  count rather than the rows themselves: 39 rows is the UI maximum. */
+  protected needRowCount(): number {
+    return this.collectNeeds().length;
+  }
+
+  /** Community line for the review step (settlement is optional). */
+  protected locationLabel(): string {
+    const loc = this.form.get('location')!.value as LocationValue | null;
+    if (!loc) return '—';
+    const ua = this.isUa();
+    const community = (ua ? loc.communityUa : loc.communityEn) || '';
+    const region = (ua ? loc.regionUa : loc.regionEn) || '';
+    const settlement = (ua ? loc.settlementUa : loc.settlementEn) || '';
+    return [settlement, community, region].filter(Boolean).join(', ') || '—';
+  }
+
+  /**
+   * Wrap the data payload in the full submit shape. Kept separate from
+   * buildPayload() for the same reason as in Recovery: an admin edit-mode must
+   * be able to PATCH the data without touching attachments or the consent
+   * snapshot. Empty file arrays are omitted rather than sent as `[]` — photos
+   * are optional here (unlike Recovery), so `[]` would be noise.
+   */
+  private buildFullPayload(): CreateWinterizationFormPayload {
+    const withSort = (f: UploadedFile, i: number): WinterizationAttachmentPayload => ({
+      ...f,
+      sortOrder: i,
+    });
+    const photos = this.photos();
+    const documents = this.documents();
+    return {
+      ...this.buildPayload(),
+      ...(photos.length ? { photos: photos.map(withSort) } : {}),
+      ...(documents.length ? { documents: documents.map(withSort) } : {}),
+      cloudLink: this.str('cloudLink'),
+      consentGiven: true,
+    };
+  }
+
+  protected async submit(): Promise<void> {
+    this.form.get('consentGiven')!.markAsTouched();
+    if (this.submitting() || !this.canSubmit()) {
+      this.stepInvalid.set(true);
+      return;
+    }
+    this.submitting.set(true);
+    this.submitError.set(false);
+    try {
+      // Turnstile tokens are single-use — the uploads already spent theirs.
+      const token = await this.tokenProvider();
+      const res = await firstValueFrom(
+        this.api.post<{ id: string; trackingNumber: string }>(
+          'needs-forms/winterization',
+          this.buildFullPayload(),
+          // Header, not body: the endpoint runs forbidNonWhitelisted (§14.3 п.11).
+          { 'x-turnstile-token': token },
+        ),
+      );
+      this.trackingNumber.set(res.trackingNumber);
+      this.submitted.set(true);
+      this.draft.clear();
+    } catch {
+      this.submitError.set(true);
+    } finally {
+      this.submitting.set(false);
+    }
   }
 }

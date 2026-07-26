@@ -1,8 +1,30 @@
 <!-- ui/src/app/features/needs/winterization-form/winterization-form.html -->
 <!-- Winterization form UI. PR-W2 = steps 1–5 (applicant, object+heating,
-     winter needs, beneficiaries, budget). Steps 6–7 (files, review/consent/
-     Turnstile/submit → thank-you) are placeholders until PR-W3.
+     winter needs, beneficiaries, budget). CHANGED (PR-W3): steps 6–7 —
+     files, review/consent/Turnstile/submit → thank-you.
      Inline bilingual via the signal isUa() (zoneless-safe). === -->
+
+@if (submitted()) {
+  <div class="thankyou-card">
+    <div class="thankyou-icon" aria-hidden="true">✅</div>
+    <h2>{{ isUa() ? 'Заявку подано!' : 'Application submitted!' }}</h2>
+    <p class="thankyou-num">
+      {{ isUa() ? 'Ваш номер заявки:' : 'Your application number:' }}
+      <strong>{{ trackingNumber() }}</strong>
+    </p>
+    <p class="thankyou-text">
+      {{
+        isUa()
+          ? 'Первинний розгляд — до 10 робочих днів. Ми звʼяжемось із вами за вказаними контактами; заявки на паливо опрацьовуються в першу чергу. Збережіть номер для звернень.'
+          : 'Initial review takes up to 10 working days. We will contact you using the details you provided; fuel requests are processed first. Keep this number for reference.'
+      }}
+    </p>
+    <p class="thankyou-contacts">
+      {{ isUa() ? 'Питання щодо заявки:' : 'Questions about your application:' }}
+      <a href="mailto:office.ua.csd@gmail.com">office.ua.csd&#64;gmail.com</a>
+    </p>
+  </div>
+} @else {
 
 @if (draftFound()) {
   <div class="draft-banner" role="status">
@@ -1368,33 +1390,267 @@
     </div>
   }
 
-  <!-- ══════════ STEP 6: Files — PR-W3 ══════════ -->
+  <!-- ══════════ STEP 6: Files ══════════ -->
   @if (currentStep() === 5) {
     <div class="form-section">
       <h2 class="section-title">{{ isUa() ? 'VI. Файли' : 'VI. Files' }}</h2>
-      <div class="placeholder-card">
-        {{
+
+      <div class="form-field full-width">
+        <span class="field-label">
+          {{ isUa() ? 'Фотографії' : 'Photos' }}
+          @if (photosRequired) {
+            (3–{{ PHOTOS_MAX }}) <span class="req">*</span>
+          } @else {
+            ({{ isUa() ? 'до' : 'up to' }} {{ PHOTOS_MAX }}, {{
+              isUa() ? 'необовʼязково' : 'optional'
+            }})
+          }
+        </span>
+        <app-file-upload
+          kind="photo"
+          formType="winterization"
+          [tokenProvider]="tokenProvider"
+          [max]="PHOTOS_MAX"
+          [maxBytes]="PHOTO_MAX_BYTES"
+          [accept]="photoAccept"
+          [hintUa]="'JPG / PNG / WEBP · до 5 МБ · до 10 фото'"
+          [hintEn]="'JPG / PNG / WEBP · up to 5 MB · up to 10 photos'"
+          (changed)="onPhotosChanged($event)"
+        ></app-file-upload>
+        <span class="hint">{{
           isUa()
-            ? 'Завантаження фото та документів буде додано в PR-W3 (presigned-upload з formType=winterization).'
-            : 'Photo and document upload lands in PR-W3 (presigned upload with formType=winterization).'
-        }}
+            ? 'Фотографуйте будівлі, котельні, обладнання. Не завантажуйте фото з упізнаваними людьми.'
+            : 'Photograph buildings, boiler houses, equipment. Do not upload photos with identifiable people.'
+        }}</span>
+        @if (photosRequired) {
+          <span class="hint hint-warn">{{
+            isUa()
+              ? 'Для ремонту тепло-/водопостачання та утеплення потрібно щонайменше 3 фото — це доказова база для кошторису.'
+              : 'Heating/water repair and insulation require at least 3 photos — they are the evidence base for the cost estimate.'
+          }}</span>
+        }
+        @if (stepInvalid() && photosRequired && photos().length < PHOTOS_MIN_FOR_WORKS) {
+          <span class="error">{{
+            isUa() ? 'Потрібно щонайменше 3 фото' : 'At least 3 photos required'
+          }}</span>
+        }
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{
+          isUa() ? 'Документи (до 5, необовʼязково)' : 'Documents (up to 5, optional)'
+        }}</span>
+        <app-file-upload
+          kind="document"
+          formType="winterization"
+          [tokenProvider]="tokenProvider"
+          [max]="DOCUMENTS_MAX"
+          [maxBytes]="DOCUMENT_MAX_BYTES"
+          [accept]="documentAccept"
+          [hintUa]="'PDF / DOCX / XLSX / ZIP · до 15 МБ · до 5 файлів'"
+          [hintEn]="'PDF / DOCX / XLSX / ZIP · up to 15 MB · up to 5 files'"
+          (changed)="onDocumentsChanged($event)"
+        ></app-file-upload>
+        <span class="hint">{{
+          isUa()
+            ? 'Гарантійний лист, рішення виконкому, кошторис, технічні специфікації.'
+            : 'Guarantee letter, executive committee decision, cost estimate, technical specifications.'
+        }}</span>
+      </div>
+
+      <div class="form-field full-width">
+        <label for="cloudLink">{{
+          isUa() ? 'Посилання на хмарний архів (необовʼязково)' : 'Cloud archive link (optional)'
+        }}</label>
+        <input id="cloudLink" type="url" formControlName="cloudLink" placeholder="https://…" />
+        <span class="hint">{{
+          isUa()
+            ? 'Якщо матеріалів більше, ніж вміщує форма — Google Drive, OneDrive тощо (відкрийте доступ за посиланням).'
+            : 'If you have more material than the form takes — Google Drive, OneDrive etc. (share by link).'
+        }}</span>
+        @if (showError('cloudLink')) {
+          <span class="error">{{
+            isUa() ? 'Посилання має починатись з http:// або https://' : 'Link must start with http:// or https://'
+          }}</span>
+        }
       </div>
     </div>
   }
 
-  <!-- ══════════ STEP 7: Review & consent — PR-W3 ══════════ -->
+  <!-- ══════════ STEP 7: Review & consent ══════════ -->
   @if (currentStep() === 6) {
     <div class="form-section">
-      <h2 class="section-title">{{ isUa() ? 'VII. Перевірка та згода' : 'VII. Review & consent' }}</h2>
-      <div class="placeholder-card">
-        {{
-          isUa()
-            ? 'Блок перевірки, згода на обробку персональних даних, Turnstile та подання заявки будуть додані в PR-W3.'
-            : 'The review block, personal-data consent, Turnstile and submit land in PR-W3.'
-        }}
+      <h2 class="section-title">
+        {{ isUa() ? 'VII. Перевірка та згода' : 'VII. Review & consent' }}
+      </h2>
+
+      <div class="review-block">
+        <h3>{{ isUa() ? 'Заявник' : 'Applicant' }}</h3>
+        <div class="review-grid">
+          <div class="review-item">
+            <span class="review-label">{{ isUa() ? 'Тип заявника' : 'Applicant type' }}</span>
+            <span class="review-value">{{
+              label(applicantTypes, form.get('applicantType')?.value)
+            }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{ isUa() ? 'Організація' : 'Organization' }}</span>
+            <span class="review-value">{{ form.get('organizationName')?.value || '—' }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{ isUa() ? 'Громада' : 'Hromada' }}</span>
+            <span class="review-value">{{ locationLabel() }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{ isUa() ? 'Контакт' : 'Contact' }}</span>
+            <span class="review-value">
+              {{ form.get('contactName')?.value || '—' }} ·
+              +38{{ form.get('phoneDigits')?.value }}
+            </span>
+          </div>
+        </div>
       </div>
+
+      <div class="review-block">
+        <h3>{{ isUa() ? 'Обʼєкт' : 'Object' }}</h3>
+        <div class="review-grid">
+          @if (applicantTypeIs('institution')) {
+            <div class="review-item">
+              <span class="review-label">{{ isUa() ? 'Заклад' : 'Facility' }}</span>
+              <span class="review-value">{{ form.get('facilityName')?.value || '—' }}</span>
+            </div>
+            <div class="review-item">
+              <span class="review-label">{{ isUa() ? 'Вид закладу' : 'Facility kind' }}</span>
+              <span class="review-value">{{
+                label(facilityKinds, form.get('facilityKind')?.value)
+              }}</span>
+            </div>
+            <div class="review-item">
+              <span class="review-label">{{ isUa() ? 'Опалення' : 'Heating' }}</span>
+              <span class="review-value">{{
+                label(heatingSources, form.get('heatingSource')?.value)
+              }}</span>
+            </div>
+            <div class="review-item">
+              <span class="review-label">{{ isUa() ? 'Резервне живлення' : 'Backup power' }}</span>
+              <span class="review-value">{{
+                label(backupPowerOptions, form.get('backupPower')?.value)
+              }}</span>
+            </div>
+          } @else {
+            <div class="review-item">
+              <span class="review-label">{{ isUa() ? 'Населення' : 'Population' }}</span>
+              <span class="review-value">{{ form.get('populationTotal')?.value || '—' }}</span>
+            </div>
+            <div class="review-item">
+              <span class="review-label">{{
+                isUa() ? 'Населених пунктів' : 'Settlements covered'
+              }}</span>
+              <span class="review-value">{{ form.get('settlementsCovered')?.value || '—' }}</span>
+            </div>
+            <div class="review-item">
+              <span class="review-label">{{ isUa() ? 'Статус громади' : 'Hromada status' }}</span>
+              <span class="review-value">{{
+                label(frontlineStatuses, form.get('frontlineStatus')?.value)
+              }}</span>
+            </div>
+            <div class="review-item">
+              <span class="review-label">{{ isUa() ? 'Цільові обʼєкти' : 'Target facilities' }}</span>
+              <span class="review-value">{{ form.get('targetFacilities')?.value || '—' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="review-block">
+        <h3>{{ isUa() ? 'Потреби' : 'Needs' }}</h3>
+        <div class="review-grid">
+          <div class="review-item review-item-wide">
+            <span class="review-label">{{ isUa() ? 'Категорії' : 'Categories' }}</span>
+            <span class="review-value">{{ selectedCategoryLabels() }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{ isUa() ? 'Позицій специфікації' : 'Specification rows' }}</span>
+            <span class="review-value">{{ needRowCount() }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{ isUa() ? 'Терміновість' : 'Urgency' }}</span>
+            <span class="review-value">{{ label(urgencyOptions, form.get('urgency')?.value) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="review-block">
+        <h3>{{ isUa() ? 'Бенефіціари, бюджет і файли' : 'Beneficiaries, budget & files' }}</h3>
+        <div class="review-grid">
+          <div class="review-item">
+            <span class="review-label">{{ isUa() ? 'Прямі бенефіціари' : 'Direct beneficiaries' }}</span>
+            <span class="review-value">{{ form.get('directBeneficiaries')?.value || '—' }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{ isUa() ? 'Потреба до' : 'Needed by' }}</span>
+            <span class="review-value">{{ label(needByOptions, form.get('needBy')?.value) }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{
+              isUa() ? 'Орієнтовна вартість, грн' : 'Estimated cost, UAH'
+            }}</span>
+            <span class="review-value">{{ form.get('estimatedCost')?.value || '—' }}</span>
+          </div>
+          <div class="review-item">
+            <span class="review-label">{{ isUa() ? 'Файли' : 'Files' }}</span>
+            <span class="review-value">
+              {{ isUa() ? 'фото' : 'photos' }}: {{ photos().length }} ·
+              {{ isUa() ? 'документи' : 'documents' }}: {{ documents().length }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <label class="consent">
+        <input type="checkbox" formControlName="consentGiven" />
+        <span>{{
+          isUa()
+            ? 'Я даю згоду БО «БФ «ЦПР» на обробку моїх персональних даних відповідно до Закону України «Про захист персональних даних» та на їх передачу міжнародним донорам у межах виконання гуманітарних програм.'
+            : 'I consent to BO «CF «CSD» processing my personal data under the Law of Ukraine “On Personal Data Protection” and transferring it to international donors within humanitarian programs.'
+        }}</span>
+      </label>
+      <!-- ТЗ asks for a link to the Policy; the site has no /privacy-policy
+           route, so this points at «Про нас», where the fund publishes its
+           POLICY-type documents. -->
+      <p class="consent-policy">
+        <a routerLink="/about" target="_blank" rel="noopener">{{
+          isUa()
+            ? 'Політика обробки персональних даних — у документах фонду'
+            : 'Personal data policy — in the fund’s documents'
+        }}</a>
+      </p>
+      @if (form.get('consentGiven')?.touched && form.get('consentGiven')?.invalid) {
+        <span class="error">{{
+          isUa() ? 'Потрібна згода для подання заявки' : 'Consent is required to submit'
+        }}</span>
+      }
+
+      <p class="turnstile-note">{{
+        isUa() ? 'Форму захищено Cloudflare Turnstile.' : 'Protected by Cloudflare Turnstile.'
+      }}</p>
+
+      @if (submitError()) {
+        <div class="error-banner">
+          {{
+            isUa()
+              ? 'Помилка подання. Перевірте зʼєднання і спробуйте ще раз.'
+              : 'Submission failed. Check your connection and try again.'
+          }}
+        </div>
+      }
     </div>
   }
+
+  <!-- Managed Turnstile (mostly invisible). Rendered outside the step blocks so
+       that the widget survives navigation: it feeds both the presigned uploads
+       on step 6 and the submit on step 7, and each token is single-use. -->
+  <app-turnstile [siteKey]="siteKey"></app-turnstile>
 
   <!-- ══════════ Navigation ══════════ -->
   <div class="form-nav">
@@ -1411,9 +1667,22 @@
           {{ isUa() ? 'Далі' : 'Next' }}
         </button>
       } @else {
-        <span class="nav-note">{{
-          isUa() ? 'Подання заявки — PR-W3' : 'Submitting the application — PR-W3'
-        }}</span>
+        <button
+          type="button"
+          class="btn btn-submit"
+          [disabled]="submitting() || !canSubmit()"
+          (click)="submit()"
+        >
+          {{
+            submitting()
+              ? isUa()
+                ? 'Надсилання…'
+                : 'Submitting…'
+              : isUa()
+                ? 'Подати заявку'
+                : 'Submit application'
+          }}
+        </button>
       }
     </div>
   </div>
@@ -1428,3 +1697,4 @@
     </div>
   }
 </form>
+}
