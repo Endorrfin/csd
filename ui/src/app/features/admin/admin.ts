@@ -49,7 +49,7 @@ import { AuthService } from '../../core/services/auth.service';
             class="admin-nav-item"
             (click)="closeSidebar()"
           >
-            {{ isUa ? 'Відновлення' : 'Recovery' }}
+            {{ isUa ? 'Recovery' : 'Recovery' }}
           </a>
           <a
             routerLink="winterization-forms"
