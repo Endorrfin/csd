@@ -20,6 +20,10 @@ import { RecoveryService } from './recovery.service';
 import { RecoveryXlsxExportService } from './recovery-xlsx-export.service';
 import { NeedsAuditLogService } from './needs-audit-log.service';
 import { FormNumberService } from './form-number.service';
+
+import { WinterizationForm } from './entities/winterization-form.entity';
+import { WinterizationFormNeed } from './entities/winterization-form-need.entity';
+import { WinterizationService } from './winterization.service';
 // UploadModule (presigned GET) + Turnstile guard
 import { UploadModule } from '../upload/upload.module';
 import { TurnstileGuard } from '../../common/guards/turnstile.guard';
@@ -39,8 +43,11 @@ import { TurnstileGuard } from '../../common/guards/turnstile.guard';
       NeedsFormAttachment,
       NeedsFormAuditLog,
       FormNumberSequence,
+
+      WinterizationForm,
+      WinterizationFormNeed,
     ]),
-    UploadModule, // RecoveryService injects UploadService
+    UploadModule, // Recovery/Winterization services inject UploadService
   ],
   controllers: [NeedsFormsController],
   // register AuditLogService so the controller can request the log.
@@ -53,7 +60,9 @@ import { TurnstileGuard } from '../../common/guards/turnstile.guard';
     RecoveryXlsxExportService,
     NeedsAuditLogService,
     FormNumberService,
-    // Turnstile guard for the public recovery submit
+
+    WinterizationService,
+    // Turnstile guard for the public recovery / winterization submits
     TurnstileGuard,
   ],
 })

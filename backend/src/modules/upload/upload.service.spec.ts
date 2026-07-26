@@ -101,6 +101,48 @@ describe('UploadService — recovery/needs uploads', () => {
         svc.getNeedsPresignedPost('photo', 'image/png'),
       ).rejects.toThrow(InternalServerErrorException);
     });
+
+    // PR-W1 — formType selects the key prefix
+    it('defaults to the recovery prefix when formType is omitted', async () => {
+      const svc = withPrivateBucket();
+      const res = await svc.getNeedsPresignedPost('photo', 'image/png');
+      expect(res.s3Key.startsWith('media/needs/recovery/')).toBe(true);
+    });
+
+    it('uses the winterization prefix when formType is winterization', async () => {
+      const svc = withPrivateBucket();
+      const photo = await svc.getNeedsPresignedPost(
+        'photo',
+        'image/png',
+        'winterization',
+      );
+      const doc = await svc.getNeedsPresignedPost(
+        'document',
+        'application/pdf',
+        'winterization',
+      );
+
+      expect(photo.s3Key).toMatch(
+        /^media\/needs\/winterization\/photo\/.*\.png$/,
+      );
+      expect(doc.s3Key).toMatch(/^media\/needs\/winterization\/doc\/.*\.pdf$/);
+    });
+
+    it('keeps the per-kind size caps for winterization uploads', async () => {
+      const svc = withPrivateBucket();
+      await svc.getNeedsPresignedPost('photo', 'image/jpeg', 'winterization');
+
+      const call = createPresignedPostMock.mock.calls[0] as [
+        unknown,
+        { Bucket: string; Conditions: unknown[] },
+      ];
+      expect(call[1].Bucket).toBe('csd-media-private');
+      expect(call[1].Conditions).toContainEqual([
+        'content-length-range',
+        1,
+        PHOTO_MAX_BYTES,
+      ]);
+    });
   });
 
   describe('getNeedsFileUrl', () => {

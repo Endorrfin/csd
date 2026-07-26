@@ -34,9 +34,11 @@ export class UploadController {
     return this.uploadService.getTestimonialPresignedPost(dto.contentType);
   }
 
-  // === ADDED: PR-2 — public recovery/needs upload (photos + documents) ===
+  // PR-2 — public recovery/needs upload (photos + documents)
   // Turnstile-guarded (anti-spam); files land in the PRIVATE bucket. The
   // returned s3Key is echoed back on form submit and re-validated there.
+  // PR-W1 — `dto.formType` picks the key prefix (recovery |
+  // winterization); omitting it keeps the PR-2 recovery behaviour.
   @Post('needs-presigned')
   @UseGuards(TurnstileGuard)
   getNeedsPresignedPost(@Body() dto: NeedsUploadDto): Promise<{
@@ -44,6 +46,10 @@ export class UploadController {
     fields: Record<string, string>;
     s3Key: string;
   }> {
-    return this.uploadService.getNeedsPresignedPost(dto.kind, dto.contentType);
+    return this.uploadService.getNeedsPresignedPost(
+      dto.kind,
+      dto.contentType,
+      dto.formType,
+    );
   }
 }
