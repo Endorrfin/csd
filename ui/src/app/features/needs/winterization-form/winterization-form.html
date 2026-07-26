@@ -1,0 +1,1430 @@
+<!-- ui/src/app/features/needs/winterization-form/winterization-form.html -->
+<!-- Winterization form UI. PR-W2 = steps 1–5 (applicant, object+heating,
+     winter needs, beneficiaries, budget). Steps 6–7 (files, review/consent/
+     Turnstile/submit → thank-you) are placeholders until PR-W3.
+     Inline bilingual via the signal isUa() (zoneless-safe). === -->
+
+@if (draftFound()) {
+  <div class="draft-banner" role="status">
+    <span class="draft-text">
+      {{ isUa() ? 'Знайдено збережену чернетку від' : 'Found a saved draft from' }}
+      {{ draftSavedLabel() }}
+    </span>
+    <div class="draft-actions">
+      <button type="button" class="btn btn-primary btn-sm" (click)="restoreDraft()">
+        {{ isUa() ? 'Відновити' : 'Restore' }}
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm" (click)="discardDraft()">
+        {{ isUa() ? 'Почати заново' : 'Start fresh' }}
+      </button>
+    </div>
+  </div>
+}
+
+<app-form-stepper
+  [steps]="steps"
+  [current]="currentStep()"
+  (stepClick)="goToStep($event)"
+></app-form-stepper>
+
+<form [formGroup]="form" class="winterization-form">
+  <!-- ══════════ STEP 1: Applicant & contacts ══════════ -->
+  @if (currentStep() === 0) {
+    <div class="form-section">
+      <h2 class="section-title">
+        {{ isUa() ? 'I. Заявник і контакти' : 'I. Applicant & contacts' }}
+      </h2>
+
+      <div class="form-field full-width">
+        <span class="field-label">
+          {{ isUa() ? 'Тип заявника' : 'Applicant type' }} <span class="req">*</span>
+        </span>
+        <div class="type-cards">
+          @for (o of applicantTypes; track o.value) {
+            <label
+              class="type-card"
+              [class.is-disabled]="o.value === 'household' && !householdEnabled"
+            >
+              <input
+                type="radio"
+                formControlName="applicantType"
+                [value]="o.value"
+                [attr.disabled]="o.value === 'household' && !householdEnabled ? true : null"
+              />
+              <span class="type-card-body">
+                <span class="type-card-title">
+                  {{ isUa() ? o.ua : o.en }}
+                  @if (o.value === 'household' && !householdEnabled) {
+                    <span class="badge">{{ isUa() ? 'скоро' : 'soon' }}</span>
+                  }
+                </span>
+                <span class="type-card-hint">{{ isUa() ? o.hintUa : o.hintEn }}</span>
+              </span>
+            </label>
+          }
+        </div>
+        <span class="hint">{{
+          isUa()
+            ? 'Потреби кількох окремих закладів подавайте окремими заявками; потребу рівня громади — однією заявкою від ОМС.'
+            : 'Submit the needs of several separate facilities as separate applications; a community-level need goes in one application from the local authority.'
+        }}</span>
+        @if (showError('applicantType')) {
+          <span class="error">{{ isUa() ? 'Оберіть тип заявника' : 'Select an applicant type' }}</span>
+        }
+      </div>
+
+      <div class="location-block">
+        <app-location-selector formControlName="location" [isUa]="isUa()" [required]="true">
+        </app-location-selector>
+        @if (showError('location')) {
+          <span class="error">{{
+            isUa() ? 'Оберіть хоча б область' : 'Select at least a region'
+          }}</span>
+        }
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field full-width">
+          <label for="organizationName">
+            {{
+              applicantTypeIs('municipality')
+                ? isUa()
+                  ? 'Назва громади / ОМС'
+                  : 'Hromada / local authority name'
+                : isUa()
+                  ? 'Назва закладу / установи'
+                  : 'Facility / institution name'
+            }}
+            <span class="req">*</span>
+          </label>
+          <input
+            id="organizationName"
+            formControlName="organizationName"
+            maxlength="255"
+            [placeholder]="
+              applicantTypeIs('municipality')
+                ? isUa()
+                  ? 'Напр. Прилуцька міська рада'
+                  : 'e.g. Pryluky City Council'
+                : isUa()
+                  ? 'Напр. Ліцей №1 Прилуцької міської ради'
+                  : 'e.g. Lyceum No. 1'
+            "
+          />
+          @if (showError('organizationName')) {
+            <span class="error">{{ isUa() ? 'Мінімум 3 символи' : 'Min 3 characters' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="edrpou">{{ isUa() ? 'ЄДРПОУ (необовʼязково)' : 'EDRPOU (optional)' }}</label>
+          <input
+            id="edrpou"
+            formControlName="edrpou"
+            inputmode="numeric"
+            maxlength="8"
+            placeholder="12345678"
+          />
+          <span class="hint">{{
+            isUa() ? '8 цифр — пришвидшує верифікацію заявника' : '8 digits — speeds up verification'
+          }}</span>
+          @if (showError('edrpou')) {
+            <span class="error">{{ isUa() ? 'Рівно 8 цифр' : 'Exactly 8 digits' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="contactName">
+            {{ isUa() ? 'Контактна особа (ПІБ)' : 'Contact person' }} <span class="req">*</span>
+          </label>
+          <input
+            id="contactName"
+            formControlName="contactName"
+            maxlength="255"
+            [placeholder]="isUa() ? 'Прізвище Імʼя По батькові' : 'Full name'"
+          />
+          @if (showError('contactName')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="contactPosition">
+            {{ isUa() ? 'Посада' : 'Position' }} <span class="req">*</span>
+          </label>
+          <input id="contactPosition" formControlName="contactPosition" maxlength="255" />
+          @if (showError('contactPosition')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="phoneDigits">{{ isUa() ? 'Телефон' : 'Phone' }} <span class="req">*</span></label>
+          <div class="phone-input">
+            <span class="phone-prefix">+38</span>
+            <input
+              id="phoneDigits"
+              type="tel"
+              inputmode="numeric"
+              maxlength="10"
+              formControlName="phoneDigits"
+              placeholder="0501234567"
+            />
+          </div>
+          <span class="hint">{{
+            isUa() ? 'Формат: 0XXXXXXXXX (10 цифр)' : 'Format: 0XXXXXXXXX (10 digits)'
+          }}</span>
+          @if (showError('phoneDigits')) {
+            <span class="error">{{
+              isUa() ? 'Введіть 10 цифр, починаючи з 0' : 'Enter 10 digits starting with 0'
+            }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="email">Email <span class="req">*</span></label>
+          <input id="email" type="email" formControlName="email" placeholder="email&#64;example.com" />
+          @if (showError('email')) {
+            <span class="error">{{ isUa() ? 'Некоректний email' : 'Invalid email' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="messenger">{{
+            isUa() ? 'Месенджер (необовʼязково)' : 'Messenger (optional)'
+          }}</label>
+          <input
+            id="messenger"
+            formControlName="messenger"
+            maxlength="100"
+            placeholder="Telegram / Viber / Signal"
+          />
+        </div>
+
+        <div class="form-field">
+          <label for="altContactName">{{
+            isUa() ? 'Додатковий контакт (ПІБ)' : 'Alternate contact'
+          }}</label>
+          <input id="altContactName" formControlName="altContactName" maxlength="255" />
+          @if (showError('altContactName')) {
+            <span class="error">{{ isUa() ? 'Мінімум 2 символи' : 'Min 2 characters' }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="altPhoneDigits">{{ isUa() ? 'Додатковий телефон' : 'Alternate phone' }}</label>
+          <div class="phone-input">
+            <span class="phone-prefix">+38</span>
+            <input
+              id="altPhoneDigits"
+              type="tel"
+              inputmode="numeric"
+              maxlength="10"
+              formControlName="altContactPhoneDigits"
+              placeholder="0501234567"
+            />
+          </div>
+          @if (showError('altContactPhoneDigits')) {
+            <span class="error">{{
+              isUa() ? 'Введіть 10 цифр, починаючи з 0' : 'Enter 10 digits starting with 0'
+            }}</span>
+          }
+        </div>
+
+        <div class="form-field">
+          <label for="website">{{ isUa() ? 'Вебсайт (необовʼязково)' : 'Website (optional)' }}</label>
+          <input id="website" formControlName="website" maxlength="500" placeholder="https://" />
+          @if (showError('website')) {
+            <span class="error">{{
+              isUa() ? 'Вкажіть повне посилання (https://...)' : 'Enter a full URL (https://...)'
+            }}</span>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ STEP 2: Object & heating (conditional by applicantType) ══════════ -->
+  @if (currentStep() === 1) {
+    <div class="form-section">
+      <h2 class="section-title">
+        {{ isUa() ? 'II. Обʼєкт та опалення' : 'II. Object & heating' }}
+      </h2>
+
+      @if (applicantTypeMissing) {
+        <div class="placeholder-card">
+          {{
+            isUa()
+              ? 'Спочатку оберіть тип заявника на кроці 1 — від нього залежить, які поля потрібні.'
+              : 'Pick an applicant type on step 1 first — it decides which fields are needed.'
+          }}
+        </div>
+      }
+
+      <!-- 2а. Institution / facility -->
+      @if (applicantTypeIs('institution')) {
+        <div class="form-grid">
+          <div class="form-field full-width">
+            <label for="facilityName">
+              {{ isUa() ? 'Назва закладу (обʼєкт заявки)' : 'Facility name (application object)' }}
+              <span class="req">*</span>
+            </label>
+            <input id="facilityName" formControlName="facilityName" maxlength="255" />
+            <span class="hint">{{
+              isUa() ? 'Одна заявка = один заклад' : 'One application = one facility'
+            }}</span>
+            @if (showError('facilityName')) {
+              <span class="error">{{ isUa() ? 'Мінімум 3 символи' : 'Min 3 characters' }}</span>
+            }
+          </div>
+
+          <div class="form-field">
+            <label for="facilityKind">
+              {{ isUa() ? 'Тип закладу' : 'Facility kind' }} <span class="req">*</span>
+            </label>
+            <select id="facilityKind" formControlName="facilityKind">
+              <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+              @for (o of facilityKinds; track o.value) {
+                <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+              }
+            </select>
+            @if (showError('facilityKind')) {
+              <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+            }
+          </div>
+
+          @if (form.get('facilityKind')?.value === 'other') {
+            <div class="form-field">
+              <label for="facilityKindOther">
+                {{ isUa() ? 'Уточніть тип' : 'Specify kind' }} <span class="req">*</span>
+              </label>
+              <input id="facilityKindOther" formControlName="facilityKindOther" maxlength="255" />
+              @if (showError('facilityKindOther')) {
+                <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+              }
+            </div>
+          }
+
+          <div class="form-field full-width">
+            <label for="streetAddress">{{
+              isUa() ? 'Адреса обʼєкта (вулиця, №)' : 'Object address (street, no.)'
+            }}</label>
+            <input id="streetAddress" formControlName="streetAddress" maxlength="255" />
+          </div>
+
+          <div class="form-field">
+            <label for="heatingSource">
+              {{ isUa() ? 'Джерело опалення' : 'Heating source' }} <span class="req">*</span>
+            </label>
+            <select id="heatingSource" formControlName="heatingSource">
+              <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+              @for (o of heatingSources; track o.value) {
+                <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+              }
+            </select>
+            <span class="hint">{{
+              isUa()
+                ? 'Визначає, які модальності допомоги доречні (паливо, техніка, ремонт).'
+                : 'Decides which assistance modalities apply (fuel, equipment, repair).'
+            }}</span>
+            @if (showError('heatingSource')) {
+              <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+            }
+          </div>
+
+          @if (form.get('heatingSource')?.value === 'other') {
+            <div class="form-field">
+              <label for="heatingSourceOther">
+                {{ isUa() ? 'Уточніть джерело' : 'Specify source' }} <span class="req">*</span>
+              </label>
+              <input id="heatingSourceOther" formControlName="heatingSourceOther" maxlength="255" />
+              @if (showError('heatingSourceOther')) {
+                <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+              }
+            </div>
+          }
+
+          <div class="form-field">
+            <label for="heatedArea">{{ isUa() ? 'Опалювана площа, м²' : 'Heated area, m²' }}</label>
+            <input
+              id="heatedArea"
+              type="number"
+              inputmode="decimal"
+              formControlName="heatedArea"
+              min="1"
+              step="any"
+            />
+            @if (showError('heatedArea')) {
+              <span class="error">{{ isUa() ? 'Некоректне значення' : 'Invalid value' }}</span>
+            }
+          </div>
+
+          <div class="form-field">
+            <label for="buildingCondition">{{
+              isUa() ? 'Стан теплового контуру' : 'Thermal envelope condition'
+            }}</label>
+            <select id="buildingCondition" formControlName="buildingCondition">
+              <option value="">{{ isUa() ? '-- Не вказано --' : '-- Not specified --' }}</option>
+              @for (o of buildingConditions; track o.value) {
+                <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+              }
+            </select>
+            <span class="hint">{{
+              isUa() ? 'Вікна, двері, покрівля' : 'Windows, doors, roof'
+            }}</span>
+          </div>
+        </div>
+
+        <div class="form-field full-width">
+          <span class="field-label">
+            {{ isUa() ? 'Резервне живлення' : 'Backup power' }} <span class="req">*</span>
+          </span>
+          <div class="radio-group">
+            @for (o of backupPowerOptions; track o.value) {
+              <label class="radio">
+                <input type="radio" formControlName="backupPower" [value]="o.value" />{{
+                  isUa() ? o.ua : o.en
+                }}
+              </label>
+            }
+          </div>
+          @if (showError('backupPower')) {
+            <span class="error">{{ isUa() ? 'Оберіть варіант' : 'Select an option' }}</span>
+          }
+        </div>
+      }
+
+      <!-- 2б. Municipality / hromada -->
+      @if (applicantTypeIs('municipality')) {
+        <p class="block-note">
+          {{
+            isUa()
+              ? 'Обʼєкт заявки — громада: потреба рівня громади (паливо для котелень, генератори для критичної інфраструктури).'
+              : 'The application object is the hromada: a community-level need (fuel for boiler houses, generators for critical infrastructure).'
+          }}
+        </p>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label for="populationTotal">{{
+              isUa() ? 'Населення громади' : 'Hromada population'
+            }}</label>
+            <input
+              id="populationTotal"
+              type="number"
+              inputmode="numeric"
+              formControlName="populationTotal"
+              min="1"
+            />
+            @if (showError('populationTotal')) {
+              <span class="error">{{ isUa() ? 'Некоректне значення' : 'Invalid value' }}</span>
+            }
+          </div>
+
+          <div class="form-field">
+            <label for="settlementsCovered">{{
+              isUa() ? 'Скільки населених пунктів охоплює потреба' : 'Settlements covered by the need'
+            }}</label>
+            <input
+              id="settlementsCovered"
+              type="number"
+              inputmode="numeric"
+              formControlName="settlementsCovered"
+              min="1"
+            />
+            @if (showError('settlementsCovered')) {
+              <span class="error">{{ isUa() ? 'Від 1 до 1000' : '1 to 1000' }}</span>
+            }
+          </div>
+
+          <div class="form-field full-width">
+            <label for="frontlineStatus">{{
+              isUa() ? 'Статус громади' : 'Hromada status'
+            }}</label>
+            <select id="frontlineStatus" formControlName="frontlineStatus">
+              <option value="">{{ isUa() ? '-- Не вказано --' : '-- Not specified --' }}</option>
+              @for (o of frontlineStatuses; track o.value) {
+                <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="form-field full-width">
+            <label for="targetFacilities">{{
+              isUa() ? 'Обʼєкти, на які спрямована потреба' : 'Infrastructure the need targets'
+            }}</label>
+            <textarea
+              id="targetFacilities"
+              formControlName="targetFacilities"
+              rows="2"
+              maxlength="500"
+              [placeholder]="
+                isUa()
+                  ? 'Напр. 3 котельні, 2 пункти незламності, водоканал'
+                  : 'e.g. 3 boiler houses, 2 resilience points, water utility'
+              "
+            ></textarea>
+            @if (showError('targetFacilities')) {
+              <span class="error">{{ isUa() ? 'До 500 символів' : 'Up to 500 characters' }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ══════════ STEP 3: Winter needs ══════════ -->
+  @if (currentStep() === 2) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'III. Потреби на зиму' : 'III. Winter needs' }}</h2>
+
+      <div class="form-field full-width">
+        <span class="field-label">
+          {{ isUa() ? 'Категорії потреб' : 'Need categories' }} <span class="req">*</span>
+        </span>
+        <div class="checklist checklist-inline" formGroupName="needCategories">
+          @for (o of needCategoryOptions; track o.value) {
+            <label class="checklist-item">
+              <input type="checkbox" [formControlName]="o.value" />
+              <span class="checklist-text">{{ isUa() ? o.ua : o.en }}</span>
+            </label>
+          }
+        </div>
+        <span class="hint">{{
+          isUa()
+            ? 'Кожна вибрана категорія розкриває свій блок. Без обсягів ми не зможемо порахувати бюджет.'
+            : 'Each selected category opens its own block. Without quantities we cannot calculate a budget.'
+        }}</span>
+        @if (showGroupError('needCategories')) {
+          <span class="error">{{
+            isUa() ? 'Оберіть хоча б одну категорію' : 'Select at least one category'
+          }}</span>
+        }
+      </div>
+
+      <!-- generators — the only repeatable block (one row per power rating) -->
+      @if (hasCategory('generators')) {
+        <div class="spec-block">
+          <h3 class="block-title">
+            {{ isUa() ? 'Генератори / резервне живлення' : 'Generators / backup power' }}
+          </h3>
+          <div formArrayName="generators">
+            @for (row of generatorRows.controls; track row; let i = $index) {
+              <div class="gen-row" [formGroupName]="i">
+                <div class="form-field">
+                  <label [attr.for]="'gen-qty-' + i">
+                    {{ isUa() ? 'Кількість, шт' : 'Quantity, pcs' }} <span class="req">*</span>
+                  </label>
+                  <input
+                    [id]="'gen-qty-' + i"
+                    type="number"
+                    inputmode="numeric"
+                    formControlName="qty"
+                    min="1"
+                    step="1"
+                  />
+                  @if (generatorRowInvalid(i, 'qty')) {
+                    <span class="error">{{ isUa() ? 'Вкажіть кількість' : 'Enter a quantity' }}</span>
+                  }
+                </div>
+                <div class="form-field">
+                  <label [attr.for]="'gen-kw-' + i">{{
+                    isUa() ? 'Потужність, кВт' : 'Power, kW'
+                  }}</label>
+                  <input
+                    [id]="'gen-kw-' + i"
+                    type="number"
+                    inputmode="decimal"
+                    formControlName="powerKw"
+                    min="0.1"
+                    step="any"
+                  />
+                </div>
+                <div class="form-field">
+                  <label [attr.for]="'gen-fuel-' + i">{{
+                    isUa() ? 'Тип пального' : 'Fuel type'
+                  }}</label>
+                  <select [id]="'gen-fuel-' + i" formControlName="fuelType">
+                    <option value="">{{ isUa() ? '-- Не вказано --' : '-- Not specified --' }}</option>
+                    @for (o of generatorFuelTypes; track o.value) {
+                      <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label [attr.for]="'gen-purpose-' + i">{{
+                    isUa() ? 'Призначення' : 'Purpose'
+                  }}</label>
+                  <select [id]="'gen-purpose-' + i" formControlName="purpose">
+                    <option value="">{{ isUa() ? '-- Не вказано --' : '-- Not specified --' }}</option>
+                    @for (o of generatorPurposes; track o.value) {
+                      <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+                    }
+                  </select>
+                </div>
+                @if (generatorRows.length > 1) {
+                  <button
+                    type="button"
+                    class="gen-remove"
+                    [attr.aria-label]="isUa() ? 'Видалити рядок' : 'Remove row'"
+                    (click)="removeGeneratorRow(i)"
+                  >
+                    ✕
+                  </button>
+                }
+              </div>
+            }
+          </div>
+          @if (generatorRows.length < GENERATOR_ROWS_MAX) {
+            <button type="button" class="btn btn-secondary btn-sm" (click)="addGeneratorRow()">
+              {{ isUa() ? '+ Додати генератор' : '+ Add generator' }}
+            </button>
+          }
+          <span class="hint">{{
+            isUa()
+              ? 'Окремий рядок на кожну потужність (напр. 2×10 кВт і 1×60 кВт). Без потужності бюджет порахувати неможливо.'
+              : 'One row per power rating (e.g. 2×10 kW and 1×60 kW). Without the rating the line cannot be costed.'
+          }}</span>
+          @if (showGroupError('generators')) {
+            <span class="error">{{
+              isUa() ? 'Додайте хоча б один генератор' : 'Add at least one generator'
+            }}</span>
+          }
+        </div>
+      }
+
+      <!-- solid_fuel -->
+      @if (hasCategory('solid_fuel')) {
+        <div class="spec-block">
+          <h3 class="block-title">{{ isUa() ? 'Тверде паливо' : 'Solid fuel' }}</h3>
+          <div class="checklist" formGroupName="solidFuel">
+            @for (d of solidFuelItems; track d.item) {
+              <div class="checklist-item-wrap" [formGroupName]="d.item">
+                <label class="checklist-item">
+                  <input type="checkbox" formControlName="checked" />
+                  <span class="checklist-text">{{ isUa() ? d.ua : d.en }}</span>
+                </label>
+                @if (rowChecked('solidFuel', d.item)) {
+                  <div class="spec-qty spec-qty-unit">
+                    <div class="form-field">
+                      <label [attr.for]="'sf-amount-' + d.item">
+                        {{ isUa() ? 'Обсяг' : 'Amount' }} <span class="req">*</span>
+                      </label>
+                      <input
+                        [id]="'sf-amount-' + d.item"
+                        type="number"
+                        inputmode="decimal"
+                        formControlName="amount"
+                        min="0.01"
+                        step="any"
+                      />
+                    </div>
+                    <div class="form-field">
+                      <label [attr.for]="'sf-unit-' + d.item">{{
+                        isUa() ? 'Одиниця' : 'Unit'
+                      }}</label>
+                      <select [id]="'sf-unit-' + d.item" formControlName="unit">
+                        @for (u of solidFuelUnits; track u.value) {
+                          <option [value]="u.value">{{ isUa() ? u.ua : u.en }}</option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          @if (showGroupError('solidFuel')) {
+            <span class="error">{{
+              isUa() ? 'Оберіть хоча б один вид палива' : 'Select at least one fuel type'
+            }}</span>
+          }
+          @if (showGroupError('solidFuel', 'amountRequired')) {
+            <span class="error">{{
+              isUa()
+                ? 'Вкажіть обсяг для кожного вибраного виду палива — без тоннажу заявку неможливо оцінити.'
+                : 'Enter an amount for every selected fuel — without tonnage the request cannot be costed.'
+            }}</span>
+          }
+
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="solidFuelBoilerCount">{{
+                isUa() ? 'Кількість котлів' : 'Number of boilers'
+              }}</label>
+              <input
+                id="solidFuelBoilerCount"
+                type="number"
+                inputmode="numeric"
+                formControlName="solidFuelBoilerCount"
+                min="1"
+              />
+              @if (showError('solidFuelBoilerCount')) {
+                <span class="error">{{ isUa() ? 'Від 1 до 1000' : '1 to 1000' }}</span>
+              }
+            </div>
+            <div class="form-field">
+              <span class="field-label">{{
+                isUa() ? 'Чи є місце для зберігання палива?' : 'Is there storage for the fuel?'
+              }}</span>
+              <div class="radio-group">
+                <label class="radio">
+                  <input type="radio" formControlName="solidFuelStorageAvailable" value="yes" />{{
+                    isUa() ? 'Так' : 'Yes'
+                  }}
+                </label>
+                <label class="radio">
+                  <input type="radio" formControlName="solidFuelStorageAvailable" value="no" />{{
+                    isUa() ? 'Ні' : 'No'
+                  }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- heating_appliances -->
+      @if (hasCategory('heating_appliances')) {
+        <div class="spec-block">
+          <h3 class="block-title">
+            {{ isUa() ? 'Обігрівачі та опалювальні прилади' : 'Heaters and heating appliances' }}
+          </h3>
+          <div class="checklist" formGroupName="heatingAppliances">
+            @for (d of heatingApplianceItems; track d.item) {
+              <div class="checklist-item-wrap" [formGroupName]="d.item">
+                <label class="checklist-item">
+                  <input type="checkbox" formControlName="checked" />
+                  <span class="checklist-text">{{ isUa() ? d.ua : d.en }}</span>
+                </label>
+                @if (rowChecked('heatingAppliances', d.item)) {
+                  <div class="spec-qty">
+                    <label [attr.for]="'ha-' + d.item">
+                      {{ isUa() ? 'Кількість' : 'Quantity' }}, {{ isUa() ? d.unitUa : d.unitEn }}
+                    </label>
+                    <input
+                      [id]="'ha-' + d.item"
+                      type="number"
+                      inputmode="decimal"
+                      formControlName="qty"
+                      min="0.01"
+                      step="any"
+                    />
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          @if (showGroupError('heatingAppliances')) {
+            <span class="error">{{
+              isUa() ? 'Оберіть хоча б одну позицію' : 'Select at least one item'
+            }}</span>
+          }
+        </div>
+      }
+
+      <!-- heating_system_repair -->
+      @if (hasCategory('heating_system_repair')) {
+        <div class="spec-block">
+          <h3 class="block-title">
+            {{
+              isUa()
+                ? 'Ремонт / модернізація тепло- і водопостачання'
+                : 'Heating / water supply repair or upgrade'
+            }}
+          </h3>
+          <div class="checklist" formGroupName="heatingRepair">
+            @for (d of heatingRepairItems; track d.item) {
+              <div class="checklist-item-wrap" [formGroupName]="d.item">
+                <label class="checklist-item">
+                  <input type="checkbox" formControlName="checked" />
+                  <span class="checklist-text">{{ isUa() ? d.ua : d.en }}</span>
+                </label>
+                @if (rowChecked('heatingRepair', d.item)) {
+                  <div class="spec-qty">
+                    <label [attr.for]="'hr-' + d.item">
+                      {{ isUa() ? 'Обсяг' : 'Volume' }}, {{ isUa() ? d.unitUa : d.unitEn }}
+                    </label>
+                    <input
+                      [id]="'hr-' + d.item"
+                      type="number"
+                      inputmode="decimal"
+                      formControlName="qty"
+                      min="0.01"
+                      step="any"
+                    />
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          @if (showGroupError('heatingRepair')) {
+            <span class="error">{{
+              isUa() ? 'Оберіть хоча б одну позицію' : 'Select at least one item'
+            }}</span>
+          }
+
+          <div class="form-field full-width">
+            <label for="heatingRepairDescription">
+              {{ isUa() ? 'Опис необхідних робіт' : 'Description of the works' }}
+              <span class="req">*</span>
+            </label>
+            <textarea
+              id="heatingRepairDescription"
+              formControlName="heatingRepairDescription"
+              rows="3"
+              maxlength="1000"
+              [placeholder]="
+                isUa()
+                  ? 'Що саме зламано / потребує заміни, від 30 символів'
+                  : 'What exactly is broken or needs replacing, min 30 characters'
+              "
+            ></textarea>
+            @if (showError('heatingRepairDescription')) {
+              <span class="error">{{
+                isUa() ? 'Від 30 до 1000 символів' : '30–1000 characters'
+              }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- insulation -->
+      @if (hasCategory('insulation')) {
+        <div class="spec-block">
+          <h3 class="block-title">{{ isUa() ? 'Утеплення будівлі' : 'Building insulation' }}</h3>
+          <div class="checklist" formGroupName="insulation">
+            @for (d of insulationItems; track d.item) {
+              <div class="checklist-item-wrap" [formGroupName]="d.item">
+                <label class="checklist-item">
+                  <input type="checkbox" formControlName="checked" />
+                  <span class="checklist-text">{{ isUa() ? d.ua : d.en }}</span>
+                </label>
+                @if (rowChecked('insulation', d.item)) {
+                  <div class="spec-qty">
+                    <label [attr.for]="'ins-' + d.item">
+                      {{ isUa() ? 'Обсяг' : 'Volume' }}, {{ isUa() ? d.unitUa : d.unitEn }}
+                    </label>
+                    <input
+                      [id]="'ins-' + d.item"
+                      type="number"
+                      inputmode="decimal"
+                      formControlName="qty"
+                      min="0.01"
+                      step="any"
+                    />
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          @if (showGroupError('insulation')) {
+            <span class="error">{{
+              isUa() ? 'Оберіть хоча б один елемент' : 'Select at least one element'
+            }}</span>
+          }
+        </div>
+      }
+
+      <!-- resilience_point_equipment -->
+      @if (hasCategory('resilience_point_equipment')) {
+        <div class="spec-block">
+          <h3 class="block-title">
+            {{ isUa() ? 'Обладнання для Пункту Незламності' : 'Resilience point equipment' }}
+          </h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <span class="field-label">
+                {{ isUa() ? 'Статус пункту' : 'Point status' }} <span class="req">*</span>
+              </span>
+              <div class="radio-group">
+                @for (o of resiliencePointStatuses; track o.value) {
+                  <label class="radio">
+                    <input type="radio" formControlName="resiliencePointStatus" [value]="o.value" />{{
+                      isUa() ? o.ua : o.en
+                    }}
+                  </label>
+                }
+              </div>
+              @if (showError('resiliencePointStatus')) {
+                <span class="error">{{ isUa() ? 'Оберіть статус' : 'Select a status' }}</span>
+              }
+            </div>
+            <div class="form-field">
+              <label for="resiliencePointCapacity">{{
+                isUa() ? 'Місткість, осіб' : 'Capacity, persons'
+              }}</label>
+              <input
+                id="resiliencePointCapacity"
+                type="number"
+                inputmode="numeric"
+                formControlName="resiliencePointCapacity"
+                min="1"
+              />
+              @if (showError('resiliencePointCapacity')) {
+                <span class="error">{{ isUa() ? 'Від 1 до 10 000' : '1 to 10,000' }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="checklist" formGroupName="resiliencePoint">
+            @for (d of resiliencePointItems; track d.item) {
+              <div class="checklist-item-wrap" [formGroupName]="d.item">
+                <label class="checklist-item">
+                  <input type="checkbox" formControlName="checked" />
+                  <span class="checklist-text">{{ isUa() ? d.ua : d.en }}</span>
+                </label>
+                @if (rowChecked('resiliencePoint', d.item)) {
+                  @if (d.unitUa) {
+                    <div class="spec-qty">
+                      <label [attr.for]="'rp-' + d.item">
+                        {{ isUa() ? 'Кількість' : 'Quantity' }}, {{ isUa() ? d.unitUa : d.unitEn }}
+                      </label>
+                      <input
+                        [id]="'rp-' + d.item"
+                        type="number"
+                        inputmode="decimal"
+                        formControlName="qty"
+                        min="0.01"
+                        step="any"
+                      />
+                    </div>
+                  } @else {
+                    <div class="spec-qty spec-qty-wide">
+                      <label [attr.for]="'rp-details-' + d.item">{{
+                        isUa() ? 'Уточніть' : 'Specify'
+                      }}</label>
+                      <input
+                        [id]="'rp-details-' + d.item"
+                        formControlName="details"
+                        maxlength="500"
+                      />
+                    </div>
+                  }
+                }
+              </div>
+            }
+          </div>
+          @if (showGroupError('resiliencePoint')) {
+            <span class="error">{{
+              isUa() ? 'Оберіть хоча б одну позицію' : 'Select at least one item'
+            }}</span>
+          }
+        </div>
+      }
+
+      <!-- winter_nfi -->
+      @if (hasCategory('winter_nfi')) {
+        <div class="spec-block">
+          <h3 class="block-title">{{ isUa() ? 'Зимові речі' : 'Winter NFI' }}</h3>
+          <div class="checklist" formGroupName="winterNfi">
+            @for (d of winterNfiItems; track d.item) {
+              <div class="checklist-item-wrap" [formGroupName]="d.item">
+                <label class="checklist-item">
+                  <input type="checkbox" formControlName="checked" />
+                  <span class="checklist-text">{{ isUa() ? d.ua : d.en }}</span>
+                </label>
+                @if (rowChecked('winterNfi', d.item)) {
+                  <div class="spec-qty">
+                    <label [attr.for]="'nfi-' + d.item">
+                      {{ isUa() ? 'Кількість' : 'Quantity' }}, {{ isUa() ? d.unitUa : d.unitEn }}
+                    </label>
+                    <input
+                      [id]="'nfi-' + d.item"
+                      type="number"
+                      inputmode="decimal"
+                      formControlName="qty"
+                      min="0.01"
+                      step="any"
+                    />
+                  </div>
+                }
+              </div>
+            }
+          </div>
+          @if (showGroupError('winterNfi')) {
+            <span class="error">{{
+              isUa() ? 'Оберіть хоча б одну позицію' : 'Select at least one item'
+            }}</span>
+          }
+        </div>
+      }
+
+      <!-- liquid_fuel -->
+      @if (hasCategory('liquid_fuel')) {
+        <div class="spec-block">
+          <h3 class="block-title">
+            {{ isUa() ? 'Пальне для генераторів' : 'Fuel for generators' }}
+          </h3>
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="liquidFuelType">
+                {{ isUa() ? 'Тип пального' : 'Fuel type' }} <span class="req">*</span>
+              </label>
+              <select id="liquidFuelType" formControlName="liquidFuelType">
+                <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+                @for (o of liquidFuelTypes; track o.value) {
+                  <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+                }
+              </select>
+              @if (showError('liquidFuelType')) {
+                <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+              }
+            </div>
+            <div class="form-field">
+              <label for="liquidFuelMonthlyLiters">
+                {{ isUa() ? 'Літрів на місяць' : 'Litres per month' }} <span class="req">*</span>
+              </label>
+              <input
+                id="liquidFuelMonthlyLiters"
+                type="number"
+                inputmode="decimal"
+                formControlName="liquidFuelMonthlyLiters"
+                min="1"
+                step="any"
+              />
+              @if (showError('liquidFuelMonthlyLiters')) {
+                <span class="error">{{ isUa() ? 'Вкажіть обсяг' : 'Enter a volume' }}</span>
+              }
+            </div>
+            <div class="form-field">
+              <label for="liquidFuelMonthsNeeded">
+                {{ isUa() ? 'На скільки місяців (1–6)' : 'For how many months (1–6)' }}
+                <span class="req">*</span>
+              </label>
+              <input
+                id="liquidFuelMonthsNeeded"
+                type="number"
+                inputmode="numeric"
+                formControlName="liquidFuelMonthsNeeded"
+                min="1"
+                max="6"
+                step="1"
+              />
+              @if (showError('liquidFuelMonthsNeeded')) {
+                <span class="error">{{ isUa() ? 'Від 1 до 6' : '1 to 6' }}</span>
+              }
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- other -->
+      @if (hasCategory('other')) {
+        <div class="spec-block">
+          <h3 class="block-title">{{ isUa() ? 'Інше' : 'Other' }}</h3>
+          <div class="form-field full-width">
+            <label for="needCategoryOther">
+              {{ isUa() ? 'Опишіть потребу' : 'Describe the need' }} <span class="req">*</span>
+            </label>
+            <textarea
+              id="needCategoryOther"
+              formControlName="needCategoryOther"
+              rows="2"
+              maxlength="500"
+            ></textarea>
+            @if (showError('needCategoryOther')) {
+              <span class="error">{{ isUa() ? 'Від 3 до 500 символів' : '3–500 characters' }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="form-field full-width">
+        <label for="situationDescription">
+          {{ isUa() ? 'Опис ситуації' : 'Situation description' }} <span class="req">*</span>
+        </label>
+        <textarea
+          id="situationDescription"
+          formControlName="situationDescription"
+          rows="4"
+          [attr.maxlength]="SITUATION_MAX"
+          [placeholder]="
+            isUa()
+              ? 'Поточний стан опалення / живлення; що станеться без допомоги (мінімум 50 символів)'
+              : 'Current heating / power situation; what happens without assistance (min 50 characters)'
+          "
+        ></textarea>
+        <span class="hint" [class.hint-warn]="situationLen() < SITUATION_MIN">
+          {{ situationLen() }}/{{ SITUATION_MAX }}
+        </span>
+        @if (showError('situationDescription')) {
+          <span class="error">{{
+            isUa() ? 'Від 50 до 1500 символів' : '50–1500 characters'
+          }}</span>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ STEP 4: Beneficiaries ══════════ -->
+  @if (currentStep() === 3) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'IV. Бенефіціари' : 'IV. Beneficiaries' }}</h2>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="directBeneficiaries">
+            {{ isUa() ? 'Прямі бенефіціари' : 'Direct beneficiaries' }} <span class="req">*</span>
+          </label>
+          <input
+            id="directBeneficiaries"
+            type="number"
+            inputmode="numeric"
+            formControlName="directBeneficiaries"
+            min="1"
+          />
+          <span class="hint">{{
+            isUa() ? 'Хто безпосередньо отримає користь' : 'Who directly benefits'
+          }}</span>
+          @if (showError('directBeneficiaries')) {
+            <span class="error">{{ isUa() ? 'Вкажіть число ≥ 1' : 'Enter a number ≥ 1' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="idpCount">{{ isUa() ? 'з них ВПО' : 'incl. IDPs' }} <span class="req">*</span></label>
+          <input id="idpCount" type="number" inputmode="numeric" formControlName="idpCount" min="0" />
+          @if (showError('idpCount')) {
+            <span class="error">{{ isUa() ? 'Число ≥ 0' : 'Number ≥ 0' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="childrenCount">
+            {{ isUa() ? 'з них діти (до 18)' : 'incl. children (under 18)' }}
+            <span class="req">*</span>
+          </label>
+          <input
+            id="childrenCount"
+            type="number"
+            inputmode="numeric"
+            formControlName="childrenCount"
+            min="0"
+          />
+          @if (showError('childrenCount')) {
+            <span class="error">{{ isUa() ? 'Число ≥ 0' : 'Number ≥ 0' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="pwdCount">
+            {{ isUa() ? 'з них особи з інвалідністю' : 'incl. persons with disability' }}
+            <span class="req">*</span>
+          </label>
+          <input id="pwdCount" type="number" inputmode="numeric" formControlName="pwdCount" min="0" />
+          @if (showError('pwdCount')) {
+            <span class="error">{{ isUa() ? 'Число ≥ 0' : 'Number ≥ 0' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="elderlyCount">
+            {{ isUa() ? 'з них особи 60+' : 'incl. persons 60+' }} <span class="req">*</span>
+          </label>
+          <input
+            id="elderlyCount"
+            type="number"
+            inputmode="numeric"
+            formControlName="elderlyCount"
+            min="0"
+          />
+          <span class="hint">{{
+            isUa() ? 'Головна вразлива група зими' : 'The key winter vulnerable group'
+          }}</span>
+          @if (showError('elderlyCount')) {
+            <span class="error">{{ isUa() ? 'Число ≥ 0' : 'Number ≥ 0' }}</span>
+          }
+        </div>
+        <div class="form-field">
+          <label for="femaleCount">{{ isUa() ? 'Жінки' : 'Female' }}</label>
+          <input
+            id="femaleCount"
+            type="number"
+            inputmode="numeric"
+            formControlName="femaleCount"
+            min="0"
+          />
+        </div>
+        <div class="form-field">
+          <label for="maleCount">{{ isUa() ? 'Чоловіки' : 'Male' }}</label>
+          <input id="maleCount" type="number" inputmode="numeric" formControlName="maleCount" min="0" />
+        </div>
+        <div class="form-field">
+          <label for="indirectBeneficiaries">{{
+            isUa() ? 'Непрямі бенефіціари' : 'Indirect beneficiaries'
+          }}</label>
+          <input
+            id="indirectBeneficiaries"
+            type="number"
+            inputmode="numeric"
+            formControlName="indirectBeneficiaries"
+            min="0"
+          />
+          <span class="hint">{{
+            isUa()
+              ? 'Населення, що виграє опосередковано'
+              : 'Population that benefits indirectly'
+          }}</span>
+        </div>
+        @if (applicantTypeIs('institution')) {
+          <div class="form-field">
+            <label for="staffCount">{{ isUa() ? 'Персонал закладу' : 'Facility staff' }}</label>
+            <input
+              id="staffCount"
+              type="number"
+              inputmode="numeric"
+              formControlName="staffCount"
+              min="0"
+            />
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ STEP 5: Budget & coordination ══════════ -->
+  @if (currentStep() === 4) {
+    <div class="form-section">
+      <h2 class="section-title">
+        {{ isUa() ? 'V. Бюджет і координація' : 'V. Budget & coordination' }}
+      </h2>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="needBy">
+            {{ isUa() ? 'Коли потреба має бути закрита' : 'Deadline for the need' }}
+            <span class="req">*</span>
+          </label>
+          <select id="needBy" formControlName="needBy">
+            <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+            @for (o of needByOptions; track o.value) {
+              <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+            }
+          </select>
+          <span class="hint">{{
+            isUa()
+              ? 'Паливо в ідеалі розподіляється до жовтня — це визначає вікно закупівлі.'
+              : 'Fuel is ideally distributed before October — this sets the procurement window.'
+          }}</span>
+          @if (showError('needBy')) {
+            <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">
+          {{ isUa() ? 'Терміновість' : 'Urgency' }} <span class="req">*</span>
+        </span>
+        <div class="radio-group">
+          @for (o of urgencyOptions; track o.value) {
+            <label class="radio">
+              <input type="radio" formControlName="urgency" [value]="o.value" />{{
+                isUa() ? o.ua : o.en
+              }}
+            </label>
+          }
+        </div>
+        @if (showError('urgency')) {
+          <span class="error">{{ isUa() ? 'Оберіть варіант' : 'Select an option' }}</span>
+        }
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label for="estimatedCost">{{
+            isUa() ? 'Орієнтовна вартість, грн (необовʼязково)' : 'Estimated cost, UAH (optional)'
+          }}</label>
+          <input
+            id="estimatedCost"
+            type="number"
+            inputmode="decimal"
+            formControlName="estimatedCost"
+            min="1"
+            step="any"
+          />
+          <span class="hint">{{
+            isUa()
+              ? 'Якщо кошторису немає — залиште порожнім: ми порахуємо бюджет із зазначених обсягів.'
+              : 'No estimate? Leave it empty — we will cost the request from the quantities you provided.'
+          }}</span>
+          @if (showError('estimatedCost')) {
+            <span class="error">{{ isUa() ? 'Вкажіть суму > 0' : 'Enter an amount > 0' }}</span>
+          }
+        </div>
+
+        @if (form.get('estimatedCost')?.value !== null && form.get('estimatedCost')?.value !== '') {
+          <div class="form-field">
+            <label for="costBasis">
+              {{ isUa() ? 'Підстава оцінки' : 'Cost basis' }} <span class="req">*</span>
+            </label>
+            <select id="costBasis" formControlName="costBasis">
+              <option value="">{{ isUa() ? '-- Оберіть --' : '-- Select --' }}</option>
+              @for (o of costBases; track o.value) {
+                <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+              }
+            </select>
+            @if (showError('costBasis')) {
+              <span class="error">{{ isUa() ? 'Обовʼязкове поле' : 'Required' }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">
+          {{ isUa() ? 'Чи звертались до інших донорів?' : 'Applied to other donors?' }}
+          <span class="req">*</span>
+        </span>
+        <div class="radio-group">
+          <label class="radio">
+            <input type="radio" formControlName="otherDonors" value="yes" />{{ isUa() ? 'Так' : 'Yes' }}
+          </label>
+          <label class="radio">
+            <input type="radio" formControlName="otherDonors" value="no" />{{ isUa() ? 'Ні' : 'No' }}
+          </label>
+        </div>
+        @if (showError('otherDonors')) {
+          <span class="error">{{ isUa() ? 'Оберіть варіант' : 'Select an option' }}</span>
+        }
+      </div>
+
+      @if (form.get('otherDonors')?.value === 'yes') {
+        <div class="form-field full-width">
+          <label for="otherDonorsDetails">
+            {{ isUa() ? 'Хто, коли, що саме' : 'Who, when, what exactly' }} <span class="req">*</span>
+          </label>
+          <textarea
+            id="otherDonorsDetails"
+            formControlName="otherDonorsDetails"
+            rows="2"
+            maxlength="1000"
+          ></textarea>
+          @if (showError('otherDonorsDetails')) {
+            <span class="error">{{ isUa() ? 'Мінімум 3 символи' : 'Min 3 characters' }}</span>
+          }
+        </div>
+      }
+
+      <div class="form-field full-width">
+        <span class="field-label">
+          {{ isUa() ? 'Співфінансування' : 'Co-financing' }} <span class="req">*</span>
+        </span>
+        <div class="radio-group">
+          @for (o of cofinancingOptions; track o.value) {
+            <label class="radio">
+              <input type="radio" formControlName="cofinancing" [value]="o.value" />{{
+                isUa() ? o.ua : o.en
+              }}
+            </label>
+          }
+        </div>
+        @if (showError('cofinancing')) {
+          <span class="error">{{ isUa() ? 'Оберіть варіант' : 'Select an option' }}</span>
+        }
+      </div>
+
+      @if (form.get('cofinancing')?.value && form.get('cofinancing')?.value !== 'no') {
+        <div class="form-field full-width">
+          <label for="cofinancingDetails">{{
+            isUa() ? 'Деталі співфінансування (сума або %)' : 'Co-financing details (amount or %)'
+          }}</label>
+          <input id="cofinancingDetails" formControlName="cofinancingDetails" maxlength="255" />
+          @if (showError('cofinancingDetails')) {
+            <span class="error">{{ isUa() ? 'До 255 символів' : 'Up to 255 characters' }}</span>
+          }
+        </div>
+      }
+
+      <div class="form-field full-width">
+        <span class="field-label">{{
+          isUa() ? 'Логістичні можливості' : 'Logistics capacity'
+        }}</span>
+        <div class="checklist checklist-inline" formGroupName="logistics">
+          @for (o of logisticsOptions; track o.value) {
+            <label class="checklist-item">
+              <input type="checkbox" [formControlName]="o.value" />
+              <span class="checklist-text">{{ isUa() ? o.ua : o.en }}</span>
+            </label>
+          }
+        </div>
+        <span class="hint">{{
+          isUa()
+            ? 'Транспорт — суттєва частина вартості палива; склад — передумова постачання.'
+            : 'Transport is a material share of fuel cost; storage is a delivery precondition.'
+        }}</span>
+      </div>
+
+      <div class="form-field full-width">
+        <span class="field-label">{{
+          isUa() ? 'Наявна документація' : 'Available documentation'
+        }}</span>
+        <div class="checklist checklist-inline" formGroupName="docsAvailable">
+          @for (o of docsAvailableOptions; track o.value) {
+            <label class="checklist-item">
+              <input type="checkbox" [formControlName]="o.value" />
+              <span class="checklist-text">{{ isUa() ? o.ua : o.en }}</span>
+            </label>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ STEP 6: Files — PR-W3 ══════════ -->
+  @if (currentStep() === 5) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'VI. Файли' : 'VI. Files' }}</h2>
+      <div class="placeholder-card">
+        {{
+          isUa()
+            ? 'Завантаження фото та документів буде додано в PR-W3 (presigned-upload з formType=winterization).'
+            : 'Photo and document upload lands in PR-W3 (presigned upload with formType=winterization).'
+        }}
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ STEP 7: Review & consent — PR-W3 ══════════ -->
+  @if (currentStep() === 6) {
+    <div class="form-section">
+      <h2 class="section-title">{{ isUa() ? 'VII. Перевірка та згода' : 'VII. Review & consent' }}</h2>
+      <div class="placeholder-card">
+        {{
+          isUa()
+            ? 'Блок перевірки, згода на обробку персональних даних, Turnstile та подання заявки будуть додані в PR-W3.'
+            : 'The review block, personal-data consent, Turnstile and submit land in PR-W3.'
+        }}
+      </div>
+    </div>
+  }
+
+  <!-- ══════════ Navigation ══════════ -->
+  <div class="form-nav">
+    @if (currentStep() > 0) {
+      <button type="button" class="btn btn-secondary" (click)="prevStep()">
+        {{ isUa() ? 'Назад' : 'Back' }}
+      </button>
+    } @else {
+      <div></div>
+    }
+    <div class="form-nav-right">
+      @if (currentStep() < steps.length - 1) {
+        <button type="button" class="btn btn-primary" (click)="nextStep()">
+          {{ isUa() ? 'Далі' : 'Next' }}
+        </button>
+      } @else {
+        <span class="nav-note">{{
+          isUa() ? 'Подання заявки — PR-W3' : 'Submitting the application — PR-W3'
+        }}</span>
+      }
+    </div>
+  </div>
+
+  @if (stepInvalid()) {
+    <div class="error-banner">
+      {{
+        isUa()
+          ? 'Заповніть усі обовʼязкові поля (позначені *) перед тим як перейти далі.'
+          : 'Please fill in all required fields (marked with *) before continuing.'
+      }}
+    </div>
+  }
+</form>

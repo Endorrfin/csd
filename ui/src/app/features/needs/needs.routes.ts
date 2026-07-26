@@ -16,6 +16,14 @@ export const needsRoutes: Routes = [
     loadComponent: () =>
       import('./recovery-form/recovery-form').then((m) => m.RecoveryFormComponent),
   },
+  // CHANGED: PR-W2 — Winterization form (steps 1–5). Reachable by URL only for
+  // now; activating the ❄️ tab in needs.ts belongs to PR-W3, which adds the
+  // files/review/consent steps and the actual submit.
+  {
+    path: 'winterization-form',
+    loadComponent: () =>
+      import('./winterization-form/winterization-form').then((m) => m.WinterizationFormComponent),
+  },
   // Stage 2 — placeholder routes
   // {
   //   path: 'shelters-form',
