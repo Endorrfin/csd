@@ -21,9 +21,7 @@ export const adminRoutes: Routes = [
   {
     path: 'recovery-forms',
     loadComponent: () =>
-      import('./recovery-forms-list/recovery-forms-list').then(
-        (m) => m.RecoveryFormsListComponent,
-      ),
+      import('./recovery-forms-list/recovery-forms-list').then((m) => m.RecoveryFormsListComponent),
   },
   {
     path: 'recovery-forms/:id',

@@ -34,6 +34,12 @@ import { RecoveryXlsxExportService } from './recovery-xlsx-export.service';
 // Turnstile anti-spam on the public recovery submit
 import { TurnstileGuard } from '../../common/guards/turnstile.guard';
 
+import { WinterizationService } from './winterization.service';
+import { CreateWinterizationFormDto } from './dto/create-winterization-form.dto';
+import { UpdateWinterizationFormDto } from './dto/update-winterization-form.dto';
+import { UpdateWinterizationFormFullDto } from './dto/update-winterization-form-full.dto';
+import { WinterizationAdminQueryDto } from './dto/winterization-admin-query.dto';
+
 /**
  * Shape of req.user injected by JwtAuthGuard. Keep narrow — we only need
  * id/email for audit logging.
@@ -64,6 +70,7 @@ export class NeedsFormsController {
     private readonly xlsxExport: XlsxExportService,
     private readonly recoveryService: RecoveryService,
     private readonly recoveryXlsxExport: RecoveryXlsxExportService,
+    private readonly winterizationService: WinterizationService,
   ) {}
 
   /** Public — submit a WASH needs form. Anonymous allowed. */
@@ -336,5 +343,109 @@ export class NeedsFormsController {
   @Roles(UserRole.ADMIN)
   removeRecovery(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
     return this.recoveryService.remove(id, resolveActor(req));
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // === ADDED: PR-W1 Winterization form routes ===
+  // ══════════════════════════════════════════════════════════════
+
+  /**
+   * Public — submit a Winterization needs form. Anonymous, Turnstile-guarded.
+   * Client sends the Turnstile token in the `x-turnstile-token` header.
+   *
+   * Household applications are rejected with 422 until
+   * WINTERIZATION_HOUSEHOLD_ENABLED=true (the disabled UI card is not a
+   * protection — this endpoint is public). See WinterizationService §feature gate.
+   */
+  @Post('winterization')
+  @UseGuards(TurnstileGuard)
+  createWinterization(
+    @Body() dto: CreateWinterizationFormDto,
+    @Req() req: Request,
+  ) {
+    return this.winterizationService.create(dto, resolveActor(req));
+  }
+
+  /** Manager/Admin — paginated list with filters. */
+  @Get('winterization')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  findAllWinterization(@Query() query: WinterizationAdminQueryDto) {
+    return this.winterizationService.findAll(query);
+  }
+
+  /**
+   * Manager/Admin — bulk status change.
+   * NOTE: literal 'winterization/bulk' must stay registered BEFORE
+   * 'winterization/:id' (same gotcha as wash/export-xlsx and recovery/bulk).
+   */
+  @Patch('winterization/bulk')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  bulkUpdateWinterizationStatus(
+    @Body() dto: BulkUpdateStatusDto,
+    @Req() req: AuthedRequest,
+  ) {
+    return this.winterizationService.bulkUpdateStatus(dto.ids, dto.status, {
+      userId: req.user.id,
+      email: req.user.email,
+    });
+  }
+
+  // NOTE (PR-W4): the XLSX export route `GET winterization/export-xlsx` belongs
+  // HERE — above the `:id` matcher — for the same reason as its recovery twin.
+
+  /**
+   * Manager/Admin — single form incl. need specification + attachments.
+   * Attachments come back with short-lived presigned GET urls (private bucket).
+   */
+  @Get('winterization/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  findWinterizationById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.winterizationService.findByIdWithUrls(id);
+  }
+
+  /** Manager/Admin — audit log for one form. */
+  @Get('winterization/:id/audit-log')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  getWinterizationAuditLog(@Param('id', ParseUUIDPipe) id: string) {
+    return this.winterizationService.getAuditLog(id);
+  }
+
+  /** Manager/Admin — quick status/notes change. */
+  @Patch('winterization/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  updateWinterization(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateWinterizationFormDto,
+    @Req() req: Request,
+  ) {
+    return this.winterizationService.update(id, dto, resolveActor(req));
+  }
+
+  /** Manager/Admin — full-form edit (replace semantics for arrays). */
+  @Patch('winterization/:id/full')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  updateWinterizationFull(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateWinterizationFormFullDto,
+    @Req() req: Request,
+  ) {
+    return this.winterizationService.updateFull(id, dto, resolveActor(req));
+  }
+
+  /** Admin — delete form (attachment rows removed; S3 cleanup is Phase 2). */
+  @Delete('winterization/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  removeWinterization(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: Request,
+  ) {
+    return this.winterizationService.remove(id, resolveActor(req));
   }
 }

@@ -60,6 +60,11 @@ provider:
     # recovery endpoints until it's provisioned — the rest of the API is
     # unaffected (we intentionally do NOT gate app boot on this).
     TURNSTILE_SECRET_KEY: ${env:TURNSTILE_SECRET_KEY, ''}
+    # === ADDED: PR-W1 — household applicants on the winterization form are
+    # designed but gated off (implementation-plan §7). 'false' default keeps the
+    # gate closed even if the GitHub variable is never set; the service answers
+    # 422 for applicantType='household' unless this is exactly 'true'.
+    WINTERIZATION_HOUSEHOLD_ENABLED: ${env:WINTERIZATION_HOUSEHOLD_ENABLED, 'false'}
 
 functions:
   api:
