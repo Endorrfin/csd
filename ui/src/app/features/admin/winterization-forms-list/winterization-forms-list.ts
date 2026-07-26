@@ -1,90 +1,119 @@
+// ui/src/app/features/admin/winterization-forms-list/winterization-forms-list.ts
+// Admin list for the "Winterization" needs form (PR-W4). Mirrors
+// recovery-forms-list (filters + sort + bulk status + XLSX export); the filter
+// set is exactly WinterizationAdminQueryDto, and language comes from the
+// signal-based LanguageService so it stays reactive under zoneless CD.
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
-import { environment } from '../../../../environments/environment';
+import { LanguageService } from '../../../core/services/language.service';
 import { PageTitleService } from '../../../core/services/page-title.service';
-// typed status + sortable field keys
-type FormStatus = 'new' | 'in_review' | 'approved' | 'rejected' | 'in_progress' | 'completed';
+import { environment } from '../../../../environments/environment';
+import {
+  APPLICANT_TYPE_OPTIONS,
+  FACILITY_KIND_OPTIONS,
+  NEED_BY_OPTIONS,
+  NeedCategory,
+  ORGANIZATION_NEED_CATEGORY_OPTIONS,
+  URGENCY_OPTIONS,
+  WinterizationFormStatus,
+  WinterizationFormSummary,
+} from '../../needs/winterization-form/winterization-form.interfaces';
 
-type SortField = 'createdAt' | 'organizationName' | 'region' | 'dependentPopulation' | 'status';
+// Sortable columns must match WINTERIZATION_SORTABLE_COLUMNS on the backend.
+type SortField =
+  | 'createdAt'
+  | 'trackingNumber'
+  | 'region'
+  | 'estimatedCost'
+  | 'status'
+  | 'urgency'
+  | 'needBy';
 type SortDir = 'ASC' | 'DESC';
 
-// align with new multi-section schema (arrays, not singular)
-interface WashFormSummary {
-  id: string;
-  region: string;
-  organizationName: string;
-  headName: string;
-  email: string;
-  objectName: string;
-  dependentPopulation: number;
-  status: FormStatus;
-  createdAt: string;
-  items: unknown[];
-  boreholes?: unknown[];
-  towers?: unknown[];
-  purifications?: unknown[];
-  pumps?: unknown[];
-}
-
 interface PaginatedResponse {
-  data: WashFormSummary[];
+  data: WinterizationFormSummary[];
   total: number;
   page: number;
   limit: number;
 }
 
 @Component({
-  selector: 'app-wash-forms-list',
+  selector: 'app-winterization-forms-list',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
     <div class="list-header">
       <h2>
-        {{ isUa ? 'WASH' : 'WASH Forms' }}
+        {{ isUa() ? 'Заявки: Підготовка до зими' : 'Winterization Forms' }}
         @if (total() > 0) {
           <span class="count">({{ total() }})</span>
         }
       </h2>
-      <!-- CSV → XLSX, with disabled state during download -->
       <button class="btn btn-export" (click)="exportXlsx()" [disabled]="exporting()">
         @if (exporting()) {
-          {{ isUa ? 'Експортується...' : 'Exporting...' }}
+          {{ isUa() ? 'Експортується...' : 'Exporting...' }}
         } @else {
-          {{ isUa ? 'Експорт XLSX' : 'Export XLSX' }}
+          {{ isUa() ? 'Експорт XLSX' : 'Export XLSX' }}
         }
       </button>
     </div>
 
-    <!-- Filters -->
+    <!-- Filters — exactly the 9 params WinterizationAdminQueryDto accepts.
+         Search covers tracking №, organization and facility name only: contact
+         details are PII and are deliberately not searchable. -->
     <div class="filters">
       <input
         [placeholder]="
-          isUa ? 'Пошук по організації, ПІБ, email...' : 'Search by org, name, email...'
+          isUa()
+            ? 'Пошук: № заявки, організація, заклад...'
+            : 'Search: tracking №, organization, facility...'
         "
         [(ngModel)]="searchQuery"
         (input)="onSearchChange()"
         class="filter-input filter-search"
       />
       <select [(ngModel)]="statusFilter" (change)="onFilterChange()" class="filter-input">
-        <option value="">{{ isUa ? 'Всі статуси' : 'All statuses' }}</option>
+        <option value="">{{ isUa() ? 'Всі статуси' : 'All statuses' }}</option>
         @for (s of STATUSES; track s) {
           <option [value]="s">{{ getStatusLabel(s) }}</option>
         }
       </select>
+      <select [(ngModel)]="applicantTypeFilter" (change)="onFilterChange()" class="filter-input">
+        <option value="">{{ isUa() ? 'Тип заявника' : 'Applicant type' }}</option>
+        @for (o of applicantTypeOptions; track o.value) {
+          <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+        }
+      </select>
+      <select [(ngModel)]="facilityKindFilter" (change)="onFilterChange()" class="filter-input">
+        <option value="">{{ isUa() ? 'Тип закладу' : 'Facility kind' }}</option>
+        @for (o of facilityKindOptions; track o.value) {
+          <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+        }
+      </select>
+      <select [(ngModel)]="needCategoryFilter" (change)="onFilterChange()" class="filter-input">
+        <option value="">{{ isUa() ? 'Категорія потреби' : 'Need category' }}</option>
+        @for (o of needCategoryOptions; track o.value) {
+          <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+        }
+      </select>
+      <select [(ngModel)]="urgencyFilter" (change)="onFilterChange()" class="filter-input">
+        <option value="">{{ isUa() ? 'Терміновість' : 'Urgency' }}</option>
+        @for (o of urgencyOptions; track o.value) {
+          <option [value]="o.value">{{ isUa() ? o.ua : o.en }}</option>
+        }
+      </select>
       <input
-        [placeholder]="isUa ? 'Область' : 'Region'"
+        [placeholder]="isUa() ? 'Область' : 'Region'"
         [(ngModel)]="regionFilter"
         (input)="onSearchChange()"
         class="filter-input filter-region"
       />
-      <!-- date range -->
       <label class="filter-date">
-        <span>{{ isUa ? 'Від' : 'From' }}</span>
+        <span>{{ isUa() ? 'Від' : 'From' }}</span>
         <input
           type="date"
           [(ngModel)]="dateFrom"
@@ -93,24 +122,24 @@ interface PaginatedResponse {
         />
       </label>
       <label class="filter-date">
-        <span>{{ isUa ? 'До' : 'To' }}</span>
+        <span>{{ isUa() ? 'До' : 'To' }}</span>
         <input type="date" [(ngModel)]="dateTo" (change)="onFilterChange()" class="filter-input" />
       </label>
       @if (hasActiveFilters()) {
         <button class="btn btn-link" (click)="clearFilters()">
-          {{ isUa ? 'Скинути фільтри' : 'Clear filters' }}
+          {{ isUa() ? 'Скинути фільтри' : 'Clear filters' }}
         </button>
       }
     </div>
 
-    <!-- Bulk action bar — appears only when selection exists -->
+    <!-- Bulk action bar -->
     @if (hasSelection()) {
       <div class="bulk-bar">
         <span class="bulk-count">
-          {{ isUa ? 'Вибрано:' : 'Selected:' }} <strong>{{ selectedIds().size }}</strong>
+          {{ isUa() ? 'Вибрано:' : 'Selected:' }} <strong>{{ selectedIds().size }}</strong>
         </span>
         <select [(ngModel)]="bulkStatus" class="filter-input">
-          <option value="">{{ isUa ? 'Змінити статус на...' : 'Change status to...' }}</option>
+          <option value="">{{ isUa() ? 'Змінити статус на...' : 'Change status to...' }}</option>
           @for (s of STATUSES; track s) {
             <option [value]="s">{{ getStatusLabel(s) }}</option>
           }
@@ -121,27 +150,26 @@ interface PaginatedResponse {
           (click)="applyBulkStatus()"
         >
           @if (bulkApplying()) {
-            {{ isUa ? 'Застосовується...' : 'Applying...' }}
+            {{ isUa() ? 'Застосовується...' : 'Applying...' }}
           } @else {
-            {{ isUa ? 'Застосувати' : 'Apply' }}
+            {{ isUa() ? 'Застосувати' : 'Apply' }}
           }
         </button>
         <button class="btn btn-link" (click)="clearSelection()">
-          {{ isUa ? 'Скасувати' : 'Cancel' }}
+          {{ isUa() ? 'Скасувати' : 'Cancel' }}
         </button>
       </div>
     }
 
     @if (loading()) {
-      <div class="loading">{{ isUa ? 'Завантаження...' : 'Loading...' }}</div>
+      <div class="loading">{{ isUa() ? 'Завантаження...' : 'Loading...' }}</div>
     } @else if (forms().length === 0) {
-      <div class="empty">{{ isUa ? 'Заявки не знайдено' : 'No forms found' }}</div>
+      <div class="empty">{{ isUa() ? 'Заявки не знайдено' : 'No forms found' }}</div>
     } @else {
       <div class="table-wrap">
         <table class="data-table">
           <thead>
             <tr>
-              <!-- select-all checkbox -->
               <th class="th-check">
                 <input
                   type="checkbox"
@@ -150,24 +178,31 @@ interface PaginatedResponse {
                 />
               </th>
               <th>#</th>
-              <!-- sortable headers -->
+              <th class="sortable" (click)="toggleSort('trackingNumber')">
+                {{ isUa() ? '№ заявки' : 'Tracking №' }}{{ sortIndicator('trackingNumber') }}
+              </th>
               <th class="sortable" (click)="toggleSort('createdAt')">
-                {{ isUa ? 'Дата' : 'Date' }}{{ sortIndicator('createdAt') }}
+                {{ isUa() ? 'Дата' : 'Date' }}{{ sortIndicator('createdAt') }}
               </th>
               <th class="sortable" (click)="toggleSort('status')">
-                {{ isUa ? 'Статус' : 'Status' }}{{ sortIndicator('status') }}
+                {{ isUa() ? 'Статус' : 'Status' }}{{ sortIndicator('status') }}
               </th>
               <th class="sortable" (click)="toggleSort('region')">
-                {{ isUa ? 'Область' : 'Region' }}{{ sortIndicator('region') }}
+                {{ isUa() ? 'Область / громада' : 'Region / community'
+                }}{{ sortIndicator('region') }}
               </th>
-              <th class="sortable" (click)="toggleSort('organizationName')">
-                {{ isUa ? 'Організація' : 'Organization' }}{{ sortIndicator('organizationName') }}
+              <th>{{ isUa() ? 'Заявник' : 'Applicant' }}</th>
+              <th>{{ isUa() ? 'Тип' : 'Type' }}</th>
+              <th class="th-cats">{{ isUa() ? 'Категорії потреб' : 'Need categories' }}</th>
+              <th class="sortable" (click)="toggleSort('urgency')">
+                {{ isUa() ? 'Терміновість' : 'Urgency' }}{{ sortIndicator('urgency') }}
               </th>
-              <th>{{ isUa ? 'Обʼєкт' : 'Object' }}</th>
-              <th class="sortable" (click)="toggleSort('dependentPopulation')">
-                {{ isUa ? 'Людей' : 'People' }}{{ sortIndicator('dependentPopulation') }}
+              <th class="sortable" (click)="toggleSort('needBy')">
+                {{ isUa() ? 'Потрібно до' : 'Needed by' }}{{ sortIndicator('needBy') }}
               </th>
-              <th>{{ isUa ? 'Розділи' : 'Sections' }}</th>
+              <th class="sortable" (click)="toggleSort('estimatedCost')">
+                {{ isUa() ? 'Бюджет, грн' : 'Budget, UAH' }}{{ sortIndicator('estimatedCost') }}
+              </th>
               <th></th>
             </tr>
           </thead>
@@ -178,7 +213,6 @@ interface PaginatedResponse {
                 [class.row-selected]="isSelected(f.id)"
                 (click)="openDetail(f.id)"
               >
-                <!-- row checkbox — stops propagation so it doesn't open detail -->
                 <td class="td-check" (click)="$event.stopPropagation()">
                   <input
                     type="checkbox"
@@ -187,17 +221,35 @@ interface PaginatedResponse {
                   />
                 </td>
                 <td class="td-num">{{ (currentPage - 1) * pageSize + i + 1 }}</td>
+                <td class="td-track">{{ f.trackingNumber }}</td>
                 <td class="td-date">{{ f.createdAt | date: 'dd.MM.yyyy' }}</td>
                 <td>
                   <span class="status-badge" [attr.data-status]="f.status">{{
                     getStatusLabel(f.status)
                   }}</span>
                 </td>
-                <td>{{ f.region }}</td>
-                <td class="td-org">{{ f.organizationName }}</td>
-                <td>{{ f.objectName }}</td>
-                <td class="td-num">{{ f.dependentPopulation }}</td>
-                <td class="td-sections">{{ getSections(f) }}</td>
+                <td class="td-loc">
+                  <span class="loc-region">{{ isUa() ? f.region : f.regionEn }}</span>
+                  @if (f.community) {
+                    <span class="loc-community">{{ isUa() ? f.community : f.communityEn }}</span>
+                  }
+                </td>
+                <td class="td-org">{{ f.facilityName || f.organizationName }}</td>
+                <td>{{ applicantTypeLabel(f.applicantType) }}</td>
+                <td class="td-cats">
+                  @for (c of f.needCategories; track c) {
+                    <span class="cat-chip" [attr.data-cat]="c" [title]="needCategoryLabel(c)">{{
+                      needCategoryShort(c)
+                    }}</span>
+                  }
+                </td>
+                <td>
+                  <span class="urg-badge" [attr.data-urg]="f.urgency">{{
+                    urgencyLabel(f.urgency)
+                  }}</span>
+                </td>
+                <td class="td-needby">{{ needByLabel(f.needBy) }}</td>
+                <td class="td-cost">{{ formatCost(f.estimatedCost) }}</td>
                 <td class="td-action"><span class="arrow">&#8250;</span></td>
               </tr>
             }
@@ -207,9 +259,8 @@ interface PaginatedResponse {
 
       <!-- Pagination -->
       <div class="pagination">
-        <!-- page size selector -->
         <label class="page-size">
-          <span>{{ isUa ? 'На сторінці:' : 'Per page:' }}</span>
+          <span>{{ isUa() ? 'На сторінці:' : 'Per page:' }}</span>
           <select [(ngModel)]="pageSize" (change)="onFilterChange()">
             <option [ngValue]="20">20</option>
             <option [ngValue]="50">50</option>
@@ -224,7 +275,7 @@ interface PaginatedResponse {
               [disabled]="currentPage <= 1"
               (click)="goPage(currentPage - 1)"
             >
-              {{ isUa ? 'Попередня' : 'Previous' }}
+              {{ isUa() ? 'Попередня' : 'Previous' }}
             </button>
             <span class="page-info">{{ currentPage }} / {{ totalPages() }}</span>
             <button
@@ -232,7 +283,7 @@ interface PaginatedResponse {
               [disabled]="currentPage >= totalPages()"
               (click)="goPage(currentPage + 1)"
             >
-              {{ isUa ? 'Наступна' : 'Next' }}
+              {{ isUa() ? 'Наступна' : 'Next' }}
             </button>
           </div>
         }
@@ -246,6 +297,7 @@ interface PaginatedResponse {
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1.25rem;
+        gap: 1rem;
       }
       .list-header h2 {
         font-size: 1.2rem;
@@ -272,6 +324,7 @@ interface PaginatedResponse {
         border-radius: 6px;
         font-size: 0.85rem;
         font-weight: 500;
+        white-space: nowrap;
       }
       .btn-export:not(:disabled):hover {
         background: #2c5282;
@@ -315,10 +368,10 @@ interface PaginatedResponse {
       }
       .filter-search {
         flex: 1;
-        min-width: 200px;
+        min-width: 220px;
       }
       .filter-region {
-        width: 160px;
+        width: 150px;
       }
       .filter-date {
         display: flex;
@@ -331,7 +384,6 @@ interface PaginatedResponse {
         padding: 0.4rem 0.6rem;
       }
 
-      /* bulk action bar */
       .bulk-bar {
         display: flex;
         gap: 0.75rem;
@@ -384,6 +436,7 @@ interface PaginatedResponse {
       .data-table td {
         padding: 0.65rem 0.5rem;
         border-bottom: 1px solid #f1f5f9;
+        vertical-align: top;
       }
       .clickable {
         cursor: pointer;
@@ -402,10 +455,28 @@ interface PaginatedResponse {
         text-align: center;
         color: #64748b;
       }
-      .td-date {
+      .td-track {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        color: #1e293b;
+      }
+      .td-date,
+      .td-needby {
         white-space: nowrap;
         color: #64748b;
         font-size: 0.8rem;
+      }
+      .td-loc {
+        max-width: 180px;
+      }
+      .loc-region {
+        display: block;
+      }
+      .loc-community {
+        display: block;
+        font-size: 0.75rem;
+        color: #64748b;
       }
       .td-org {
         max-width: 200px;
@@ -413,9 +484,14 @@ interface PaginatedResponse {
         text-overflow: ellipsis;
         white-space: nowrap;
       }
-      .td-sections {
-        font-size: 0.75rem;
-        color: #64748b;
+      .th-cats,
+      .td-cats {
+        max-width: 190px;
+      }
+      .td-cost {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
       }
       .td-action {
         text-align: center;
@@ -433,6 +509,7 @@ interface PaginatedResponse {
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.03em;
+        white-space: nowrap;
       }
       [data-status='new'] {
         background: #dbeafe;
@@ -457,6 +534,58 @@ interface PaginatedResponse {
       [data-status='completed'] {
         background: #d1fae5;
         color: #065f46;
+      }
+
+      /* Need categories render as compact abbreviations with a full-text title:
+         a form may carry up to 9 of them and the words would blow up the row. */
+      .cat-chip {
+        display: inline-block;
+        margin: 0 0.2rem 0.2rem 0;
+        padding: 0.12rem 0.4rem;
+        border-radius: 4px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        white-space: nowrap;
+        background: #e0f2fe;
+        color: #075985;
+        cursor: help;
+      }
+      [data-cat='solid_fuel'],
+      [data-cat='liquid_fuel'] {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      [data-cat='generators'] {
+        background: #ede9fe;
+        color: #5b21b6;
+      }
+      [data-cat='heating_system_repair'],
+      [data-cat='insulation'] {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+
+      .urg-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        white-space: nowrap;
+        background: #f1f5f9;
+        color: #475569;
+      }
+      [data-urg='critical'] {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      [data-urg='high'] {
+        background: #fed7aa;
+        color: #9a3412;
+      }
+      [data-urg='medium'] {
+        background: #fef9c3;
+        color: #854d0e;
       }
 
       .pagination {
@@ -509,6 +638,10 @@ interface PaginatedResponse {
         font-size: 0.95rem;
       }
       @media (max-width: 768px) {
+        .list-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
         .filters {
           flex-direction: column;
           align-items: stretch;
@@ -525,44 +658,48 @@ interface PaginatedResponse {
     `,
   ],
 })
-export class WashFormsListComponent implements OnInit {
+export class WinterizationFormsListComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
-  private readonly translate = inject(TranslateService);
-  // === ADDED: Page title service for SEO ===
+  protected readonly isUa = inject(LanguageService).isUa;
   private readonly pageTitle = inject(PageTitleService);
-  // === END ADDED ===
 
-  get isUa(): boolean {
-    return (this.translate.currentLang || 'ua') === 'ua';
-  }
+  // Option catalogs (single source = winterization-form.interfaces).
+  protected readonly applicantTypeOptions = APPLICANT_TYPE_OPTIONS;
+  protected readonly facilityKindOptions = FACILITY_KIND_OPTIONS;
+  protected readonly needCategoryOptions = ORGANIZATION_NEED_CATEGORY_OPTIONS;
+  protected readonly urgencyOptions = URGENCY_OPTIONS;
+  protected readonly needByOptions = NEED_BY_OPTIONS;
 
   // ───── State ─────
-  forms = signal<WashFormSummary[]>([]);
+  forms = signal<WinterizationFormSummary[]>([]);
   total = signal(0);
   loading = signal(true);
   totalPages = signal(1);
   exporting = signal(false);
   bulkApplying = signal(false);
 
-  // ───── Filters ─────
+  // ───── Filters (1:1 with WinterizationAdminQueryDto) ─────
   currentPage = 1;
   pageSize = 20;
   searchQuery = '';
   statusFilter = '';
+  applicantTypeFilter = '';
+  facilityKindFilter = '';
+  needCategoryFilter = '';
+  urgencyFilter = '';
   regionFilter = '';
-  dateFrom = ''; // NEW
-  dateTo = ''; // NEW
+  dateFrom = '';
+  dateTo = '';
 
   // ───── Sorting ─────
-  sortBy: SortField = 'createdAt'; // NEW
-  sortOrder: SortDir = 'DESC'; // NEW
+  sortBy: SortField = 'createdAt';
+  sortOrder: SortDir = 'DESC';
 
   // ───── Bulk selection ─────
-  selectedIds = signal<Set<string>>(new Set()); // NEW
-  bulkStatus: FormStatus | '' = ''; // NEW
+  selectedIds = signal<Set<string>>(new Set());
+  bulkStatus: WinterizationFormStatus | '' = '';
 
-  // derived flags
   allOnPageSelected = computed(() => {
     const sel = this.selectedIds();
     const rows = this.forms();
@@ -570,7 +707,7 @@ export class WashFormsListComponent implements OnInit {
   });
   hasSelection = computed(() => this.selectedIds().size > 0);
 
-  readonly STATUSES: readonly FormStatus[] = [
+  readonly STATUSES: readonly WinterizationFormStatus[] = [
     'new',
     'in_review',
     'approved',
@@ -583,30 +720,39 @@ export class WashFormsListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadForms();
-    this.pageTitle.setTitle('admin_titles.wash_forms', true);
+    this.pageTitle.setTitle('admin_titles.winterization_forms', true);
   }
 
-  // URLSearchParams (safer encoding) + sort + date range params
-  loadForms(): void {
-    this.loading.set(true);
+  /** Query params common to the list request and the XLSX export. */
+  private filterParams(): URLSearchParams {
     const params = new URLSearchParams();
-    params.set('page', String(this.currentPage));
-    params.set('limit', String(this.pageSize));
-    params.set('sortBy', this.sortBy);
-    params.set('sortOrder', this.sortOrder);
     if (this.statusFilter) params.set('status', this.statusFilter);
+    if (this.applicantTypeFilter) params.set('applicantType', this.applicantTypeFilter);
+    if (this.facilityKindFilter) params.set('facilityKind', this.facilityKindFilter);
+    if (this.needCategoryFilter) params.set('needCategory', this.needCategoryFilter);
+    if (this.urgencyFilter) params.set('urgency', this.urgencyFilter);
     if (this.regionFilter) params.set('region', this.regionFilter);
     if (this.searchQuery) params.set('search', this.searchQuery);
     if (this.dateFrom) params.set('dateFrom', this.dateFrom);
     if (this.dateTo) params.set('dateTo', this.dateTo);
+    return params;
+  }
 
-    this.api.get<PaginatedResponse>(`needs-forms/wash?${params.toString()}`).subscribe({
+  loadForms(): void {
+    this.loading.set(true);
+    const params = this.filterParams();
+    params.set('page', String(this.currentPage));
+    params.set('limit', String(this.pageSize));
+    params.set('sortBy', this.sortBy);
+    params.set('sortOrder', this.sortOrder);
+
+    this.api.get<PaginatedResponse>(`needs-forms/winterization?${params.toString()}`).subscribe({
       next: (res) => {
         this.forms.set(res.data);
         this.total.set(res.total);
         this.totalPages.set(Math.max(1, Math.ceil(res.total / res.limit)));
         this.loading.set(false);
-        this.pruneStaleSelection(); // NEW
+        this.pruneStaleSelection();
       },
       error: () => this.loading.set(false),
     });
@@ -620,25 +766,22 @@ export class WashFormsListComponent implements OnInit {
     }, 400);
   }
 
-  // instant filter changes (status / dates / page size)
   onFilterChange(): void {
     this.currentPage = 1;
     this.loadForms();
   }
 
   hasActiveFilters(): boolean {
-    return !!(
-      this.searchQuery ||
-      this.statusFilter ||
-      this.regionFilter ||
-      this.dateFrom ||
-      this.dateTo
-    );
+    return this.filterParams().toString().length > 0;
   }
 
   clearFilters(): void {
     this.searchQuery = '';
     this.statusFilter = '';
+    this.applicantTypeFilter = '';
+    this.facilityKindFilter = '';
+    this.needCategoryFilter = '';
+    this.urgencyFilter = '';
     this.regionFilter = '';
     this.dateFrom = '';
     this.dateTo = '';
@@ -651,13 +794,12 @@ export class WashFormsListComponent implements OnInit {
     this.loadForms();
   }
 
-  // header click → toggle direction or switch column with sensible default
   toggleSort(field: SortField): void {
     if (this.sortBy === field) {
       this.sortOrder = this.sortOrder === 'ASC' ? 'DESC' : 'ASC';
     } else {
       this.sortBy = field;
-      this.sortOrder = field === 'createdAt' || field === 'dependentPopulation' ? 'DESC' : 'ASC';
+      this.sortOrder = field === 'createdAt' || field === 'estimatedCost' ? 'DESC' : 'ASC';
     }
     this.loadForms();
   }
@@ -667,7 +809,7 @@ export class WashFormsListComponent implements OnInit {
     return this.sortOrder === 'ASC' ? ' ▲' : ' ▼';
   }
 
-  // ───── Selection ─────  (all NEW below)
+  // ───── Selection ─────
 
   isSelected(id: string): boolean {
     return this.selectedIds().has(id);
@@ -697,7 +839,6 @@ export class WashFormsListComponent implements OnInit {
     this.selectedIds.set(new Set());
   }
 
-  /** Drop selected IDs that are no longer visible (after filter/page change). */
   private pruneStaleSelection(): void {
     const visible = new Set(this.forms().map((f) => f.id));
     const next = new Set<string>();
@@ -711,14 +852,14 @@ export class WashFormsListComponent implements OnInit {
     if (!this.bulkStatus || this.selectedIds().size === 0) return;
     const ids = Array.from(this.selectedIds());
     const status = this.bulkStatus;
-    const confirmMsg = this.isUa
+    const confirmMsg = this.isUa()
       ? `Змінити статус для ${ids.length} заявок на «${this.getStatusLabel(status)}»?`
       : `Change status of ${ids.length} forms to "${this.getStatusLabel(status)}"?`;
     if (!confirm(confirmMsg)) return;
 
     this.bulkApplying.set(true);
     this.api
-      .patch<{ updated: number; skipped: number }>('needs-forms/wash/bulk', { ids, status })
+      .patch<{ updated: number }>('needs-forms/winterization/bulk', { ids, status })
       .subscribe({
         next: () => {
           this.bulkApplying.set(false);
@@ -728,28 +869,23 @@ export class WashFormsListComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           this.bulkApplying.set(false);
-          alert((this.isUa ? 'Помилка: ' : 'Error: ') + (err.error?.message ?? err.message));
+          alert((this.isUa() ? 'Помилка: ' : 'Error: ') + (err.error?.message ?? err.message));
         },
       });
   }
 
   openDetail(id: string): void {
-    this.router.navigate(['/admin', 'wash-forms', id]);
+    this.router.navigate(['/admin', 'winterization-forms', id]);
   }
 
-  // CSV → XLSX, with loading/error handling and URLSearchParams
+  /** Exports exactly what the table currently shows — same filters, no paging. */
   exportXlsx(): void {
     this.exporting.set(true);
-    const params = new URLSearchParams();
-    params.set('lang', this.isUa ? 'ua' : 'en');
-    if (this.statusFilter) params.set('status', this.statusFilter);
-    if (this.regionFilter) params.set('region', this.regionFilter);
-    if (this.searchQuery) params.set('search', this.searchQuery);
-    if (this.dateFrom) params.set('dateFrom', this.dateFrom);
-    if (this.dateTo) params.set('dateTo', this.dateTo);
+    const params = this.filterParams();
+    params.set('lang', this.isUa() ? 'ua' : 'en');
 
     const token = localStorage.getItem('token');
-    fetch(`${environment.apiUrl}/api/needs-forms/wash/export-xlsx?${params}`, {
+    fetch(`${environment.apiUrl}/api/needs-forms/winterization/export-xlsx?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => {
@@ -760,38 +896,74 @@ export class WashFormsListComponent implements OnInit {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `wash-forms-${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.download = `winterization-forms-${new Date().toISOString().slice(0, 10)}.xlsx`;
         a.click();
         URL.revokeObjectURL(url);
       })
       .catch((err: Error) => {
-        alert((this.isUa ? 'Помилка експорту: ' : 'Export error: ') + err.message);
+        alert((this.isUa() ? 'Помилка експорту: ' : 'Export error: ') + err.message);
       })
       .finally(() => this.exporting.set(false));
   }
+
+  // ───── Label helpers ─────
 
   getStatusLabel(status: string): string {
     const map: Record<string, [string, string]> = {
       new: ['Нова', 'New'],
       in_review: ['На розгляді', 'In review'],
-      approved: ['Затверджено', 'Approved'],
+      approved: ['Включено в проєкт', 'Included in project'],
       rejected: ['Відхилено', 'Rejected'],
       in_progress: ['В роботі', 'In progress'],
       completed: ['Завершено', 'Completed'],
     };
     const v = map[status];
-    return v ? (this.isUa ? v[0] : v[1]) : status;
+    return v ? (this.isUa() ? v[0] : v[1]) : status;
   }
 
-  // now reads array lengths (boreholes/towers/purifications/pumps)
-  getSections(f: WashFormSummary): string {
-    const parts: string[] = [];
-    if (f.boreholes?.length) parts.push(`${this.isUa ? 'Бур.' : 'Bore'} ${f.boreholes.length}`);
-    if (f.towers?.length) parts.push(`${this.isUa ? 'Башта' : 'Tower'} ${f.towers.length}`);
-    if (f.purifications?.length)
-      parts.push(`${this.isUa ? 'Очищ.' : 'Purif'} ${f.purifications.length}`);
-    if (f.pumps?.length) parts.push(`${this.isUa ? 'Помпа' : 'Pump'} ${f.pumps.length}`);
-    if (f.items?.length) parts.push(`${f.items.length} ${this.isUa ? 'поз.' : 'items'}`);
-    return parts.join(', ') || '---';
+  applicantTypeLabel(value: string): string {
+    const o = this.applicantTypeOptions.find((x) => x.value === value);
+    return o ? (this.isUa() ? o.ua : o.en) : value;
+  }
+
+  needCategoryLabel(value: NeedCategory): string {
+    const o = this.needCategoryOptions.find((x) => x.value === value);
+    return o ? (this.isUa() ? o.ua : o.en) : value;
+  }
+
+  /** Short chip text — the full label rides on the `title` attribute. */
+  needCategoryShort(value: NeedCategory): string {
+    const map: Record<string, [string, string]> = {
+      generators: ['Генератори', 'Generators'],
+      solid_fuel: ['Тв. паливо', 'Solid fuel'],
+      heating_appliances: ['Обігрівачі', 'Heaters'],
+      heating_system_repair: ['Ремонт тепла', 'Heating repair'],
+      insulation: ['Утеплення', 'Insulation'],
+      resilience_point_equipment: ['Пункт незл.', 'Resilience pt.'],
+      winter_nfi: ['NFI', 'NFI'],
+      liquid_fuel: ['Пальне', 'Fuel'],
+      utilities_cash: ['Кошти ЖКП', 'Utilities cash'],
+      other: ['Інше', 'Other'],
+    };
+    const v = map[value];
+    return v ? (this.isUa() ? v[0] : v[1]) : value;
+  }
+
+  urgencyLabel(value: string): string {
+    const o = this.urgencyOptions.find((x) => x.value === value);
+    return o ? (this.isUa() ? o.ua : o.en) : value;
+  }
+
+  needByLabel(value: string): string {
+    const o = this.needByOptions.find((x) => x.value === value);
+    return o ? (this.isUa() ? o.ua : o.en) : value;
+  }
+
+  /** estimatedCost is optional for winterization (unlike Recovery). */
+  formatCost(value: number | string | null): string {
+    if (value === null || value === undefined || value === '') return '—';
+    const n = Number(value);
+    if (!isFinite(n)) return '—';
+    return n.toLocaleString(this.isUa() ? 'uk-UA' : 'en-US');
   }
 }

@@ -9,7 +9,17 @@
 // The field contract mirrors backend winterization.constants.ts +
 // CreateWinterizationFormDto, NOT §2 of the implementation plan — see §14.3 for
 // the list of places where the implemented contract diverged from the plan. ===
-import { Component, DestroyRef, OnInit, ViewChild, inject, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  ViewChild,
+  inject,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   AbstractControl,
@@ -76,9 +86,12 @@ import {
   SOLID_FUEL_UNIT_OPTIONS,
   URGENCY_OPTIONS,
   WINTER_NFI_ITEMS,
+  UpdateWinterizationFormFullPayload,
   WinterizationApplicantType,
+  WinterizationAttachmentFull,
   WinterizationDataPayload,
   WinterizationDocsOption,
+  WinterizationFormDetail,
   WinterizationNeedPayload,
 } from './winterization-form.interfaces';
 
@@ -146,6 +159,31 @@ export class WinterizationFormComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   protected readonly isUa = inject(LanguageService).isUa;
   private readonly api = inject(ApiService); // CHANGED (PR-W3)
+
+  // ── (PR-W4): 'create' = public submit; 'edit' = admin full-edit
+  //    (winterization-form-detail). Edit mode emits `saved` instead of POSTing,
+  //    and renders no Turnstile, no upload dropzones and no draft banner. ──
+
+  /** 'create' = public submit; 'edit' = admin full-edit. */
+  @Input() mode: 'create' | 'edit' = 'create';
+
+  /** Existing record to hydrate the reactive form with when mode === 'edit'. */
+  @Input() initialData: WinterizationFormDetail | null = null;
+
+  /** Parent's PATCH /full in-flight state — disables Save during the request. */
+  @Input() externalSaving = false;
+
+  /** Edit mode: emitted on Save — the parent calls PATCH /full. Files, cloud
+   *  link and consent are excluded by `buildPayload()`, so attachments and the
+   *  consent snapshot survive the edit untouched. */
+  @Output() saved = new EventEmitter<UpdateWinterizationFormFullPayload>();
+
+  /** Edit mode: emitted when the admin clicks Cancel. */
+  @Output() cancelled = new EventEmitter<void>();
+
+  protected get isEdit(): boolean {
+    return this.mode === 'edit';
+  }
 
   /**
    * Households are designed but switched off at launch (implementation-plan §7).
@@ -488,7 +526,16 @@ export class WinterizationFormComponent implements OnInit {
       .valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((v) => this.situationLen.set(((v as string) || '').length));
 
-    // localStorage draft autosave + restore banner.
+    // Edit mode (admin): hydrate from the existing record; no drafts, no files.
+    if (this.mode === 'edit') {
+      if (this.initialData) {
+        // Defer a microtask so LocationSelector (CVA) can accept the value.
+        Promise.resolve().then(() => this.patchFromInitialData(this.initialData!));
+      }
+      return;
+    }
+
+    // Create mode (public): localStorage draft autosave + restore banner.
     this.form.valueChanges
       .pipe(debounceTime(800), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
@@ -729,6 +776,224 @@ export class WinterizationFormComponent implements OnInit {
     if (active) c.setValidators(validators);
     else c.clearValidators();
     c.updateValueAndValidity({ emitEvent: false });
+  }
+
+  // ── (PR-W4) Edit mode (admin): hydrate reactive state from a record ──
+
+  /** Existing photos (read-only on the files step in edit mode). */
+  protected get existingPhotos(): WinterizationAttachmentFull[] {
+    return (this.initialData?.attachments ?? []).filter((a) => a.kind === 'photo');
+  }
+
+  /** Existing documents (read-only on the files step in edit mode). */
+  protected get existingDocuments(): WinterizationAttachmentFull[] {
+    return (this.initialData?.attachments ?? []).filter((a) => a.kind === 'document');
+  }
+
+  /** Tri-state radio backing a nullable boolean column. */
+  private boolToRadio(v: boolean | null | undefined): string {
+    if (v === true) return 'yes';
+    if (v === false) return 'no';
+    return '';
+  }
+
+  /** '+380XXXXXXXXX' → '0XXXXXXXXX' (10 digits) for the phoneDigits control. */
+  private stripPhonePrefix(v: string | null | undefined): string {
+    if (!v) return '';
+    return v.startsWith('+38') ? v.slice(3) : v;
+  }
+
+  /** Build a {optionValue: boolean} map for a checkbox FormGroup. */
+  private checkboxGroupValue<T extends string>(
+    all: readonly LabeledOption<T>[],
+    selected: readonly T[] | null | undefined,
+  ): Record<T, boolean> {
+    const set = new Set(selected ?? []);
+    const out = {} as Record<T, boolean>;
+    for (const o of all) out[o.value] = set.has(o.value);
+    return out;
+  }
+
+  private numOrNull(v: number | string | null | undefined): number | null {
+    return v === null || v === undefined || v === '' ? null : Number(v);
+  }
+
+  /**
+   * Rebuild the whole form from a stored record.
+   *
+   * Order matters: `applicantType` + `needCategories` are patched FIRST, because
+   * their valueChanges subscriptions rewire every conditional validator and
+   * reset the controls of blocks that are switched off — doing it after the data
+   * pass would wipe the values we just wrote. The generators FormArray is sized
+   * before the patch for the same reason patchValue cannot grow a FormArray
+   * (identical to restoreDraft()).
+   */
+  private patchFromInitialData(d: WinterizationFormDetail): void {
+    const needs = d.needs ?? [];
+    const generatorNeeds = needs
+      .filter((n) => n.category === 'generators')
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+
+    this.generatorRows.clear();
+    for (let i = 0; i < Math.min(generatorNeeds.length, GENERATOR_ROWS_MAX); i++) {
+      this.generatorRows.push(this.generatorRow());
+    }
+
+    // Pass 1 — the two controls every conditional validator hangs off.
+    this.form.patchValue({
+      applicantType: d.applicantType,
+      needCategories: this.checkboxGroupValue(
+        ORGANIZATION_NEED_CATEGORY_OPTIONS,
+        d.needCategories.filter(
+          (c) => c !== 'utilities_cash',
+        ) as (typeof ORGANIZATION_NEED_CATEGORY_OPTIONS)[number]['value'][],
+      ),
+    });
+
+    // Pass 2 — scalars.
+    const liquidFuelNeed = needs.find((n) => n.category === 'liquid_fuel');
+    this.form.patchValue({
+      location: {
+        regionUa: d.region,
+        regionEn: d.regionEn,
+        districtUa: d.district,
+        districtEn: d.districtEn,
+        communityUa: d.community,
+        communityEn: d.communityEn,
+        communityCode: d.communityCode,
+        settlementUa: d.settlement ?? '',
+        settlementEn: d.settlementEn ?? '',
+        settlementCode: d.settlementCode ?? '',
+      },
+      organizationName: d.organizationName,
+      edrpou: d.edrpou ?? '',
+      contactName: d.contactName,
+      contactPosition: d.contactPosition ?? '',
+      phoneDigits: this.stripPhonePrefix(d.phone),
+      email: d.email,
+      messenger: d.messenger ?? '',
+      altContactName: d.altContactName ?? '',
+      altContactPhoneDigits: this.stripPhonePrefix(d.altContactPhone),
+      website: d.website ?? '',
+
+      facilityName: d.facilityName ?? '',
+      facilityKind: d.facilityKind ?? '',
+      facilityKindOther: d.facilityKindOther ?? '',
+      streetAddress: d.streetAddress ?? '',
+      heatingSource: d.heatingSource ?? '',
+      heatingSourceOther: d.heatingSourceOther ?? '',
+      heatedArea: this.numOrNull(d.heatedArea),
+      backupPower: d.backupPower ?? '',
+      buildingCondition: d.buildingCondition ?? '',
+
+      populationTotal: d.populationTotal,
+      settlementsCovered: d.settlementsCovered,
+      frontlineStatus: d.frontlineStatus ?? '',
+      targetFacilities: d.targetFacilities ?? '',
+
+      needCategoryOther: d.needCategoryOther ?? '',
+      situationDescription: d.situationDescription ?? '',
+      solidFuelBoilerCount: d.solidFuelBoilerCount,
+      solidFuelStorageAvailable: this.boolToRadio(d.solidFuelStorageAvailable),
+      heatingRepairDescription: d.heatingRepairDescription ?? '',
+      resiliencePointStatus: d.resiliencePointStatus ?? '',
+      resiliencePointCapacity: d.resiliencePointCapacity,
+      liquidFuelType: liquidFuelNeed?.item ?? '',
+      liquidFuelMonthlyLiters: this.numOrNull(liquidFuelNeed?.quantity),
+      liquidFuelMonthsNeeded: d.liquidFuelMonthsNeeded,
+
+      directBeneficiaries: d.directBeneficiaries,
+      idpCount: d.idpCount,
+      childrenCount: d.childrenCount,
+      pwdCount: d.pwdCount,
+      elderlyCount: d.elderlyCount,
+      femaleCount: d.femaleCount,
+      maleCount: d.maleCount,
+      indirectBeneficiaries: d.indirectBeneficiaries,
+      staffCount: d.staffCount,
+
+      needBy: d.needBy,
+      urgency: d.urgency,
+      estimatedCost: this.numOrNull(d.estimatedCost),
+      costBasis: d.costBasis ?? '',
+      otherDonors: this.boolToRadio(d.otherDonors),
+      otherDonorsDetails: d.otherDonorsDetails ?? '',
+      cofinancing: d.cofinancing ?? '',
+      cofinancingDetails: d.cofinancingDetails ?? '',
+      logistics: this.checkboxGroupValue(LOGISTICS_OPTIONS, d.logistics),
+      docsAvailable: this.checkboxGroupValue(DOCS_AVAILABLE_OPTIONS, d.docsAvailable),
+
+      // The cloud link is NOT part of the edit payload (buildPayload excludes
+      // it, like photos/documents); it is shown read-only in the detail view.
+      cloudLink: d.cloudLink ?? '',
+
+      // Consent was captured at submit time; keep the form valid without asking
+      // the admin to re-consent (it is never sent back in the edit payload).
+      consentGiven: true,
+    });
+
+    // Pass 3 — the specification blocks (fixed-shape FormGroups).
+    generatorNeeds.slice(0, GENERATOR_ROWS_MAX).forEach((n, i) => {
+      this.generatorRows.at(i).patchValue({
+        qty: this.numOrNull(n.quantity),
+        powerKw: this.numOrNull(n.powerKw),
+        fuelType: n.fuelType ?? '',
+        purpose: n.purpose ?? '',
+      });
+    });
+
+    const solidFuelPatch: Record<
+      string,
+      { checked: boolean; amount: number | null; unit: string }
+    > = {};
+    for (const def of SOLID_FUEL_ITEMS) {
+      const row = needs.find((n) => n.category === 'solid_fuel' && n.item === def.item);
+      solidFuelPatch[def.item] = {
+        checked: !!row,
+        amount: this.numOrNull(row?.quantity),
+        unit: (row?.unit as 't' | 'm3') ?? def.defaultUnit,
+      };
+    }
+    this.form.get('solidFuel')!.patchValue(solidFuelPatch);
+
+    const simpleBlocks: readonly {
+      category: NeedCategory;
+      group: string;
+      items: readonly { item: string }[];
+    }[] = [
+      {
+        category: 'heating_appliances',
+        group: 'heatingAppliances',
+        items: HEATING_APPLIANCE_ITEMS,
+      },
+      { category: 'heating_system_repair', group: 'heatingRepair', items: HEATING_REPAIR_ITEMS },
+      { category: 'insulation', group: 'insulation', items: INSULATION_ITEMS },
+      {
+        category: 'resilience_point_equipment',
+        group: 'resiliencePoint',
+        items: RESILIENCE_POINT_ITEMS,
+      },
+      { category: 'winter_nfi', group: 'winterNfi', items: WINTER_NFI_ITEMS },
+    ];
+    for (const block of simpleBlocks) {
+      const patch: Record<string, Record<string, unknown>> = {};
+      for (const def of block.items) {
+        const row = needs.find((n) => n.category === block.category && n.item === def.item);
+        const value: Record<string, unknown> = {
+          checked: !!row,
+          qty: this.numOrNull(row?.quantity),
+        };
+        // Only the resilience-point «Інше» row owns a `details` control.
+        if (this.form.get([block.group, def.item, 'details'])) {
+          value['details'] = row?.details ?? '';
+        }
+        patch[def.item] = value;
+      }
+      this.form.get(block.group)!.patchValue(patch);
+    }
+
+    this.situationLen.set((d.situationDescription ?? '').length);
+    this.form.updateValueAndValidity();
   }
 
   // ── Draft banner ──
@@ -1232,5 +1497,28 @@ export class WinterizationFormComponent implements OnInit {
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  // ── (PR-W4) Edit mode — emit the data payload; the parent owns PATCH /full ──
+
+  /**
+   * Validate every field and emit the payload. `buildPayload()` carries no
+   * photos, documents, cloudLink or consent, so PATCH /full leaves the
+   * attachments and the consent snapshot untouched — replace-semantics apply
+   * only to `needs[]` and the scalars.
+   */
+  protected save(): void {
+    if (this.externalSaving) return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) {
+      this.stepInvalid.set(true);
+      return;
+    }
+    this.stepInvalid.set(false);
+    this.saved.emit(this.buildPayload());
+  }
+
+  protected cancel(): void {
+    this.cancelled.emit();
   }
 }

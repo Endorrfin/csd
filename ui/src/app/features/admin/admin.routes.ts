@@ -31,6 +31,22 @@ export const adminRoutes: Routes = [
       ),
   },
 
+  // Winterization forms (PR-W4)
+  {
+    path: 'winterization-forms',
+    loadComponent: () =>
+      import('./winterization-forms-list/winterization-forms-list').then(
+        (m) => m.WinterizationFormsListComponent,
+      ),
+  },
+  {
+    path: 'winterization-forms/:id',
+    loadComponent: () =>
+      import('./winterization-form-detail/winterization-form-detail').then(
+        (m) => m.WinterizationFormDetailComponent,
+      ),
+  },
+
   // Procurements admin (placeholder — replaced in Step 4)
   {
     path: 'procurements',
