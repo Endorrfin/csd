@@ -52,6 +52,14 @@ import { AuthService } from '../../core/services/auth.service';
             {{ isUa ? 'Форми: Відновлення' : 'Recovery Forms' }}
           </a>
           <a
+            routerLink="winterization-forms"
+            routerLinkActive="active"
+            class="admin-nav-item"
+            (click)="closeSidebar()"
+          >
+            {{ isUa ? 'Форми: Підготовка до зими' : 'Winterization Forms' }}
+          </a>
+          <a
             routerLink="procurements"
             routerLinkActive="active"
             class="admin-nav-item"

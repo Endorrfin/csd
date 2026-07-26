@@ -24,6 +24,7 @@ import { FormNumberService } from './form-number.service';
 import { WinterizationForm } from './entities/winterization-form.entity';
 import { WinterizationFormNeed } from './entities/winterization-form-need.entity';
 import { WinterizationService } from './winterization.service';
+import { WinterizationXlsxExportService } from './winterization-xlsx-export.service';
 // UploadModule (presigned GET) + Turnstile guard
 import { UploadModule } from '../upload/upload.module';
 import { TurnstileGuard } from '../../common/guards/turnstile.guard';
@@ -62,6 +63,7 @@ import { TurnstileGuard } from '../../common/guards/turnstile.guard';
     FormNumberService,
 
     WinterizationService,
+    WinterizationXlsxExportService,
     // Turnstile guard for the public recovery / winterization submits
     TurnstileGuard,
   ],

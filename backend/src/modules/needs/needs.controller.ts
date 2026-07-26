@@ -39,6 +39,7 @@ import { CreateWinterizationFormDto } from './dto/create-winterization-form.dto'
 import { UpdateWinterizationFormDto } from './dto/update-winterization-form.dto';
 import { UpdateWinterizationFormFullDto } from './dto/update-winterization-form-full.dto';
 import { WinterizationAdminQueryDto } from './dto/winterization-admin-query.dto';
+import { WinterizationXlsxExportService } from './winterization-xlsx-export.service';
 
 /**
  * Shape of req.user injected by JwtAuthGuard. Keep narrow — we only need
@@ -71,6 +72,7 @@ export class NeedsFormsController {
     private readonly recoveryService: RecoveryService,
     private readonly recoveryXlsxExport: RecoveryXlsxExportService,
     private readonly winterizationService: WinterizationService,
+    private readonly winterizationXlsxExport: WinterizationXlsxExportService,
   ) {}
 
   /** Public — submit a WASH needs form. Anonymous allowed. */
@@ -392,8 +394,56 @@ export class NeedsFormsController {
     });
   }
 
-  // NOTE (PR-W4): the XLSX export route `GET winterization/export-xlsx` belongs
-  // HERE — above the `:id` matcher — for the same reason as its recovery twin.
+  /**
+   * Manager/Admin — export Winterization forms as a 3-sheet XLSX
+   * (Applications / Needs / Files).
+   *
+   * Query params mirror the winterization list filters: status, region,
+   * applicantType, facilityKind, needCategory, urgency, search, dateFrom,
+   * dateTo, plus lang ('ua'|'en', defaults to 'en').
+   *
+   * IMPORTANT: must be registered BEFORE `winterization/:id` (ParseUUIDPipe) so
+   * the literal path wins over the :id matcher.
+   */
+  @Get('winterization/export-xlsx')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN)
+  async exportWinterizationXlsx(
+    @Res() res: Response,
+    @Query('status') status?: FormStatus,
+    @Query('region') region?: string,
+    @Query('applicantType') applicantType?: string,
+    @Query('facilityKind') facilityKind?: string,
+    @Query('needCategory') needCategory?: string,
+    @Query('urgency') urgency?: string,
+    @Query('search') search?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('lang') lang?: string,
+  ): Promise<void> {
+    const buffer = await this.winterizationXlsxExport.buildWorkbook({
+      status,
+      region,
+      applicantType,
+      facilityKind,
+      needCategory,
+      urgency,
+      search,
+      dateFrom,
+      dateTo,
+      lang: lang === 'ua' ? 'ua' : 'en',
+    });
+
+    const date = new Date().toISOString().slice(0, 10);
+    const filename = `winterization-forms-${date}.xlsx`;
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(buffer);
+  }
 
   /**
    * Manager/Admin — single form incl. need specification + attachments.
