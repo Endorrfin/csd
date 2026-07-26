@@ -38,33 +38,60 @@ import { Router } from '@angular/router';
             routerLink="/"
             routerLinkActive="active"
             [routerLinkActiveOptions]="{ exact: true }"
+            ariaCurrentWhenActive="page"
             (click)="closeMenu()"
           >
             {{ 'NAV.HOME' | translate }}
           </a>
-          <a routerLink="/about" routerLinkActive="active" (click)="closeMenu()">{{
-            'NAV.ABOUT' | translate
-          }}</a>
-          <a routerLink="/activity-map" routerLinkActive="active" (click)="closeMenu()">{{
-            'NAV.ACTIVITY_MAP' | translate
-          }}</a>
+          <a
+            routerLink="/about"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenu()"
+          >
+            {{ 'NAV.ABOUT' | translate }}
+          </a>
+          <a
+            routerLink="/activity-map"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenu()"
+          >
+            {{ 'NAV.ACTIVITY_MAP' | translate }}
+          </a>
           <!-- 🤔 FROZEN  -->
           <!-- <a routerLink="/partners" routerLinkActive="active" (click)="closeMenu()">{{  -->
           <!-- 'NAV.PARTNERS' | translate  -->
           <!-- }}</a>  -->
-          <a routerLink="/cooperation" routerLinkActive="active" (click)="closeMenu()">{{
-            'NAV.COOPERATION' | translate
-          }}</a>
-          <a routerLink="/needs" routerLinkActive="active" (click)="closeMenu()">{{
-            'NAV.NEEDS' | translate
-          }}</a>
-          <a routerLink="/contact" routerLinkActive="active" (click)="closeMenu()">{{
-            'NAV.CONTACT' | translate
-          }}</a>
+          <a
+            routerLink="/cooperation"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenu()"
+          >
+            {{ 'NAV.COOPERATION' | translate }}
+          </a>
+          <a
+            routerLink="/needs"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenu()"
+          >
+            {{ 'NAV.NEEDS' | translate }}
+          </a>
+          <a
+            routerLink="/contact"
+            routerLinkActive="active"
+            ariaCurrentWhenActive="page"
+            (click)="closeMenu()"
+          >
+            {{ 'NAV.CONTACT' | translate }}
+          </a>
           @if (auth.isManager) {
             <a
               routerLink="/admin"
               routerLinkActive="active"
+              ariaCurrentWhenActive="page"
               class="nav-admin"
               (click)="closeMenu()"
             >
@@ -74,7 +101,13 @@ import { Router } from '@angular/router';
 
           <!-- auth actions inside nav on mobile -->
           <div class="header__nav-actions">
-            <button (click)="switchLang()" class="header__lang">
+            <button
+              (click)="switchLang()"
+              class="header__lang"
+              [attr.aria-label]="
+                (isUa() ? 'HEADER.SWITCH_TO_EN' : 'HEADER.SWITCH_TO_UA') | translate
+              "
+            >
               {{ isUa() ? 'EN' : 'UA' }}
             </button>
             @if (auth.isLoggedIn()) {
@@ -92,7 +125,11 @@ import { Router } from '@angular/router';
 
         <!-- desktop-only actions -->
         <div class="header__actions header__actions--desktop">
-          <button (click)="switchLang()" class="header__lang">
+          <button
+            (click)="switchLang()"
+            class="header__lang"
+            [attr.aria-label]="(isUa() ? 'HEADER.SWITCH_TO_EN' : 'HEADER.SWITCH_TO_UA') | translate"
+          >
             {{ isUa() ? 'EN' : 'UA' }}
           </button>
           @if (auth.isLoggedIn()) {
