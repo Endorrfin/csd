@@ -227,6 +227,17 @@ export const PHOTO_REQUIRED_CATEGORIES: readonly NeedCategory[] = [
   'insulation',
 ];
 
+// file limits mirroring winterization.constants.ts. They live
+// next to PHOTO_REQUIRED_CATEGORIES because the conditional «≥3 photos» rule and
+// the caps are one contract and have to be read together. Type/size rules are
+// re-exported from recovery.constants.ts server-side, i.e. identical to Recovery
+// by design — the counts are not.
+export const WINTERIZATION_PHOTOS_MAX = 10;
+export const WINTERIZATION_DOCUMENTS_MAX = 5;
+export const WINTERIZATION_PHOTOS_MIN_FOR_WORKS = 3;
+export const WINTERIZATION_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
+export const WINTERIZATION_DOCUMENT_MAX_BYTES = 15 * 1024 * 1024;
+
 // ── Крок 3: spec items (NEED_ITEMS_BY_CATEGORY) ──
 
 export type NeedItem =
@@ -681,8 +692,10 @@ export interface CreateWinterizationFormPayload {
 }
 
 /**
- * Data portion produced by PR-W2 (steps 1–5). Files (photos/documents/cloudLink)
- * and consent are added in PR-W3 together with steps 6–7 and the submit flow.
+ * Data portion (steps 1–5). (PR-W3): files (photos/documents/cloudLink)
+ * and consent are wrapped around it by buildFullPayload() — the split is kept so
+ * that a future admin edit-mode can PATCH the data without touching attachments,
+ * exactly as recovery-form.ts does.
  */
 export type WinterizationDataPayload = Omit<
   CreateWinterizationFormPayload,

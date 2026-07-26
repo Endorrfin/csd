@@ -32,10 +32,10 @@ import { PageTitleService } from '../../core/services/page-title.service';
           {{ isUa() ? 'Відновлення' : 'Recovery' }}
         </a>
 
-        <a class="needs-tab disabled" title="{{ isUa() ? 'Скоро' : 'Coming soon' }}">
+        <!-- (PR-W3): Winterization tab activated (was disabled/coming-soon). -->
+        <a routerLink="winterization-form" routerLinkActive="active" class="needs-tab">
           <span class="tab-icon">❄️</span>
           {{ isUa() ? 'Підготовка до зими' : 'Winterization' }}
-          <span class="badge">{{ isUa() ? 'скоро' : 'soon' }}</span>
         </a>
 
         <a class="needs-tab disabled" title="{{ isUa() ? 'Скоро' : 'Coming soon' }}">
