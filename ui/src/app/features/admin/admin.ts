@@ -41,7 +41,7 @@ import { AuthService } from '../../core/services/auth.service';
             class="admin-nav-item"
             (click)="closeSidebar()"
           >
-            {{ isUa ? 'WASH' : 'WASH Forms' }}
+            {{ isUa ? 'WASH' : 'WASH' }}
           </a>
           <a
             routerLink="recovery-forms"
@@ -49,7 +49,7 @@ import { AuthService } from '../../core/services/auth.service';
             class="admin-nav-item"
             (click)="closeSidebar()"
           >
-            {{ isUa ? 'Відновлення' : 'Recovery Forms' }}
+            {{ isUa ? 'Відновлення' : 'Recovery' }}
           </a>
           <a
             routerLink="winterization-forms"
@@ -57,7 +57,7 @@ import { AuthService } from '../../core/services/auth.service';
             class="admin-nav-item"
             (click)="closeSidebar()"
           >
-            {{ isUa ? 'Форми: Підготовка до зими' : 'Winterization Forms' }}
+            {{ isUa ? 'Winterization' : 'Winterization' }}
           </a>
           <a
             routerLink="procurements"
