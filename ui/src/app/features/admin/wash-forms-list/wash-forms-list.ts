@@ -45,7 +45,7 @@ interface PaginatedResponse {
   template: `
     <div class="list-header">
       <h2>
-        {{ isUa ? 'WASH Заявки' : 'WASH Forms' }}
+        {{ isUa ? 'WASH' : 'WASH Forms' }}
         @if (total() > 0) {
           <span class="count">({{ total() }})</span>
         }
