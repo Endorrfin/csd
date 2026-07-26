@@ -26,7 +26,7 @@
   </div>
 } @else {
 
-@if (draftFound()) {
+@if (!isEdit && draftFound()) {
   <div class="draft-banner" role="status">
     <span class="draft-text">
       {{ isUa() ? 'Знайдено збережену чернетку від' : 'Found a saved draft from' }}
@@ -1395,6 +1395,48 @@
     <div class="form-section">
       <h2 class="section-title">{{ isUa() ? 'VI. Файли' : 'VI. Files' }}</h2>
 
+      @if (isEdit) {
+        <!-- Admin edit: uploads to the private bucket need a public Turnstile
+             token, unavailable here — attachments stay read-only and are kept
+             untouched by PATCH /full (buildPayload carries no files). -->
+        <div class="edit-files-note">
+          {{
+            isUa()
+              ? 'Файли не редагуються в цьому режимі. Наявні фото та документи залишаться без змін; переглянути й завантажити їх можна в режимі перегляду заявки.'
+              : 'Files are not editable here. Existing photos and documents stay unchanged; view and download them from the form detail view.'
+          }}
+        </div>
+
+        <div class="form-field full-width">
+          <span class="field-label"
+            >{{ isUa() ? 'Фотографії' : 'Photos' }} ({{ existingPhotos.length }})</span
+          >
+          @if (existingPhotos.length) {
+            <ul class="edit-files-list">
+              @for (a of existingPhotos; track a.id) {
+                <li>{{ a.originalName }}</li>
+              }
+            </ul>
+          } @else {
+            <span class="hint">{{ isUa() ? 'Немає' : 'None' }}</span>
+          }
+        </div>
+
+        <div class="form-field full-width">
+          <span class="field-label"
+            >{{ isUa() ? 'Документи' : 'Documents' }} ({{ existingDocuments.length }})</span
+          >
+          @if (existingDocuments.length) {
+            <ul class="edit-files-list">
+              @for (a of existingDocuments; track a.id) {
+                <li>{{ a.originalName }}</li>
+              }
+            </ul>
+          } @else {
+            <span class="hint">{{ isUa() ? 'Немає' : 'None' }}</span>
+          }
+        </div>
+      } @else {
       <div class="form-field full-width">
         <span class="field-label">
           {{ isUa() ? 'Фотографії' : 'Photos' }}
@@ -1457,7 +1499,10 @@
             : 'Guarantee letter, executive committee decision, cost estimate, technical specifications.'
         }}</span>
       </div>
+      }
 
+      <!-- cloudLink is display-only in edit mode: like the attachments it is
+           excluded from buildPayload(), so an edit never rewrites it. -->
       <div class="form-field full-width">
         <label for="cloudLink">{{
           isUa() ? 'Посилання на хмарний архів (необовʼязково)' : 'Cloud archive link (optional)'
@@ -1607,6 +1652,7 @@
         </div>
       </div>
 
+      @if (!isEdit) {
       <label class="consent">
         <input type="checkbox" formControlName="consentGiven" />
         <span>{{
@@ -1634,6 +1680,11 @@
       <p class="turnstile-note">{{
         isUa() ? 'Форму захищено Cloudflare Turnstile.' : 'Protected by Cloudflare Turnstile.'
       }}</p>
+      } @else {
+        <p class="edit-review-note">{{
+          isUa() ? 'Перевірте зміни та натисніть «Зберегти зміни».' : 'Review the changes and click “Save changes”.'
+        }}</p>
+      }
 
       @if (submitError()) {
         <div class="error-banner">
@@ -1650,7 +1701,9 @@
   <!-- Managed Turnstile (mostly invisible). Rendered outside the step blocks so
        that the widget survives navigation: it feeds both the presigned uploads
        on step 6 and the submit on step 7, and each token is single-use. -->
-  <app-turnstile [siteKey]="siteKey"></app-turnstile>
+  @if (!isEdit) {
+    <app-turnstile [siteKey]="siteKey"></app-turnstile>
+  }
 
   <!-- ══════════ Navigation ══════════ -->
   <div class="form-nav">
@@ -1662,9 +1715,26 @@
       <div></div>
     }
     <div class="form-nav-right">
+      @if (isEdit) {
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          {{ isUa() ? 'Скасувати' : 'Cancel' }}
+        </button>
+      }
       @if (currentStep() < steps.length - 1) {
         <button type="button" class="btn btn-primary" (click)="nextStep()">
           {{ isUa() ? 'Далі' : 'Next' }}
+        </button>
+      } @else if (isEdit) {
+        <button type="button" class="btn btn-submit" [disabled]="externalSaving" (click)="save()">
+          {{
+            externalSaving
+              ? isUa()
+                ? 'Збереження…'
+                : 'Saving…'
+              : isUa()
+                ? 'Зберегти зміни'
+                : 'Save changes'
+          }}
         </button>
       } @else {
         <button

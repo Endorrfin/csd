@@ -547,6 +547,8 @@
     "wash_form_detail": "WASH Application Details",
     "recovery_forms": "Recovery Applications",
     "recovery_form_detail": "Recovery Application Details",
+    "winterization_forms": "Winterization Applications",
+    "winterization_form_detail": "Winterization Application Details",
     "users": "User Management",
     "testimonials": "Testimonials Management",
     "procurements": "Procurements",

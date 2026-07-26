@@ -708,3 +708,197 @@ export interface WinterizationDraft {
   savedAt: number;
   value: Record<string, unknown>;
 }
+
+// ══════════════════════════════════════════════════════════════
+// (PR-W4) Admin detail / list / edit types — mirror the backend
+// WinterizationForm entity + WinterizationFormWithUrls
+// (winterization.service.ts). NUMERIC columns come back from Postgres as
+// strings, so numeric fields are typed `number | string` and coerced with
+// Number() at the point of use.
+//
+// Household (`hh*`) fields are deliberately absent: the scenario is gated off
+// by WINTERIZATION_HOUSEHOLD_ENABLED and the server answers 422, so the admin
+// can never see or create one (implementation-plan §7). They land with the flag.
+// ══════════════════════════════════════════════════════════════
+
+/** Shared 6-value lifecycle across every needs form (needs_form_status_enum). */
+export type WinterizationFormStatus =
+  | 'new'
+  | 'in_review'
+  | 'approved'
+  | 'rejected'
+  | 'in_progress'
+  | 'completed';
+
+export type AttachmentKind = 'photo' | 'document';
+
+/** One specification position as stored (child of winterization_forms). */
+export interface WinterizationNeedFull {
+  id: string;
+  category: NeedCategory;
+  item: NeedItem;
+  quantity: number | string | null;
+  unit: string | null;
+  powerKw: number | string | null;
+  fuelType: GeneratorFuelType | null;
+  purpose: GeneratorPurpose | null;
+  details: string | null;
+  sortOrder: number;
+}
+
+/** One attachment row, enriched with a short-lived presigned GET `url`. */
+export interface WinterizationAttachmentFull {
+  id: string;
+  formType: string;
+  formId: string;
+  kind: AttachmentKind;
+  s3Key: string;
+  publicUrl: string | null;
+  originalName: string;
+  mimeType: string;
+  sizeBytes: number;
+  sortOrder: number;
+  createdAt: string;
+  /** Presigned GET (private bucket) — null if presign failed. */
+  url: string | null;
+}
+
+/** Full form as returned by GET /needs-forms/winterization/:id. */
+export interface WinterizationFormDetail {
+  id: string;
+  trackingNumber: string;
+
+  applicantType: WinterizationApplicantType;
+  organizationName: string;
+  edrpou: string | null;
+
+  region: string;
+  regionEn: string;
+  district: string;
+  districtEn: string;
+  community: string;
+  communityEn: string;
+  communityCode: string;
+  settlement: string | null;
+  settlementEn: string | null;
+  settlementCode: string | null;
+
+  contactName: string;
+  contactPosition: string | null;
+  phone: string;
+  email: string;
+  messenger: string | null;
+  altContactName: string | null;
+  altContactPhone: string | null;
+  website: string | null;
+
+  // Крок 2а — institution
+  facilityName: string | null;
+  facilityKind: FacilityKind | null;
+  facilityKindOther: string | null;
+  streetAddress: string | null;
+  heatingSource: HeatingSource | null;
+  heatingSourceOther: string | null;
+  heatedArea: number | string | null;
+  backupPower: BackupPowerOption | null;
+  buildingCondition: BuildingCondition | null;
+
+  // Крок 2б — municipality
+  populationTotal: number | null;
+  settlementsCovered: number | null;
+  frontlineStatus: FrontlineStatus | null;
+  targetFacilities: string | null;
+
+  // Крок 3 — needs (category-level scalars live here, item level in `needs`)
+  needCategories: NeedCategory[];
+  needCategoryOther: string | null;
+  situationDescription: string | null;
+  solidFuelBoilerCount: number | null;
+  solidFuelStorageAvailable: boolean | null;
+  heatingRepairDescription: string | null;
+  resiliencePointStatus: ResiliencePointStatus | null;
+  resiliencePointCapacity: number | null;
+  liquidFuelMonthsNeeded: number | null;
+
+  // Крок 4 — beneficiaries
+  directBeneficiaries: number;
+  idpCount: number;
+  childrenCount: number;
+  pwdCount: number;
+  elderlyCount: number;
+  femaleCount: number | null;
+  maleCount: number | null;
+  indirectBeneficiaries: number | null;
+  staffCount: number | null;
+
+  // Крок 5 — budget & coordination
+  needBy: NeedByOption;
+  urgency: WinterizationUrgency;
+  estimatedCost: number | string | null;
+  costBasis: WinterizationCostBasis | null;
+  otherDonors: boolean;
+  otherDonorsDetails: string | null;
+  cofinancing: WinterizationCofinancing | null;
+  cofinancingDetails: string | null;
+  logistics: LogisticsOption[] | null;
+  docsAvailable: WinterizationDocsOption[] | null;
+  cloudLink: string | null;
+
+  status: WinterizationFormStatus;
+  managerNotes: string | null;
+  consentGiven: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+  needs: WinterizationNeedFull[];
+  attachments: WinterizationAttachmentFull[];
+}
+
+/**
+ * Row shape for the admin list (GET /needs-forms/winterization).
+ *
+ * The endpoint returns whole entities; this type narrows them to what the table
+ * renders. `needs` is absent on purpose — QueryBuilder does not hydrate the
+ * eager relation, so the list never carries specification rows.
+ */
+export interface WinterizationFormSummary {
+  id: string;
+  trackingNumber: string;
+  applicantType: WinterizationApplicantType;
+  organizationName: string;
+  facilityName: string | null;
+  region: string;
+  regionEn: string;
+  community: string;
+  communityEn: string;
+  needCategories: NeedCategory[];
+  needBy: NeedByOption;
+  urgency: WinterizationUrgency;
+  estimatedCost: number | string | null;
+  status: WinterizationFormStatus;
+  createdAt: string;
+}
+
+/**
+ * Payload for PATCH /needs-forms/winterization/:id/full — same shape as create,
+ * all optional. The admin edit omits photos/documents/cloudLink/consentGiven so
+ * the backend leaves attachments and the consent snapshot untouched; that is
+ * exactly what `WinterizationDataPayload` already excludes.
+ */
+export type UpdateWinterizationFormFullPayload = Partial<CreateWinterizationFormPayload>;
+
+/** One audit-log entry (GET /needs-forms/winterization/:id/audit-log).
+ *  Matches the NeedsFormAuditLog entity (shared needs_form_audit_log table). */
+export interface WinterizationAuditLogEntry {
+  id: string;
+  formType: string;
+  formId: string;
+  action: 'created' | 'updated' | 'status_changed' | 'deleted';
+  changedById: string | null;
+  changedByEmail: string | null;
+  fieldName: string | null;
+  oldValue: string | null;
+  newValue: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
