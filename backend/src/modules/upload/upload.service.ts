@@ -27,6 +27,14 @@ import {
   NeedsUploadFormType,
 } from '../needs/needs-forms.constants';
 import { WINTERIZATION_S3_PREFIX } from '../needs/winterization.constants';
+// === ADDED: PR-D1 — About document registry upload rules ===
+import {
+  ABOUT_DOCS_S3_PREFIX,
+  ABOUT_DOCUMENT_MAX_BYTES,
+  ABOUT_DOCUMENT_MIME_TYPES,
+  ABOUT_DOCUMENT_URL_TTL_SECONDS,
+} from '../about/about-documents.constants';
+import type { AboutDocumentLocale } from '../about/about-documents.constants';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const PRESIGNED_URL_EXPIRES_IN = 300;
@@ -204,6 +212,78 @@ export class UploadService {
     });
     return getSignedUrl(this.s3, command, {
       expiresIn: PRESIGNED_URL_EXPIRES_IN,
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // === ADDED: PR-D1 — About document registry (PRIVATE bucket) ===
+  // ══════════════════════════════════════════════════════════════
+
+  /**
+   * Presigned POST for an About-registry PDF. Admin-only (guarded in the
+   * controller), so no Turnstile — but the POST conditions stay, because they are
+   * the only place where size and content type can be enforced before the bytes
+   * land in the bucket. The key encodes code/locale/version so AboutService can
+   * re-derive it and refuse a key that belongs to another document.
+   */
+  async getAboutDocPresignedPost(
+    code: string,
+    locale: AboutDocumentLocale,
+    version: string,
+    contentType: string,
+  ): Promise<{ url: string; fields: Record<string, string>; s3Key: string }> {
+    this.assertPrivateBucketConfigured();
+
+    const allowed: readonly string[] = ABOUT_DOCUMENT_MIME_TYPES;
+    if (!allowed.includes(contentType)) {
+      throw new BadRequestException(
+        `Unsupported document content type: ${contentType}`,
+      );
+    }
+
+    const prefix = `${ABOUT_DOCS_S3_PREFIX}${code}/${locale}/${version}`;
+    const key = `${prefix}/${Date.now()}-original.pdf`;
+
+    const { url, fields } = await createPresignedPost(this.s3, {
+      Bucket: this.privateBucket,
+      Key: key,
+      Conditions: [
+        ['content-length-range', 1, ABOUT_DOCUMENT_MAX_BYTES],
+        ['eq', '$Content-Type', contentType],
+      ],
+      Fields: { 'Content-Type': contentType },
+      Expires: PRESIGNED_URL_EXPIRES_IN,
+    });
+
+    return { url, fields, s3Key: key };
+  }
+
+  /**
+   * Short-lived presigned GET for a registry PDF. `download === false` pins the
+   * response to `inline`, so opening the signed URL directly renders the document
+   * instead of saving it — the access mode, not the browser, decides.
+   */
+  async getAboutDocFileUrl(
+    s3Key: string,
+    fileName: string,
+    download: boolean,
+  ): Promise<string> {
+    this.assertPrivateBucketConfigured();
+
+    // Content-Disposition is a signed header: anything non-ASCII would break the
+    // signature comparison on S3, so the name is reduced to a safe subset.
+    const safeName = fileName.replace(/[^A-Za-z0-9._-]/g, '_');
+    const disposition = download ? 'attachment' : 'inline';
+
+    const command = new GetObjectCommand({
+      Bucket: this.privateBucket,
+      Key: s3Key,
+      ResponseContentType: 'application/pdf',
+      ResponseContentDisposition: `${disposition}; filename="${safeName}"`,
+    });
+
+    return getSignedUrl(this.s3, command, {
+      expiresIn: ABOUT_DOCUMENT_URL_TTL_SECONDS,
     });
   }
 

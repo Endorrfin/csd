@@ -5,19 +5,32 @@ import { TranslateModule } from '@ngx-translate/core';
 import { LanguageService } from '../../core/services/language.service';
 import { ApiService } from '../../core/services/api.service';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
-import { AboutDocument, AboutDocumentType, AboutSection } from '../admin/about/about.interfaces';
+import {
+  AboutDocumentFileLink,
+  AboutDocumentLocale,
+  AboutDocumentType,
+  AboutSection,
+  PublicAboutDocument,
+} from '../admin/about/about.interfaces';
 import { PageTitleService } from '../../core/services/page-title.service';
 
 interface PublicAboutResponse {
   sections: AboutSection[];
-  documents: AboutDocument[];
+  // CHANGED: PR-D1 — documents no longer carry a file URL; see PublicAboutDocument.
+  documents: PublicAboutDocument[];
 }
 
+// CHANGED: PR-D1 — all 10 types of the CSD register, in reading order.
 const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
   'POLICY',
-  'PROCEDURE',
-  'REGULATION',
   'CODE',
+  'MECHANISM',
+  'REGULATION',
+  'RULES',
+  'PROCEDURE',
+  'MANUAL',
+  'DIRECTIVE',
+  'TEMPLATE',
   'REPORT',
 ];
 
@@ -78,7 +91,8 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
                 </h3>
 
                 <ul class="doc-list">
-                  @for (doc of group.docs; track doc.id) {
+                  <!-- CHANGED: PR-D1 — the public payload has no uuid; the register code is the identity. -->
+                  @for (doc of group.docs; track doc.code) {
                     <li class="doc-item">
                       <div class="doc-title">{{ getDocTitle(doc) }}</div>
 
@@ -96,17 +110,25 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
                             {{ doc.lastReviewDate | date: 'dd.MM.yyyy' }}
                           </span>
                         }
-                        @if (doc.fileUrl) {
-                          <a
-                            [href]="doc.fileUrl"
-                            target="_blank"
-                            rel="noopener noreferrer"
+                        <!-- CHANGED: PR-D1 — no href in the payload any more. The
+                             link is requested per document per language, so the whole
+                             registry can no longer be scraped from one response. -->
+                        @for (loc of doc.locales; track loc) {
+                          <button
+                            type="button"
                             class="doc-link"
+                            [disabled]="pendingKey() === doc.code + ':' + loc"
+                            (click)="openDocument(doc, loc)"
                           >
-                            📄 {{ 'about.page.viewFile' | translate }}
-                          </a>
+                            📄 {{ 'about.page.viewFile' | translate }} ·
+                            {{ loc.toUpperCase() }}
+                          </button>
                         }
                       </div>
+
+                      @if (docErrorCode() === doc.code) {
+                        <p class="doc-error">{{ docErrorMessage() }}</p>
+                      }
                     </li>
                   }
                 </ul>
@@ -288,7 +310,17 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
       .meta-date {
         color: #64748b;
       }
+      .doc-error {
+        margin: 0.5rem 0 0;
+        font-size: 0.85rem;
+        color: #c53030;
+      }
       .doc-link {
+        appearance: none;
+        border: 0;
+        background: none;
+        font: inherit;
+        cursor: pointer;
         color: #2b6cb0;
         text-decoration: none;
         font-weight: 500;
@@ -322,11 +354,15 @@ export class AboutComponent implements OnInit {
   loading = signal(true);
   errorMessage = signal('');
   sections = signal<AboutSection[]>([]);
-  documents = signal<AboutDocument[]>([]);
+  documents = signal<PublicAboutDocument[]>([]);
+  // === ADDED: PR-D1 — one in-flight link request at a time ===
+  pendingKey = signal('');
+  docErrorCode = signal('');
+  docErrorMessage = signal('');
 
   // ----- Computed -----
   // pre-grouped documents, in fixed type order, only types with content
-  documentsByType = computed<{ type: AboutDocumentType; docs: AboutDocument[] }[]>(() => {
+  documentsByType = computed<{ type: AboutDocumentType; docs: PublicAboutDocument[] }[]>(() => {
     const all = this.documents();
     return DOCUMENT_TYPE_ORDER.map((type) => ({
       type,
@@ -375,11 +411,44 @@ export class AboutComponent implements OnInit {
     return s.metadata?.items ?? [];
   }
 
-  getDocTitle(d: AboutDocument): string {
+  getDocTitle(d: PublicAboutDocument): string {
     return this.isUa() ? d.titleUa : d.titleEn;
   }
 
-  getDocDescription(d: AboutDocument): string | null {
+  getDocDescription(d: PublicAboutDocument): string | null {
     return this.isUa() ? d.descriptionUa : d.descriptionEn;
+  }
+
+  /**
+   * === ADDED: PR-D1 — fetch a short-lived link for ONE document in ONE language.
+   * PR-D2 replaces window.open with the in-app viewer (ngx-extended-pdf-viewer, no
+   * download button); until then the presigned URL is opened directly. It is signed
+   * with `inline` disposition, expires in 5 minutes and is issued per document —
+   * which is the part that closes the bulk-download hole.
+   */
+  openDocument(doc: PublicAboutDocument, locale: AboutDocumentLocale): void {
+    const key = `${doc.code}:${locale}`;
+    if (this.pendingKey() === key) {
+      return;
+    }
+    this.pendingKey.set(key);
+    this.docErrorCode.set('');
+
+    this.api
+      .get<AboutDocumentFileLink>(`about/documents/${doc.code}/file?locale=${locale}`)
+      .subscribe({
+        next: (link) => {
+          this.pendingKey.set('');
+          window.open(link.url, '_blank', 'noopener');
+        },
+        error: (err) => {
+          this.pendingKey.set('');
+          this.docErrorCode.set(doc.code);
+          this.docErrorMessage.set(
+            err?.error?.message ||
+              (this.isUa() ? 'Не вдалося відкрити документ' : 'Could not open the document'),
+          );
+        },
+      });
   }
 }

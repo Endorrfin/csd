@@ -83,13 +83,18 @@
         "descriptionEn": "Short description (EN)",
         "type": "Type",
         "typeLabel": "Document type",
-        "fileUrl": "File",
-        "fileUrlLabel": "File URL",
-        "fileUrlHint": "S3, Google Drive or any public link",
+        "code": "Code",
+        "codeLabel": "Document code",
+        "codeHint": "As in the register: CSD-POL-01. Cannot be changed after creation.",
+        "accessModeLabel": "Access mode",
+        "accessModeHint": "Public download — for documents donors must receive as a file. View only — everything else.",
+        "files": "Files",
+        "filesHint": "PDF files (UA/EN) are attached separately after the document is created.",
         "version": "Version",
         "versionLabel": "Document version",
         "lastReviewDate": "Last review",
         "lastReviewDateLabel": "Last review date",
+        "nextReviewDateLabel": "Next review date",
         "isPublished": "Published",
         "actions": "Actions"
       },
@@ -105,7 +110,12 @@
         "POLICY": "Policy",
         "PROCEDURE": "Procedure",
         "REGULATION": "Regulation",
-        "CODE": "Code",
+        "RULES": "Internal rules",
+        "CODE": "Code of conduct",
+        "MECHANISM": "Mechanism",
+        "MANUAL": "Manual",
+        "DIRECTIVE": "Directive",
+        "TEMPLATE": "Template",
         "REPORT": "Report"
       },
       "sectionKey": {
@@ -119,6 +129,11 @@
         "TEAM_INTRO": "Team (intro)",
         "CONTACTS_INTRO": "Contacts (intro)",
         "DOCUMENTS_INTRO": "Documents (intro)"
+      },
+      "accessMode": {
+        "public_download": "Public download",
+        "view_only": "View only",
+        "on_request": "Original on request"
       }
     },
     "page": {
@@ -126,9 +141,14 @@
       "documentsHeading": "Document registry",
       "documentTypes": {
         "POLICY": "Policies",
-        "PROCEDURE": "Procedures",
+        "CODE": "Codes of conduct",
+        "MECHANISM": "Mechanisms",
         "REGULATION": "Regulations",
-        "CODE": "Codes",
+        "RULES": "Internal rules",
+        "PROCEDURE": "Procedures",
+        "MANUAL": "Manuals",
+        "DIRECTIVE": "Directives",
+        "TEMPLATE": "Templates",
         "REPORT": "Reports"
       },
       "empty": "Information will be available soon",
@@ -146,7 +166,7 @@
     "LOAD_ERROR": "Failed to load activities",
     "MAP_COMING_SOON": "Map coming in next step",
     "SIDEBAR": {
-      "TITLE": "Filters", 
+      "TITLE": "Filters",
       "NO_COORDS": "No coordinates available"
     },
     "MAP_LOAD_ERROR": "Failed to load map"
@@ -534,13 +554,13 @@
     }
   },
   "auth": {
-  "forgot": {
-    "title": "Forgot Password"
+    "forgot": {
+      "title": "Forgot Password"
+    },
+    "reset": {
+      "title": "Reset Password"
+    }
   },
-  "reset": {
-    "title": "Reset Password"
-  }
-},
   "admin_titles": {
     "vacancies": "Vacancies Management",
     "wash_forms": "WASH Applications",

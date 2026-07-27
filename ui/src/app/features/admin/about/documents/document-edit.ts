@@ -7,7 +7,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../../core/services/api.service';
 import {
   AboutDocument,
+  AboutDocumentAccessMode,
   AboutDocumentType,
+  ALL_ACCESS_MODES,
   ALL_DOCUMENT_TYPES,
   CreateAboutDocumentDto,
   UpdateAboutDocumentDto,
@@ -37,6 +39,37 @@ import {
       <div class="loading">{{ 'common.loading' | translate }}</div>
     } @else {
       <form (submit)="$event.preventDefault(); onSave()" class="form">
+        <!-- === ADDED: PR-D1 — register code is the public identifier; immutable
+             after creation because it is also the S3 prefix and the public URL === -->
+        <div class="row">
+          <div class="field">
+            <label for="code">{{ 'about.admin.documents.codeLabel' | translate }} *</label>
+            <input
+              id="code"
+              type="text"
+              [(ngModel)]="code"
+              name="code"
+              placeholder="CSD-POL-01"
+              pattern="CSD-[A-Z]{3,4}-[0-9]{2}"
+              [readonly]="isEditMode()"
+              required
+            />
+            <small class="hint">{{ 'about.admin.documents.codeHint' | translate }}</small>
+          </div>
+
+          <div class="field">
+            <label for="accessMode">
+              {{ 'about.admin.documents.accessModeLabel' | translate }} *
+            </label>
+            <select id="accessMode" [(ngModel)]="accessMode" name="accessMode" required>
+              @for (m of allAccessModes; track m) {
+                <option [value]="m">{{ 'about.admin.accessMode.' + m | translate }}</option>
+              }
+            </select>
+            <small class="hint">{{ 'about.admin.documents.accessModeHint' | translate }}</small>
+          </div>
+        </div>
+
         <div class="row">
           <div class="field">
             <label for="documentType">
@@ -69,6 +102,18 @@ import {
               type="date"
               [(ngModel)]="lastReviewDate"
               name="lastReviewDate"
+            />
+          </div>
+
+          <div class="field">
+            <label for="nextReviewDate">
+              {{ 'about.admin.documents.nextReviewDateLabel' | translate }}
+            </label>
+            <input
+              id="nextReviewDate"
+              type="date"
+              [(ngModel)]="nextReviewDate"
+              name="nextReviewDate"
             />
           </div>
         </div>
@@ -107,16 +152,11 @@ import {
           ></textarea>
         </div>
 
+        <!-- CHANGED: PR-D1 — the free-text file URL is gone. PDFs are uploaded to the
+             private bucket and attached per language/version; the upload widget lands
+             in PR-D2, until then use POST /api/about/admin/documents/:id/files. -->
         <div class="field">
-          <label for="fileUrl">{{ 'about.admin.documents.fileUrlLabel' | translate }}</label>
-          <input
-            id="fileUrl"
-            type="url"
-            [(ngModel)]="fileUrl"
-            name="fileUrl"
-            placeholder="https://..."
-          />
-          <small class="hint">{{ 'about.admin.documents.fileUrlHint' | translate }}</small>
+          <small class="hint">{{ 'about.admin.documents.filesHint' | translate }}</small>
         </div>
 
         <div class="row">
@@ -278,6 +318,7 @@ export class AdminAboutDocumentEditComponent implements OnInit {
   private readonly translate = inject(TranslateService);
 
   readonly allDocumentTypes = ALL_DOCUMENT_TYPES;
+  readonly allAccessModes = ALL_ACCESS_MODES;
 
   // ----- State -----
   id = signal<string | null>(null);
@@ -291,9 +332,12 @@ export class AdminAboutDocumentEditComponent implements OnInit {
   descriptionUa = '';
   descriptionEn = '';
   documentType: AboutDocumentType = 'POLICY';
-  fileUrl = '';
+  // === ADDED: PR-D1 ===
+  code = '';
+  accessMode: AboutDocumentAccessMode = 'view_only';
   version = '';
   lastReviewDate = ''; // YYYY-MM-DD for native <input type="date">
+  nextReviewDate = '';
   isPublished = false;
   sortOrder = 0;
 
@@ -320,10 +364,12 @@ export class AdminAboutDocumentEditComponent implements OnInit {
         this.descriptionUa = d.descriptionUa ?? '';
         this.descriptionEn = d.descriptionEn ?? '';
         this.documentType = d.documentType;
-        this.fileUrl = d.fileUrl ?? '';
+        this.code = d.code;
+        this.accessMode = d.accessMode;
         this.version = d.version ?? '';
         // CHANGED: backend sends ISO date; trim to YYYY-MM-DD for date input
         this.lastReviewDate = d.lastReviewDate ? d.lastReviewDate.substring(0, 10) : '';
+        this.nextReviewDate = d.nextReviewDate ? d.nextReviewDate.substring(0, 10) : '';
         this.isPublished = d.isPublished;
         this.sortOrder = d.sortOrder;
         this.loading.set(false);
@@ -336,6 +382,13 @@ export class AdminAboutDocumentEditComponent implements OnInit {
   }
 
   onSave(): void {
+    if (!this.isEditMode() && !/^CSD-[A-Z]{3,4}-\d{2}$/.test(this.code.trim().toUpperCase())) {
+      this.errorMessage.set(
+        this.isUa ? 'Код має виглядати як CSD-POL-01' : 'Code must look like CSD-POL-01',
+      );
+      return;
+    }
+
     if (!this.titleUa.trim() || !this.titleEn.trim()) {
       this.errorMessage.set(
         this.isUa ? "Заголовки UA та EN обов'язкові" : 'UA and EN titles are required',
@@ -347,15 +400,17 @@ export class AdminAboutDocumentEditComponent implements OnInit {
     this.errorMessage.set('');
 
     // CHANGED: send undefined for empty optional fields (DTO IsOptional rules)
-    const payload: CreateAboutDocumentDto = {
+    // CHANGED: PR-D1 — `code` only goes out on create; PATCH rejects it (immutable).
+    const common: Omit<CreateAboutDocumentDto, 'code'> = {
       titleUa: this.titleUa.trim(),
       titleEn: this.titleEn.trim(),
       descriptionUa: this.descriptionUa.trim() || undefined,
       descriptionEn: this.descriptionEn.trim() || undefined,
       documentType: this.documentType,
-      fileUrl: this.fileUrl.trim() || undefined,
+      accessMode: this.accessMode,
       version: this.version.trim() || undefined,
       lastReviewDate: this.lastReviewDate || undefined,
+      nextReviewDate: this.nextReviewDate || undefined,
       isPublished: this.isPublished,
       sortOrder: this.sortOrder,
     };
@@ -363,9 +418,12 @@ export class AdminAboutDocumentEditComponent implements OnInit {
     const request$ = this.isEditMode()
       ? this.api.patch<AboutDocument>(
           `about/admin/documents/${this.id()}`,
-          payload satisfies UpdateAboutDocumentDto,
+          common satisfies UpdateAboutDocumentDto,
         )
-      : this.api.post<AboutDocument>('about/admin/documents', payload);
+      : this.api.post<AboutDocument>('about/admin/documents', {
+          ...common,
+          code: this.code.trim().toUpperCase(),
+        } satisfies CreateAboutDocumentDto);
 
     request$.subscribe({
       next: () => this.router.navigate(['/admin/about/documents']),

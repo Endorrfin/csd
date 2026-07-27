@@ -8,6 +8,8 @@ import { TestimonialUploadDto } from './dto/testimonial-upload.dto';
 // === ADDED: PR-2 recovery/needs presigned upload ===
 import { NeedsUploadDto } from './dto/needs-upload.dto';
 import { TurnstileGuard } from '../../common/guards/turnstile.guard';
+// === ADDED: PR-D1 — admin upload for the About document registry ===
+import { AboutDocUploadDto } from './dto/about-doc-upload.dto';
 
 @Controller('upload')
 export class UploadController {
@@ -50,6 +52,26 @@ export class UploadController {
       dto.kind,
       dto.contentType,
       dto.formType,
+    );
+  }
+
+  // === ADDED: PR-D1 — About registry PDFs. Admin-only and NOT anonymous, so the
+  // guard pair is Jwt+Roles rather than Turnstile. Files land in the PRIVATE
+  // bucket; the returned s3Key is echoed back to
+  // POST /api/about/admin/documents/:id/files and re-validated there. ===
+  @Post('about-doc-presigned')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  getAboutDocPresignedPost(@Body() dto: AboutDocUploadDto): Promise<{
+    url: string;
+    fields: Record<string, string>;
+    s3Key: string;
+  }> {
+    return this.uploadService.getAboutDocPresignedPost(
+      dto.code,
+      dto.locale,
+      dto.version,
+      dto.contentType,
     );
   }
 }
