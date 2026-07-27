@@ -42,7 +42,8 @@ import { AboutDocument } from '../about.interfaces';
               <th>#</th>
               <th>{{ 'about.admin.documents.title' | translate }}</th>
               <th>{{ 'about.admin.documents.type' | translate }}</th>
-              <th>{{ 'about.admin.documents.fileUrl' | translate }}</th>
+              <th>{{ 'about.admin.documents.code' | translate }}</th>
+              <th>{{ 'about.admin.documents.files' | translate }}</th>
               <th>{{ 'about.admin.documents.version' | translate }}</th>
               <th>{{ 'about.admin.documents.lastReviewDate' | translate }}</th>
               <th>{{ 'about.admin.documents.isPublished' | translate }}</th>
@@ -63,18 +64,16 @@ import { AboutDocument } from '../about.interfaces';
                     {{ 'about.admin.documentType.' + item.documentType | translate }}
                   </span>
                 </td>
+                <td class="td-meta">{{ item.code }}</td>
+                <!-- CHANGED: PR-D1 — the raw file URL is gone; the column now shows
+                     which language variants actually have a current file. -->
                 <td>
-                  @if (item.fileUrl) {
-                    <a
-                      [href]="item.fileUrl"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      class="file-link"
-                    >
-                      📄 {{ isUa ? 'Відкрити' : 'Open' }}
-                    </a>
-                  } @else {
-                    <span class="muted">—</span>
+                  @if (currentLocales(item); as locales) {
+                    @if (locales.length) {
+                      <span class="file-link">{{ locales }}</span>
+                    } @else {
+                      <span class="muted">—</span>
+                    }
                   }
                 </td>
                 <td class="td-meta">{{ item.version || '—' }}</td>
@@ -425,5 +424,14 @@ export class AdminAboutDocumentsListComponent implements OnInit {
   private clearMessages(): void {
     this.successMessage.set('');
     this.errorMessage.set('');
+  }
+
+  // === ADDED: PR-D1 — "UA · EN" summary of the current files on a document ===
+  currentLocales(item: AboutDocument): string {
+    return (item.files ?? [])
+      .filter((file) => file.isCurrent)
+      .map((file) => file.locale.toUpperCase())
+      .sort()
+      .join(' · ');
   }
 }

@@ -5,6 +5,7 @@ import {
   Patch,
   Delete,
   Param,
+  Query,
   Body,
   UseGuards,
   ParseUUIDPipe,
@@ -16,6 +17,9 @@ import { CreateAboutSectionDto } from './dto/create-about-section.dto';
 import { UpdateAboutSectionDto } from './dto/update-about-section.dto';
 import { CreateAboutDocumentDto } from './dto/create-about-document.dto';
 import { UpdateAboutDocumentDto } from './dto/update-about-document.dto';
+// === ADDED: PR-D1 ===
+import { CreateAboutDocumentFileDto } from './dto/create-about-document-file.dto';
+import { AboutDocumentFileQueryDto } from './dto/about-document-file-query.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -27,10 +31,23 @@ export class AboutController {
 
   // ===== PUBLIC =====
 
-  // CHANGED: single endpoint returning published sections + documents (SSR-friendly)
+  // CHANGED: single endpoint returning published sections + documents (SSR-friendly).
+  // PR-D1 — the documents in this payload no longer carry any file URL.
   @Get()
   getPublicAbout() {
     return this.aboutService.getPublicAbout();
+  }
+
+  // === ADDED: PR-D1 — one short-lived presigned GET per document per language.
+  // Public by design (the registry is public), but deliberately NOT batchable:
+  // downloading the whole registry now costs one request per file instead of one
+  // request in total. ===
+  @Get('documents/:code/file')
+  getPublicDocumentFile(
+    @Param('code') code: string,
+    @Query() query: AboutDocumentFileQueryDto,
+  ) {
+    return this.aboutService.getPublicDocumentFile(code, query.locale);
   }
 
   // ===== ADMIN: SECTIONS =====
@@ -113,5 +130,39 @@ export class AboutController {
   @HttpCode(HttpStatus.NO_CONTENT)
   removeDocument(@Param('id', ParseUUIDPipe) id: string) {
     return this.aboutService.removeDocument(id);
+  }
+
+  // ===== ADMIN: DOCUMENT FILES — ADDED: PR-D1 =====
+
+  @Get('admin/documents/:id/files')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  findDocumentFiles(@Param('id', ParseUUIDPipe) id: string) {
+    return this.aboutService.findDocumentFiles(id);
+  }
+
+  @Post('admin/documents/:id/files')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  addDocumentFile(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateAboutDocumentFileDto,
+  ) {
+    return this.aboutService.addDocumentFile(id, dto);
+  }
+
+  @Get('admin/files/:fileId/url')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  getAdminFileUrl(@Param('fileId', ParseUUIDPipe) fileId: string) {
+    return this.aboutService.getAdminFileUrl(fileId);
+  }
+
+  @Delete('admin/files/:fileId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeDocumentFile(@Param('fileId', ParseUUIDPipe) fileId: string) {
+    return this.aboutService.removeDocumentFile(fileId);
   }
 }
