@@ -113,30 +113,35 @@ export class AboutService {
 
   // ===== PUBLIC =====
 
-  // CHANGED: single endpoint payload for SSR — both lists in one trip
-  async getPublicAbout(): Promise<{
-    sections: AboutSection[];
-    documents: PublicAboutDocument[];
-  }> {
-    const [sections, documents] = await Promise.all([
-      this.sectionRepo.find({
-        where: { isPublished: true },
-        order: { sortOrder: 'ASC', createdAt: 'ASC' },
-      }),
-      this.documentRepo.find({
-        where: { isPublished: true },
-        relations: { files: true },
-        order: { sortOrder: 'ASC', titleUa: 'ASC' },
-      }),
-    ]);
+  // PR-D3 — the registry moved to its own page (/about/documents), so this
+  // payload no longer carries it. `/about` renders sections only and must not pay for
+  // a join over about_document_files on every SSR render. Shape kept as an object so
+  // future About-page-wide data can be added without another breaking change.
+  async getPublicAbout(): Promise<{ sections: AboutSection[] }> {
+    const sections = await this.sectionRepo.find({
+      where: { isPublished: true },
+      order: { sortOrder: 'ASC', createdAt: 'ASC' },
+    });
 
-    return {
-      sections,
-      documents: documents
+    return { sections };
+  }
+
+  // === ADDED: PR-D3 — registry feed for the /about/documents page.
+  // Still carries NO file URL (see PublicAboutDocument): links stay one-at-a-time
+  // through GET /api/about/documents/:code/file. ===
+  async getPublicDocuments(): Promise<PublicAboutDocument[]> {
+    const documents = await this.documentRepo.find({
+      where: { isPublished: true },
+      relations: { files: true },
+      order: { sortOrder: 'ASC', titleUa: 'ASC' },
+    });
+
+    return (
+      documents
         .map((document) => this.toPublicDocument(document))
         // a published registry entry with no uploaded file has nothing to show
-        .filter((document) => document.locales.length > 0),
-    };
+        .filter((document) => document.locales.length > 0)
+    );
   }
 
   /**

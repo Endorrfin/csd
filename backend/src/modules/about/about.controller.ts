@@ -31,11 +31,19 @@ export class AboutController {
 
   // ===== PUBLIC =====
 
-  // CHANGED: single endpoint returning published sections + documents (SSR-friendly).
-  // PR-D1 — the documents in this payload no longer carry any file URL.
+  // PR-D3 — sections only. The registry moved to GET /api/about/documents
+  // when it got its own page, so the About page no longer loads it.
   @Get()
   getPublicAbout() {
     return this.aboutService.getPublicAbout();
+  }
+
+  // === ADDED: PR-D3 — registry feed for /about/documents. Declared BEFORE
+  // 'documents/:code/file' for readability only; Nest matches on full path depth,
+  // so the two cannot shadow each other. ===
+  @Get('documents')
+  getPublicDocuments() {
+    return this.aboutService.getPublicDocuments();
   }
 
   // === ADDED: PR-D1 — one short-lived presigned GET per document per language.
