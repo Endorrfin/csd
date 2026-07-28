@@ -1,38 +1,18 @@
 // ui/src/app/features/about/about.ts
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { LanguageService } from '../../core/services/language.service';
 import { ApiService } from '../../core/services/api.service';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
-import {
-  AboutDocumentFileLink,
-  AboutDocumentLocale,
-  AboutDocumentType,
-  AboutSection,
-  PublicAboutDocument,
-} from '../admin/about/about.interfaces';
-import { PageTitleService } from '../../core/services/page-title.service';
+import { AboutSection } from '../admin/about/about.interfaces';
 
+// PR-D3 — the registry moved to the "Documents" sub-tab
+// (features/about/documents/about-documents.ts), so GET /api/about is sections-only
+// and this component no longer knows about documents at all.
 interface PublicAboutResponse {
   sections: AboutSection[];
-  // CHANGED: PR-D1 — documents no longer carry a file URL; see PublicAboutDocument.
-  documents: PublicAboutDocument[];
 }
-
-// CHANGED: PR-D1 — all 10 types of the CSD register, in reading order.
-const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
-  'POLICY',
-  'CODE',
-  'MECHANISM',
-  'REGULATION',
-  'RULES',
-  'PROCEDURE',
-  'MANUAL',
-  'DIRECTIVE',
-  'TEMPLATE',
-  'REPORT',
-];
 
 @Component({
   selector: 'app-about',
@@ -40,13 +20,12 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
   imports: [CommonModule, TranslateModule, QuillHtmlPipe],
   template: `
     <div class="about-page">
-      <h1>{{ 'about.page.title' | translate }}</h1>
-
+      <!-- PR-D3 — <h1> now lives in AboutShellComponent, above the tabs. -->
       @if (loading()) {
         <div class="state state-loading">{{ 'common.loading' | translate }}</div>
       } @else if (errorMessage()) {
         <div class="state state-error">{{ errorMessage() }}</div>
-      } @else if (sections().length === 0 && documents().length === 0) {
+      } @else if (sections().length === 0) {
         <div class="state state-empty">{{ 'about.page.empty' | translate }}</div>
       } @else {
         <!-- SECTIONS -->
@@ -77,80 +56,15 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
             }
           </section>
         }
-
-        <!-- DOCUMENTS REGISTRY -->
-        @if (documents().length > 0) {
-          <section class="about-section documents-section">
-            <h2>{{ 'about.page.documentsHeading' | translate }}</h2>
-
-            @for (group of documentsByType(); track group.type) {
-              <div class="doc-group">
-                <h3>
-                  {{ 'about.page.documentTypes.' + group.type | translate }}
-                  <span class="doc-count">({{ group.docs.length }})</span>
-                </h3>
-
-                <ul class="doc-list">
-                  <!-- CHANGED: PR-D1 — the public payload has no uuid; the register code is the identity. -->
-                  @for (doc of group.docs; track doc.code) {
-                    <li class="doc-item">
-                      <div class="doc-title">{{ getDocTitle(doc) }}</div>
-
-                      @if (getDocDescription(doc); as desc) {
-                        <p class="doc-desc">{{ desc }}</p>
-                      }
-
-                      <div class="doc-meta">
-                        @if (doc.version) {
-                          <span class="meta-tag">{{ doc.version }}</span>
-                        }
-                        @if (doc.lastReviewDate) {
-                          <span class="meta-date">
-                            {{ 'about.page.lastReview' | translate }}:
-                            {{ doc.lastReviewDate | date: 'dd.MM.yyyy' }}
-                          </span>
-                        }
-                        <!-- CHANGED: PR-D1 — no href in the payload any more. The
-                             link is requested per document per language, so the whole
-                             registry can no longer be scraped from one response. -->
-                        @for (loc of doc.locales; track loc) {
-                          <button
-                            type="button"
-                            class="doc-link"
-                            [disabled]="pendingKey() === doc.code + ':' + loc"
-                            (click)="openDocument(doc, loc)"
-                          >
-                            📄 {{ 'about.page.viewFile' | translate }} ·
-                            {{ loc.toUpperCase() }}
-                          </button>
-                        }
-                      </div>
-
-                      @if (docErrorCode() === doc.code) {
-                        <p class="doc-error">{{ docErrorMessage() }}</p>
-                      }
-                    </li>
-                  }
-                </ul>
-              </div>
-            }
-          </section>
-        }
       }
     </div>
   `,
   styles: [
     `
+      /* PR-D3 — the page container and <h1> moved to AboutShellComponent;
+         this component now renders inside the shell's <router-outlet>. */
       .about-page {
-        max-width: 1024px;
-        margin: 0 auto;
-        padding: 2rem 1rem;
-      }
-      .about-page > h1 {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #1a365d;
-        margin: 0 0 2rem;
+        display: block;
       }
 
       .state {
@@ -246,99 +160,12 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
         color: #475569;
       }
 
-      /* Documents registry */
-      .doc-group {
-        margin-bottom: 2rem;
-      }
-      .doc-group:last-child {
-        margin-bottom: 0;
-      }
-      .doc-group h3 {
-        font-size: 1.05rem;
-        font-weight: 600;
-        color: #1a365d;
-        margin: 0 0 0.75rem;
-      }
-      .doc-count {
-        color: #94a3b8;
-        font-weight: 400;
-        font-size: 0.85rem;
-      }
-      .doc-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      .doc-item {
-        padding: 1rem;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        margin-bottom: 0.5rem;
-      }
-      .doc-item:last-child {
-        margin-bottom: 0;
-      }
-      .doc-title {
-        font-weight: 500;
-        color: #1a365d;
-        margin-bottom: 0.25rem;
-        line-height: 1.4;
-      }
-      .doc-desc {
-        font-size: 0.875rem;
-        color: #475569;
-        margin: 0.25rem 0 0.5rem;
-        line-height: 1.5;
-      }
-      .doc-meta {
-        display: flex;
-        gap: 0.75rem;
-        flex-wrap: wrap;
-        align-items: center;
-        font-size: 0.8rem;
-        color: #64748b;
-        margin-top: 0.5rem;
-      }
-      .meta-tag {
-        background: #f1f5f9;
-        color: #475569;
-        padding: 0.15rem 0.5rem;
-        border-radius: 4px;
-        font-weight: 500;
-      }
-      .meta-date {
-        color: #64748b;
-      }
-      .doc-error {
-        margin: 0.5rem 0 0;
-        font-size: 0.85rem;
-        color: #c53030;
-      }
-      .doc-link {
-        appearance: none;
-        border: 0;
-        background: none;
-        font: inherit;
-        cursor: pointer;
-        color: #2b6cb0;
-        text-decoration: none;
-        font-weight: 500;
-        margin-left: auto;
-      }
-      .doc-link:hover {
-        text-decoration: underline;
-      }
+      /* PR-D3 — .doc-* styles moved with the registry to
+         features/about/documents/about-documents.ts. */
 
       @media (max-width: 640px) {
-        .about-page > h1 {
-          font-size: 1.6rem;
-        }
         .about-section h2 {
           font-size: 1.25rem;
-        }
-        .doc-link {
-          margin-left: 0;
         }
       }
     `,
@@ -346,36 +173,18 @@ const DOCUMENT_TYPE_ORDER: AboutDocumentType[] = [
 })
 export class AboutComponent implements OnInit {
   private readonly api = inject(ApiService);
-  // === ADDED: Page title service for SEO ===
-  private readonly pageTitle = inject(PageTitleService);
-  // === END ADDED ===
 
   // ----- State -----
   loading = signal(true);
   errorMessage = signal('');
   sections = signal<AboutSection[]>([]);
-  documents = signal<PublicAboutDocument[]>([]);
-  // === ADDED: PR-D1 — one in-flight link request at a time ===
-  pendingKey = signal('');
-  docErrorCode = signal('');
-  docErrorMessage = signal('');
-
-  // ----- Computed -----
-  // pre-grouped documents, in fixed type order, only types with content
-  documentsByType = computed<{ type: AboutDocumentType; docs: PublicAboutDocument[] }[]>(() => {
-    const all = this.documents();
-    return DOCUMENT_TYPE_ORDER.map((type) => ({
-      type,
-      docs: all.filter((d) => d.documentType === type),
-    })).filter((g) => g.docs.length > 0);
-  });
 
   // signal-based language flag (reactive in zoneless) — call as isUa() everywhere
   protected readonly isUa = inject(LanguageService).isUa;
 
   ngOnInit(): void {
+    // PR-D3 — the page title is set by AboutShellComponent for both sub-tabs.
     this.loadAbout();
-    this.pageTitle.setTitle('about.page.title');
   }
 
   private loadAbout(): void {
@@ -385,7 +194,6 @@ export class AboutComponent implements OnInit {
     this.api.get<PublicAboutResponse>('about').subscribe({
       next: (res) => {
         this.sections.set(res.sections);
-        this.documents.set(res.documents);
         this.loading.set(false);
       },
       error: (err) => {
@@ -409,46 +217,5 @@ export class AboutComponent implements OnInit {
 
   getKeyFacts(s: AboutSection) {
     return s.metadata?.items ?? [];
-  }
-
-  getDocTitle(d: PublicAboutDocument): string {
-    return this.isUa() ? d.titleUa : d.titleEn;
-  }
-
-  getDocDescription(d: PublicAboutDocument): string | null {
-    return this.isUa() ? d.descriptionUa : d.descriptionEn;
-  }
-
-  /**
-   * === ADDED: PR-D1 — fetch a short-lived link for ONE document in ONE language.
-   * PR-D2 replaces window.open with the in-app viewer (ngx-extended-pdf-viewer, no
-   * download button); until then the presigned URL is opened directly. It is signed
-   * with `inline` disposition, expires in 5 minutes and is issued per document —
-   * which is the part that closes the bulk-download hole.
-   */
-  openDocument(doc: PublicAboutDocument, locale: AboutDocumentLocale): void {
-    const key = `${doc.code}:${locale}`;
-    if (this.pendingKey() === key) {
-      return;
-    }
-    this.pendingKey.set(key);
-    this.docErrorCode.set('');
-
-    this.api
-      .get<AboutDocumentFileLink>(`about/documents/${doc.code}/file?locale=${locale}`)
-      .subscribe({
-        next: (link) => {
-          this.pendingKey.set('');
-          window.open(link.url, '_blank', 'noopener');
-        },
-        error: (err) => {
-          this.pendingKey.set('');
-          this.docErrorCode.set(doc.code);
-          this.docErrorMessage.set(
-            err?.error?.message ||
-              (this.isUa() ? 'Не вдалося відкрити документ' : 'Could not open the document'),
-          );
-        },
-      });
   }
 }

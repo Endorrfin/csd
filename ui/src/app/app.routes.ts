@@ -8,9 +8,27 @@ export const routes: Routes = [
     path: '',
     loadComponent: () => import('./features/home/home').then((m) => m.HomeComponent),
   },
+  // PR-D3 — "About us" is now a shell with sub-tabs.
+  // Deliberately NO `redirectTo` on the empty child: /about is an indexed public URL
+  // (header.ts, winterization-form.html) and must stay the real overview address.
+  // The future PDF viewer belongs on 'about/documents/:code' declared ABOVE this
+  // route, so it renders full-width without the shell's heading and tab bar. ===
   {
     path: 'about',
-    loadComponent: () => import('./features/about/about').then((m) => m.AboutComponent),
+    loadComponent: () => import('./features/about/about-shell').then((m) => m.AboutShellComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/about/about').then((m) => m.AboutComponent),
+      },
+      {
+        path: 'documents',
+        loadComponent: () =>
+          import('./features/about/documents/about-documents').then(
+            (m) => m.AboutDocumentsComponent,
+          ),
+      },
+    ],
   },
   {
     path: 'blog',

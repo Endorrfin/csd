@@ -98,6 +98,19 @@
         "isPublished": "Published",
         "actions": "Actions"
       },
+      "files": {
+        "heading": "Document files",
+        "locale": "Language",
+        "version": "Version",
+        "name": "File",
+        "size": "Size",
+        "current": "Current",
+        "open": "View",
+        "pick": "Add PDF",
+        "pickHint": "PDF only, up to 4096 KB. A new file replaces the current one for that language.",
+        "uploading": "Uploading…",
+        "empty": "No files yet"
+      },
       "common": {
         "save": "Save",
         "cancel": "Cancel",
@@ -154,6 +167,16 @@
       "empty": "Information will be available soon",
       "viewFile": "View",
       "lastReview": "Last review"
+    },
+    "tabs": {
+      "ariaLabel": "About us sections",
+      "overview": "About the Fund",
+      "documents": "Documents"
+    },
+    "documents": {
+      "empty": "The document registry is currently empty",
+      "filterLabel": "Filter by document type",
+      "filterAll": "All types"
     }
   },
   "ACTIVITY_MAP": {
