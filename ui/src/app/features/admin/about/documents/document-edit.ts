@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ApiService } from '../../../../core/services/api.service';
+// PR-D2 — per-language PDF upload block ===
+import { DocumentFilesComponent } from './document-files';
 import {
   AboutDocument,
   AboutDocumentAccessMode,
@@ -18,7 +20,7 @@ import {
 @Component({
   selector: 'app-admin-about-document-edit',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TranslateModule],
+  imports: [CommonModule, FormsModule, RouterLink, TranslateModule, DocumentFilesComponent],
   template: `
     <div class="form-header">
       <h2>
@@ -152,12 +154,14 @@ import {
           ></textarea>
         </div>
 
-        <!-- CHANGED: PR-D1 — the free-text file URL is gone. PDFs are uploaded to the
-             private bucket and attached per language/version; the upload widget lands
-             in PR-D2, until then use POST /api/about/admin/documents/:id/files. -->
-        <div class="field">
-          <small class="hint">{{ 'about.admin.documents.filesHint' | translate }}</small>
-        </div>
+        <!-- CHANGED: PR-D2 — files are managed in their own block below the form
+             (outside <form> on purpose: its ngModel controls must not register with
+             this NgForm). Only reachable in edit mode, since the upload needs an id. -->
+        @if (!isEditMode()) {
+          <div class="field">
+            <small class="hint">{{ 'about.admin.documents.filesHint' | translate }}</small>
+          </div>
+        }
 
         <div class="row">
           <div class="field">
@@ -184,6 +188,15 @@ import {
           </button>
         </div>
       </form>
+
+      <!-- PR-D2 -->
+      @if (isEditMode() && code) {
+        <app-admin-about-document-files
+          [documentId]="id()!"
+          [code]="code"
+          [defaultVersion]="version || 'v1'"
+        />
+      }
     }
   `,
   styles: [
