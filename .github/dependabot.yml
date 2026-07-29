@@ -10,8 +10,15 @@
 # main without CI having proven it loads and passes.
 #
 # Grouping rule below: minor/patch updates are batched per area to keep PR
-# volume sane; MAJOR updates are deliberately left ungrouped so each one gets
-# its own PR and its own review.
+# volume sane.
+#
+# MAJOR updates are no longer proposed automatically. The original
+# "one ungrouped PR per major" idea produced 16 simultaneous major PRs on the
+# first run (typescript 5.9 -> 7.0, typeorm 0.3 -> 1.1, Angular 21 -> 22 split
+# across five unmergeable PRs, eslint 9 -> 10, @types/node 22 -> 26, ...).
+# That is not a review queue, it is noise — and noise is what let the
+# sanitize-html regression through in the first place. Majors are now opt-in:
+# bump them by hand, one framework at a time, on a dedicated branch.
 
 version: 2
 
@@ -78,6 +85,16 @@ updates:
     # ERR_REQUIRE_ESM -> 502 on every route. Unpin only together with a bundler
     # (esbuild) or an `await import()` refactor of SanitizeHtmlPipe.
     ignore:
+      # no automatic major bumps — see header comment.
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
+      # sanitize-html is pinned to an exact 2.17.5 on purpose: 2.17.6 bumped
+      # htmlparser2 ^10 -> ^12 (ESM-only) and killed the Lambda cold start with
+      # ERR_REQUIRE_ESM -> 502 on every route. Blocked at ALL levels, not just
+      # major, because that break shipped in a PATCH release.
+      # Unpin only together with a bundler (esbuild) or an `await import()`
+      # refactor of SanitizeHtmlPipe — and re-run `npm run check:cjs`.
       - dependency-name: sanitize-html
 
   # ── Frontend: Angular 21 standalone + SSR ────────────────────────────────
@@ -132,6 +149,13 @@ updates:
           - '@types/*'
         update-types:
           - patch
+    # no automatic major bumps — see header comment.
+    # Angular majors in particular must move as one hand-made branch
+    # (core + common + cli + ssr + devkit + angular-eslint together).
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - version-update:semver-major
 
   # ── GitHub Actions: deploy.yml / test.yml pin exact action versions ──────
   - package-ecosystem: github-actions
@@ -151,6 +175,11 @@ updates:
       github-actions:
         patterns:
           - '*'
+        # majors included here, unlike the npm ecosystems above.
+        # An action major (actions/checkout v4 -> v7) cannot brick the Lambda —
+        # worst case CI goes red, which is a safe failure mode. Grouping them
+        # keeps it to ONE reviewable PR instead of one per action.
         update-types:
+          - major
           - minor
           - patch
