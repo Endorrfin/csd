@@ -12,10 +12,7 @@ import { User } from '../../users/entities/user.entity';
 
 /** Mirrors wash AuditAction values; varchar (not pg enum) to stay shared/extensible. */
 export type NeedsAuditAction =
-  | 'created'
-  | 'updated'
-  | 'status_changed'
-  | 'deleted';
+  'created' | 'updated' | 'status_changed' | 'deleted';
 
 /**
  * Audit trail shared by all NEW needs forms (WASH keeps its own

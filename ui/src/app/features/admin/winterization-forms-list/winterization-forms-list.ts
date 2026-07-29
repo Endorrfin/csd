@@ -25,13 +25,7 @@ import {
 
 // Sortable columns must match WINTERIZATION_SORTABLE_COLUMNS on the backend.
 type SortField =
-  | 'createdAt'
-  | 'trackingNumber'
-  | 'region'
-  | 'estimatedCost'
-  | 'status'
-  | 'urgency'
-  | 'needBy';
+  'createdAt' | 'trackingNumber' | 'region' | 'estimatedCost' | 'status' | 'urgency' | 'needBy';
 type SortDir = 'ASC' | 'DESC';
 
 interface PaginatedResponse {

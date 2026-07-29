@@ -159,12 +159,7 @@ export function getUnitLabel(unit: EquipmentUnit, isUa: boolean): string {
 // ══════════════════════════════════════════════════════════════
 
 export type WashFormStatus =
-  | 'new'
-  | 'in_review'
-  | 'approved'
-  | 'rejected'
-  | 'in_progress'
-  | 'completed';
+  'new' | 'in_review' | 'approved' | 'rejected' | 'in_progress' | 'completed';
 
 export interface WashFormBoreholeFull {
   id: string;

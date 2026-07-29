@@ -1,0 +1,30 @@
+// === ADDED: test-only TS config — `nest build` still uses tsconfig.json ===
+//
+// Why this exists:
+//   sanitize-html >= 2.17.6 depends on htmlparser2 v12, which is ESM-only
+//   ("type": "module", and its `exports` map has no `require` condition).
+//   Node >= 22.12 loads that graph fine through require(esm), which is what
+//   the Lambda bundle does. Jest's CJS runtime does NOT implement require(esm),
+//   so ts-jest has to downlevel those .js files to CommonJS instead.
+//
+//   That needs `allowJs` (ts-jest ignores .js otherwise) and `module: commonjs`
+//   (under nodenext, a file inside a "type": "module" package stays ESM).
+//   `declaration` must be off — TS forbids it together with `allowJs`.
+//
+// Paired with `transformIgnorePatterns` in the jest configs, which is what
+// actually lets these node_modules files reach the transformer.
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node10",
+    "resolvePackageJsonExports": false,
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": false,
+    "incremental": false
+  },
+  // `allowJs` would otherwise pull eslint.config.mjs into the program, and its
+  // `import.meta` is invalid under module: commonjs.
+  "exclude": ["node_modules", "dist", "eslint.config.mjs"]
+}
