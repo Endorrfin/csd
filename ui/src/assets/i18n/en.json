@@ -194,6 +194,14 @@
     },
     "MAP_LOAD_ERROR": "Failed to load map"
   },
+  "HEADER": {
+    "SWITCH_TO_EN": "Switch language to English",
+    "SWITCH_TO_UA": "Switch language to Ukrainian",
+    "OPEN_MENU": "Open menu",
+    "CLOSE_MENU": "Close menu",
+    "ADMIN": "Admin",
+    "LOGOUT": "Logout"
+  },
   "FOOTER": {
     "TITLE": "«Charitable Fund «Centre for Support and Development»»",
     "RIGHTS": "All rights reserved"
