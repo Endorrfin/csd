@@ -13,13 +13,15 @@ import sanitizeHtml from 'sanitize-html';
  * pulled jsdom → @exodus/bytes (ESM), which crashed Lambda cold-start with
  * ERR_REQUIRE_ESM.
  *
- * CHANGED: sanitize-html >= 2.17.6 depends on htmlparser2 v12, which is
- * ESM-only. Our CJS bundle now reaches it through require(esm), so this file
- * requires Node >= 22.12 at runtime (Lambda runs nodejs22.x — fine). Two
- * guards keep that honest: `npm run check:cjs` exercises the untransformed
- * require() path, and the jest configs carry a `transformIgnorePatterns`
- * exception plus tsconfig.spec.json so the test runner can load it at all.
- * Do NOT drop those without re-checking the cold-start path.
+ * CHANGED: `sanitize-html` is PINNED to an exact 2.17.5 in package.json — do
+ * not float it. 2.17.6 bumped htmlparser2 ^10 -> ^12, which is ESM-only, and
+ * AWS's managed nodejs22.x runtime is built WITHOUT require(esm) support (it
+ * cannot be re-enabled via NODE_OPTIONS). That took production down with
+ * ERR_REQUIRE_ESM at cold start — 502 on every route, exactly like the earlier
+ * isomorphic-dompurify attempt. Plain Node 22.12+ hides the bug locally and in
+ * CI, so `npm run check:cjs` runs with --no-experimental-require-module.
+ * The jest configs additionally carry a `transformIgnorePatterns` exception
+ * plus tsconfig.spec.json; do NOT drop those without re-checking cold start.
  *
  * Keep `allowedTags` in sync with `ui/src/app/shared/config/quill.config.ts`.
  */

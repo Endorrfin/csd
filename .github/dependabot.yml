@@ -72,6 +72,13 @@ updates:
           - '@types/*'
         update-types:
           - patch
+    # === ADDED: sanitize-html is pinned to an exact 2.17.5 on purpose. ===
+    # 2.17.6 bumped htmlparser2 ^10 -> ^12 (ESM-only). AWS's managed nodejs22.x
+    # runtime has no require(esm), so the Lambda dies at cold start with
+    # ERR_REQUIRE_ESM -> 502 on every route. Unpin only together with a bundler
+    # (esbuild) or an `await import()` refactor of SanitizeHtmlPipe.
+    ignore:
+      - dependency-name: sanitize-html
 
   # ── Frontend: Angular 21 standalone + SSR ────────────────────────────────
   - package-ecosystem: npm
