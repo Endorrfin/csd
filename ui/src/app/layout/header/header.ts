@@ -21,11 +21,14 @@ import { Router } from '@angular/router';
         </a>
 
         <!-- hamburger button (mobile only) -->
+        <!-- translated aria-label (was hardcoded EN) + aria-expanded/aria-controls so screen readers know open/closed state -->
         <button
           class="header__burger"
           [class.header__burger--open]="isMenuOpen()"
           (click)="toggleMenu()"
-          aria-label="Toggle menu"
+          [attr.aria-label]="(isMenuOpen() ? 'HEADER.CLOSE_MENU' : 'HEADER.OPEN_MENU') | translate"
+          [attr.aria-expanded]="isMenuOpen()"
+          aria-controls="header-nav"
         >
           <span></span>
           <span></span>
@@ -33,7 +36,8 @@ import { Router } from '@angular/router';
         </button>
 
         <!-- nav with mobile open/close state -->
-        <nav class="header__nav" [class.header__nav--open]="isMenuOpen()">
+        <!-- id added so the burger button's aria-controls can reference this nav -->
+        <nav id="header-nav" class="header__nav" [class.header__nav--open]="isMenuOpen()">
           <a
             routerLink="/"
             routerLinkActive="active"
@@ -95,7 +99,8 @@ import { Router } from '@angular/router';
               class="nav-admin"
               (click)="closeMenu()"
             >
-              {{ isUa() ? 'Адмін' : 'Admin' }}
+              <!-- moved off inline ternary onto the HEADER i18n namespace -->
+              {{ 'HEADER.ADMIN' | translate }}
             </a>
           }
 
@@ -113,7 +118,7 @@ import { Router } from '@angular/router';
             @if (auth.isLoggedIn()) {
               <span class="header__email">{{ auth.userEmail() }}</span>
               <button (click)="logout()" class="header__login">
-                {{ isUa() ? 'Вийти' : 'Logout' }}
+                {{ 'HEADER.LOGOUT' | translate }}
               </button>
             } @else {
               <a routerLink="/login" class="header__login" (click)="closeMenu()">
@@ -135,7 +140,7 @@ import { Router } from '@angular/router';
           @if (auth.isLoggedIn()) {
             <span class="header__email">{{ auth.userEmail() }}</span>
             <button (click)="logout()" class="header__login">
-              {{ isUa() ? 'Вийти' : 'Logout' }}
+              {{ 'HEADER.LOGOUT' | translate }}
             </button>
           } @else {
             <a routerLink="/login" class="header__login">{{ 'NAV.LOGIN' | translate }}</a>
@@ -147,11 +152,12 @@ import { Router } from '@angular/router';
     <!-- overlay to close menu on outside click -->
     @if (isMenuOpen()) {
       <!-- converted div to button for keyboard support + focusability -->
+      <!-- aria-label now reuses HEADER.CLOSE_MENU instead of an inline ternary -->
       <button
         type="button"
         class="header__overlay"
         (click)="closeMenu()"
-        [attr.aria-label]="isUa() ? 'Закрити меню' : 'Close menu'"
+        [attr.aria-label]="'HEADER.CLOSE_MENU' | translate"
       ></button>
     }
   `,
