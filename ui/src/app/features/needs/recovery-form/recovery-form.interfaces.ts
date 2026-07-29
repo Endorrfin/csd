@@ -288,12 +288,7 @@ export const COFINANCING_OPTIONS: readonly LabeledOption<CofinancingOption>[] = 
 ];
 
 export type DocsAvailableOption =
-  | 'survey_act_326'
-  | 'defect_act'
-  | 'cost_estimate'
-  | 'design_docs'
-  | 'design_expertise'
-  | 'none';
+  'survey_act_326' | 'defect_act' | 'cost_estimate' | 'design_docs' | 'design_expertise' | 'none';
 
 export const DOCS_AVAILABLE_OPTIONS: readonly LabeledOption<DocsAvailableOption>[] = [
   {
@@ -468,12 +463,7 @@ export interface RecoveryDraft {
 // ══════════════════════════════════════════════════════════════
 
 export type RecoveryFormStatus =
-  | 'new'
-  | 'in_review'
-  | 'approved'
-  | 'rejected'
-  | 'in_progress'
-  | 'completed';
+  'new' | 'in_review' | 'approved' | 'rejected' | 'in_progress' | 'completed';
 
 export type AttachmentKind = 'photo' | 'document';
 

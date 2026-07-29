@@ -24,7 +24,7 @@ describe('TurnstileGuard', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    global.fetch = fetchMock as unknown as typeof fetch;
+    global.fetch = fetchMock;
     // Silence expected warn/error output from the fail-closed paths.
     jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
     jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);

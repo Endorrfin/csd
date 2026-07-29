@@ -219,7 +219,7 @@ function makeService(): WinterizationXlsxExportService {
 /** Flatten a row's cells to primitive values for `toContain` assertions. */
 function rowValues(sheet: ExcelJS.Worksheet, rowNumber: number): unknown[] {
   const raw = sheet.getRow(rowNumber).values;
-  return Array.isArray(raw) ? (raw as unknown[]) : [];
+  return Array.isArray(raw) ? raw : [];
 }
 
 async function loadWorkbook(buffer: Buffer): Promise<ExcelJS.Workbook> {

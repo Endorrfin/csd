@@ -105,13 +105,7 @@ export const FACILITY_KIND_OPTIONS: readonly LabeledOption<FacilityKind>[] = [
 ];
 
 export type HeatingSource =
-  | 'district'
-  | 'autonomous_gas'
-  | 'autonomous_solid_fuel'
-  | 'electric'
-  | 'stove'
-  | 'none'
-  | 'other';
+  'district' | 'autonomous_gas' | 'autonomous_solid_fuel' | 'electric' | 'stove' | 'none' | 'other';
 
 export const HEATING_SOURCE_OPTIONS: readonly LabeledOption<HeatingSource>[] = [
   { value: 'district', ua: 'Централізоване', en: 'District heating' },
@@ -304,12 +298,7 @@ export const SOLID_FUEL_ITEMS: readonly SolidFuelItemDef[] = [
 ];
 
 export type HeatingApplianceItem =
-  | 'convector'
-  | 'oil_heater'
-  | 'fan_heater'
-  | 'solid_fuel_stove'
-  | 'potbelly_stove'
-  | 'gas_heater';
+  'convector' | 'oil_heater' | 'fan_heater' | 'solid_fuel_stove' | 'potbelly_stove' | 'gas_heater';
 
 export const HEATING_APPLIANCE_ITEMS: readonly NeedItemDef<HeatingApplianceItem>[] = [
   { item: 'convector', ua: 'Конвектор', en: 'Convector', unitUa: 'шт', unitEn: 'pcs' },
@@ -327,11 +316,7 @@ export const HEATING_APPLIANCE_ITEMS: readonly NeedItemDef<HeatingApplianceItem>
 ];
 
 export type HeatingRepairItem =
-  | 'boiler'
-  | 'heat_networks'
-  | 'pumps'
-  | 'heat_substation'
-  | 'water_heating_equipment';
+  'boiler' | 'heat_networks' | 'pumps' | 'heat_substation' | 'water_heating_equipment';
 
 export const HEATING_REPAIR_ITEMS: readonly NeedItemDef<HeatingRepairItem>[] = [
   {
@@ -375,13 +360,7 @@ export const INSULATION_ITEMS: readonly NeedItemDef<InsulationItem>[] = [
 ];
 
 export type ResiliencePointItem =
-  | 'generator'
-  | 'heating'
-  | 'furniture'
-  | 'water_boiler'
-  | 'connectivity'
-  | 'powerbanks'
-  | 'other';
+  'generator' | 'heating' | 'furniture' | 'water_boiler' | 'connectivity' | 'powerbanks' | 'other';
 
 export const RESILIENCE_POINT_ITEMS: readonly NeedItemDef<ResiliencePointItem>[] = [
   { item: 'generator', ua: 'Генератор', en: 'Generator', unitUa: 'шт', unitEn: 'pcs' },
@@ -463,11 +442,7 @@ export const GENERATOR_FUEL_TYPE_OPTIONS: readonly LabeledOption<GeneratorFuelTy
 ];
 
 export type GeneratorPurpose =
-  | 'boiler_house'
-  | 'water_utility'
-  | 'resilience_point'
-  | 'facility'
-  | 'other';
+  'boiler_house' | 'water_utility' | 'resilience_point' | 'facility' | 'other';
 
 export const GENERATOR_PURPOSE_OPTIONS: readonly LabeledOption<GeneratorPurpose>[] = [
   { value: 'boiler_house', ua: 'Котельня', en: 'Boiler house' },
@@ -507,10 +482,7 @@ export const URGENCY_OPTIONS: readonly LabeledOption<WinterizationUrgency>[] = [
 ];
 
 export type WinterizationCostBasis =
-  | 'cost_estimate'
-  | 'price_offer'
-  | 'expert_assessment'
-  | 'applicant_estimate';
+  'cost_estimate' | 'price_offer' | 'expert_assessment' | 'applicant_estimate';
 
 export const COST_BASIS_OPTIONS: readonly LabeledOption<WinterizationCostBasis>[] = [
   { value: 'cost_estimate', ua: 'Кошторис', en: 'Cost estimate' },
@@ -723,12 +695,7 @@ export interface WinterizationDraft {
 
 /** Shared 6-value lifecycle across every needs form (needs_form_status_enum). */
 export type WinterizationFormStatus =
-  | 'new'
-  | 'in_review'
-  | 'approved'
-  | 'rejected'
-  | 'in_progress'
-  | 'completed';
+  'new' | 'in_review' | 'approved' | 'rejected' | 'in_progress' | 'completed';
 
 export type AttachmentKind = 'photo' | 'document';
 

@@ -13,6 +13,14 @@ import sanitizeHtml from 'sanitize-html';
  * pulled jsdom → @exodus/bytes (ESM), which crashed Lambda cold-start with
  * ERR_REQUIRE_ESM.
  *
+ * CHANGED: sanitize-html >= 2.17.6 depends on htmlparser2 v12, which is
+ * ESM-only. Our CJS bundle now reaches it through require(esm), so this file
+ * requires Node >= 22.12 at runtime (Lambda runs nodejs22.x — fine). Two
+ * guards keep that honest: `npm run check:cjs` exercises the untransformed
+ * require() path, and the jest configs carry a `transformIgnorePatterns`
+ * exception plus tsconfig.spec.json so the test runner can load it at all.
+ * Do NOT drop those without re-checking the cold-start path.
+ *
  * Keep `allowedTags` in sync with `ui/src/app/shared/config/quill.config.ts`.
  */
 @Injectable()

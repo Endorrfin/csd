@@ -119,7 +119,7 @@ describe('InquiryService', () => {
       repo.findOne.mockResolvedValue({
         id: 'uuid-1',
         status: InquiryStatus.NEW,
-      } as Inquiry);
+      });
 
       await expect(service.remove('uuid-1')).rejects.toBeInstanceOf(
         BadRequestException,
@@ -131,7 +131,7 @@ describe('InquiryService', () => {
       repo.findOne.mockResolvedValue({
         id: 'uuid-1',
         status: InquiryStatus.ARCHIVED,
-      } as Inquiry);
+      });
       repo.delete.mockResolvedValue(undefined);
 
       await service.remove('uuid-1');

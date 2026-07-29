@@ -41,8 +41,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # CHANGED: lint:check, not lint — `npm run lint` carries --fix, which
+      # silently rewrites files in the runner instead of failing the PR.
       - name: Lint
-        run: npm run lint
+        run: npm run lint:check
+
+      # === ADDED: proves the untransformed CommonJS graph still loads. ===
+      # Jest downlevels the ESM-only deps (sanitize-html -> htmlparser2 v12),
+      # so it cannot catch an ERR_REQUIRE_ESM cold-start crash on Lambda.
+      - name: CommonJS load check
+        run: npm run check:cjs
 
       - name: Unit tests
         run: npm test
