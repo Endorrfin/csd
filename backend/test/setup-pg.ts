@@ -15,6 +15,7 @@
 // behavior varies across Jest versions. The tmp-file handshake is bulletproof.
 
 import { writeFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DataSource } from 'typeorm';
@@ -43,10 +44,16 @@ export default async function globalSetup(): Promise<void> {
 
   console.log('\n[test:e2e] starting Postgres 16 container…');
 
+  // generate the container password per run instead of hardcoding it.
+  // The old literal ('csd_test') was flagged by GitGuardian as a Generic Password.
+  // It was never a real credential — the container is ephemeral, bound to a
+  // random localhost port and destroyed in teardown — but a credential-shaped
+  // literal in git is worth avoiding on principle, and it keeps secret scanning
+  // signal-to-noise high. Same reasoning as JWT_SECRET in setup-env.ts.
   const container = await new PostgreSqlContainer('postgres:16-alpine')
     .withDatabase('csd_test')
     .withUsername('csd_test')
-    .withPassword('csd_test')
+    .withPassword(randomBytes(24).toString('hex'))
     .start();
 
   const info: PgInfo = {

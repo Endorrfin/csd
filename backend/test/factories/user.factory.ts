@@ -9,6 +9,7 @@
 // this shape as new modules get covered.
 
 import * as bcrypt from 'bcrypt';
+import { randomBytes } from 'node:crypto';
 import { DataSource } from 'typeorm';
 import { User, UserRole } from '../../src/modules/users/entities/user.entity';
 
@@ -33,7 +34,12 @@ export async function createUser(
   overrides: CreateUserOverrides = {},
 ): Promise<CreatedUser> {
   counter += 1;
-  const password = overrides.password ?? 'Test1234!';
+  // CHANGED: random default instead of a hardcoded 'Test1234!'. Callers get the
+  // plain-text value back in `CreatedUser.password`, so nothing needs to know it
+  // up front — and no credential-shaped literal ends up in git. See the same
+  // reasoning in test/setup-pg.ts and test/setup-env.ts.
+  const password =
+    overrides.password ?? `Aa1!${randomBytes(12).toString('hex')}`;
   const passwordHash = await bcrypt.hash(password, 4); // 4 rounds — fast for tests
 
   const repo = dataSource.getRepository(User);
