@@ -1,8 +1,10 @@
-# Documentation Audit — 2026-07-28 (revised 2026-07-29)
+# Documentation Audit — 2026-07-28 (rev. 2 2026-07-29 · rev. 3 2026-07-29, during pass A)
 
 Ground truth for the documentation refresh. Every fact below was read from source at commit `d93b258` and spot-verified; nothing here is copied from an existing document.
 
-> **Revision 2026-07-29.** Three findings changed after live AWS output and repository archaeology. Two of them were **inverted** — see §0. Read §0 before anything else.
+> **Revision 2 (2026-07-29).** Three findings changed after live AWS output and repository archaeology. Two of them were **inverted** — see §0. Read §0 before anything else.
+>
+> **Revision 3 (2026-07-29, written during pass A).** `feat/test-infrastructure` has been **merged**, and `main` has moved from `d93b258` to `1c1030f`. Several rev. 1/2 findings flipped as a result, and one new production incident landed in between. See **§0.5**, which supersedes §0.3 and §3.6.
 
 **Purpose.** The nine documents in this repo drifted 1–4 months behind the code. This file is the verified input for rewriting them, so the rewrite sessions do not have to re-discover the codebase. Where this file and a document disagree, this file wins; where this file and the code disagree, **the code wins** — re-verify before quoting.
 
@@ -95,6 +97,52 @@ So `CONTRIBUTING.md` describes **real work that was never merged**, not an inven
 
 The dev/prod major-version skew (14 vs 16) is real and undocumented: migrations are authored and tested on 14, applied to 16. Usually benign, occasionally not.
 
+### 0.5 Rev. 3 — `feat/test-infrastructure` is merged, and `main` moved on
+
+**Supersedes §0.3 and §3.6.** Verified at HEAD `1c1030f`.
+
+`feat/test-infrastructure` merged as `dfac315` (PR #78). Three commits landed on `main` after it. The findings that were *conditional on the merge* are now simply **false of `main`**:
+
+| Rev. 1/2 finding | Status at `1c1030f` |
+| --- | --- |
+| "No PR-check CI on `main`" | **FALSE.** `.github/workflows/test.yml` ("PR Checks") runs on `pull_request` → `main` |
+| "`backend/test/jest-e2e.json` does not exist / is gitignored" | **FALSE.** It is tracked, via the `!test/jest-e2e.json` negation at `backend/.gitignore:39` |
+| "`test:e2e` cannot run on a clone" | **FALSE.** Testcontainers `postgres:16-alpine`, runs all migrations, `maxWorkers: 1` |
+| "13 migrations on `main`, 14 on the branch" | **14 on `main`** |
+| CONTRIBUTING's Testcontainers section describes an unmerged branch | It now describes `main` |
+| CONTRIBUTING:500 "not running lint before pushing blocks the PR" | Now **true for the backend**; still false for `ui` |
+
+**What `test.yml` does *not* cover, and this is the sharpest remaining CI finding:** it has exactly **one job**, `backend`. The entire `ui` app is ungated on pull requests — no `ng lint`, no `typecheck`, no `ng test`, no `format:check`, no `ng build`. `ui`'s only CI execution is the production build in `deploy.yml`, after merge. Neither workflow ever invokes `npm run verify`.
+
+**New since `d93b258` — Incident #4, a second ESM production outage.** `sanitize-html` ≥ 2.17.6 pulls ESM-only `htmlparser2` v12. AWS's managed `nodejs22.x` is built **without** `require(esm)` support and it cannot be re-enabled via `NODE_OPTIONS` — but plain Node 22.12+ locally and on GitHub Actions *does* support it, so every check stayed green while production returned 502 on every route. Jest could not catch it either (`transformIgnorePatterns` downlevels those files to CJS).
+
+Mitigations now in the repo, all of which the documents must describe:
+- `backend/scripts/check-cjs-load.cjs` + `npm run check:cjs` — `require()`s every runtime dependency under `node --no-experimental-require-module`.
+- Wired into `test.yml` (pre-merge) **and** `deploy.yml` *before* the migration steps, so a build known not to boot never mutates prod RDS.
+- `sanitize-html` pinned exact (`2.17.5`); `.github/dependabot.yml` ignores it at every level and ignores **all npm majors** for both apps.
+- `backend/verify` chain is now `typecheck → lint:check → check:cjs → test → build`.
+
+**Corrections to rev. 1/2 counts and claims, verified this pass:**
+
+| §1 claim | Correction at `1c1030f` |
+| --- | --- |
+| "Backend jest suites / tests: 17 / 176" | 17 suites confirmed. The test count was **not** re-verified by execution this pass; a `grep` of `it(`/`test(` gives ~158. Re-run `npx jest` before quoting a number |
+| "UI feature folders 14 public + 12 admin" | 14 public, **13** admin subfolders (`about`, `complaints`, `inquiries`, `procurements`, `recovery-form-detail`, `recovery-forms-list`, `testimonials`, `users-management`, `vacancies`, `wash-form-detail`, `wash-forms-list`, `winterization-form-detail`, `winterization-forms-list`) |
+| §1.3 "Blog, `/pages` **and About sections** accept Quill HTML with no server-side sanitization" | **Partly wrong.** Blog and `/pages` are unsanitized — confirmed. **About sections *are* sanitized**, but inside `about.service.ts` with its own locally-defined options object, not via `SanitizeHtmlPipe`. Two independent sanitizer configs exist |
+| §1.2 About `code` "(unique, `/^CSD-[A-Z]{3,4}-\d{2}$/`)" | The regex is **`class-validator` only — there is no DB CHECK constraint**. The database enforces `varchar(32)` + `NOT NULL` + `UNIQUE` |
+| §1.2 recovery/winterization "6 / 7 public steps" | Confirmed — but note neither component has a `totalSteps` property; the steps are an array. `totalSteps` exists only in the procurement form |
+
+**New findings not in rev. 1/2, all documented in `ARCHITECTURE.md` pass A:**
+
+- `POST /api/upload/presigned-url` (blog images, presigned **PUT**) has **no size cap at all** — a presigned PUT cannot carry a `content-length-range` condition. Its MIME rejection also throws a **500**, not a 400.
+- `AWS_S3_MEDIA_BUCKET` has the code default `''`, so **locally** public-media presigned URLs are generated against an empty bucket name with no error.
+- `AWS_S3_PRIVATE_BUCKET` and `WINTERIZATION_HOUSEHOLD_ENABLED` are **not** in `deploy.yml`'s deploy-step `env:` block, so both always take their `serverless.yml` defaults regardless of GitHub configuration.
+- `src/database/run-seeds-standalone.ts` is **dead code** — no npm script and no import references it, and it seeds equipment only.
+- `backend` has an undocumented `verify:prod-baseline` script (read-only prod schema diff); no workflow invokes it.
+- The backend IAM role has **no `s3:DeleteObject`**, which is *why* deleting a needs form leaves its S3 objects behind — the code could not remove them even if it tried.
+- `RolesGuard` returns `true` when `@Roles()` is absent or empty, so `@UseGuards(RolesGuard)` without the decorator is a silent no-op.
+- `infra/s3-csd-media-private-cors.json` exists (rev. 2 §2.3 implied it might not).
+
 ---
 
 ## 1. Verified inventory
@@ -107,9 +155,9 @@ The dev/prod major-version skew (14 vs 16) is real and undocumented: migrations 
 | Controllers | 16 (incl. `app.controller.ts`) | `find backend/src -name '*.controller.ts'` |
 | Route decorators | 118 | `grep -rho "@\(Get\|Post\|Patch\|Put\|Delete\)(" backend/src --include=*.controller.ts \| wc -l` |
 | Entity files / `@Entity` classes | 29 / 29 | `find backend/src -name '*.entity.ts' \| wc -l` |
-| Migrations | 13 on `main`, **14** on `feat/test-infrastructure` (`+1776000000000-InitialSchema`) | `ls backend/src/database/migrations` |
-| Backend jest suites / tests | 17 / 176 | `cd backend && npx jest` |
-| UI feature folders | 14 public + 12 admin | `ls ui/src/app/features` |
+| Migrations | **14** on `main` since the merge (incl. `1776000000000-InitialSchema`) — see §0.5 | `ls backend/src/database/migrations` |
+| Backend jest suites / tests | 17 suites; test count not re-verified by execution in rev. 3 — see §0.5 | `cd backend && npx jest` |
+| UI feature folders | 14 public + **13** admin — see §0.5 | `ls ui/src/app/features` |
 | UI TypeScript files | 107 | `find ui/src/app -name '*.ts' \| wc -l` |
 | **UI spec files** | **2** | `find ui/src -name '*.spec.ts'` |
 
@@ -139,7 +187,7 @@ Both needs forms: `TurnstileGuard` on submit, presigned-POST attachments into th
 | `TurnstileGuard` on exactly 3 routes (`POST needs-forms/recovery`, `POST needs-forms/winterization`, `POST upload/needs-presigned`); token in the **`x-turnstile-token` header** because the global `ValidationPipe` sets `forbidNonWhitelisted` | absent from every document |
 | `run-seeds.ts` runs `seedEquipmentCatalog()` **and** `seedAboutDocuments()` — and only locally; `lambda.ts` never seeds | README 47/83, ARCHITECTURE 207/888, backend/CLAUDE 38, backend/README 95 |
 | `lambda.ts` now sets `forbidNonWhitelisted: true` (line 52) — **the prod/local ValidationPipe asymmetry no longer exists** | backend/CLAUDE 122–129, CONTRIBUTING 459 still teach it as current |
-| `SanitizeHtmlPipe` is used by **only** `vacancy.controller.ts` and `procurement.controller.ts`. Blog, `/pages` and About sections accept Quill HTML with no server-side sanitization | README 26, ARCHITECTURE 1046/1050 claim "defense in depth" |
+| `SanitizeHtmlPipe` is used by **only** `vacancy.controller.ts` and `procurement.controller.ts`. Blog and `/pages` accept Quill HTML with no server-side sanitization. **About sections *are* sanitized** — but by a second, independent config inside `about.service.ts`, not by the pipe (rev. 3 correction, §0.5) | README 26, ARCHITECTURE 1046/1050 claim "defense in depth" |
 | `backend/serverless.yml` grants `s3:PutObject` **and `s3:GetObject`** on the private bucket, not only `PutObject` on `csd-media/*` | ARCHITECTURE 779/834, backend/CLAUDE 146 |
 | `AWS_CLOUDFRONT_MEDIA_URL` is read in code but **never set** in `serverless.yml` → prod public media URLs are direct S3, not CloudFront | README 52/54, ARCHITECTURE 749 |
 | Language is hardcoded to `'ua'` on every bootstrap (`app.ts`) and **never persisted** — no localStorage, cookie or URL segment | README 37, ARCHITECTURE 645, ui/CLAUDE 12 |
@@ -147,11 +195,11 @@ Both needs forms: `TurnstileGuard` on submit, presigned-POST attachments into th
 
 ### 1.4 Facts absent from every document
 
-- **No PR-check CI on `main`.** `.github/workflows/deploy.yml` is the only workflow there. It triggers on `pull_request: types:[closed]` + `merged==true`, i.e. **after** merge. Neither job runs lint, typecheck or tests, so `npm run verify` is an honour-system local gate. ⚠️ **`feat/test-infrastructure` adds `test.yml` (PR Checks, pre-merge) — see §0.3.** State whichever is true at the time of writing.
+- ~~**No PR-check CI on `main`.**~~ **Superseded by §0.5 — `test.yml` is now on `main`.** What remains true: `deploy.yml` still runs no lint, typecheck or tests in either job, and `test.yml` gates the **backend only**, so the entire `ui` app has no pre-merge gate and `npm run verify` is an honour-system local step there.
 - **Migrations run before build and deploy.** A failed build leaves prod already migrated.
 - **UI has 2 spec files** for 107 source files. No `vitest.config.ts` exists; `angular.json`'s `test` target has no options block.
 - **`ui` `format:check` checks SCSS only** (`prettier --check "src/**/*.scss"`), while `format` writes ts+html+scss. So `verify` never catches TS/HTML formatting drift.
-- **`backend/test/jest-e2e.json` is gitignored, not absent** (`backend/.gitignore:38`, since the first commit). It exists in any `nest new` working copy but never in a `git clone`, so `npm run test:e2e` works locally for whoever scaffolded the project and fails for everyone else. Fixed on `feat/test-infrastructure` by a `!test/jest-e2e.json` negation — see §0.3.
+- ~~**`backend/test/jest-e2e.json` is gitignored, not absent.**~~ **Superseded by §0.5** — the `!test/jest-e2e.json` negation (`backend/.gitignore:39`) is on `main` and the file is tracked. `npm run test:e2e` now works from a clean clone, given Docker.
 - **No Swagger, no `@nestjs/throttler`, no global exception filter, no global interceptors, no CloudWatch alarms, no X-Ray** anywhere in the repo.
 - **Password-reset links are logged, not emailed** (`auth.service.ts:89`, `TODO: Replace with EmailService`). JWT expiry 7d.
 - **`RolesGuard` lets `super_admin` bypass every role list**, so it implicitly has access to every `+Roles` route.
@@ -265,7 +313,7 @@ The most stale document in the repo. It will actively mislead an agent.
 
 | Lines | Says | Reality | Sev |
 | --- | --- | --- | --- |
-| 17 | e2e via `test/jest-e2e.json` | that file does not exist; `test:e2e` cannot run | WRONG |
+| 17 | e2e via `test/jest-e2e.json` | ~~file does not exist~~ — **now correct** since the merge (§0.5). It should additionally say the run needs Docker | — (OK) |
 | 28 | `tsconfig.json # ESNext target` | `target: ES2023`, `module: nodenext` | WRONG |
 | 30 | main.ts CORS hardcoded `localhost:4200` | CORS from `getFrontendOrigins()`; also `assertRequiredEnv()` + helmet first | STALE |
 | 38 | `run-seeds.ts` runs **only** equipment | also about-documents | WRONG |
@@ -306,7 +354,7 @@ The most stale document in the repo. It will actively mislead an agent.
 | 255–269 | 14 modules | 15 — `inquiry` absent | WRONG |
 | 263 | needs = WASH | three form families | WRONG |
 | 274 | "merges to main trigger the workflow" | trigger is `pull_request: closed` + `merged==true`, or `workflow_dispatch` | STALE |
-| 288–292 | `test:e2e` "spins up a real NestJS instance" | config file missing; command fails | WRONG |
+| 288–292 | `test:e2e` "spins up a real NestJS instance" | ~~config file missing~~ — **now correct** since the merge (§0.5); it spins up `postgres:16-alpine` via Testcontainers and needs Docker | — (OK) |
 | 296–301 | lint/format; "pre-commit enforcement in the repo root (if configured)" | nothing configured — no husky, no lint-staged | STALE |
 
 ### 2.8 `ui/README.md` (59 lines, last touched 2026-03-11)
@@ -395,11 +443,11 @@ It already carries the most accurate copy (`verify` chains for both apps) and is
 
 The one caveat that must appear wherever `verify` is mentioned: **`ui`'s `format:check` covers SCSS only**, so `verify` never format-checks `.ts` or `.html`, even though `npm run format` rewrites all three.
 
-### 3.6 Test infrastructure — **merge `feat/test-infrastructure` first**
+### 3.6 Test infrastructure — ~~merge first~~ **DONE, merged as `dfac315`**
 
-New in rev. 2, see §0.3. The branch has been rebased onto `main` (`8f32e52`) and adds the PR-check workflow, Testcontainers e2e, the `InitialSchema` baseline migration and the `!test/jest-e2e.json` gitignore negation.
+**Superseded by §0.5.** The branch is merged; `main` is at `1c1030f`. Document the merged reality: `test.yml` PR Checks (backend only), Testcontainers e2e on `postgres:16-alpine`, the `InitialSchema` self-detecting baseline, and the `!test/jest-e2e.json` negation.
 
-Two of the audit's sharpest findings — "no PR-check CI" and "`test:e2e` cannot run on a clone" — are true of `main` and **false** after this merge. Merge before the documentation refresh, then document the merged reality. Otherwise the new documents are stale on the day they land.
+The finding that *replaces* the two retired ones: **`test.yml` has a single `backend` job, so the entire `ui` app is still ungated pre-merge.** Say that explicitly wherever CI is described — a reader who sees "PR Checks" on a green PR will otherwise assume the frontend was checked.
 
 ---
 
@@ -409,7 +457,7 @@ Sequenced so that later documents can cite earlier ones instead of duplicating t
 
 | Pass | Documents | Why this order |
 | --- | --- | --- |
-| A | `docs/ARCHITECTURE.md` | Largest, and the natural home for the three new feature sections and the ER diagram. Everything else can link to it. |
+| A ✅ | `docs/ARCHITECTURE.md` — **done 2026-07-29 at `1c1030f`** | Largest, and the natural home for the three new feature sections and the ER diagram. Everything else can link to it. |
 | B | `README.md`, `backend/README.md`, `ui/README.md` | Entry points. `ui/README.md` is a from-scratch write. |
 | C | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` | Narrow, factual, mostly mechanical once the bucket/endpoint matrix from pass A exists. |
 | D | `CLAUDE.md` ×3, `CONTRIBUTING.md` | Agent- and contributor-facing. Should be written last so they can point at the corrected documents rather than restating them. |
@@ -420,4 +468,15 @@ Passes C and D can run in parallel once A is done.
 
 ## 5. Re-verification
 
-Before quoting any figure from this file, re-run the command in §1.1 — this audit is a snapshot of `d93b258`, not a live view. If a document and this audit disagree, check the code; if the code and this audit disagree, the code wins and this file should be corrected.
+Before quoting any figure from this file, re-run the command in §1.1 — §1 is a snapshot of `d93b258`, corrected at `1c1030f` in §0.5, and neither is a live view. If a document and this audit disagree, check the code; if the code and this audit disagree, the code wins and this file should be corrected.
+
+**Decisions settled in pass A**, recorded here so passes B–D stay consistent and do not re-litigate them:
+
+1. **PostgreSQL:** local dev **14**, e2e Testcontainers **16-alpine**, production **16.13**. The skew is documented, not fixed. `ARCHITECTURE.md` §4 and §13 carry it.
+2. **Procurement form: 7 steps.** `ARCHITECTURE.md` was already right; only `README.md:71` needs fixing (pass B).
+3. **CSP:** `ARCHITECTURE.md` §14.3 now holds a single "CSP status — single source of truth" block, and the old §17 "CSP header on the frontend" item is replaced by two ordered items: *apply the prepared JSON*, then *promote to enforce*. **Other documents should link to that block rather than restating it.**
+4. **Seeding:** equipment + about-documents, via `main.ts` only; never in production; About registry reaches prod only via `npm run seed:about-documents`. No super-admin seed in the bootstrap chain, no locations seed at all.
+5. **Commands:** `CONTRIBUTING.md` §4 remains the canonical reference. `ARCHITECTURE.md` §11 now says so explicitly and keeps only a day-to-day subset plus the load-bearing scripts (`check:cjs`, `verify:prod-baseline`, `seed:about-documents`).
+6. **Feature sections live in `ARCHITECTURE.md`** as §7.7 (Recovery), §7.8 (Winterization), §7.9 (About registry) and §7.10 (shared needs infrastructure). Existing numbering 7.1–7.6 was preserved. **Passes B–D should link to these, not duplicate them.**
+7. **The upload/bucket matrix lives in `ARCHITECTURE.md` §8.1** — four endpoints, three buckets, presigned POST vs PUT, size caps, MIME lists. `MEDIA-UPLOADS.md` (pass C) should build on it rather than restate it.
+8. **Incident #4 is recorded in `ARCHITECTURE.md` §15** (the `sanitize-html` / `htmlparser2` ESM outage and the `check:cjs` mitigation). `CONTRIBUTING.md` (pass D) should point at it when explaining the dependency policy.
