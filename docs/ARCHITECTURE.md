@@ -974,7 +974,7 @@ Reconstruction requests for war-damaged objects. Public form at `/needs/recovery
 
 **Export:** `RecoveryXlsxExportService`, **3 sheets** — `Applications` / `Damages` / `Files` (Ukrainian sheet names when `?lang=ua`). Unpaged: the query builder fetches every matching form.
 
-**Delete is a hard delete and is ungated beyond the role check** — no status precondition, unlike procurement/vacancy/testimonial/complaint. The form row, its damages (FK cascade) and its attachment rows go; **S3 objects are deliberately left behind**, with their keys recorded in the audit entry. See §14.2.
+**Delete is a hard delete and is ungated beyond the role check** — no status precondition, unlike procurement, vacancy and complaint. (Testimonial delete is ungated too; see §14.2.) The form row, its damages (FK cascade) and its attachment rows go; **S3 objects are deliberately left behind**, with their keys recorded in the audit entry. See §14.2.
 
 ### 7.8 Winterization Form
 
@@ -1586,7 +1586,9 @@ See Incident #3.
 
 #### Recovery and Winterization hard-delete is ungated
 
-**Status:** `DELETE /api/needs-forms/recovery/:id` and `.../winterization/:id` carry `@Roles(ADMIN)` and **no status precondition**. Every other module gates hard deletes by state — draft procurement/vacancy, rejected testimonial, closed complaint (§14.3). The needs-form services read the record, delete the attachment rows and the form row in one transaction, and never inspect `status`. An approved, in-progress submission can be destroyed in one call.
+**Status:** `DELETE /api/needs-forms/recovery/:id` and `.../winterization/:id` carry `@Roles(ADMIN)` and **no status precondition**. The needs-form services read the record, delete the attachment rows and the form row in one transaction, and never inspect `status`. An approved, in-progress submission can be destroyed in one call.
+
+**Correction (pass B, 2026-07-29): testimonial delete is ungated as well.** `TestimonialService.remove()` is `await this.findById(id); await this.repo.delete(id);` with a comment reading *"any testimonial can be hard-deleted (admin confirms in UI)"* — there is no `rejected`-only rule despite the controller comment claiming one. So only **three** modules actually gate hard deletes by state: draft procurement, draft vacancy, closed complaint. Any document that lists testimonial among them is wrong.
 
 **Related:** the delete is a true hard delete of the database rows, but **S3 objects are deliberately left in `csd-media-private`**. Their keys are recorded in the audit entry, and the backend IAM role has no `s3:DeleteObject`, so cleanup cannot happen from application code at all. Orphaned PII accumulates.
 
@@ -1670,7 +1672,7 @@ See Incident #3.
 
 These are conscious decisions, not bugs:
 
-- **No soft-delete anywhere.** We use `@deprecated` enum values and `cancelled` status instead. Hard deletes are gated **in the cooperation modules** (only `draft` procurement/vacancy, only `rejected` testimonial, only `closed` complaint). ⚠ **Recovery and Winterization are the exception and it was not a decision** — their deletes carry a role check only. That is a gap, tracked in §14.2, not a trade-off.
+- **No soft-delete anywhere.** We use `@deprecated` enum values and `cancelled` status instead. Hard deletes are gated by state in exactly **three** places: only `draft` procurement, only `draft` vacancy, only `closed` complaint. ⚠ **Recovery, Winterization and testimonial are ungated and none of it was a decision** — those deletes carry a role check only. That is a gap, tracked in §14.2, not a trade-off.
 - **Legacy `/publish`, `/approve`, `/reject` endpoints kept** for backward compat until UI fully uses `/status`. To be removed after stabilization.
 - **Quill HTML stored as raw string, not JSON delta.** Simpler rendering, but editing requires the exact same Quill version. Acceptable for current needs.
 - **Audit logging covers the needs forms only, across two tables.** `wash_form_audit_log` (`wash-form-audit-log.entity.ts`) records WASH changes; the newer shared `needs_form_audit_log` (§7.10) records Recovery and Winterization changes polymorphically. Both capture `action` (created/updated/status_changed/deleted), `changedById` + `changedByEmail` snapshot, `fieldName`, `oldValue`, `newValue` and a `metadata` JSONB. WASH was deliberately **not** migrated onto the shared table — working code was left alone. Procurement, vacancy, testimonial, complaint and inquiry changes are still **not** audited (only `createdBy` captures creation there). Extend the shared table to those modules if donor compliance requires it.

@@ -4,7 +4,80 @@
 
 **Prerequisite (done):** `docs/DOC-AUDIT.md` — the verified inventory and per-document drift list, produced 2026-07-28 against commit `d93b258`, revised 2026-07-29 against live AWS output. Read it first, **starting with §0 (corrections) and §3 (resolved contradictions)**. It exists so the rewrite sessions do not have to re-discover the codebase.
 
-**Blocking prerequisite:** merge `feat/test-infrastructure`. Rebased onto `main` as `8f32e52`; `npm run verify` passes in both apps (backend 17 suites / 176 tests + build, ui green) as of 2026-07-29. It adds the PR-check workflow, Testcontainers e2e, the `InitialSchema` baseline migration (13 → 14 migrations) and the `!test/jest-e2e.json` gitignore negation. Two of the audit's findings flip after this merge. Document the merged state, not `main` as it stands. See DOC-AUDIT §0.3 and §3.6.
+**Blocking prerequisite — ✅ DONE.** `feat/test-infrastructure` is merged (`dfac315`, PR #78) and `main` has moved on to `1c1030f`. It added the PR-check workflow, Testcontainers e2e, the `InitialSchema` baseline migration (13 → 14 migrations) and the `!test/jest-e2e.json` gitignore negation. **Document the merged state.** See DOC-AUDIT **§0.5**, which supersedes §0.3 and §3.6.
+
+---
+
+## Pass A — DONE (2026-07-29, at `1c1030f`)
+
+`docs/ARCHITECTURE.md` is corrected and is now the reference the remaining passes link to. `docs/DOC-AUDIT.md` was corrected in the same pass (new §0.5 with rev.-3 corrections; new §5 with the settled decisions).
+
+**Read `DOC-AUDIT.md` §0.5 and §5 before starting any later pass.** §5 lists the eight decisions taken in pass A; apply them, do not re-decide them.
+
+### What later passes should now LINK to rather than restate
+
+| Topic | Lives in |
+| --- | --- |
+| Recovery form, Winterization form, About registry, shared needs infrastructure | `ARCHITECTURE.md` §7.7, §7.8, §7.9, §7.10 |
+| Three buckets + all four upload endpoints (auth · S3 op · bucket · prefix · cap · MIME · TTL) | `ARCHITECTURE.md` §8.1 |
+| Env vars, incl. the five read-but-absent from `.env.example`, and the frontend `environment` keys | `ARCHITECTURE.md` §9 |
+| Command tables and the `verify` chains for both apps | `ARCHITECTURE.md` §11 (which itself defers to `CONTRIBUTING.md` §4 as canonical) |
+| Both CI workflows and the explicit "what CI does not run" | `ARCHITECTURE.md` §12 |
+| CSP status — single source of truth | `ARCHITECTURE.md` §14.3 |
+| Incident #4 (the `sanitize-html` / ESM outage and `check:cjs`) | `ARCHITECTURE.md` §15 |
+
+### Findings that FLIPPED — do not repeat the audit's rev. 1/2 wording
+
+- PR-check CI **does** exist on `main` (`.github/workflows/test.yml`). The live finding is now: **it has a single `backend` job, so the whole `ui` app is ungated pre-merge** — no `ng lint`, `typecheck`, `ng test`, `format:check` or `ng build` on any PR.
+- `backend/test/jest-e2e.json` **is tracked**; `npm run test:e2e` works from a clean clone given Docker (Testcontainers `postgres:16-alpine`).
+- 14 migrations on `main`.
+- **About sections *are* sanitized** — by a separate config inside `about.service.ts`, not by `SanitizeHtmlPipe`. Only blog and `/api/pages` are unsanitized.
+- `SanitizeHtmlPipe` covers **five routes**: procurement (create, update) and vacancy (create, update, legacy `:id/publish`).
+
+### New facts found in pass A, not in the audit's §1
+
+- `npm run check:cjs` + `backend/scripts/check-cjs-load.cjs`; `.github/dependabot.yml` (all npm majors ignored, `sanitize-html` ignored at every level).
+- Backend `verify` = `typecheck → lint:check → check:cjs → test → build`. Undocumented script `verify:prod-baseline`.
+- `POST /api/upload/presigned-url` has **no size cap** (presigned PUT cannot carry one) and returns **500** on a MIME violation.
+- `AWS_S3_MEDIA_BUCKET` defaults to `''` in code → locally, public-media presigned URLs are built against an empty bucket name with no error.
+- `AWS_S3_PRIVATE_BUCKET` and `WINTERIZATION_HOUSEHOLD_ENABLED` are **not** in `deploy.yml`'s deploy-step `env:`, so both always take their `serverless.yml` defaults.
+- `src/database/run-seeds-standalone.ts` is dead code (no npm script, no import).
+- Backend IAM has no `s3:DeleteObject` — which is *why* deleting a needs form orphans its S3 objects.
+- `RolesGuard` returns `true` when `@Roles()` is absent/empty → the guard without the decorator is a silent no-op.
+- `deploy.yml`'s concurrency group is keyed on `github.event_name`, so `workflow_dispatch` **cannot** cancel a queued PR-merge run, despite the workflow comment claiming it does.
+- 35 files still read `translate.currentLang` (audit said ~31); 13 admin feature folders (audit said 12).
+
+**Branch used for pass A:** `docs/architecture-sync` (merged as PR #139).
+
+---
+
+## Pass B — DONE (2026-07-29, at `6d84d64`)
+
+`README.md` and `backend/README.md` are corrected; `ui/README.md` was rewritten from scratch. `docs/DOC-AUDIT.md` gained **§0.6** (rev.-4 corrections) and four more settled decisions in **§5** (items 9–12).
+
+**Read `DOC-AUDIT.md` §0.6 and §5 items 9–12 before starting pass C or D.**
+
+### What C and D should now LINK to rather than restate
+
+| Topic | Lives in |
+| --- | --- |
+| Local-dev / e2e / prod PostgreSQL versions, as a table | root `README.md` §1 "Database" |
+| The CI table + "what no workflow does" | root `README.md` §1.1 (short) · `ARCHITECTURE.md` §12 (full) |
+| Bucket/endpoint summary aimed at a newcomer | root `README.md` §2.2 (`ARCHITECTURE.md` §8.1 stays canonical) |
+| Env vars a developer must set, and the five missing from `.env.example` | root `README.md` §2.3 · `backend/README.md` "Environment" |
+| Backend seeds, `verify` chain, `check:cjs`, known gaps | `backend/README.md` |
+| Render modes, npm scripts, testing reality, language rule, Leaflet-from-CDN, known debt | `ui/README.md` |
+
+### Findings corrected in pass B — do not repeat the audit's earlier wording
+
+- Root `README.md` was wrong about local PostgreSQL in **five** places, not seven. The **Docker** `postgres:16` blocks were correct and were left alone (DOC-AUDIT §0.6).
+- Equipment catalogue is 21 categories / **232** items, not "~230".
+- `LanguageService` **19** files · `translate.currentLang` **35** files — both re-derived, drop the "~".
+- `backend/README.md:100-103` said "two standalone scripts"; there are **three** files outside the bootstrap chain, one of which (`run-seeds-standalone.ts`) is dead code.
+- `ui`'s `lint` is plain `ng lint` — **no `--fix`**. Only the backend's `lint` mutates files. Do not generalise the backend caveat to both apps.
+- `POST /api/upload/testimonial-presigned` has **no guard at all** — anonymous by design.
+
+**Branch used for pass B:** none created. Suggested: `docs/readme-sync-pass-b`.
 
 **Decisions already taken by Vasyl:**
 
@@ -18,14 +91,14 @@
 
 ## Scope
 
-| Pass | Documents | Size |
-| --- | --- | --- |
-| **A** | `docs/ARCHITECTURE.md` | 1429 lines |
-| **B** | `README.md`, `backend/README.md`, `ui/README.md` | 614 + 318 + 59 |
-| **C** | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` | 129 + 108 |
-| **D** | `CLAUDE.md`, `backend/CLAUDE.md`, `ui/CLAUDE.md`, `CONTRIBUTING.md` | 110 + 155 + 148 + 548 |
+| Pass | Documents | Size | Status |
+| --- | --- | --- | --- |
+| **A** | `docs/ARCHITECTURE.md` | 1429 → 2074 lines | ✅ done 2026-07-29 at `1c1030f` |
+| **B** | `README.md`, `backend/README.md`, `ui/README.md` | 614 → ~760 · 318 → ~430 · 59 → ~280 | ✅ done 2026-07-29 at `6d84d64` |
+| **C** | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` | 129 + 108 | next |
+| **D** | `CLAUDE.md`, `backend/CLAUDE.md`, `ui/CLAUDE.md`, `CONTRIBUTING.md` | 110 + 155 + 148 + 548 | pending |
 
-Run A first — it is the natural home for the three new feature sections and the ER diagram, and everything else links to it. C and D can run in parallel after A. Each pass is a separate session; do not attempt all four in one.
+A is done — it is the home for the three feature sections, the ER diagram and the bucket/upload matrix, and everything else links to it. B is done. C and D can now run in any order, and in parallel. **Each pass is a separate session**; do not attempt several in one — the value of this work is accuracy, and that is the first thing a stretched context loses.
 
 ---
 
@@ -55,13 +128,25 @@ Run A first — it is the natural home for the three new feature sections and th
 
 > Update `README.md` and `backend/README.md`, and rewrite `ui/README.md` from scratch, in `/Users/vk/i-data/projects/csd-fund`.
 >
-> Read `docs/DOC-AUDIT.md` (§2.1, §2.7, §2.8) and `docs/tasks/doc-refresh-task.md` first. `docs/ARCHITECTURE.md` has already been corrected in pass A — link to it rather than duplicating it.
+> Read these first, in this order: `docs/tasks/doc-refresh-task.md` (this file — especially the **Pass A — DONE** section), then `docs/DOC-AUDIT.md` **§0.5 and §5**, then its §2.1, §2.7, §2.8. `docs/ARCHITECTURE.md` was corrected in pass A and is the reference — **link to its sections rather than duplicating them**, per the table in the Pass A section above.
 >
-> Re-verify facts against the source before writing; where the audit and the code disagree, the code wins.
+> Re-verify every fact against the source before writing. The audit is a snapshot; where it and the code disagree, the code wins, and correct `DOC-AUDIT.md` in the same pass. Re-derive counts — do not copy them from the audit into prose as if permanent. Note that HEAD is now `1c1030f`, not the audit's `d93b258`.
 >
-> `ui/README.md` is currently untouched Angular CLI boilerplate with no project-specific content. Replace it entirely, modelled on `backend/README.md`: stack, feature/route map, SSR model, i18n, auth, local setup, npm scripts (including the `format:check` SCSS-only caveat), testing reality, deployment.
+> **Root `README.md`** — priorities, roughly in order:
+> - The `inquiry` module row is missing from the 14-module table (there are 15 modules).
+> - The three shipped-but-undocumented features (Recovery, Winterization, About registry) — a short paragraph each, linking to `ARCHITECTURE.md` §7.7–§7.9.
+> - Four upload endpoints and three buckets, linking to §8.1. Today it claims one bucket and one presigned PUT.
+> - An env-var section covering the five variables read in code but absent from `backend/.env.example`, linking to §9.
+> - **`postgresql@16` appears in seven places as the *local dev* database and is wrong in all seven** (DOC-AUDIT §3.1 lists the line numbers — re-derive them, the file may have shifted). Local dev is PostgreSQL 14.
+> - Line ~71: procurement is a **7**-step form, not 6.
+> - Line ~47: the seeders claim (super-admin + equipment + locations) is wrong — it is equipment + about-documents, local only, and there is no locations seed. It also contradicts line ~83 of the same file.
+> - Line ~55: the frontend smoke test greps `ng-server-context`, not `<app-root>`.
+> - Line ~26: `ValidationPipe` also sets `forbidNonWhitelisted: true`; `SanitizeHtmlPipe` does **not** cover "Quill rich-text fields" generally — see the flipped-findings list above.
+> - Add a short "what CI does not do" note — the `ui` app has no pre-merge gate.
 >
-> For the root `README.md`, the priorities are: the missing `inquiry` module row, the three undocumented features, the four upload endpoints and two buckets, and an env-var section covering the five variables read in code but absent from `backend/.env.example`.
+> **`backend/README.md`** — the `test:e2e` and Testcontainers sections are **now correct** (the branch merged); add only that the run needs Docker and starts `postgres:16-alpine`. Still wrong: the 14-module list (missing `inquiry`), `needs/` described as WASH-only, `runSeeds` described as equipment-only, the "minimum required keys" env list, the "merges to main trigger the workflow" phrasing, and the "pre-commit enforcement (if configured)" line — nothing is configured, there is no husky and no lint-staged.
+>
+> **`ui/README.md`** is untouched Angular CLI boilerplate — replace it entirely, modelled on `backend/README.md`. Facts verified in pass A that it should carry (re-verify before writing): Angular 21 standalone + signals + SSR; the three render-mode rules in `app.routes.server.ts` including `activity-map` = `RenderMode.Client` and **no prerendering**; 14 public + 13 admin feature folders; the full npm-script list with **`format:check` covering SCSS only** while `format` rewrites ts+html+scss, and `verify` including `build`; testing reality — **2 spec files, no `vitest.config.ts`, no options block on angular.json's test target**; the four `environment` keys (`production`, `apiUrl`, `turnstileSiteKey`, `winterizationHouseholdEnabled`); language hardcoded to `'ua'` on bootstrap and never persisted, plus the `LanguageService`-vs-`translate.currentLang` rule; **Leaflet is loaded from the unpkg CDN in `index.html`, it is not an npm dependency** (only the `@types` are); the squatted `"ngx-translate": "^0.0.1-security"` dependency; the five admin lists calling `localStorage.getItem('token')` without an `isPlatformBrowser` guard; deployment via S3 sync + SSR Lambda + CloudFront invalidation.
 >
 > Do not create a branch; suggest a name at the end.
 
