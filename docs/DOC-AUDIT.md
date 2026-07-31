@@ -1,10 +1,12 @@
-# Documentation Audit — 2026-07-28 (rev. 2 2026-07-29 · rev. 3 2026-07-29, during pass A)
+# Documentation Audit — 2026-07-28 (rev. 2 2026-07-29 · rev. 3 2026-07-29, during pass A · rev. 4 2026-07-29, during pass B)
 
 Ground truth for the documentation refresh. Every fact below was read from source at commit `d93b258` and spot-verified; nothing here is copied from an existing document.
 
 > **Revision 2 (2026-07-29).** Three findings changed after live AWS output and repository archaeology. Two of them were **inverted** — see §0. Read §0 before anything else.
 >
 > **Revision 3 (2026-07-29, written during pass A).** `feat/test-infrastructure` has been **merged**, and `main` has moved from `d93b258` to `1c1030f`. Several rev. 1/2 findings flipped as a result, and one new production incident landed in between. See **§0.5**, which supersedes §0.3 and §3.6.
+>
+> **Revision 4 (2026-07-29, written during pass B).** `main` has moved again, to `6d84d64` (pass A merged as PR #139, plus PR #111 a11y header work). Three counts and one line-number list in this file were wrong on re-derivation. See **§0.6**.
 
 **Purpose.** The nine documents in this repo drifted 1–4 months behind the code. This file is the verified input for rewriting them, so the rewrite sessions do not have to re-discover the codebase. Where this file and a document disagree, this file wins; where this file and the code disagree, **the code wins** — re-verify before quoting.
 
@@ -142,6 +144,32 @@ Mitigations now in the repo, all of which the documents must describe:
 - The backend IAM role has **no `s3:DeleteObject`**, which is *why* deleting a needs form leaves its S3 objects behind — the code could not remove them even if it tried.
 - `RolesGuard` returns `true` when `@Roles()` is absent or empty, so `@UseGuards(RolesGuard)` without the decorator is a silent no-op.
 - `infra/s3-csd-media-private-cors.json` exists (rev. 2 §2.3 implied it might not).
+
+### 0.6 Rev. 4 — corrections found while writing pass B
+
+Verified at HEAD `6d84d64`. Everything below was re-derived from the source, not copied.
+
+| Claim in this file | Correction |
+| --- | --- |
+| §3.1: root `README.md` says `postgresql@16`/`PostgreSQL 16` for local dev "in seven places: lines 24, 45, 195, 196, 199, 387, 572" | **Five, not seven.** Lines 387 and 397 (`Then start a PostgreSQL 16 container` / `postgres:16`) are the **Windows Docker** path, and `postgres:16` is the correct, documented Docker image — `ARCHITECTURE.md:143,1292` and `backend/README.md:31` both say so. Line 218 is the same image on macOS. The genuinely wrong ones were 24, 195, 196, 199, 572 (Homebrew `postgresql@16`); line 45 was ambiguous rather than wrong (it named the prod version under a generic "Database" heading) and was rewritten as a three-row table |
+| §1.1 / §1.2: equipment catalogue "21 categories / ~230 items" | 21 categories / **232** items (`grep -c "ltaCode:" backend/src/database/seed-equipment.ts`) |
+| §1.4: "~19 files use `LanguageService`, ~35 still read `translate.currentLang`" | Re-derived: **19** files reference `LanguageService` excluding its own definition; **35** read `translate.currentLang`. Both figures hold at `6d84d64` — the "~" can be dropped |
+| §1.1: "Backend jest suites 17" | Confirmed by file count: 17 `*.spec.ts` under `backend/src`, plus **1** `*.e2e-spec.ts` under `backend/test`. Test *case* count still not verified by execution — do not quote one |
+| §2.7 (`backend/README.md:100-103`): "two standalone scripts" | There are three files outside the bootstrap chain: `seed-super-admin.ts`, `seed-about-documents-standalone.ts` and `run-seeds-standalone.ts` — the last being dead code (§0.5) |
+
+**Four findings that are new in rev. 4** — none appear anywhere in §1–§3, and two of them were also wrong in `ARCHITECTURE.md` after pass A (corrected in the same pass):
+
+- **Testimonial hard-delete is ungated.** `TestimonialService.remove()` is `await this.findById(id); await this.repo.delete(id);`, commented *"any testimonial can be hard-deleted (admin confirms in UI)"*. The `rejected`-only rule exists only in a stale `testimonial.controller.ts` comment. So state-gated hard deletes exist in **three** modules, not four: draft procurement, draft vacancy, closed complaint. `ARCHITECTURE.md:977`, `:1589` and `:1673` all said "rejected testimonial" — fixed.
+- **`POST /api/testimonials` is anonymous** (no `@UseGuards` on `testimonial.controller.ts`). §1.4 lists the anonymous endpoints; this one was folded into "admin CRUD" in the README.
+- **Every complaint admin route is `MANAGER, ADMIN, SUPER_ADMIN`** — manager+, not admin-only. Only the *frontend* route is `adminGuard`. Documents describing the module as "admin-only" conflate the two.
+- **`GET /api/procurement` returns every non-draft record**, not published only (`where: { status: Not(DRAFT) }`), deliberately so cancelled and completed tenders stay visible. The vacancy row of the same table was already correct.
+
+Two smaller ones: `AppController.getHealth()` returns `{ status, timestamp }`, so `{"status":"ok"}` is not a literal match for a smoke test; and `assertRequiredEnv()`'s messages are *"JWT_SECRET is required but missing…"* / *"JWT_SECRET is too short (N chars)…"*, not the `must be at least 32 characters` string the root README quoted.
+
+Two things this file did **not** flag that pass B added to the READMEs, both re-verified:
+
+- `ui`'s `verify` is `typecheck → lint → format:check → test:ci → build`, and its `lint` is plain `ng lint` — **no `--fix`**. Only the *backend*'s `lint` carries `--fix`. §2.9/§3.5 discuss the backend case; the ui distinction was never stated.
+- `POST /api/upload/testimonial-presigned` is genuinely **unauthenticated** (no guard at all, by design — the testimonial form is anonymous). §1.3 lists the four endpoints but never says this one is open.
 
 ---
 
@@ -404,7 +432,9 @@ Settled with Vasyl against live systems. Apply these verbatim; do not re-litigat
 > Local development runs PostgreSQL **14** (Homebrew `postgresql@14`, port 5432, client 14.19).
 > Production runs PostgreSQL **16.13** on RDS `csd-postgres`.
 
-`backend/README.md:20-21`, `docs/ARCHITECTURE.md:130,863` and `backend/.env.example:2` are already correct. **Only the root `README.md` is wrong**, in seven places: lines 24, 45, 195, 196, 199, 387, 572 — all say `postgresql@16`/`PostgreSQL 16` for local dev. Fix those seven; touch nothing else.
+`backend/README.md:20-21`, `docs/ARCHITECTURE.md:130,863` and `backend/.env.example:2` are already correct. **Only the root `README.md` was wrong** — ~~in seven places: lines 24, 45, 195, 196, 199, 387, 572~~ **in five** (the Homebrew lines only). See **§0.6** for the correction and **§0.7** for what pass B actually changed. ✅ **Fixed in pass B.**
+
+The Docker path is *not* part of this: `postgres:16` mapped to host 5433 is the documented Docker alternative in `ARCHITECTURE.md:143,1292` and `backend/README.md:31`, and the root README's Docker blocks (macOS and Windows) were already consistent with it.
 
 Two facts to add while there:
 
@@ -458,7 +488,7 @@ Sequenced so that later documents can cite earlier ones instead of duplicating t
 | Pass | Documents | Why this order |
 | --- | --- | --- |
 | A ✅ | `docs/ARCHITECTURE.md` — **done 2026-07-29 at `1c1030f`** | Largest, and the natural home for the three new feature sections and the ER diagram. Everything else can link to it. |
-| B | `README.md`, `backend/README.md`, `ui/README.md` | Entry points. `ui/README.md` is a from-scratch write. |
+| B ✅ | `README.md`, `backend/README.md`, `ui/README.md` — **done 2026-07-29 at `6d84d64`** | Entry points. `ui/README.md` was a from-scratch write. |
 | C | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` | Narrow, factual, mostly mechanical once the bucket/endpoint matrix from pass A exists. |
 | D | `CLAUDE.md` ×3, `CONTRIBUTING.md` | Agent- and contributor-facing. Should be written last so they can point at the corrected documents rather than restating them. |
 
@@ -480,3 +510,10 @@ Before quoting any figure from this file, re-run the command in §1.1 — §1 is
 6. **Feature sections live in `ARCHITECTURE.md`** as §7.7 (Recovery), §7.8 (Winterization), §7.9 (About registry) and §7.10 (shared needs infrastructure). Existing numbering 7.1–7.6 was preserved. **Passes B–D should link to these, not duplicate them.**
 7. **The upload/bucket matrix lives in `ARCHITECTURE.md` §8.1** — four endpoints, three buckets, presigned POST vs PUT, size caps, MIME lists. `MEDIA-UPLOADS.md` (pass C) should build on it rather than restate it.
 8. **Incident #4 is recorded in `ARCHITECTURE.md` §15** (the `sanitize-html` / `htmlparser2` ESM outage and the `check:cjs` mitigation). `CONTRIBUTING.md` (pass D) should point at it when explaining the dependency policy.
+
+**Decisions settled in pass B**, for passes C and D:
+
+9. **The three READMEs link, they do not restate.** Root `README.md` gained §2.1 (three-paragraph feature summaries → `ARCHITECTURE.md` §7.7–§7.9), §2.2 (a two-table bucket/endpoint summary → §8.1) and §2.3 (env vars → §9). Each is a *pointer with enough detail to act on*, not a duplicate. Passes C and D should do the same, and should not re-summarise the features again.
+10. **"What CI does and does not do" now lives in three places by design** — `ARCHITECTURE.md` §12 (full), root `README.md` §1.1 (table + the ui-is-ungated warning), and each app's README (its own half). The invariant sentence to reuse verbatim: *`test.yml` has exactly one job, `backend`; the entire `ui` app is ungated pre-merge.*
+11. **`ui/README.md` is now a real document** (~250 lines) and is the home for frontend specifics: render modes, npm scripts, the SSR `X-Forwarded-*` hardening, the language rule, the Leaflet-from-CDN fact and a "Known debt" section. `ui/CLAUDE.md` (pass D) should point at it rather than repeat it, and should keep only the *rules an agent must not break*.
+12. **Prose documents carry no `// CHANGED:` markers.** Pass A set this precedent in `ARCHITECTURE.md` and pass B followed it. The convention applies to code; in Markdown the diff is the record. Do not add them in passes C and D.
