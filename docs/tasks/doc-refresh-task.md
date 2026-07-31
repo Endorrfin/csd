@@ -77,7 +77,38 @@
 - `ui`'s `lint` is plain `ng lint` — **no `--fix`**. Only the backend's `lint` mutates files. Do not generalise the backend caveat to both apps.
 - `POST /api/upload/testimonial-presigned` has **no guard at all** — anonymous by design.
 
-**Branch used for pass B:** none created. Suggested: `docs/readme-sync-pass-b`.
+**Branch used for pass B:** `docs/readme-sync-pass` (merged as PR #140, `4ee8195`).
+
+---
+
+## Pass C — DONE (2026-07-31, at `4ee8195`)
+
+`docs/MEDIA-UPLOADS.md` was rescoped as the **operational** media document; `infra/SECURITY-HEADERS.md` gained a "current state" §0, the blocking enforce warning and executable runbooks. `docs/DOC-AUDIT.md` gained **§0.7** (rev.-5 corrections) and four more settled decisions in **§5** (items 13–16).
+
+Note for pass D: HEAD was `4ee8195`, not the `6d84d64` the pass-C prompt named — pass B had already merged as PR #140.
+
+### What D should now LINK to rather than restate
+
+| Topic | Lives in |
+| --- | --- |
+| Manual bucket creation, CORS commands, IAM statements, upload error responses, retention/PII | `docs/MEDIA-UPLOADS.md` |
+| Which constants file owns each size cap / MIME list / key prefix | `docs/MEDIA-UPLOADS.md` §1 (second table) |
+| CSP allowlist rationale, apply/verify/enforce runbooks, the `unpkg.com` warning | `infra/SECURITY-HEADERS.md` |
+| Live CloudFront values (policy ID, distribution, 10 behaviours, Report-Only) | `infra/SECURITY-HEADERS.md` §0 — all `†`-marked, none of it repo state |
+| CSP *status* | still `ARCHITECTURE.md` §14.3 (unchanged) |
+
+### Findings corrected in pass C — do not repeat the audit's earlier wording
+
+- **The "enforce breaks the About registry" claim was too broad.** The public `/about/documents` link is a `window.open` top-level navigation, which no CSP fetch directive governs — it survives enforce today. What breaks is the **About admin upload** (`connect-src`, `document-files.ts:371`) and the **admin needs-attachment previews** (`img-src`, `recovery-form-detail.ts:518,617`). The Recovery/Winterization claim was correct. Full table in DOC-AUDIT §0.7. The conclusion — apply the prepared JSON before enforce — is unchanged.
+- The `presigned-url` **500** on a bad MIME has a mechanism: that endpoint has **no DTO**, so the global `ValidationPipe` never runs. The other three return 400.
+- **`AWS_S3_MEDIA_BUCKET=''` does not fail silently everywhere.** Probed against the repo's own `@aws-sdk`: the blog **PUT** flow throws at generation (`No value provided for input HTTP label: Bucket.` → 500); only the testimonial **POST** flow signs a bucket-less URL and fails later in the browser. The audit, pass A and `README.md` §2.3 all said "with no error" flatly. `README.md` §2.3's cell was corrected in this pass — it is the only pass-B file pass C touched.
+- The **submit DTOs**, not the services, re-validate the S3 key prefix (`@Matches` in the three attachment DTOs).
+- `AWS_S3_PRIVATE_BUCKET` unset → clean 500 via `assertPrivateBucketConfigured()`; there is no public-bucket equivalent.
+- The two CORS configs differ on purpose: `csd-media` allows GET/PUT/POST, `csd-media-private` GET/POST.
+- Backend helmet HSTS is `15552000` (180 d); the CloudFront policy is `63072000` (2 y). They are not the same value.
+- `infra/s3-csd-media-lifecycle.json` has **never** existed — the reference is now removed, not fixed.
+
+**Branch used for pass C:** none created. Suggested: `docs/infra-sync-pass-c`.
 
 **Decisions already taken by Vasyl:**
 
@@ -95,10 +126,10 @@
 | --- | --- | --- | --- |
 | **A** | `docs/ARCHITECTURE.md` | 1429 → 2074 lines | ✅ done 2026-07-29 at `1c1030f` |
 | **B** | `README.md`, `backend/README.md`, `ui/README.md` | 614 → ~760 · 318 → ~430 · 59 → ~280 | ✅ done 2026-07-29 at `6d84d64` |
-| **C** | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` | 129 + 108 | next |
-| **D** | `CLAUDE.md`, `backend/CLAUDE.md`, `ui/CLAUDE.md`, `CONTRIBUTING.md` | 110 + 155 + 148 + 548 | pending |
+| **C** | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` | 129 → ~250 · 108 → ~230 | ✅ done 2026-07-31 at `4ee8195` |
+| **D** | `CLAUDE.md`, `backend/CLAUDE.md`, `ui/CLAUDE.md`, `CONTRIBUTING.md` | 110 + 155 + 148 + 548 | next |
 
-A is done — it is the home for the three feature sections, the ER diagram and the bucket/upload matrix, and everything else links to it. B is done. C and D can now run in any order, and in parallel. **Each pass is a separate session**; do not attempt several in one — the value of this work is accuracy, and that is the first thing a stretched context loses.
+A is done — it is the home for the three feature sections, the ER diagram and the bucket/upload matrix, and everything else links to it. B and C are done. Only D remains. **Each pass is a separate session**; do not attempt several in one — the value of this work is accuracy, and that is the first thing a stretched context loses.
 
 ---
 
@@ -154,13 +185,23 @@ A is done — it is the home for the three feature sections, the ER diagram and 
 
 > Update `docs/MEDIA-UPLOADS.md` and `infra/SECURITY-HEADERS.md` in `/Users/vk/i-data/projects/csd-fund`.
 >
-> Read `docs/DOC-AUDIT.md` (§2.3, §2.10) and `docs/tasks/doc-refresh-task.md` first. Re-verify against the source — in particular read `backend/src/modules/upload/upload.service.ts` and `infra/cloudfront-response-headers-policy.json` in full, since both documents describe an older state of exactly those two files.
+> Read, in this order: `docs/tasks/doc-refresh-task.md` (this file — especially **Pass A — DONE** and **Pass B — DONE**), then `docs/DOC-AUDIT.md` **§0.5, §0.6 and §5** (§5 items 1–12 are settled decisions — apply them, do not re-decide), then its §2.3 and §2.10. Re-verify against the source — in particular read `backend/src/modules/upload/upload.service.ts` and `infra/cloudfront-response-headers-policy.json` in full, since both documents describe an older state of exactly those two files.
 >
-> `MEDIA-UPLOADS.md` describes a world with one bucket and two endpoints; there are two buckets and four endpoints. Rescope it: an endpoint matrix (endpoint · auth · S3 method · bucket · key prefix · size cap · MIME allow-list), a private-bucket section (manual creation, CORS file, IAM statements, no public-read policy), a presigned-GET read section, and a retention/PII section for `media/needs/*`. The referenced `infra/s3-csd-media-lifecycle.json` does not exist — fix or drop that reference.
+> **HEAD is now `6d84d64`**, not the audit's `d93b258` nor pass A's `1c1030f`. Pass B is complete: `ARCHITECTURE.md` §8.1 (canonical matrix) and root `README.md` §2.2 (newcomer-facing summary) both already exist. **Build on them — do not restate either.** §5 item 9 sets the pattern: a pointer with enough detail to act on, not a duplicate.
+>
+> `MEDIA-UPLOADS.md` describes a world with one bucket and two endpoints; there are three buckets (`csd-fund-static`, `csd-media`, `csd-media-private`) and four upload endpoints, three of them presigned **POST**. This document is the **operational** one — its job is the how, not the what. Rescope it: an endpoint matrix (endpoint · auth · S3 method · bucket · key prefix · size cap · MIME allow-list), a private-bucket section (manual creation, `infra/s3-csd-media-private-cors.json`, the two IAM statements, no public-read policy), a presigned-GET read section covering `getNeedsFileUrl()` and `getAboutDocFileUrl()`, and a retention/PII section for `media/needs/*`. The referenced `infra/s3-csd-media-lifecycle.json` does not exist — fix or drop that reference.
+>
+> Three facts pass A verified that this document must carry, because they are operational and live nowhere else: `POST /api/upload/presigned-url` has **no size cap** (a presigned PUT cannot carry a `content-length-range` condition) and returns **500** on a MIME violation; `AWS_S3_MEDIA_BUCKET` defaults to `''` in code so local public-media presigned URLs are built against an empty bucket name with no error; the backend IAM role has **no `s3:DeleteObject`**, which is why deleting a needs form orphans its S3 objects.
 >
 > `SECURITY-HEADERS.md` is the tricky one, and the audit's first revision got it backwards — read DOC-AUDIT §0.1 and §3.3 carefully. Its allowlist table matches the **live** header and is correct; `infra/cloudfront-response-headers-policy.json` is the file that is out of sync, because it contains an update that was never applied to AWS. Do not "sync the table to the JSON".
 >
 > What the document needs: a "current state" header (live, Report-Only, policy `0dfcb167-3b72-4c89-8574-0465ee42283c` on distribution `E3U465AMSVR9PN`, verified 2026-07-29); a `default-src 'self'` row; and — most importantly — a **blocking warning** that switching to enforce today breaks the Recovery form, the Winterization form and the About registry, because the live CSP allows neither `challenges.cloudflare.com` nor `csd-media-private`. Applying the prepared JSON is a prerequisite for enforce, not an optional tidy-up. Extend the verification checklist to cover `/needs/recovery-form`, `/needs/winterization-form` and `/about/documents`.
+>
+> `ARCHITECTURE.md` §14.3 is the single source of truth on CSP *status* (§5 item 3) — link to it rather than restating the status. `SECURITY-HEADERS.md` owns the *procedure*: the allowlist table, the apply/verify commands, and the enforce runbook that the recorded policy ID finally makes executable.
+>
+> One more thing pass B surfaced: **`unpkg.com` is load-bearing.** Leaflet and `leaflet.markercluster` are loaded from that CDN by `<script>`/`<link>` in `ui/src/index.html` and are not npm dependencies, so `script-src`/`style-src`/`img-src` must keep `https://unpkg.com` or the activity map dies. Say so explicitly — a future reader tightening the CSP will otherwise assume it is a leftover.
+>
+> **Standing rule 3 applies hard in this pass.** The live header, the policy ID and the cache-behaviour count are *not derivable from this repository* — they were read from live AWS on 2026-07-29. Mark them as such with the verification date and the command to re-check, the way `README.md`'s Database table now does with its `†` footnote. Do not present them as repo facts.
 >
 > Do not create a branch; suggest a name at the end.
 

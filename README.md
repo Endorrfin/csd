@@ -176,7 +176,7 @@ Two that are easy to misread:
 | `NODE_ENV` | RDS SSL, Turnstile fail-closed, prod `FRONTEND_URL` assertion | dev-mode behaviour everywhere |
 | `PORT` | `main.ts` | defaults to 3000 |
 | `AWS_REGION` | `upload.service.ts` | code default `eu-central-1`; injected by the Lambda runtime in prod |
-| `AWS_S3_MEDIA_BUCKET` | `upload.service.ts` | ⚠ **locally defaults to `''`** — public-media presigned URLs are built against an empty bucket name **with no error** |
+| `AWS_S3_MEDIA_BUCKET` | `upload.service.ts` | ⚠ **locally defaults to `''`** — the blog PUT flow then throws at URL generation (500), while the testimonial POST flow signs a bucket-less URL **with no error** and only fails in the browser. Detail: [`docs/MEDIA-UPLOADS.md`](./docs/MEDIA-UPLOADS.md) §2.2 |
 | `AWS_CLOUDFRONT_MEDIA_URL` | `upload.service.ts` | falls back to direct S3 URLs. Never set in `serverless.yml` either, so this is production behaviour too |
 
 Full reference, including what Serverless injects in production and what deliberately is *not* in env: [ARCHITECTURE §9](./docs/ARCHITECTURE.md#9-environment-variables-reference).
