@@ -108,7 +108,51 @@ Note for pass D: HEAD was `4ee8195`, not the `6d84d64` the pass-C prompt named �
 - Backend helmet HSTS is `15552000` (180 d); the CloudFront policy is `63072000` (2 y). They are not the same value.
 - `infra/s3-csd-media-lifecycle.json` has **never** existed — the reference is now removed, not fixed.
 
-**Branch used for pass C:** none created. Suggested: `docs/infra-sync-pass-c`.
+**Branch used for pass C:** `docs/infra-sync-pass-c` (merged as PR #141, `e5a4578`).
+
+---
+
+## Pass D — DONE (2026-07-31, at `e5a4578`) — **the refresh is complete**
+
+`CLAUDE.md`, `backend/CLAUDE.md`, `ui/CLAUDE.md` and `CONTRIBUTING.md` are corrected. `docs/DOC-AUDIT.md` gained **§0.8** (rev.-6 corrections), four more settled decisions in **§5** (items 17–20), a completion banner at the top, and ✅ marks on §2.4, §2.5, §2.6 and §2.9.
+
+**Every tracked document in the repository has now been verified against the code.** There is no pass E.
+
+### What each document ended up owning
+
+| Document | Owns | Verified at |
+| --- | --- | --- |
+| `CLAUDE.md` (root) | Repo tree, stack snapshot, the CI-gaps summary, prod resources, Vasyl's rules, the **Documentation state** table | `e5a4578` |
+| `backend/CLAUDE.md` | Boot contract, RBAC + Turnstile, sanitization scope, IAM, migrations, "known gaps — do not fix blindly", Don'ts | `e5a4578` |
+| `ui/CLAUDE.md` | The `LanguageService` rule, the Leaflet nuance, SSR safety + the five violators, `ApiService` and its two real exceptions, environments, Don'ts | `e5a4578` |
+| `CONTRIBUTING.md` | Branching, commits, PR process, **§4 — the canonical command reference**, testing reality, security rules | `e5a4578` |
+
+### Findings corrected in pass D — do not repeat the audit's earlier wording
+
+- **DOC-AUDIT §2.5's `about` row is backwards.** It said `backend/CLAUDE.md`'s "sections + documents" should read "sections only since PR-D3". The module carries **both** — three entities and two admin document routes. Only the row's parenthetical ("NOT mentioned in README") was wrong.
+- **The backend `verify` chain includes `check:cjs`** — `CONTRIBUTING.md:236` omitted it, and §2.9 did not flag the omission. It is the step that exists *because* of two production outages.
+- **`test.yml` does not run backend `typecheck`, `format` or `build`**, only `lint:check → check:cjs → test → test:e2e`. So `typecheck` is ungated on both apps, not just on `ui`.
+- **The backend has no `format:check` script at all.** §0.6 documented the `ui` half of the formatting story only; nothing anywhere verifies backend formatting.
+- **The Turnstile contract has a third part:** `serverless.yml` allowlists `X-Turnstile-Token` in the API Gateway CORS `headers` block on both `http` events. Guarding a new route means editing `serverless.yml` too.
+- **Root `CLAUDE.md` carried two deploy errors §2.4 missed** — the frontend smoke test greps `ng-server-context`, not `<app-root>`; and `workflow_dispatch` cannot cancel a queued PR-merge run, because the concurrency group is keyed on `github.event_name`.
+- **`ssr-lambda.mjs` and `lambda.mjs` wrap different exports** (`handler` vs `app`). Editing the wrong one is silent.
+- **Two of the four `allowedCommonJsDependencies` entries are real.** `quill` and `quill-delta` are load-bearing; only `leaflet` and `leaflet.markercluster` are dead. Do not remove the array.
+- **DOC-AUDIT §0.5's "14 public + 13 admin" feature-folder count double-counts `admin/`.** `features/` has 14 folders total, one being `admin/`; `admin/` has 13 subfolders.
+- **`POST /api/auth/login` is not unguarded** — it carries `@UseGuards(AuthGuard('local'))`. Anonymous in the JWT sense only.
+- **There is a second raw-`fetch` category in `ui`**, larger than the XLSX one: five components do direct-to-S3 presigned uploads, correctly bypassing the auth interceptor.
+- **`main.ts` and `lambda.ts` match on ValidationPipe *options*, not on statement order.**
+- **Two hand-rolled CSV exporters exist** (`complaint.controller.ts`, `inquiry.controller.ts`), with no shared helper.
+- **Not every untracked `docs/` subfolder is gitignored** — `Research/` and `pоlicies_and_procedures/` are not.
+
+The last eight were caught by an independent verification pass run against the source *after* the first draft, not during it. That check earned its keep; do it again if there is ever a pass E.
+
+### Counts re-derived at `e5a4578`
+
+15 backend modules · 14 migrations · 17 backend unit suites + 1 e2e suite · 21 equipment categories / 232 items · 27 routes in `needs.controller.ts` · 5 `SanitizeHtmlPipe` routes · 3 Turnstile-guarded routes · 14 `ui` feature folders (13 public + `admin/`, which has 13 subfolders) · **2** `ui` spec files · 19 `LanguageService` consumers vs **35** files still reading `translate.currentLang` · 5 admin lists with unguarded `localStorage` · 5 components doing direct-to-S3 `fetch`.
+
+**Branch suggested for pass D:** `docs/agent-guides-pass-d`.
+
+---
 
 **Decisions already taken by Vasyl:**
 
@@ -127,9 +171,11 @@ Note for pass D: HEAD was `4ee8195`, not the `6d84d64` the pass-C prompt named �
 | **A** | `docs/ARCHITECTURE.md` | 1429 → 2074 lines | ✅ done 2026-07-29 at `1c1030f` |
 | **B** | `README.md`, `backend/README.md`, `ui/README.md` | 614 → ~760 · 318 → ~430 · 59 → ~280 | ✅ done 2026-07-29 at `6d84d64` |
 | **C** | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` | 129 → ~250 · 108 → ~230 | ✅ done 2026-07-31 at `4ee8195` |
-| **D** | `CLAUDE.md`, `backend/CLAUDE.md`, `ui/CLAUDE.md`, `CONTRIBUTING.md` | 110 + 155 + 148 + 548 | next |
+| **D** | `CLAUDE.md`, `backend/CLAUDE.md`, `ui/CLAUDE.md`, `CONTRIBUTING.md` | 110 + 155 + 148 + 548 → ~150 + ~250 + ~200 + ~640 | ✅ done 2026-07-31 at `e5a4578` |
 
-A is done — it is the home for the three feature sections, the ER diagram and the bucket/upload matrix, and everything else links to it. B and C are done. Only D remains. **Each pass is a separate session**; do not attempt several in one — the value of this work is accuracy, and that is the first thing a stretched context loses.
+**All four passes are complete.** A is the home for the three feature sections, the ER diagram and the bucket/upload matrix, and everything else links to it. **Each pass was a separate session** — do not attempt several in one; the value of this work is accuracy, and that is the first thing a stretched context loses.
+
+Nothing further is planned. If a fifth pass ever becomes necessary, `DOC-AUDIT.md`'s top banner lists what would trigger it.
 
 ---
 
@@ -207,15 +253,32 @@ A is done — it is the home for the three feature sections, the ER diagram and 
 
 ## Prompt for pass D
 
-> Update `CLAUDE.md`, `backend/CLAUDE.md`, `ui/CLAUDE.md` and `CONTRIBUTING.md` in `/Users/vk/i-data/projects/csd-fund`.
+*(Rewritten 2026-07-31 after pass C merged. The pre-pass-A version of this prompt is obsolete — it referred to `feat/test-infrastructure` as unmerged.)*
+
+> Update `CLAUDE.md`, `backend/CLAUDE.md`, `ui/CLAUDE.md` and `CONTRIBUTING.md` in `/Users/vk/i-data/projects/csd-fund`. This is the **last pass** — after it, every document in the repo has been verified.
 >
-> Read `docs/DOC-AUDIT.md` (§2.4–§2.6, §2.9) and `docs/tasks/doc-refresh-task.md` first. Passes A–C have already corrected the other documents — point at them instead of restating them.
+> Read, in this order: `docs/tasks/doc-refresh-task.md` (this file — the **Pass A/B/C — DONE** sections and their "what to LINK to" tables), then `docs/DOC-AUDIT.md` **§0.5, §0.6, §0.7 and §5** (§5 items 1–16 are settled decisions — apply them, do not re-decide), then its §2.4, §2.5, §2.6 and §2.9.
 >
-> Judge the three `CLAUDE.md` files by whether an agent reading them would make a wrong edit. `backend/CLAUDE.md` is the most dangerous document in the repo right now: it teaches a ValidationPipe prod/local asymmetry that no longer exists, claims `run-seeds.ts` runs only the equipment seed, says public endpoints carry no guards (three carry `TurnstileGuard`), and lists 14 of 15 modules.
+> **HEAD is `e5a4578`** (pass C merged as PR #141). Passes A–C corrected `ARCHITECTURE.md`, all three READMEs, `MEDIA-UPLOADS.md` and `SECURITY-HEADERS.md`. **Point at them; do not restate them.** Standing rules 1–6 at the bottom of this file apply, especially rule 1 (open the source before writing) and rule 3 (never present a live-AWS value as a repo fact).
 >
-> `CONTRIBUTING.md`: two of its claims are genuinely false (`auth.service.spec.ts` and `ReadingTimePipe` do not exist), but the Testcontainers/e2e section and the "lint blocks the PR" claim describe `feat/test-infrastructure`, which is being merged — see DOC-AUDIT §0.3. Verify what is on `main` at the time you write and describe that, rather than deleting the section. Note the e2e container is PostgreSQL 16 while local dev is 14 (DOC-AUDIT §3.1).
+> **The test to apply throughout:** judge the three `CLAUDE.md` files by whether an agent that believes them would make a *wrong edit*. Everything else is secondary. `CONTRIBUTING.md` is judged differently — it is the canonical command reference (DOC-AUDIT §5 item 5), so its §4 must be re-derived line by line against `backend/package.json` and `ui/package.json`.
 >
-> Also add to `ui/CLAUDE.md`: `LanguageService` is mandatory for language-dependent logic, because the app is zoneless and `translate.currentLang` is not reactive — roughly 35 files still read it and an agent copying a neighbouring component will reproduce the bug.
+> **`backend/CLAUDE.md` is the most dangerous document in the repo.** Every item below is from DOC-AUDIT §2.5 — re-verify each before writing: it teaches a ValidationPipe prod/local asymmetry that no longer exists (`lambda.ts:52` sets `forbidNonWhitelisted`), claims `run-seeds.ts` runs only the equipment seed (it also runs `seedAboutDocuments()`), says public endpoints carry no guards (three carry `TurnstileGuard`), lists 14 of 15 modules (`inquiry` missing), describes `needs/` as WASH-only, says the tsconfig target is ESNext (`ES2023` / `module: nodenext`), and claims IAM covers `csd-media/*` only. Add: the Turnstile header contract, `assertRequiredEnv` + helmet, the full npm-script list including `verify` / `lint` vs `lint:check` / `check:cjs` / `seed:about-documents` (there is **no** `seed:equipment`), and a "known gaps — do not fix blindly" section.
+>
+> **`ui/CLAUDE.md`.** Its Leaflet line needs care rather than deletion: `angular.json:61-66` really does still list `leaflet` and `leaflet.markercluster` under `allowedCommonJsDependencies`, but **neither is an npm dependency** — both come from the unpkg CDN via `<script>`/`<link>` in `index.html`, and `map-view.ts` reads `globalThis.L`. So the config entries are dead, and the CLAUDE.md line is true about the config and false about reality. Say both, and flag the entries as a cleanup candidate. Also add the rule that matters most: **`LanguageService` is mandatory for language-dependent logic** — the app is zoneless, `translate.currentLang` is not reactive, and ~35 files still read it (re-derive the count), so an agent copying a neighbouring component reproduces the bug. Keep only the rules an agent must not break; `ui/README.md` is now the home for render modes, scripts and known debt (DOC-AUDIT §5 item 11).
+>
+> **Root `CLAUDE.md`.** Its "⚠ Doc drift warning" lists four README errors that pass B already fixed. **Decision taken: replace the section with a "documents are current" pointer** — a short table of each document, the commit it was last verified against, and a link to `DOC-AUDIT.md` §5 for the settled decisions. Do not keep a list of specific stale claims; that is what went wrong the first time. Also add `infra/` and `docs/tasks/` to the repo tree, and `csd-media-private` to the prod-resources list.
+>
+> **`CONTRIBUTING.md`.** The status of several claims has *flipped* since the audit was written — verify against `main`, not against DOC-AUDIT's rev. 1:
+> - The Testcontainers/e2e section and "not running lint blocks the PR" are now **true for the backend** (`.github/workflows/test.yml` is on `main`). They remain **false for `ui`** — `test.yml` has exactly one job, `backend`. Use the invariant sentence from DOC-AUDIT §5 item 10 verbatim.
+> - `auth.service.spec.ts` does not exist; `ui` has exactly **two** spec files (`app.spec.ts`, `features/contact/inquiry-form.spec.ts`).
+> - Line ~271 names two pipes as test targets: **`ReadingTimePipe` does not exist**, but **`QuillHtmlPipe` does** (`ui/src/app/shared/pipes/quill-html.pipe.ts`). Fix the false half, keep the true half.
+> - "pre-commit enforcement (if configured)" — nothing is configured. No `.husky/`, no `lint-staged` in any `package.json`.
+> - Line ~459's ValidationPipe asymmetry is gone (same fix as `backend/CLAUDE.md`).
+> - Note the PostgreSQL spread: local dev **14**, e2e Testcontainers **16-alpine**, production **16.13** (DOC-AUDIT §5 item 1).
+> - `ui`'s `format:check` is **SCSS only**, and its `lint` is plain `ng lint` with **no `--fix`** — only the backend's `lint` mutates files. Do not generalise the backend caveat.
+>
+> Finally, add a line to `docs/DOC-AUDIT.md` §5 recording any decision you take, and a **Pass D — DONE** section to this file. Since D is last, also say plainly in `DOC-AUDIT.md` that the refresh is complete and what would make it stale again.
 >
 > Do not create a branch; suggest a name at the end.
 

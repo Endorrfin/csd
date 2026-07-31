@@ -1,4 +1,12 @@
-# Documentation Audit — 2026-07-28 (rev. 2 2026-07-29 · rev. 3 2026-07-29, during pass A · rev. 4 2026-07-29, during pass B · rev. 5 2026-07-31, during pass C)
+# Documentation Audit — 2026-07-28 (rev. 2 2026-07-29 · rev. 3 2026-07-29, during pass A · rev. 4 2026-07-29, during pass B · rev. 5 2026-07-31, during pass C · rev. 6 2026-07-31, during pass D)
+
+> ## ✅ The refresh is complete
+>
+> All four passes are done. **Every tracked document in this repository has been re-verified against the code**, most recently at `e5a4578` (2026-07-31). This file is now a *record* of that work, not a to-do list — §2's per-document drift tables describe states that no longer exist and are kept only so the reasoning is auditable.
+>
+> **Read §5 first.** It holds the twenty settled decisions — which document owns what, and what was deliberately not done. Re-litigating them is how the split falls apart.
+>
+> **What would make this stale again**, in rough order of likelihood: a new backend module or upload endpoint; a change to either GitHub workflow (especially adding a `ui` job to `test.yml`, which would flip the invariant sentence in §5 item 10); applying or enforcing the prepared CloudFront CSP policy; shipping PR-D4 of the About registry; and any change to an npm script, which must be mirrored in `CONTRIBUTING.md` §4. Live-AWS values (§5 item 15) go stale on their own schedule and carry re-check commands.
 
 Ground truth for the documentation refresh. Every fact below was read from source at commit `d93b258` and spot-verified; nothing here is copied from an existing document.
 
@@ -9,6 +17,8 @@ Ground truth for the documentation refresh. Every fact below was read from sourc
 > **Revision 4 (2026-07-29, written during pass B).** `main` has moved again, to `6d84d64` (pass A merged as PR #139, plus PR #111 a11y header work). Three counts and one line-number list in this file were wrong on re-derivation. See **§0.6**.
 >
 > **Revision 5 (2026-07-31, written during pass C).** `main` is at `4ee8195` — pass B merged as PR #140. One consequential claim in §0.1/§2.10 was **too broad**: not every part of the About registry breaks under CSP enforce. See **§0.7**.
+>
+> **Revision 6 (2026-07-31, written during pass D — the last).** `main` is at `e5a4578` (pass C merged as PR #141). The three `CLAUDE.md` files and `CONTRIBUTING.md` are done, which completes the refresh. Corrections found in this pass: **§0.8**. Four more settled decisions: **§5 items 17–20**.
 
 **Purpose.** The nine documents in this repo drifted 1–4 months behind the code. This file is the verified input for rewriting them, so the rewrite sessions do not have to re-discover the codebase. Where this file and a document disagree, this file wins; where this file and the code disagree, **the code wins** — re-verify before quoting.
 
@@ -201,6 +211,32 @@ So the correct blocking statement is: **enforce breaks the two needs forms (Turn
 | `infra/s3-csd-media-lifecycle.json` | Confirmed: never existed in git history, not just absent from the working tree. §2.3 called it WRONG; it is safe to state flatly that the file has never existed |
 | Needs-form presigned GETs are best-effort | `findByIdWithUrls()` in both services wraps each `getNeedsFileUrl` in try/catch and yields `url: null` on failure, so an S3 outage degrades the admin detail view instead of failing the request. Not documented anywhere before pass C |
 
+### 0.8 Rev. 6 — corrections found while writing pass D
+
+Verified at HEAD `e5a4578`. Everything below was re-derived from the source.
+
+**One row of this file is wrong.** §2.5 line 46 says `backend/CLAUDE.md`'s *"about = sections + documents"* should read *"sections only since PR-D3"*. **That is backwards.** `src/modules/about/` holds `about-section.entity.ts`, `about-document.entity.ts` **and** `about-document-file.entity.ts`, and `about.controller.ts` exposes `POST /admin/documents` and `POST /admin/documents/:id/files`. The module carries both. The only wrong half of the original line was its parenthetical — the root `README.md` *does* cover About. Corrected in pass D.
+
+| Item | Finding |
+| --- | --- |
+| §0.5: "Neither workflow ever invokes `npm run verify`" — true but incomplete | Worth stating positively, because the gap is wider than it reads: `test.yml`'s single `backend` job runs `lint:check → check:cjs → test → test:e2e`. It does **not** run backend `typecheck`, `format` or `build`. So `typecheck` is ungated on *both* apps, not just on `ui` |
+| `CONTRIBUTING.md:236` described backend `verify` as "typecheck + lint:check + test + build" | **`check:cjs` was missing from the chain** — the step that exists specifically because two production outages got past every other check. Not flagged in §2.9. Fixed in pass D |
+| §0.6 covered `ui`'s `format:check` (SCSS only) but not the backend's | **The backend has no `format:check` script at all** — `format` is write-only over `src/**/*.ts` and `test/**/*.ts`. Nothing anywhere verifies backend formatting. Combined with the row above: `verify` format-checks SCSS in one app and nothing in the other |
+| §2.5 "Add: Turnstile contract" — under-specified | The contract has a third part beyond the header name and the fail-closed policy: `serverless.yml` allowlists **`X-Turnstile-Token`** in the API Gateway CORS `headers` block on both `http` events. Guarding a new route means editing `serverless.yml` too, or the browser preflight strips the header |
+| §2.4 (root `CLAUDE.md`) omitted two deploy claims that are wrong | Line 57 said the frontend smoke test checks `<app-root>` presence — it greps **`ng-server-context`** (§2.1 caught the identical error in the root README but not here). Line 55 said `workflow_dispatch` "cancels in-flight PR-merge runs in its concurrency group" — the group is `deploy-prod-${{ github.event_name }}`, so the two event types land in **different groups** and neither can cancel the other. Pass A found this in `deploy.yml`'s own comment; the same claim was live in `CLAUDE.md` |
+| §2.6 (`ui/CLAUDE.md`) treated `ssr-lambda.mjs` as merely "legacy/alternative" | The two entries wrap **different exports** — `lambda.mjs` wraps `app`, `ssr-lambda.mjs` wraps `handler`. `serverless.yml` points at `lambda.mjs`. Editing the wrong file produces no error and no effect |
+| §2.6 line 14 "Leaflet via `allowedCommonJsDependencies` → not a dependency at all" | Correct but easy to over-apply. `angular.json:61-66` lists four entries; `quill` and `quill-delta` **are** real dependencies and are load-bearing. Only the `leaflet` and `leaflet.markercluster` entries are dead. Removing the whole array would break Quill |
+| `backend/CLAUDE.md:44` "21 categories / ~230 items" | 21 / **232**, per §0.6. That file was a second instance of the count the audit only tracked in the READMEs |
+| §0.5: "UI feature folders **14 public + 13 admin**" | **Double-counts `admin/`.** `ui/src/app/features/` holds **14 folders, one of which is `admin/`** — so 13 public + `admin/`, and `admin/` itself has the 13 subfolders §0.5 lists correctly. The phrasing propagated into pass D's first draft before being caught. Write it as "14 top-level, 13 of them public" |
+| `backend/CLAUDE.md` "public endpoints have no decorators" → §2.5 correction "3 public routes carry `TurnstileGuard`" | True but incomplete. **`POST /api/auth/login` carries `@UseGuards(AuthGuard('local'))`** — anonymous in the JWT sense, but the Passport local strategy is what validates the credentials. Removing it makes login accept anything. Five auth-adjacent routes are genuinely bare, not six |
+| §1.4's "all API calls through `ApiService`" correction — "five admin lists use raw `fetch` for XLSX" | There is a **second** raw-`fetch` category, larger than the first: direct-to-S3 presigned uploads, in `file-upload.ts`, `admin/about/documents/document-files.ts`, `admin/testimonials/testimonial-edit.ts`, `cooperation/testimonial/testimonial-form.ts` and `home/home.ts`. Those must *not* carry the interceptor's `Authorization` header, so they are correct as written — a reader told only about the XLSX case would "fix" them |
+| `main.ts` / `lambda.ts` "in lockstep" | The **options** match; the **statement order does not**. `main.ts` is prefix → CORS → pipe, `lambda.ts` is CORS → pipe → prefix. Harmless (Nest applies them at init/listen), but a document that says "both, in this order" invites a cosmetic reorder of the prod entry point |
+| `getFrontendOrigins()` "not hardcoded to `localhost:4200`" | Correct, but `frontend-urls.ts:11` defines `DEFAULT_FRONTEND_URL = 'http://localhost:4200'` and returns it when `FRONTEND_URL` is empty. That fallback is load-bearing for local dev and e2e; production is protected by `assertRequiredEnv()`. Say both or someone deletes it |
+| `backend/CLAUDE.md` "manual CSV with UTF-8 BOM for complaints" | **Two** hand-rolled CSV exporters with the same BOM — `complaint.controller.ts:64` and `inquiry.controller.ts:60`. No shared helper, so a fix to one misses the other |
+| Root `CLAUDE.md` "other `docs/` subfolders are gitignored" | Only some are. `forms/`, `about-documents/`, `screenshots/`, `audit/` and `Invoices/` are ignored; **`Research/` and `pоlicies_and_procedures/` are untracked but *not* ignored**, so `git add docs/` would commit them |
+
+**One thing pass D deliberately did not do.** §2.9 lists `CONTRIBUTING.md`'s commit-message examples that reference a "reading time pipe" (lines ~119, ~157, ~547). `ReadingTimePipe` does not exist, but those three are *illustrations of commit format* for a hypothetical change and never assert the pipe is in the repo. Only line ~271 — which listed it as a real test target — was a false claim, and only that one was fixed. Rewriting the examples would be churn with no accuracy gain.
+
 ---
 
 ## 1. Verified inventory
@@ -215,7 +251,7 @@ So the correct blocking statement is: **enforce breaks the two needs forms (Turn
 | Entity files / `@Entity` classes | 29 / 29 | `find backend/src -name '*.entity.ts' \| wc -l` |
 | Migrations | **14** on `main` since the merge (incl. `1776000000000-InitialSchema`) — see §0.5 | `ls backend/src/database/migrations` |
 | Backend jest suites / tests | 17 suites; test count not re-verified by execution in rev. 3 — see §0.5 | `cd backend && npx jest` |
-| UI feature folders | 14 public + **13** admin — see §0.5 | `ls ui/src/app/features` |
+| UI feature folders | **14 total**, 13 public + `admin/`; `admin/` has 13 subfolders. ~~14 public + 13 admin~~ double-counts `admin/` — see §0.5 and **§0.8** | `ls ui/src/app/features` |
 | UI TypeScript files | 107 | `find ui/src/app -name '*.ts' \| wc -l` |
 | **UI spec files** | **2** | `find ui/src -name '*.spec.ts'` |
 
@@ -354,7 +390,9 @@ The most out-of-date document relative to its own subject. It describes a world 
 
 **Add:** four-row endpoint matrix; a private-bucket section (manual creation, CORS, IAM, no public-read policy); a presigned-GET section; a PII/retention section; fix or drop the lifecycle-file reference.
 
-### 2.4 `CLAUDE.md` (110 lines, last touched 2026-07-03)
+### 2.4 `CLAUDE.md` (110 lines, last touched 2026-07-03) — ✅ **rewritten in pass D**
+
+Two further errors this table missed, both in the deployment section — see **§0.8**.
 
 | Lines | Says | Reality | Sev |
 | --- | --- | --- | --- |
@@ -365,9 +403,11 @@ The most out-of-date document relative to its own subject. It describes a world 
 | 94–98 | drift warning: README says `/complaint`, `/needs`, `/content`; About unmentioned | **all four already fixed** in README (lines 67, 74, 75, 78). The warning describes a state that no longer exists | WRONG |
 | whole | — | never mentions Recovery, Winterization, About registry, `inquiry`, Turnstile, helmet, private bucket | MISSING |
 
-### 2.5 `backend/CLAUDE.md` (155 lines, last touched 2026-07-03)
+### 2.5 `backend/CLAUDE.md` (155 lines, last touched 2026-07-03) — ✅ **rewritten in pass D**
 
 The most stale document in the repo. It will actively mislead an agent.
+
+**Revised.** The `about` row below is **backwards** — see **§0.8**. The Turnstile addition was also under-specified: the `X-Turnstile-Token` API Gateway CORS allowlist in `serverless.yml` is part of the contract.
 
 | Lines | Says | Reality | Sev |
 | --- | --- | --- | --- |
@@ -385,7 +425,9 @@ The most stale document in the repo. It will actively mislead an agent.
 
 **Add:** Turnstile contract; `assertRequiredEnv` + helmet; full npm-script list (`verify`, `lint` vs `lint:check`, `seed:about-documents`; there is no `seed:equipment`); env vars missing from `.env.example`; `WINTERIZATION_HOUSEHOLD_ENABLED`; "known gaps not to fix blindly" (logged reset link, no Swagger/throttler/filters, broken `test:e2e`).
 
-### 2.6 `ui/CLAUDE.md` (148 lines, last touched 2026-05-17)
+### 2.6 `ui/CLAUDE.md` (148 lines, last touched 2026-05-17) — ✅ **rewritten in pass D**
+
+**Revised.** The Leaflet row is right about the runtime and wrong to imply the `angular.json` entries do not exist; two of the four entries in that array are real. See **§0.8** and §5 item 20.
 
 | Lines | Says | Reality | Sev |
 | --- | --- | --- | --- |
@@ -419,9 +461,11 @@ The most stale document in the repo. It will actively mislead an agent.
 
 Untouched Angular CLI 21.2.1 boilerplate. Contains no project-specific claim, therefore nothing to correct — **rewrite from scratch**, modelled on `backend/README.md`.
 
-### 2.9 `CONTRIBUTING.md` (548 lines, last touched 2026-07-26)
+### 2.9 `CONTRIBUTING.md` (548 lines, last touched 2026-07-26) — ✅ **rewritten in pass D**
 
 The most recently updated document, and still carries four outright fabrications.
+
+**Revised.** Three rows below are **conditional findings that have since resolved** — `test.yml` is on `main`, so lines 248–249, 285–291 and 500 are now *true for the backend and false for `ui`*. One further §4 error this table missed: the backend `verify` chain was described without `check:cjs`. See **§0.8**. The `ReadingTimePipe` row applies only to line ~271; the three commit-message examples elsewhere were left alone deliberately.
 
 | Lines | Says | Reality | Sev |
 | --- | --- | --- | --- |
@@ -520,9 +564,9 @@ Sequenced so that later documents can cite earlier ones instead of duplicating t
 | A ✅ | `docs/ARCHITECTURE.md` — **done 2026-07-29 at `1c1030f`** | Largest, and the natural home for the three new feature sections and the ER diagram. Everything else can link to it. |
 | B ✅ | `README.md`, `backend/README.md`, `ui/README.md` — **done 2026-07-29 at `6d84d64`** | Entry points. `ui/README.md` was a from-scratch write. |
 | C ✅ | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` — **done 2026-07-31 at `4ee8195`** | Narrow and factual, but not mechanical: both were rescoped, and one audit claim had to be narrowed (§0.7). |
-| D | `CLAUDE.md` ×3, `CONTRIBUTING.md` | Agent- and contributor-facing. Should be written last so they can point at the corrected documents rather than restating them. |
+| D ✅ | `CLAUDE.md` ×3, `CONTRIBUTING.md` — **done 2026-07-31 at `e5a4578`** | Agent- and contributor-facing, so written last: they point at the corrected documents rather than restating them. `CONTRIBUTING.md` §4 was re-derived line by line against both `package.json` files. |
 
-Passes C and D can run in parallel once A is done.
+~~Passes C and D can run in parallel once A is done.~~ They ran in sequence, C then D. **All four passes are complete** — see the banner at the top of this file.
 
 ---
 
@@ -554,3 +598,10 @@ Before quoting any figure from this file, re-run the command in §1.1 — §1 is
 14. **`SECURITY-HEADERS.md` owns the CSP *procedure*; `ARCHITECTURE.md` §14.3 owns the *status*.** The document now opens with a §0 "current state" table (policy ID, distribution, attachment count, Report-Only) and the blocking-prerequisite warning, then the allowlist table, then apply/verify/enforce runbooks with the policy ID inlined so they are executable. It links to §14.3 for status rather than restating it.
 15. **Live-AWS facts carry a `†` and a re-check command**, following the pattern root `README.md` §1 set for the Database table. In pass C that covers the policy ID, the distribution, the 10-behaviour attachment count, the Report-Only status and the JSON-vs-live divergence — none of which is derivable from the repository. Pass D must not restate any of them as repo facts; point at `SECURITY-HEADERS.md` §0.
 16. **`unpkg.com` is load-bearing and must be labelled as such wherever the CSP is discussed.** Leaflet and `leaflet.markercluster` are loaded by `<script>`/`<link>` in `ui/src/index.html` and are not npm dependencies (`map-view.ts` reads `window.L`), so `script-src`, `style-src` **and** `img-src` (marker images referenced from the unpkg CSS) all need the host. Removing it from the CSP is a frontend change — move Leaflet into `package.json` first.
+
+**Decisions settled in pass D** — the last pass:
+
+17. **The three `CLAUDE.md` files hold only the rules an agent must not break.** Everything descriptive moved out or became a pointer: module inventories and env vars → `ARCHITECTURE.md`, setup and known gaps → the app READMEs, commands → `CONTRIBUTING.md` §4. The editorial test applied throughout was *"would an agent that believes this line make a wrong edit?"* — a merely incomplete line stays, a confidently wrong one goes. Hence each file now ends in a "Don'ts" section and carries a "known gaps — do not fix blindly" list: the failure mode for an agent is not ignorance, it is helpfulness aimed at a deliberate decision.
+18. **The root `CLAUDE.md` drift warning is replaced by a "Documentation state" table, not by a corrected list of stale claims.** A per-claim list is exactly what went wrong the first time — it was accurate for about six weeks, then became a warning about staleness that was itself stale. The table names each document, what it owns and the commit it was last verified against, and defers to §5 here for the decisions. It asserts no specific fact about the code, so it can only rot in one column.
+19. **Where a claim is true of one app and false of the other, both halves go in the same sentence.** Three of these bit earlier passes: backend `lint` mutates / `ui`'s does not; `test.yml` gates the backend / leaves `ui` ungated; `ui`'s `format:check` is SCSS-only / the backend has none at all. Each had previously been written as one generalised claim, and each generalisation was wrong. Do not compress them back.
+20. **The Leaflet entry in `angular.json` is documented as simultaneously live config and dead config.** `ui/CLAUDE.md` states that the `allowedCommonJsDependencies` entries exist, that neither package is an npm dependency, that the runtime comes from unpkg via `index.html`, that `quill`/`quill-delta` in the same array *are* real and load-bearing, and that removing the two dead entries is safe but separate. Stating only one half — as §2.6 and the original `ui/CLAUDE.md` did, in opposite directions — sends a reader either to install a package the app does not want or to strip a CSP entry the map needs.

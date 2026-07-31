@@ -2,6 +2,8 @@
 
 > Ground rules for every developer working on this repository — interns, juniors, and seniors alike.
 > When in doubt about something not covered here, ask the team lead before guessing.
+>
+> **Last verified against code:** 2026-07-31 (commit `e5a4578`). **§4 is the canonical command reference** for the repo — every other document keeps a day-to-day subset and links here. If you change a script in `backend/package.json` or `ui/package.json`, update §4 in the same commit.
 
 ---
 
@@ -10,7 +12,7 @@
 1. [Git workflow — branches](#1-git-workflow--branches)
 2. [Git workflow — commits](#2-git-workflow--commits)
 3. [Pull request process](#3-pull-request-process)
-4. [Pre-commit checklist](#4-pre-commit-checklist)
+4. [Pre-commit checklist — canonical command reference](#4-pre-commit-checklist)
 5. [Testing](#5-testing)
 6. [Code style](#6-code-style)
 7. [Angular conventions (ui/)](#7-angular-conventions-ui)
@@ -168,11 +170,13 @@ readonly readingTime = computed(() =>
 ### Before opening a PR
 
 - [ ] Your branch is up to date with `main` (`git pull origin main --rebase`)
-- [ ] `npm run lint` passes in the changed app directory
-- [ ] `npm test` passes in the changed app directory
+- [ ] `npm run verify` passes in the changed app directory (see §4 — this is the gate; `lint && test` is not)
 - [ ] No `console.log` statements in committed code
 - [ ] New translation keys added to **both** `ua.json` and `en.json`
-- [ ] New browser-only code has `isPlatformBrowser` check
+- [ ] New browser-only code has an `isPlatformBrowser` check
+- [ ] If you touched `ui/` only: you ran the checks yourself — **CI runs no frontend job on a PR** (§5)
+- [ ] If you added a runtime dependency to `backend/`: `npm run check:cjs` passes (§6)
+- [ ] If you changed an npm script: §4 of this file updated in the same commit
 
 ### PR title
 
@@ -212,45 +216,104 @@ Why this change was needed.
 
 ## 4. Pre-commit checklist
 
-Run these from inside the changed app's directory before every commit:
+**This section is the canonical command reference for the repository.** Other
+documents keep a day-to-day subset and link here. Every entry below was
+re-derived from `backend/package.json` and `ui/package.json`; if you change a
+script, change this section in the same commit.
 
-```bash
-# Frontend (ui/)
-npm run lint          # must pass with 0 errors
-npm test              # must pass
-npm run format        # auto-formats — commit the result
+**Nothing enforces any of this on your machine.** There is no husky, no
+lint-staged, no pre-commit hook anywhere in the repo. Running these is a habit,
+not a gate.
 
-# Backend (backend/)
-npm run lint          # must pass with 0 errors
-npm test              # must pass
-npm run format        # auto-formats — commit the result
-```
-
-A quick combined check — **this is the one command a PR must pass**:
+### The one command a PR should pass
 
 ```bash
 # ui/
-npm run verify        # typecheck (ngc, strictTemplates) + lint + format:check + test + build
+npm run verify        # typecheck → lint → format:check → test:ci → build
 
 # backend/
-npm run verify        # typecheck + lint:check + test + build
+npm run verify        # typecheck → lint:check → check:cjs → test → build
 ```
 
-Notes:
+### Backend (`cd backend`)
 
-- `verify` ends with `build` on purpose: `tsc`/`ngc --noEmit` will not catch a
-  bundling or budget failure, and a broken `ng build` is exactly what breaks the
-  deploy workflow.
-- Backend `verify` uses `lint:check` (no `--fix`), so it *reports* violations
-  instead of silently rewriting your files mid-check. `npm run lint` still fixes.
-- `npm test` in `ui/` runs once (`ng test --no-watch`); use `npm run test:watch`
-  for the interactive watcher.
-- Backend e2e (`npm run test:e2e`) is **not** part of `verify` — it needs Docker
-  for Testcontainers. Run it separately when you touch entities or migrations.
+| Script | Runs | Notes |
+| --- | --- | --- |
+| **`verify`** | **`typecheck` → `lint:check` → `check:cjs` → `test` → `build`** | the pre-push gate. Note it uses `lint:check`, **not** `lint` |
+| `typecheck` | `tsc --noEmit -p tsconfig.json` | in `verify` |
+| `lint:check` | `eslint "{src,apps,libs,test}/**/*.ts" lambda.ts` | in `verify`. Read-only — this is what `test.yml` runs |
+| `check:cjs` | `node --no-experimental-require-module scripts/check-cjs-load.cjs` | in `verify`. `require()`s every runtime dependency — see §6 "Dependencies" |
+| `test` | `jest` | in `verify`. 17 unit suites under `src/` |
+| `build` | `nest build` | in `verify` |
+| `lint` | same as `lint:check` **plus `--fix`** | *not* in `verify` — it rewrites your files. Never use it in CI |
+| `format` | `prettier --write "src/**/*.ts" "test/**/*.ts"` | **write-only — there is no `format:check` in this app** |
+| `test:e2e` | `jest --config ./test/jest-e2e.json` | **needs Docker.** Not part of `verify` |
+| `test:cov` / `test:watch` / `test:debug` | Jest variants | |
+| `migration:{generate,run,revert,show}` | TypeORM CLI via the internal `typeorm` script, with `-d src/database/data-source.ts` already passed | see §8. Don't call `typeorm` directly |
+| `seed:super-admin` | `src/database/seed-super-admin.ts` | standalone; not in the bootstrap chain |
+| `seed:about-documents` | `src/database/seed-about-documents-standalone.ts` | the **only** way production gets the About registry |
+| `verify:prod-baseline` | read-only diff of the baseline migration vs. the prod schema | manual; no workflow runs it |
+| `start` / `start:dev` / `start:debug` | `nest start` variants | local dev |
+| `start:prod` | `node dist/main` | runs the compiled **local** bootstrap. Production does not use it — Lambda's entry is `dist/lambda.handler` |
+
+There is **no `seed:equipment` script.** The equipment catalogue is seeded by
+`runSeeds()` on local boot, together with the About registry.
+
+### Frontend (`cd ui`)
+
+| Script | Runs | Notes |
+| --- | --- | --- |
+| **`verify`** | **`typecheck` → `lint` → `format:check` → `test:ci` → `build`** | the pre-push gate. Note it uses `lint` here — the ui's `lint` does not mutate |
+| `typecheck` | `ngc -p tsconfig.app.json --noEmit` | in `verify`. Strict templates |
+| `lint` | `ng lint` | in `verify`. **No `--fix`** — unlike the backend, this does not touch your files |
+| `format:check` | `prettier --check "src/**/*.scss"` | in `verify`. ⚠ **SCSS only** — `verify` never format-checks `.ts` or `.html` |
+| `test:ci` | `ng test --no-watch` | in `verify`. Identical command to `test` |
+| `build` | `ng build` | in `verify`. Production config by default |
+| `lint:fix` | `ng lint --fix` | *not* in `verify` — the one that rewrites |
+| `format` | `prettier --write "src/**/*.{ts,html,scss}"` | *not* in `verify` — rewrites all three extensions |
+| `test` | `ng test --no-watch` | **2 spec files exist** — see §5 |
+| `test:watch` | `ng test` | interactive watcher |
+| `watch` | `ng build --watch --configuration development` | |
+| `serve:ssr:ui` | `node dist/ui/server/server.mjs` | run the built SSR bundle locally |
+| `start` / `ng` | `ng serve` / `ng` | |
+
+### Notes that keep biting people
+
+- **`verify` ends with `build` on purpose.** `tsc`/`ngc --noEmit` will not catch
+  a bundling or budget failure, and a broken `ng build` is exactly what breaks
+  the deploy workflow.
+- **Backend `lint` mutates, ui `lint` does not.** The backend's carries `--fix`;
+  the ui's is plain `ng lint`. Do not generalise the backend caveat to both apps.
+- **`format:check` in `ui/` is SCSS-only**, so `npm run verify` passes on a
+  Prettier-dirty `.ts` file. Run `npm run format` before you push.
+- **The backend has no `format:check` at all**, so nothing anywhere verifies
+  backend formatting — `format` is write-only.
+- **CI runs neither `verify`.** `test.yml` runs the backend's
+  `lint:check → check:cjs → test → test:e2e` and nothing else; `deploy.yml`
+  builds both apps after merge. See §5 and `docs/ARCHITECTURE.md` §12.
+- **Backend e2e is not part of `verify`** — it needs Docker for Testcontainers.
+  Run it separately when you touch entities or migrations.
 
 ---
 
 ## 5. Testing
+
+### What CI actually gates
+
+`.github/workflows/test.yml` ("PR Checks") runs on every pull request against
+`main`. **It has exactly one job, `backend`; the entire `ui` app is ungated
+pre-merge.**
+
+| | Backend | Frontend |
+| --- | --- | --- |
+| Pre-merge (`test.yml`) | `lint:check` · `check:cjs` · `test` · `test:e2e` | **nothing** |
+| Post-merge (`deploy.yml`) | `check:cjs` · migrations · `nest build` · deploy · `/api/health` smoke test | `ng build` · S3 sync · SSR deploy · CloudFront invalidate · smoke test |
+
+So: **not running lint before pushing does block a backend PR** — `test.yml`
+fails on `lint:check`. It blocks nothing on the frontend. A green PR check does
+not mean the frontend compiles, lints or passes its specs; the first time `ui`
+is built is *after* merge, in the deploy job. Full detail in
+`docs/ARCHITECTURE.md` §12.
 
 ### Frontend — `ui/` (Vitest 4)
 
@@ -258,19 +321,26 @@ Notes:
 cd ui
 npm test              # run all specs once (ng test --no-watch)
 npm run test:watch    # interactive watcher
-npm run test:ci       # CI alias of `npm test`
+npm run test:ci       # identical command to `npm test`
 ```
 
-**Where tests live:** colocated with source as `*.spec.ts` (e.g., `auth.service.spec.ts` next to `auth.service.ts`).
+⚠ **There are exactly two spec files in the whole app** — `src/app/app.spec.ts`
+and `src/app/features/contact/inquiry-form.spec.ts`. There is no
+`vitest.config.ts` and no options block on `angular.json`'s test target. A green
+`npm test` is close to meaningless today, so treat every new spec as a net gain
+rather than as satisfying an existing bar.
+
+**Where tests live:** colocated with source as `*.spec.ts`, next to the file
+under test.
 
 **What to test:**
 
 | ✅ Test these | ❌ Skip these |
 | --- | --- |
 | Services (signal state, computed values) | Simple template rendering |
-| Pipes (`ReadingTimePipe`, `QuillHtmlPipe`) | Dumb presentational components |
-| Guards (return value per role/platform) | Angular built-in mechanics |
-| Directives (DOM mutations, class toggling) | One-line getters/setters |
+| Pipes (`QuillHtmlPipe` — the only pipe in the app) | Dumb presentational components |
+| Guards (`authGuard`, `managerGuard`, `adminGuard`, `superAdminGuard` — return value per role/platform) | Angular built-in mechanics |
+| Directives (`FadeInOnScrollDirective` — DOM mutations, class toggling) | One-line getters/setters |
 | Resolvers (success path + 404 redirect) | |
 
 **Naming:** `describe('AuthService')` → `it('should return false for isLoggedIn() on init')`.
@@ -283,12 +353,20 @@ npm run test:ci       # CI alias of `npm test`
 
 ```bash
 cd backend
-npm test              # unit tests
-npm run test:e2e      # e2e (requires PostgreSQL — uses Testcontainers)
+npm test              # 17 unit suites under src/
+npm run test:e2e      # 1 e2e suite under test/ — needs Docker
 npm run test:cov      # coverage report
 ```
 
-**E2e tests** spin up a real PostgreSQL 16 container via Testcontainers and run all migrations before the suite. Never mock the database in e2e tests — that's how prod divergence happens.
+**E2e tests** start a `postgres:16-alpine` container via Testcontainers and run
+every migration before the suite, with `maxWorkers: 1`. **Docker must be running
+or the run fails**, which is why `test:e2e` is not part of `verify`. Never mock
+the database in e2e tests — that's how prod divergence happens.
+
+Note the PostgreSQL spread while you read failures: **local dev is 14**, **e2e
+is 16-alpine**, **production is 16.13**. A migration that passes locally has
+been exercised on 14 only; `npm run test:e2e` is the cheapest way to see it on
+16 before it reaches RDS.
 
 **Unit tests:** mock TypeORM repositories with `jest.fn()`. Do not use `synchronize: true` even in tests.
 
@@ -314,6 +392,27 @@ npm run format      # inside ui/ or backend/
 ### No `console.log` in committed code
 
 Use `// TODO: remove` or a logger service instead. CI does not block on this, but reviewers will flag it.
+
+### Dependencies — the rule that came from two outages
+
+**Adding a runtime dependency to `backend/` requires `npm run check:cjs` to
+pass.** AWS's managed `nodejs22.x` runtime is built **without** `require(esm)`
+support and it cannot be re-enabled via `NODE_OPTIONS` — but plain Node 22.12+
+locally and on GitHub Actions *does* support it. So an ESM-only transitive
+dependency passes every check and takes production down with a 502 on every
+route. Jest cannot catch it either: `transformIgnorePatterns` downlevels those
+files to CJS. This has happened twice —
+[`docs/ARCHITECTURE.md` §15, Incidents #2 and #4](./docs/ARCHITECTURE.md#15-known-incidents-timeline).
+
+Consequences you must respect:
+
+- `sanitize-html` is **pinned exact at `2.17.5`**. Do not unpin or bump it;
+  ≥ 2.17.6 pulls ESM-only `htmlparser2` v12.
+- `.github/dependabot.yml` ignores `sanitize-html` at every level and ignores
+  **all npm majors** for both apps. That is deliberate, not neglect.
+- `npm run check:cjs` runs in `test.yml` pre-merge *and* in `deploy.yml`
+  **before** the migration steps, so a build known not to boot never mutates
+  production RDS. Don't reorder those steps.
 
 ### Marking changes
 
@@ -390,7 +489,31 @@ if (isPlatformBrowser(this.platformId)) {
 }
 ```
 
-Guards and the auth interceptor already do this — use them as a reference.
+`auth.interceptor.ts` and `core/guards/auth.guard.ts` do this correctly — use
+them as the reference. **Five committed components do not**, and they are not a
+precedent: `admin/{complaints,inquiries,recovery-forms-list,wash-forms-list,winterization-forms-list}`
+each call `localStorage.getItem('token')` unguarded, to attach a bearer token to
+a raw export `fetch`. They work only because those calls are user-triggered
+after hydration. Tracked as debt in `ui/README.md`; guard them if you touch them.
+
+### Language-dependent logic — use `LanguageService`
+
+The app is **zoneless** (no `zone.js` in polyfills), so `translate.currentLang`
+is not reactive — reading it subscribes to nothing and re-renders only by
+accident. Inject `LanguageService` and read `lang()` / `isUa()` instead.
+
+```typescript
+// ✅
+private readonly language = inject(LanguageService);
+readonly title = computed(() => this.language.isUa() ? this.item().titleUa : this.item().titleEn);
+
+// ❌ intermittently stale under zoneless change detection
+get title() { return this.translate.currentLang === 'ua' ? ... : ...; }
+```
+
+Roughly 35 files still read `translate.currentLang` directly, so **copying a
+neighbouring component reproduces the bug.** Copy from a `LanguageService`
+consumer.
 
 ### Translations
 
@@ -420,17 +543,24 @@ interface User { id: string; email: string; }
 type User = { id: string; email: string; };
 ```
 
-### All HTTP calls through `ApiService`
+### HTTP calls go through `ApiService`
 
-`ApiService` prepends the base URL and `/api` prefix. Never use `HttpClient` directly in components.
+`ApiService` prepends `environment.apiUrl + '/api'`, and the interceptor adds the
+bearer token. Don't use `HttpClient` directly in components.
 
 ```typescript
 // ✅
-this.api.get<Post[]>('/blog')
+this.api.get<Post[]>('blog')
 
 // ❌
 this.http.get('http://localhost:3000/api/blog')
 ```
+
+Two deliberate exceptions already exist, both using raw `fetch`: **XLSX/CSV
+downloads** in the five admin list components (`ApiService` returns JSON-typed
+`Observable`s and cannot stream a blob) and **direct-to-S3 presigned uploads**
+(which must *not* carry the `Authorization` header and don't target the API host
+at all). If you add a third category, say why in the file.
 
 ---
 
@@ -438,10 +568,11 @@ this.http.get('http://localhost:3000/api/blog')
 
 ### Migrations — non-negotiable rules
 
-- **Never edit a migration after it has been applied** to any environment (local, RDS). Write a new one.
+- **Never edit a migration after it has been applied** to any environment (local, RDS). Write a new one — the `migrations` table records the timestamp as executed and `migration:run` will silently skip the edited file forever.
 - **Never set `synchronize: true`** — hardcoded `false` in both `app.module.ts` and `data-source.ts`.
 - One migration = one concern.
 - Run `npm run migration:show` before and after `npm run migration:run` to verify.
+- **You author on PostgreSQL 14 and it runs on 16.13.** Avoid syntax only one accepts, and prefer `npm run test:e2e` (16-alpine) over local-only confidence.
 
 ```bash
 # Generate:
@@ -456,15 +587,49 @@ npm run migration:revert
 
 ### DTOs and validation
 
-Every controller method that accepts a body takes a DTO class with `class-validator` decorators. The global `ValidationPipe` runs with `whitelist: true` — extra fields are silently stripped (prod) or rejected with 400 (local). Document intentional asymmetries.
+Every controller method that accepts a body takes a DTO class with
+`class-validator` decorators. The global `ValidationPipe` runs with
+`{ whitelist: true, forbidNonWhitelisted: true, transform: true }` — **the same
+options in `main.ts` and in `lambda.ts`**, so an unexpected body field returns
+**400 in every environment**. The old prod/local asymmetry is gone; if you touch
+one pipe config, change both in the same commit.
+
+One endpoint is outside this: `POST /api/upload/presigned-url` takes an inline
+body type rather than a DTO, so `ValidationPipe` never runs on it and a bad MIME
+surfaces as a **500**. Giving it a DTO changes that behaviour — call it out in
+the PR.
 
 ### HTML sanitization
 
-Apply `SanitizeHtmlPipe` to any DTO field that accepts Quill HTML output. The allowed-tags whitelist in `sanitize-html.pipe.ts` must stay in sync with `ui/src/app/shared/config/quill.config.ts`.
+Apply `SanitizeHtmlPipe` to any DTO field that accepts Quill HTML output. The
+allowed-tags whitelist in `sanitize-html.pipe.ts` must stay in sync with
+`ui/src/app/shared/config/quill.config.ts`.
+
+Know what is and is not covered before you assume: the pipe is applied to
+**five routes** (procurement create/update, vacancy create/update/publish). About
+sections are sanitized by a **separate config inside `about.service.ts`**. Blog
+and `/api/pages` are **not sanitized server-side at all** — a documented
+trade-off, not an oversight (`docs/ARCHITECTURE.md` §14.2).
 
 ### Route guards
 
-Use per-route `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(...)`. Do not add a global guard — several endpoints are intentionally anonymous (`POST /needs-forms/wash`, `POST /complaints`).
+Use per-route `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(...)`. Do not add
+a global guard — several endpoints are intentionally anonymous:
+
+`POST /api/auth/{register,login,forgot-password,reset-password}` ·
+`POST /api/needs-forms/wash` · `POST /api/complaints` ·
+`POST /api/testimonials` · `POST /api/inquiries` ·
+`POST /api/upload/testimonial-presigned`
+
+Three further public routes carry `TurnstileGuard` instead —
+`POST /api/needs-forms/recovery`, `POST /api/needs-forms/winterization`,
+`POST /api/upload/needs-presigned`. The token travels in the
+**`x-turnstile-token` header**, never the body (a body field would be rejected by
+`forbidNonWhitelisted`).
+
+⚠ **`RolesGuard` returns `true` when `@Roles()` is absent or empty.**
+`@UseGuards(RolesGuard)` on its own is a silent no-op, not a lock. Always pair
+them. `super_admin` also bypasses every role check by design.
 
 ### No `nest start` in production
 
@@ -477,11 +642,13 @@ Use per-route `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(...)`. Do not add
 | Rule | Why |
 | --- | --- |
 | Never commit `.env` or any file with real secrets | Secrets are in GitHub Secrets + Lambda env vars |
-| Never use `*` as a CORS origin | Configured explicitly in `main.ts` via `FRONTEND_URL` |
-| Always sanitize Quill HTML server-side | A compromised manager account can `curl` directly |
+| Never use `*` as a CORS origin | The allowlist is parsed from `FRONTEND_URL` by the shared `common/frontend-urls.ts`, used by **both** entry points — not by `main.ts` alone. In production `assertRequiredEnv()` refuses to boot on an empty or non-HTTPS value |
+| Always sanitize Quill HTML server-side where the pipe is applied | A compromised manager account can `curl` directly |
+| Don't widen the S3 IAM policy | It currently grants `PutObject` on `csd-media/*` and `PutObject` + `GetObject` on `csd-media-private/*`. There is deliberately **no `DeleteObject`** anywhere — adding it is a security decision, not a cleanup |
+| Don't widen the CloudFront CSP as a convenience | Each allowlist entry has a recorded reason in `infra/SECURITY-HEADERS.md` §2.1 |
 | Keep `DB_PORT` and `DB_PASSWORD` out of version control | Use `.env.example` for templates only |
-| Never widen the S3 IAM policy beyond `csd-media/*` | Least-privilege principle |
-| Rotate `JWT_SECRET` if it leaks — min 32 characters | App refuses to start if shorter |
+| Rotate `JWT_SECRET` if it leaks — min 32 characters | `assertRequiredEnv()` throws at boot if it is missing or shorter |
+| Don't flip `WINTERIZATION_HOUSEHOLD_ENABLED` | It gates direct assistance to individuals, which triggers Ukrainian tax-reporting duties and collects vulnerability data with no agreed retention period. A management decision, not a code one — rationale in `backend/.env.example` |
 
 ---
 
@@ -492,15 +659,19 @@ Use per-route `@UseGuards(JwtAuthGuard, RolesGuard)` + `@Roles(...)`. Do not add
 | Committing directly to `main` | Always use a branch + PR |
 | Hardcoding `http://localhost:3000` anywhere | Use `environment.apiUrl` via `ApiService` |
 | Adding `localStorage` without `isPlatformBrowser` | SSR crashes silently in production |
+| Reading `translate.currentLang` in new code | Inject `LanguageService` — the app is zoneless and `currentLang` is not reactive (§7) |
 | Editing an already-applied migration | Write a new migration file |
 | Adding `NgModule` | Project is fully standalone — no modules |
 | Using `type` for object shapes | Use `interface` (ESLint error) |
 | Adding a translation key to only one language file | Always update both `ua.json` and `en.json` |
 | Leaving `console.log` in code | Remove before committing |
-| Not running `npm run lint` before pushing | Breaks CI, blocks the PR |
+| Not running lint before pushing | Blocks a **backend** PR (`test.yml` runs `lint:check`). Blocks nothing on `ui` — which is exactly why you must run `npm run verify` yourself there (§5) |
+| Assuming a green PR check covers the frontend | It doesn't. `test.yml` has one job, `backend` |
+| `import`ing Leaflet in `ui/` | It is not an npm dependency — it comes from the unpkg CDN via `index.html`. Types only (`ui/CLAUDE.md`) |
+| Bumping or unpinning `sanitize-html` | Pinned at `2.17.5`; newer versions took production down twice (§6) |
 | Using `synchronize: true` in TypeORM config | Will destroy production schema on deploy |
 | Importing route components eagerly | Always use `loadComponent` / `loadChildren` |
-| Bypassing `ApiService` for HTTP calls | Interceptor and base URL stay centralized |
+| Bypassing `ApiService` for HTTP calls | Interceptor and base URL stay centralized — except blob downloads and presigned S3 uploads (§7) |
 
 ---
 
