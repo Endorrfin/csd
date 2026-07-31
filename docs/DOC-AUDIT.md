@@ -1,4 +1,4 @@
-# Documentation Audit — 2026-07-28 (rev. 2 2026-07-29 · rev. 3 2026-07-29, during pass A · rev. 4 2026-07-29, during pass B)
+# Documentation Audit — 2026-07-28 (rev. 2 2026-07-29 · rev. 3 2026-07-29, during pass A · rev. 4 2026-07-29, during pass B · rev. 5 2026-07-31, during pass C)
 
 Ground truth for the documentation refresh. Every fact below was read from source at commit `d93b258` and spot-verified; nothing here is copied from an existing document.
 
@@ -7,6 +7,8 @@ Ground truth for the documentation refresh. Every fact below was read from sourc
 > **Revision 3 (2026-07-29, written during pass A).** `feat/test-infrastructure` has been **merged**, and `main` has moved from `d93b258` to `1c1030f`. Several rev. 1/2 findings flipped as a result, and one new production incident landed in between. See **§0.5**, which supersedes §0.3 and §3.6.
 >
 > **Revision 4 (2026-07-29, written during pass B).** `main` has moved again, to `6d84d64` (pass A merged as PR #139, plus PR #111 a11y header work). Three counts and one line-number list in this file were wrong on re-derivation. See **§0.6**.
+>
+> **Revision 5 (2026-07-31, written during pass C).** `main` is at `4ee8195` — pass B merged as PR #140. One consequential claim in §0.1/§2.10 was **too broad**: not every part of the About registry breaks under CSP enforce. See **§0.7**.
 
 **Purpose.** The nine documents in this repo drifted 1–4 months behind the code. This file is the verified input for rewriting them, so the rewrite sessions do not have to re-discover the codebase. Where this file and a document disagree, this file wins; where this file and the code disagree, **the code wins** — re-verify before quoting.
 
@@ -171,6 +173,34 @@ Two things this file did **not** flag that pass B added to the READMEs, both re-
 - `ui`'s `verify` is `typecheck → lint → format:check → test:ci → build`, and its `lint` is plain `ng lint` — **no `--fix`**. Only the *backend*'s `lint` carries `--fix`. §2.9/§3.5 discuss the backend case; the ui distinction was never stated.
 - `POST /api/upload/testimonial-presigned` is genuinely **unauthenticated** (no guard at all, by design — the testimonial form is anonymous). §1.3 lists the four endpoints but never says this one is open.
 
+### 0.7 Rev. 5 — corrections found while writing pass C
+
+Verified at HEAD `4ee8195` (pass B merged as PR #140; the pass-C prompt still said `6d84d64`).
+
+**The one that matters — §0.1 and §2.10 over-claim.** Both say that switching the CSP to enforce breaks "the About registry" via its presigned GETs, alongside the Recovery and Winterization forms. The forms are right. The About claim is **half right**, and the wrong half would send someone debugging the wrong thing:
+
+| Path | Enforce today | Why |
+| --- | --- | --- |
+| Public `/about/documents` file link | **survives** | `about-documents.ts:419-423` fetches the link from the allowlisted API host and then calls `window.open(url, '_blank', 'noopener')`. A top-level navigation is governed by no CSP fetch directive — `navigate-to` was never shipped in any browser, and `default-src` does not cover navigation |
+| Admin About file upload | **breaks** — `connect-src` | `admin/about/documents/document-files.ts:371` does `fetch(presigned.url, {method:'POST'})` straight to `csd-media-private`. No new registry document can be published |
+| Admin About file preview | survives | also `window.open` (`document-files.ts:286`) |
+| Admin recovery/winterization attachment previews | **breaks** — `img-src` | `recovery-form-detail.ts:518,617` renders `<img [src]="…presigned GET on csd-media-private">` in the thumbnail grid and the lightbox. Attached *documents* are `<a href target="_blank">`, so those survive |
+
+So the correct blocking statement is: **enforce breaks the two needs forms (Turnstile `script-src`/`frame-src`, upload `connect-src`), the About admin upload (`connect-src`) and the admin attachment previews (`img-src`).** The public registry page is in scope only from PR-D4 onwards, which replaces `window.open` with an in-app viewer (`about-documents.ts:405` marks the spot). The prepared JSON covers all of it either way — the conclusion "apply before enforce" is unchanged, only the reasoning was loose.
+
+**Smaller corrections and additions, all new to this file:**
+
+| Item | Finding |
+| --- | --- |
+| §0.5 "`presigned-url` returns 500 on a MIME violation" — no mechanism given | The endpoint takes an **inline body type, not a DTO**, so the global `ValidationPipe` has no metatype to validate and never runs; the service throws `InternalServerErrorException`. The other three return **400**: `TestimonialUploadDto` and `AboutDocUploadDto` reject via `@IsIn`, `needs-presigned` via the service's `BadRequestException` (its DTO only has `@IsString()` on `contentType`) |
+| §0.5 / `README.md` §2.3: `AWS_S3_MEDIA_BUCKET=''` produces presigned URLs "with **no error**" | **True of one flow, false of the other.** Probed with the repo's own `@aws-sdk` on 2026-07-31: `getSignedUrl(PutObjectCommand{Bucket:''})` **throws** `No value provided for input HTTP label: Bucket.`, so `POST /api/upload/presigned-url` fails at generation with a 500. `createPresignedPost({Bucket:''})` **succeeds silently** and returns the path-style `https://s3.eu-central-1.amazonaws.com/`, so only `testimonial-presigned` fails later, in the browser. The `https://.s3.…` form is the interpolated `publicUrl` string, not the upload URL. `README.md` §2.3's table cell was corrected in pass C |
+| Private vs. public bucket guard asymmetry | `assertPrivateBucketConfigured()` throws a clear 500 when `AWS_S3_PRIVATE_BUCKET` is empty. There is **no equivalent for `AWS_S3_MEDIA_BUCKET`** — the SDK's own behaviour above is all there is |
+| §2.3 "the owning service re-validates the prefix" | The **submit DTOs** pin the key prefix with `@Matches` (`recovery-attachment.dto.ts:26`, `winterization-attachment.dto.ts:30`, `create-about-document-file.dto.ts:35` via `ABOUT_DOCUMENT_S3_KEY_PATTERN`). Only MIME and size are re-checked in the service, and only for the needs forms (`assertValidAttachments`); About does both at DTO level |
+| CORS configs are not symmetric | `s3-csd-media-cors.json` allows `GET`/`PUT`/`POST`; `s3-csd-media-private-cors.json` allows `GET`/`POST` only — correct, since nothing writes to the private bucket with a presigned PUT |
+| Backend HSTS ≠ CloudFront HSTS | helmet sets `max-age=15552000` (180 d) on the API; the CloudFront policy sets `63072000` (2 y). `SECURITY-HEADERS.md` documented only the second, inviting the assumption that they match |
+| `infra/s3-csd-media-lifecycle.json` | Confirmed: never existed in git history, not just absent from the working tree. §2.3 called it WRONG; it is safe to state flatly that the file has never existed |
+| Needs-form presigned GETs are best-effort | `findByIdWithUrls()` in both services wraps each `getNeedsFileUrl` in try/catch and yields `url: null` on failure, so an S3 outage degrades the admin detail view instead of failing the request. Not documented anywhere before pass C |
+
 ---
 
 ## 1. Verified inventory
@@ -306,7 +336,7 @@ Severity: **WRONG** = states something false · **STALE** = was true, no longer 
 
 **Add:** §7.x for each of the three features; 8 ER-diagram tables + corrected `ABOUT_DOCUMENT`; a media-bucket / upload matrix under §8; "what CI does not run"; the sanitization gap and ungated deletes in §14.2; reconcile the CSP items.
 
-### 2.3 `docs/MEDIA-UPLOADS.md` (129 lines, last touched 2026-05-22)
+### 2.3 `docs/MEDIA-UPLOADS.md` (129 lines, last touched 2026-05-22) — ✅ **rewritten in pass C**
 
 The most out-of-date document relative to its own subject. It describes a world with one bucket and two endpoints.
 
@@ -407,9 +437,9 @@ The most recently updated document, and still carries four outright fabrications
 | 480 | CORS "configured in `main.ts`" | in the shared `common/frontend-urls.ts`, used by both entry points | STALE |
 | 494 | localStorage/SSR rule | correct rule, but five committed components already violate it | MISSING |
 
-### 2.10 `infra/SECURITY-HEADERS.md` (108 lines)
+### 2.10 `infra/SECURITY-HEADERS.md` (108 lines) — ✅ **rewritten in pass C**
 
-**Revised.** This document is *accurate about the live state* — its allowlist table matches the header served by production. The drift is in the repository JSON, which contains an unapplied update. See §0.1.
+**Revised.** See **§0.7** for the one row below (the whole-file MISSING) that was too broadly worded. This document is *accurate about the live state* — its allowlist table matches the header served by production. The drift is in the repository JSON, which contains an unapplied update. See §0.1.
 
 | Lines | Says | Reality | Sev |
 | --- | --- | --- | --- |
@@ -489,7 +519,7 @@ Sequenced so that later documents can cite earlier ones instead of duplicating t
 | --- | --- | --- |
 | A ✅ | `docs/ARCHITECTURE.md` — **done 2026-07-29 at `1c1030f`** | Largest, and the natural home for the three new feature sections and the ER diagram. Everything else can link to it. |
 | B ✅ | `README.md`, `backend/README.md`, `ui/README.md` — **done 2026-07-29 at `6d84d64`** | Entry points. `ui/README.md` was a from-scratch write. |
-| C | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` | Narrow, factual, mostly mechanical once the bucket/endpoint matrix from pass A exists. |
+| C ✅ | `docs/MEDIA-UPLOADS.md`, `infra/SECURITY-HEADERS.md` — **done 2026-07-31 at `4ee8195`** | Narrow and factual, but not mechanical: both were rescoped, and one audit claim had to be narrowed (§0.7). |
 | D | `CLAUDE.md` ×3, `CONTRIBUTING.md` | Agent- and contributor-facing. Should be written last so they can point at the corrected documents rather than restating them. |
 
 Passes C and D can run in parallel once A is done.
@@ -517,3 +547,10 @@ Before quoting any figure from this file, re-run the command in §1.1 — §1 is
 10. **"What CI does and does not do" now lives in three places by design** — `ARCHITECTURE.md` §12 (full), root `README.md` §1.1 (table + the ui-is-ungated warning), and each app's README (its own half). The invariant sentence to reuse verbatim: *`test.yml` has exactly one job, `backend`; the entire `ui` app is ungated pre-merge.*
 11. **`ui/README.md` is now a real document** (~250 lines) and is the home for frontend specifics: render modes, npm scripts, the SSR `X-Forwarded-*` hardening, the language rule, the Leaflet-from-CDN fact and a "Known debt" section. `ui/CLAUDE.md` (pass D) should point at it rather than repeat it, and should keep only the *rules an agent must not break*.
 12. **Prose documents carry no `// CHANGED:` markers.** Pass A set this precedent in `ARCHITECTURE.md` and pass B followed it. The convention applies to code; in Markdown the diff is the record. Do not add them in passes C and D.
+
+**Decisions settled in pass C**, for pass D:
+
+13. **`MEDIA-UPLOADS.md` is the operational document, `ARCHITECTURE.md` §8.1 is the canonical one.** §8.1 answers *what exists*; `MEDIA-UPLOADS.md` answers *how to run it* — manual bucket creation, the CORS commands, the error responses, the retention/PII position. Its endpoint matrix is deliberately not a copy of §8.1's: it carries the literal MIME strings, the exact key prefixes and, in a second table, **which constants file owns each rule** (`recovery.constants.ts`, `winterization.constants.ts`, `about-documents.constants.ts`), because that is what a reader changing a limit actually needs. Pass D should link to `MEDIA-UPLOADS.md` for procedure and to §8.1 for facts.
+14. **`SECURITY-HEADERS.md` owns the CSP *procedure*; `ARCHITECTURE.md` §14.3 owns the *status*.** The document now opens with a §0 "current state" table (policy ID, distribution, attachment count, Report-Only) and the blocking-prerequisite warning, then the allowlist table, then apply/verify/enforce runbooks with the policy ID inlined so they are executable. It links to §14.3 for status rather than restating it.
+15. **Live-AWS facts carry a `†` and a re-check command**, following the pattern root `README.md` §1 set for the Database table. In pass C that covers the policy ID, the distribution, the 10-behaviour attachment count, the Report-Only status and the JSON-vs-live divergence — none of which is derivable from the repository. Pass D must not restate any of them as repo facts; point at `SECURITY-HEADERS.md` §0.
+16. **`unpkg.com` is load-bearing and must be labelled as such wherever the CSP is discussed.** Leaflet and `leaflet.markercluster` are loaded by `<script>`/`<link>` in `ui/src/index.html` and are not npm dependencies (`map-view.ts` reads `window.L`), so `script-src`, `style-src` **and** `img-src` (marker images referenced from the unpkg CSS) all need the host. Removing it from the CSP is a frontend change — move Leaflet into `package.json` first.
