@@ -35,9 +35,9 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-node@v4.4.0
+      - uses: actions/setup-node@v7.0.0
         with:
           # === MODIFIED: pinned via env variable ===
           node-version: ${{ env.NODE_VERSION }}
@@ -254,9 +254,9 @@ jobs:
         working-directory: ui
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-node@v4.4.0
+      - uses: actions/setup-node@v7.0.0
         with:
           # === MODIFIED: pinned via env variable ===
           node-version: ${{ env.NODE_VERSION }}
