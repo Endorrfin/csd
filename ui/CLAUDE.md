@@ -31,6 +31,12 @@ ui/
 ├── serverless.yml                  # service: csd-ssr, handler: lambda.handler
 ├── eslint.config.mjs
 ├── tsconfig.{json,app,spec}.json
+├── playwright.config.ts            # ⚠ two webServers — stub API :3000, SSR app :4000
+├── e2e/
+│   ├── tsconfig.json               # `typecheck` (tsconfig.app.json) does NOT cover e2e/
+│   ├── specs/                      # 6 specs, one scenario each
+│   ├── support/test.ts             # import `test`/`expect` from here, not @playwright/test
+│   └── stub-api/{server.mjs,fixtures/}
 └── src/
     ├── index.html                  # ⚠ loads Leaflet + markercluster <script>/<link> from unpkg
     ├── main.ts / main.server.ts / server.ts
@@ -156,9 +162,22 @@ Full script table: [`README.md` § npm scripts](./README.md) and `../CONTRIBUTIN
 
 - **`format:check` covers SCSS only** (`prettier --check "src/**/*.scss"`), while `npm run format` rewrites `.ts`, `.html` **and** `.scss`. So `npm run verify` never format-checks TypeScript or templates, and a Prettier-dirty `.ts` file passes.
 - **`npm run lint` here is plain `ng lint` — no `--fix`.** Only the *backend*'s `lint` mutates files. Use `npm run lint:fix` if you want fixes. Don't carry the backend's "lint rewrites your files" caveat over to this app.
-- **Nothing checks this app before merge.** `.github/workflows/test.yml` has exactly one job, `backend`; the entire `ui` app is ungated pre-merge. Its only CI execution is the production build in `deploy.yml`, *after* merge. A green PR says nothing about the frontend — run `npm run verify` yourself.
+- **This app is now gated pre-merge**, by the `ui` job in `.github/workflows/test.yml` (`typecheck` → `lint` → `format:check` → `test:ci` → `build`) and the `e2e` job (Playwright). What a green PR still does **not** prove: `.ts`/`.html` formatting (SCSS-only `format:check`) and behaviour beyond two unit specs and six browser scenarios.
 
 `eslint.config.mjs` disables `prettier/prettier` for `.html` ("Prettier must NOT format Angular templates"), so `npm run format` may reformat a template that lint will never complain about. If a reformat breaks control-flow syntax (`@if`, `@for`), revert that file rather than fighting Prettier.
+
+## Browser tests — the rules
+
+Run with `npm run e2e`. Details and the two local gotchas (stop your backend first; the suite builds with `--configuration development`) are in [`README.md` § Browser tests](./README.md).
+
+- **Never mock the API with `page.route()` for data that appears on first paint.** This app renders the first paint in Node and `provideClientHydration()` transfers the result, so server-side requests never touch the browser's network stack and the client does not re-request them. The interception point is `e2e/stub-api/server.mjs`, a real process on `:3000` — the port `environment.ts` points at. `page.route()` is still correct for client-side navigations and for forcing error states.
+- **Never test SSR through `page.goto()`.** By the time you have a DOM, Angular has hydrated and CSR looks identical. Assert on the raw response: `request.get('/')`, then check the HTML. See `e2e/specs/ssr.spec.ts`.
+- **Never build with plain `ng build` for e2e.** The default configuration is `production`, whose `fileReplacements` swap in `environment.prod.ts` — the tests would run against the live API Gateway and the real Turnstile key. Use `npm run build:e2e`.
+- **Locators: `getByRole` / `getByLabel` / `getByText` / `getByPlaceholder` only.** Never CSS classes. `data-testid` only where there is genuinely no accessible name, and then add the attribute to the template with a `<!-- CHANGED: -->` marker. Note the header renders its language switch and login/logout controls **twice** (mobile + desktop, CSS-hidden), so those locators need `.filter({ visible: true })`.
+- **No `waitForTimeout`.** Playwright auto-waits inside `expect(locator).toBeVisible()`.
+- **No `toHaveScreenshot`.** Largest source of flakiness; not worth it here.
+- **Cap the suite at 12 tests** (6 today). A flaky suite gets ignored, and an ignored suite makes CI meaningless. `retries` is 1 in CI and 0 locally — that one retry exists to *label* a flake in the report, not to make it pass. A test that needs it is fixed or deleted the same day.
+- `typecheck` runs `ngc -p tsconfig.app.json`, which is `src/**` only, and Playwright's loader strips types without checking them. **`npm run typecheck:e2e` is the only thing that type-checks a spec** — the `e2e` CI job runs it.
 
 ## Don'ts
 

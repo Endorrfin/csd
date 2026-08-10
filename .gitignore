@@ -42,18 +42,22 @@ jest-*.json
 .cache/
 *.local
 
+# playwright — reports, traces, screenshots and downloaded browsers
+test-results/
+playwright-report/
+blob-report/
+.playwright/
+playwright/.cache/
+
 # docs
 **/.serverless/
 docs/invoices
 docs/forms
 docs/audit/
-docs/audit/AUDIT-2026-06.md
-docs/AUDIT_PLAN.md
 docs/CONCERNS.md
 docs/WORK_PLAN.md
 docs/about-documents
 docs/screenshots
-
 csd-feature-tasks.xlsx
 csd-junior-tasks.xlsx
 _examples/
@@ -61,4 +65,6 @@ _examples/
 #AI
 docs/learning/
 docs/learning/LEARNING-LOG.md
-/docs/AUDIT_PLAN.md
+/docs/audit/AUDIT_PLAN.md
+/docs/tasks/
+

@@ -371,11 +371,14 @@ in e2e tests. Note the version: the e2e container is PostgreSQL 16 (matching
 prod) while local dev is 14.
 
 `.github/workflows/test.yml` ("PR Checks") runs this on every pull request
-against `main`: `npm ci` → `lint:check` → `check:cjs` → `npm test` →
-`docker pull postgres:16-alpine` → `test:e2e`.
+against `main`: `npm ci` → `typecheck` → `lint:check` → `check:cjs` →
+`npm test` → `build` → `docker pull postgres:16-alpine` → `test:e2e`. That is
+the whole `verify` chain plus e2e; `build` runs before e2e so a broken build
+fails in seconds rather than after the image pull.
 
-⚠ **That workflow has exactly one job, `backend`.** The `ui` app has no
-pre-merge gate at all — a green "PR Checks" says nothing about the frontend.
+⚠ Still **not** covered: `npm run format`. The workflow has no formatting step
+for this app at all — the `ui` job's `format:check` is SCSS-only and covers
+nothing here.
 
 ## Linting and the verify chain
 

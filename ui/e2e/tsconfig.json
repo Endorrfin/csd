@@ -1,0 +1,21 @@
+/* Playwright specs live outside src/, so tsconfig.app.json (include: src/**) does
+   not cover them. Without this file ESLint's projectService cannot resolve a
+   project for e2e/**\/*.ts and `ng lint` errors out on the whole folder.
+
+   ../playwright.config.ts is picked up via `files` (which merges with `include`)
+   so that `npm run typecheck:e2e` covers it. It is deliberately NOT in
+   angular.json's lintFilePatterns though: ESLint's projectService resolves a
+   file's project by walking UP from the file, and for a file at the ui/ root that
+   walk lands on ui/tsconfig.json (files: [], references only) — listing it here
+   does not change that, so linting it would error. */
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../out-tsc/e2e",
+    "types": ["node"],
+    "moduleResolution": "bundler",
+    "noEmit": true
+  },
+  "files": ["../playwright.config.ts"],
+  "include": ["**/*.ts"]
+}

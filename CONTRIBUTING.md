@@ -273,6 +273,10 @@ There is **no `seed:equipment` script.** The equipment catalogue is seeded by
 | `format` | `prettier --write "src/**/*.{ts,html,scss}"` | *not* in `verify` — rewrites all three extensions |
 | `test` | `ng test --no-watch` | **2 spec files exist** — see §5 |
 | `test:watch` | `ng test` | interactive watcher |
+| `e2e` | `playwright test` | *not* in `verify`. Builds and serves the app itself — **stop your local backend first**, the stub API binds `:3000` |
+| `e2e:ui` / `e2e:report` | `playwright test --ui` / `playwright show-report` | interactive runner / last HTML report |
+| `typecheck:e2e` | `tsc -p e2e/tsconfig.json --noEmit` | *not* in `verify`. The only thing that type-checks a spec — `typecheck` covers `src/` only |
+| `build:e2e` | `ng build --configuration development` | what `playwright.config.ts` builds with. **Never plain `ng build` for e2e** — production `fileReplacements` point the app at the live API |
 | `watch` | `ng build --watch --configuration development` | |
 | `serve:ssr:ui` | `node dist/ui/server/server.mjs` | run the built SSR bundle locally |
 | `start` / `ng` | `ng serve` / `ng` | |
@@ -288,11 +292,16 @@ There is **no `seed:equipment` script.** The equipment catalogue is seeded by
   Prettier-dirty `.ts` file. Run `npm run format` before you push.
 - **The backend has no `format:check` at all**, so nothing anywhere verifies
   backend formatting — `format` is write-only.
-- **CI runs neither `verify`.** `test.yml` runs the backend's
-  `lint:check → check:cjs → test → test:e2e` and nothing else; `deploy.yml`
-  builds both apps after merge. See §5 and `docs/ARCHITECTURE.md` §12.
+- **CI never invokes `verify` by name**, but `test.yml` now runs each app's chain
+  step by step across three jobs, plus Playwright. Running `verify` locally and
+  getting a green PR are close to the same thing — the gaps are formatting of
+  `.ts`/`.html` and everything the stub API cannot exercise. See §5 and
+  `docs/ARCHITECTURE.md` §12.
 - **Backend e2e is not part of `verify`** — it needs Docker for Testcontainers.
   Run it separately when you touch entities or migrations.
+- **Playwright is not part of `verify` either.** It builds the app and starts two
+  servers, which is too slow for a pre-commit gate; the `e2e` job in `test.yml`
+  is what enforces it.
 
 ---
 
@@ -301,19 +310,19 @@ There is **no `seed:equipment` script.** The equipment catalogue is seeded by
 ### What CI actually gates
 
 `.github/workflows/test.yml` ("PR Checks") runs on every pull request against
-`main`. **It has exactly one job, `backend`; the entire `ui` app is ungated
-pre-merge.**
+`main`. **It has three parallel jobs — `backend`, `ui` and `e2e`** — and no
+`paths:` filters, so all three run on every PR.
 
 | | Backend | Frontend |
 | --- | --- | --- |
-| Pre-merge (`test.yml`) | `lint:check` · `check:cjs` · `test` · `test:e2e` | **nothing** |
+| Pre-merge (`test.yml`) | `typecheck` · `lint:check` · `check:cjs` · `test` · `build` · `test:e2e` | `typecheck` · `lint` · `format:check` · `test:ci` · `build`, plus `typecheck:e2e` · Playwright in the `e2e` job |
 | Post-merge (`deploy.yml`) | `check:cjs` · migrations · `nest build` · deploy · `/api/health` smoke test | `ng build` · S3 sync · SSR deploy · CloudFront invalidate · smoke test |
 
-So: **not running lint before pushing does block a backend PR** — `test.yml`
-fails on `lint:check`. It blocks nothing on the frontend. A green PR check does
-not mean the frontend compiles, lints or passes its specs; the first time `ui`
-is built is *after* merge, in the deploy job. Full detail in
-`docs/ARCHITECTURE.md` §12.
+So: **not running lint before pushing blocks a PR in either app.** What a green
+check still does not prove: `.ts`/`.html` formatting is checked nowhere (`ui`'s
+`format:check` is SCSS-only, the backend has no formatting step), `ui` has two
+unit specs, and the Playwright suite runs against a stub API — uploads, admin
+auth and CRUD are unexercised. Full detail in `docs/ARCHITECTURE.md` §12.
 
 ### Frontend — `ui/` (Vitest 4)
 
@@ -665,8 +674,9 @@ them. `super_admin` also bypasses every role check by design.
 | Using `type` for object shapes | Use `interface` (ESLint error) |
 | Adding a translation key to only one language file | Always update both `ua.json` and `en.json` |
 | Leaving `console.log` in code | Remove before committing |
-| Not running lint before pushing | Blocks a **backend** PR (`test.yml` runs `lint:check`). Blocks nothing on `ui` — which is exactly why you must run `npm run verify` yourself there (§5) |
-| Assuming a green PR check covers the frontend | It doesn't. `test.yml` has one job, `backend` |
+| Not running lint before pushing | Blocks the PR in **either** app — `test.yml` runs `lint:check` in `backend` and `ng lint` in `ui` (§5) |
+| Assuming a green PR check means the frontend is tested | It means it typechecks, lints and builds. `ui` has two unit specs and the Playwright suite runs against a stub API (§5) |
+| Mocking the API with `page.route()` in a Playwright spec | The first paint is rendered in Node and transferred to the browser — the mock never fires. Use the stub in `ui/e2e/stub-api` (`ui/CLAUDE.md`) |
 | `import`ing Leaflet in `ui/` | It is not an npm dependency — it comes from the unpkg CDN via `index.html`. Types only (`ui/CLAUDE.md`) |
 | Bumping or unpinning `sanitize-html` | Pinned at `2.17.5`; newer versions took production down twice (§6) |
 | Using `synchronize: true` in TypeORM config | Will destroy production schema on deploy |

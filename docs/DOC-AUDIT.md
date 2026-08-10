@@ -128,6 +128,8 @@ The dev/prod major-version skew (14 vs 16) is real and undocumented: migrations 
 
 **What `test.yml` does *not* cover, and this is the sharpest remaining CI finding:** it has exactly **one job**, `backend`. The entire `ui` app is ungated on pull requests — no `ng lint`, no `typecheck`, no `ng test`, no `format:check`, no `ng build`. `ui`'s only CI execution is the production build in `deploy.yml`, after merge. Neither workflow ever invokes `npm run verify`.
 
+> **Closed.** `test.yml` now has three jobs — `backend`, `ui` and `e2e` — and the `backend` job gained `typecheck` and `build`. The finding above is left as written because this document records what each pass found at the time; current state is `ARCHITECTURE.md` §12.1.
+
 **New since `d93b258` — Incident #4, a second ESM production outage.** `sanitize-html` ≥ 2.17.6 pulls ESM-only `htmlparser2` v12. AWS's managed `nodejs22.x` is built **without** `require(esm)` support and it cannot be re-enabled via `NODE_OPTIONS` — but plain Node 22.12+ locally and on GitHub Actions *does* support it, so every check stayed green while production returned 502 on every route. Jest could not catch it either (`transformIgnorePatterns` downlevels those files to CJS).
 
 Mitigations now in the repo, all of which the documents must describe:
@@ -589,6 +591,7 @@ Before quoting any figure from this file, re-run the command in §1.1 — §1 is
 
 9. **The three READMEs link, they do not restate.** Root `README.md` gained §2.1 (three-paragraph feature summaries → `ARCHITECTURE.md` §7.7–§7.9), §2.2 (a two-table bucket/endpoint summary → §8.1) and §2.3 (env vars → §9). Each is a *pointer with enough detail to act on*, not a duplicate. Passes C and D should do the same, and should not re-summarise the features again.
 10. **"What CI does and does not do" now lives in three places by design** — `ARCHITECTURE.md` §12 (full), root `README.md` §1.1 (table + the ui-is-ungated warning), and each app's README (its own half). The invariant sentence to reuse verbatim: *`test.yml` has exactly one job, `backend`; the entire `ui` app is ungated pre-merge.*
+    > **Superseded.** The three-places split still holds; the sentence does not — `test.yml` has three jobs. Do not copy it forward. The replacement invariant, and the one worth stating wherever CI is described, is what a green PR still fails to prove: *`.ts`/`.html` formatting is checked nowhere, `ui` has two unit specs, and the Playwright suite runs against a stub API.*
 11. **`ui/README.md` is now a real document** (~250 lines) and is the home for frontend specifics: render modes, npm scripts, the SSR `X-Forwarded-*` hardening, the language rule, the Leaflet-from-CDN fact and a "Known debt" section. `ui/CLAUDE.md` (pass D) should point at it rather than repeat it, and should keep only the *rules an agent must not break*.
 12. **Prose documents carry no `// CHANGED:` markers.** Pass A set this precedent in `ARCHITECTURE.md` and pass B followed it. The convention applies to code; in Markdown the diff is the record. Do not add them in passes C and D.
 
