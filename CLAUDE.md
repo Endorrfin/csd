@@ -21,7 +21,7 @@ csd-fund/
 ├── README.md                      # Entry point — stack, modules, local setup for macOS and Windows
 ├── CONTRIBUTING.md                # Branching, commits, PR process. §4 is the CANONICAL command reference
 ├── .github/workflows/
-│   ├── test.yml                   # PR Checks — pre-merge, BACKEND ONLY
+│   ├── test.yml                   # PR Checks — pre-merge: backend + ui + e2e
 │   └── deploy.yml                 # Post-merge deploy for both apps
 └── .prettierrc / .prettierignore  # Shared formatter config
 ```
@@ -66,9 +66,15 @@ npm run verify                  # typecheck → lint → format:check → test:c
 
 ## CI — and what it does not check
 
-Two workflows. Neither of them ever runs `npm run verify`.
+Two workflows. Neither of them ever invokes `npm run verify` by name, but `test.yml` now runs each app's chain step by step.
 
-**`.github/workflows/test.yml` ("PR Checks")** — on `pull_request` → `main`. **It has exactly one job, `backend`; the entire `ui` app is ungated pre-merge.** The job runs `lint:check` → `check:cjs` → `test` → `test:e2e` (Testcontainers). It does **not** run backend `typecheck`, `format` or `build`, and it runs no frontend step at all — no `ng lint`, no `typecheck`, no `ng test`, no `ng build`. A green PR tells you nothing about the frontend.
+**`.github/workflows/test.yml` ("PR Checks")** — on `pull_request` → `main`. **Three jobs, running in parallel: `backend`, `ui`, `e2e`.** No `paths:` filters — all three run on every PR, deliberately, because a path-skipped job never reports a status and would hang a PR if these ever become required checks.
+
+- **`backend`** — `typecheck` → `lint:check` → `check:cjs` → `test` → `build` → `test:e2e` (Testcontainers). That is the whole `verify` chain plus e2e; `build` runs before e2e so a broken build fails in seconds instead of waiting on a Postgres image pull. It still does not run `format`.
+- **`ui`** — `typecheck` → `lint` → `format:check` → `test:ci` → `build`, i.e. `ui/package.json`'s `verify` verbatim. Remember what that chain does *not* cover: `format:check` is SCSS-only, and `ng test` is two spec files.
+- **`e2e`** — `typecheck:e2e` → Playwright (chromium) against a locally built SSR app plus the stub API in `ui/e2e/stub-api`. On failure it uploads `playwright-report/` and `test-results/`.
+
+A green PR now means both apps typecheck, lint, unit-test and build, and six browser scenarios pass. It still says nothing about `.ts`/`.html` formatting or about anything the stub API cannot exercise (real uploads, admin auth, CRUD).
 
 **`.github/workflows/deploy.yml`** — the deploy. Triggers on PR merge to `main` (`closed` + `merged == true`) or manual `workflow_dispatch`. The concurrency group is `deploy-prod-${{ github.event_name }}`, i.e. **keyed on the event name**, so a `workflow_dispatch` run lands in a *different* group and cannot cancel a queued PR-merge run — the comment in the file claims otherwise.
 
@@ -125,7 +131,7 @@ Every tracked document in this repo was re-verified against the code in a four-p
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Branching, commits, PR process, and **§4 — the canonical command reference** | `e5a4578` |
 | `CLAUDE.md` ×3 (this file, `backend/`, `ui/`) | The rules an agent must not break | `e5a4578` |
 
-The decisions behind that split — which document owns what, and what was settled rather than re-argued — are recorded in [`docs/DOC-AUDIT.md` §5](./docs/DOC-AUDIT.md). Read it before proposing that a document be restructured; several of the obvious "improvements" were considered and rejected there.
+The decisions behind that split — which document owns what, and what was settled rather than re-argued — are recorded in [`docs/DOC-AUDIT.md` §5](./docs/DOC-AUDIT.md). (The link used to point at `docs/audit/DOC-AUDIT.md`, which is gitignored and stale — a reader cloning the repo would not have it.) Read it before proposing that a document be restructured; several of the obvious "improvements" were considered and rejected there.
 
 **None of this makes a document authoritative over the code.** When they disagree, open the actual `.ts`/`.yml`/`.json` and correct the document in the same change. Counts (routes, entities, spec files, modules) drift with every commit — re-derive them, don't copy them forward.
 
@@ -137,4 +143,4 @@ What will make this stale fastest: a new backend module, a new upload endpoint o
 - Frontend specifics → [`ui/CLAUDE.md`](./ui/CLAUDE.md)
 - Commands, branching, PR process → [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 - Long-form architecture & runbooks → [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
-- CI/CD → [`.github/workflows/test.yml`](./.github/workflows/test.yml) (pre-merge, backend only) · [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) (post-merge)
+- CI/CD → [`.github/workflows/test.yml`](./.github/workflows/test.yml) (pre-merge: `backend` + `ui` + `e2e`) · [`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) (post-merge)

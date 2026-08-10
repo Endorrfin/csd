@@ -99,12 +99,47 @@ There is **no `vitest.config.ts`**, and `angular.json`'s `test` target has no
 `options` block at all — just `"builder": "@angular/build:unit-test"`. Test
 setup is entirely on defaults.
 
-**No CI workflow runs anything in this app before merge.**
-`.github/workflows/test.yml` ("PR Checks") has exactly one job, `backend`. No
-`ng lint`, no `typecheck`, no `ng test`, no `format:check` and no `ng build`
-runs on any pull request. The frontend's first and only CI execution is the
-production build in `deploy.yml`, *after* the merge. Running `npm run verify`
-locally is not a formality here — it is the only gate that exists.
+**This app is gated pre-merge.** `.github/workflows/test.yml` ("PR Checks") has a
+`ui` job running `typecheck` → `lint` → `format:check` → `test:ci` → `build` —
+this app's `verify` chain verbatim — and an `e2e` job running the Playwright
+suite. Both run on every pull request, with no `paths:` filter.
+
+What the `ui` job still does not prove: `format:check` covers **SCSS only**, and
+`ng test` is the two spec files above. A green PR means the app typechecks,
+lints and builds — not that it is tested.
+
+### Browser tests (Playwright)
+
+```
+ui/playwright.config.ts          # two webServers: stub API :3000, SSR app :4000
+ui/e2e/specs/                    # 6 specs, one scenario each
+ui/e2e/support/test.ts           # shared base test — blocks unpkg + Cloudflare
+ui/e2e/stub-api/server.mjs       # Express stub + JSON fixtures
+```
+
+```bash
+npm run e2e            # headless, builds and serves the app itself
+npm run e2e:ui         # Playwright UI mode
+npm run e2e:report     # open the last HTML report
+npm run typecheck:e2e  # tsc over e2e/ — `typecheck` covers src/ only
+```
+
+Two things to know before running them:
+
+- **Stop your local backend first.** The stub API binds `:3000` — the same port
+  as `npm run start:dev` — and `reuseExistingServer` is `false` for it on
+  purpose, so a running backend makes Playwright fail with "port already used"
+  rather than silently testing against your real API and database.
+- **The suite builds with `--configuration development`**, not the default
+  production build, because production `fileReplacements` swap in
+  `environment.prod.ts` and the tests would then run against the live API
+  Gateway and the real Turnstile key.
+
+The API is stubbed rather than mocked with `page.route()` because this app
+renders the first paint in Node and `provideClientHydration()` transfers the
+result — server-side requests never reach the browser's network stack, and the
+client never re-requests what SSR already fetched. Scenarios that need a real
+backend (uploads, admin auth, CRUD) are not covered yet.
 
 ## Rendering
 

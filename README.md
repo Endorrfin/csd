@@ -77,13 +77,16 @@ csd-fund/
 
 | Workflow | When | Covers |
 | --- | --- | --- |
-| `test.yml` — "PR Checks" | `pull_request` → `main` | **One job, `backend`:** `npm ci` → `lint:check` → `check:cjs` → `npm test` → `docker pull postgres:16-alpine` → `test:e2e` |
+| `test.yml` — "PR Checks" | `pull_request` → `main` | **Three parallel jobs.** `backend`: `npm ci` → `typecheck` → `lint:check` → `check:cjs` → `npm test` → `build` → `docker pull postgres:16-alpine` → `test:e2e`. `ui`: `npm ci` → `typecheck` → `lint` → `format:check` → `test:ci` → `build`. `e2e`: `npm ci` → `typecheck:e2e` → Playwright (chromium) against a locally built SSR app plus a stub API |
 | `deploy.yml` | PR **merge** to `main`, or `workflow_dispatch` | Backend job: `npm ci` → `check:cjs` → `migration:show` → conditional `migration:run` → `nest build` → `serverless deploy --stage prod` → smoke test `GET /api/health`. Frontend job (`needs:` backend success): `npm ci` → `ng build` → `aws s3 sync` (hashed assets 1y immutable, HTML no-cache) → SSR Lambda deploy → CloudFront `/*` invalidation → smoke test grepping **`ng-server-context`** |
+
+`test.yml` deliberately carries **no `paths:` filters** — all three jobs run on every PR, because a path-skipped job never reports a status and would hang a PR if these ever become required checks.
 
 **What no workflow does — assume nothing:**
 
-- **The entire `ui` app is ungated pre-merge.** No `ng lint`, no `typecheck`, no `ng test`, no `format:check`, no `ng build` runs on any PR. The frontend's first CI execution is the production build in `deploy.yml`, *after* merge.
-- Backend `typecheck` and `build` are not run pre-merge either. `npm run verify` chains them in both apps, but **no workflow ever invokes it**.
+- **Formatting of `.ts` and `.html` is checked nowhere.** The `ui` job's `format:check` covers SCSS only, and the backend has no formatting step at all.
+- **Unit coverage is thin where CI is green.** `ui` has two spec files; a passing `test:ci` proves very little.
+- **The `e2e` job runs against a stub API**, not the real backend. Uploads to `csd-media-private`, admin login, CRUD and the document registry are not exercised anywhere before merge.
 - `deploy.yml` runs no lint, typecheck or tests in either job — it is a delivery pipeline, not a quality gate.
 - ⚠ **Migrations run before build and deploy.** A failed build leaves production already migrated against the previous code.
 

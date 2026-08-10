@@ -1,11 +1,16 @@
 # .github/workflows/test.yml
-# === ADDED: PR-gated quality checks (lint + unit + e2e) ===
 #
 # Runs on every PR against main, BEFORE merge. Separate from deploy.yml
 # (which only runs after merge) so broken PRs never reach prod.
 #
 # Backend e2e uses Testcontainers; ubuntu-latest already has Docker daemon
 # available, no `services:` block needed.
+#
+# Three jobs: one per app, plus Playwright. The `backend` and `ui` jobs each run
+# exactly the chain that app's own `npm run verify` runs locally, so a green PR
+# means the same thing as a green local verify. Deliberately NO `paths:` filters:
+# if these become required checks, a path-skipped job never reports a status and
+# the PR hangs forever.
 
 name: PR Checks
 
@@ -23,7 +28,7 @@ env:
 
 jobs:
   backend:
-    name: Backend (lint + unit + e2e)
+    name: Backend (typecheck + lint + unit + build + e2e)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -41,12 +46,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # CHANGED: lint:check, not lint — `npm run lint` carries --fix, which
+      # first link of `npm run verify`, previously missing from CI.
+      # Without it a type error passed the PR and only surfaced in deploy.yml —
+      # i.e. after the merge to main, against prod.
+      - name: Typecheck
+        run: npm run typecheck
+
+      # lint:check, not lint — `npm run lint` carries --fix, which
       # silently rewrites files in the runner instead of failing the PR.
       - name: Lint
         run: npm run lint:check
 
-      # === ADDED: proves the untransformed CommonJS graph still loads. ===
+      # proves the untransformed CommonJS graph still loads.
       # Jest downlevels the ESM-only deps (sanitize-html -> htmlparser2 v12),
       # so it cannot catch an ERR_REQUIRE_ESM cold-start crash on Lambda.
       - name: CommonJS load check
@@ -55,8 +66,140 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # last link of `npm run verify`
+      # Placed BEFORE e2e on purpose — `nest build` takes seconds, e2e pulls a
+      # Postgres image and takes minutes. A broken build should not wait for it.
+      - name: Build
+        run: npm run build
+
       - name: E2E tests (Testcontainers PG 16)
         # Pre-pull image so Testcontainers doesn't time out cold-starting it
         run: |
           docker pull postgres:16-alpine
           npm run test:e2e
+
+  # the frontend gate
+  # Until now `test.yml` had exactly one job and the entire `ui` app was ungated
+  # pre-merge — while dependabot.yml opens PRs for /ui every Monday (groups
+  # `angular`, `ui-tooling`, `ui-runtime`). Those PRs went green without running
+  # a single frontend check. Steps below are `ui/package.json` -> `verify`, in
+  # the same order, so CI and local agree.
+  ui:
+    name: UI (typecheck + lint + format + unit + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # NOTE: unlike the backend, this app's `lint` is plain `ng lint` with no
+      # --fix, so it fails the PR instead of rewriting files. There is no
+      # `lint:check` here and none is needed.
+      - name: Lint
+        run: npm run lint
+
+      # NOTE: `format:check` covers SCSS only (`prettier --check "src/**/*.scss"`).
+      # That is deliberate for now — widening the glob to .ts/.html reformats half
+      # the app and is tracked separately. Do not "fix" it in this workflow.
+      - name: Format check (SCSS)
+        run: npm run format:check
+
+      - name: Unit tests
+        run: npm run test:ci
+
+      # Production configuration on purpose: this is the build deploy.yml runs,
+      # including fileReplacements to environment.prod.ts and the size budgets.
+      - name: Build
+        run: npm run build
+
+  # Playwright, phase 1: chromium against a locally built SSR app backed by the
+  # stub API in ui/e2e/stub-api. No database, no real backend — phase 2 adds those.
+  # Runs in parallel with `ui` rather than after it: sequencing would add the whole
+  # ui job to the critical path for no extra signal.
+  e2e:
+    name: E2E (Playwright, chromium)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ui
+
+    steps:
+      - uses: actions/checkout@v4.2.2
+
+      - uses: actions/setup-node@v4.4.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `typecheck` covers tsconfig.app.json (src/** only) and Playwright's own
+      # loader strips types without checking them, so without this step a type
+      # error in a spec is silently ignored.
+      - name: Typecheck e2e specs
+        run: npm run typecheck:e2e
+
+      # Key the browser cache on the resolved @playwright/test version, not on the
+      # lockfile hash: a Dependabot bump must invalidate it, and an unrelated
+      # dependency bump must not.
+      - name: Resolve Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # restore/save split rather than actions/cache, whose save step carries
+      # post-if: success(). With that, a red suite never populates the cache and
+      # every retry re-downloads chromium — worst exactly when you iterate most.
+      - name: Restore Playwright browsers
+        id: playwright-cache
+        uses: actions/cache/restore@v5.0.5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install chromium and its system dependencies
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Save Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5.0.5
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
+
+      # A cache hit restores the browser binary but not the apt libraries it links
+      # against — those live outside ~/.cache and have to be installed every run.
+      - name: Install chromium system dependencies (cache hit)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      # playwright.config.ts starts both servers itself: the stub API on :3000 and
+      # `build:e2e && serve:ssr:ui` on :4000.
+      - name: Run Playwright
+        run: npm run e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: playwright-report
+          path: |
+            ui/playwright-report/
+            ui/test-results/
+          retention-days: 7

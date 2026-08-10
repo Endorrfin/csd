@@ -1425,13 +1425,26 @@ There are **two** workflows. Keeping them straight matters, because only one of 
 
 - **Trigger:** `pull_request` targeting `main` (default types: opened, synchronize, reopened). Not on push, no `workflow_dispatch`.
 - **Concurrency:** `pr-checks-<head_ref>`, `cancel-in-progress: true`.
-- **Exactly one job — `backend`.** In order: `npm ci` → `npm run lint:check` → `npm run check:cjs` → `npm test` → `docker pull postgres:16-alpine` → `npm run test:e2e`. Testcontainers uses the Docker daemon already present on `ubuntu-latest`, so there is no `services:` block.
+- **Three jobs, running in parallel.** There are deliberately **no `paths:` filters** — a path-skipped job never reports a status, so if these become required checks a filtered job would leave PRs waiting forever.
+
+| Job | Steps, in order |
+| --- | --- |
+| `backend` | `npm ci` → `typecheck` → `lint:check` → `check:cjs` → `test` → `build` → `docker pull postgres:16-alpine` → `test:e2e` |
+| `ui` | `npm ci` → `typecheck` → `lint` → `format:check` → `test:ci` → `build` |
+| `e2e` | `npm ci` → `typecheck:e2e` → restore Playwright browser cache → `playwright install chromium` → `npm run e2e` → upload `playwright-report/` + `test-results/` on failure |
+
+The `backend` job is the whole `verify` chain plus e2e, with `build` placed **before** e2e: `nest build` takes seconds while e2e pulls a Postgres image, so a broken build should not wait on it. The `ui` job is `ui/package.json`'s `verify` verbatim. Testcontainers uses the Docker daemon already present on `ubuntu-latest`, so there is no `services:` block.
+
+The `e2e` job caches `~/.cache/ms-playwright` keyed on the resolved `@playwright/test` version — a Dependabot bump invalidates it, an unrelated bump does not. On a cache hit the browser binary is restored but the apt libraries it links against are not, so `playwright install-deps chromium` runs anyway.
 
 **What this workflow does NOT do — read this before assuming CI has your back:**
 
-- **The entire `ui` app is ungated.** No `ng lint`, no `typecheck`, no `ng test`, no `format:check`, no `ng build` runs on any pull request. The frontend's first and only CI execution is the production build in the deploy workflow — *after* merge.
-- **Backend `typecheck` and `build` are not run pre-merge either.** `npm run verify` exists and chains them, but no workflow invokes it in either app.
+- **Formatting of `.ts` and `.html` is verified nowhere.** `ui`'s `format:check` is SCSS-only; the backend has no `format:check` at all.
+- **`ui` unit coverage is two spec files.** A green `test:ci` proves very little — see §17.
+- **The `e2e` job runs against a stub API** (`ui/e2e/stub-api/server.mjs`), not the real backend. Uploads to `csd-media-private`, admin login, admin CRUD and the document registry are exercised by nothing before merge.
 - `verify:prod-baseline` is manual.
+
+**Why the API is stubbed with a real process rather than `page.route()`** — the one thing to understand before touching these tests. `ui` renders the first paint in Node, and `provideClientHydration()` ships the result to the browser through the HTTP transfer cache. Server-side requests never reach the browser's network stack, and the client does not re-request what SSR already fetched, so a `page.route()` mock is bypassed entirely on initial load. The stub binds `:3000` — the port `src/environments/environment.ts` points `ApiService` at — so both halves of the app go through it. For the same reason the suite builds with `--configuration development`: the default production build's `fileReplacements` would aim the tests at the live API Gateway.
 
 Whether `PR Checks` is a *required* status check lives in GitHub branch-protection settings, not in this repo — the workflow file alone does not prove a PR can be blocked.
 
@@ -1931,13 +1944,13 @@ Ordered by approximate priority.
 
 ### Medium priority
 
-- [ ] **Put the `ui` app behind a pre-merge gate.** `test.yml` runs backend checks only — no `ng lint`, `typecheck`, `test` or `build` runs on any PR (§12.1).
-- [ ] **Fix `ui`'s `format:check`** to cover `ts` and `html`, matching what `npm run format` rewrites — today `verify` cannot catch TS/template formatting drift.
+- [ ] **Fix `ui`'s `format:check`** to cover `ts` and `html`, matching what `npm run format` rewrites — today `verify` cannot catch TS/template formatting drift. Widening the glob reformats a large part of the app, so it needs its own PR.
+- [ ] **Extend the Playwright suite to the scenarios a stub API cannot reach** — needs-form submit with an attachment (presigned POST into `csd-media-private`), admin login → JWT → guarded route, admin CRUD, and the document registry. Needs `docker compose` with `postgres:16-alpine` plus the real backend, and a Turnstile bypass for the two guarded forms. Keep the whole suite under 12 tests (§12.1).
 - [ ] **Add a retention / PII policy for `media/needs/*`.** No lifecycle rule exists on either media bucket; the private one holds defect acts and photographs of private property indefinitely.
 - [ ] **Replace the logged password-reset link with a real `EmailService`** (SES) (§14.2).
 - [ ] **Add CloudWatch alarms** on Lambda `Errors` and API Gateway 5xx, and a global exception filter (§14.2).
 - [ ] **Route admin XLSX/CSV exports through `ApiService`** to remove the five unguarded `localStorage` reads (§14.2).
-- [ ] **Grow the `ui` test suite** — 2 spec files for 107 source files, with no `vitest.config.ts`.
+- [ ] **Grow the `ui` unit test suite** — 2 spec files for 107 source files, with no `vitest.config.ts`. The Playwright suite covers six user-facing flows but is not a substitute for service, interceptor and guard specs.
 - [ ] **Type the 130+ `any` usages** across the frontend, especially `home.ts`, image upload flows, blog components.
 - [ ] **Write E2E tests** for admin workflows (create procurement → publish → change status → delete). The Testcontainers harness now exists; `app.e2e-spec.ts` has 2 tests.
 - [ ] **Add audit log** for status changes on procurement, vacancy, testimonial, complaint, inquiry — the shared `needs_form_audit_log` is polymorphic and could absorb them.

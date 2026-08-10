@@ -1,0 +1,53 @@
+[
+  {
+    "id": "22222222-2222-4222-8222-222222222222",
+    "slug": "e2e-post-1",
+    "titleUa": "E2E: перший пост",
+    "titleEn": "E2E: first post",
+    "excerptUa": "Опис першого поста.",
+    "excerptEn": "Excerpt of the first post.",
+    "contentUa": "<p>Тіло першого поста.</p>",
+    "contentEn": "<p>Body of the first post.</p>",
+    "category": "news",
+    "images": [],
+    "coverImage": null,
+    "videoUrl": null,
+    "publishedAt": "2026-07-20T09:00:00.000Z",
+    "createdAt": "2026-07-20T09:00:00.000Z",
+    "isFeatured": false
+  },
+  {
+    "id": "33333333-3333-4333-8333-333333333333",
+    "slug": "e2e-post-2",
+    "titleUa": "E2E: другий пост",
+    "titleEn": "E2E: second post",
+    "excerptUa": "Опис другого поста.",
+    "excerptEn": "Excerpt of the second post.",
+    "contentUa": "<p>Тіло другого поста.</p>",
+    "contentEn": "<p>Body of the second post.</p>",
+    "category": "news",
+    "images": [],
+    "coverImage": null,
+    "videoUrl": null,
+    "publishedAt": "2026-07-10T09:00:00.000Z",
+    "createdAt": "2026-07-10T09:00:00.000Z",
+    "isFeatured": false
+  },
+  {
+    "id": "44444444-4444-4444-8444-444444444444",
+    "slug": "e2e-post-3",
+    "titleUa": "E2E: третій пост",
+    "titleEn": "E2E: third post",
+    "excerptUa": "Опис третього поста.",
+    "excerptEn": "Excerpt of the third post.",
+    "contentUa": "<p>Тіло третього поста.</p>",
+    "contentEn": "<p>Body of the third post.</p>",
+    "category": "news",
+    "images": [],
+    "coverImage": null,
+    "videoUrl": null,
+    "publishedAt": "2026-07-01T09:00:00.000Z",
+    "createdAt": "2026-07-01T09:00:00.000Z",
+    "isFeatured": false
+  }
+]
