@@ -76,7 +76,7 @@ Two workflows. Neither of them ever invokes `npm run verify` by name, but `test.
 
 A green PR now means both apps typecheck, lint, unit-test and build, and six browser scenarios pass. It still says nothing about `.ts`/`.html` formatting or about anything the stub API cannot exercise (real uploads, admin auth, CRUD).
 
-**`.github/workflows/deploy.yml`** — the deploy. Triggers on PR merge to `main` (`closed` + `merged == true`) or manual `workflow_dispatch`. The concurrency group is `deploy-prod-${{ github.event_name }}`, i.e. **keyed on the event name**, so a `workflow_dispatch` run lands in a *different* group and cannot cancel a queued PR-merge run — the comment in the file claims otherwise.
+**`.github/workflows/deploy.yml`** — the deploy. Triggers on PR merge to `main` (`closed` + `merged == true`) or manual `workflow_dispatch`. The concurrency group is a **static `deploy-prod`** with **`cancel-in-progress: false`**, so every prod deploy — merge or dispatch — serializes against the same group and none is ever aborted mid-flight. A manual dispatch still supersedes a *queued* PR-merge run, because GitHub cancels the previously pending run in a group; it just waits for the in-flight one. Do not reintroduce `${{ github.event_name }}` into the group name — that split merge and dispatch runs into separate groups and let two deploys hit one RDS instance and one CloudFormation stack at once.
 
 Pipeline order: install → `check:cjs` → `migration:show` → conditional `migration:run` → `nest build` → `serverless deploy --stage prod` → `/api/health` smoke test → then the frontend job (depends on backend success) → `ng build` → S3 sync (hashed assets long-cache, HTML no-cache) → SSR Lambda deploy → CloudFront invalidate `/*` → frontend smoke test, which greps for **`ng-server-context`**, not `<app-root>` (the literal tag matched the CSR shell and would pass exactly when SSR broke).
 
@@ -115,6 +115,7 @@ These override generic Claude defaults. They apply everywhere in the repo.
 6. Reliability, security and best practices come before convenience.
 7. If something is unclear — ask. Don't guess at intent.
 8. Push back when Vasyl is wrong or only partially right; ask clarifying questions and guide to the correct solution instead of agreeing.
+9. **Never create branches or commits.** Edit the working tree only. When a change is ready, propose a branch name (per [`CONTRIBUTING.md` §Branch types](./CONTRIBUTING.md)) and a commit message (`csd | web-portal | <type>(<scope>): <subject>`) — Vasyl creates the branch and commits himself.
 
 ## Documentation state
 

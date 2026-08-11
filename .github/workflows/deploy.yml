@@ -10,14 +10,27 @@ on:
   # allow manual trigger using main branch
   workflow_dispatch:
 
-# === MODIFIED: separate concurrency groups so manual dispatch cancels prior runs ===
-# - PR merges queue (cancel-in-progress: false) — never kill a deploy mid-flight
-# - workflow_dispatch can cancel waiting PR-merge runs (you explicitly want "deploy now")
-# Note: GitHub treats `${{ ... }}` here at workflow level — github.event_name is available.
+# one static concurrency group for every prod deploy
+# The group MUST NOT interpolate github.event_name. It used to, which put PR-merge runs in
+# `deploy-prod-pull_request` and manual runs in `deploy-prod-workflow_dispatch` — different
+# groups, blind to each other, so two deploys could run at once against one RDS instance and
+# one CloudFormation stack.
+#
+# cancel-in-progress is false ON PURPOSE. A prod deploy must never be aborted mid-flight:
+#   - `migration:run` uses migrationsTransactionMode: 'each' (backend/src/database/data-source.ts),
+#     so an interrupted run leaves the schema on a partially applied set with nothing to roll back;
+#   - killing `serverless deploy` kills only the CLI — CloudFormation keeps going server-side and
+#     the stack is left in UPDATE_IN_PROGRESS, which blocks the very next deploy;
+#   - an interrupted `s3 sync --delete` serves 404s for hashed chunks until the next run lands.
+#
+# Queueing still gives the "deploy now" behaviour the old comment claimed: GitHub cancels any
+# previously PENDING run in a group, so a manual dispatch supersedes a stale queued PR-merge run.
+# It just waits for the in-flight one instead of aborting it. To stop one specific run, cancel it
+# from the Actions tab, where the step it is currently on is visible.
 concurrency:
-  group: deploy-prod-${{ github.event_name }}
-  cancel-in-progress: ${{ github.event_name == 'workflow_dispatch' }}
-# ====================================================================================
+  group: deploy-prod
+  cancel-in-progress: false
+# ====================================================================
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
