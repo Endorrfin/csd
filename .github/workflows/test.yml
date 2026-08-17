@@ -35,9 +35,9 @@ jobs:
         working-directory: backend
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-node@v4.4.0
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -92,9 +92,9 @@ jobs:
         working-directory: ui
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-node@v4.4.0
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -138,9 +138,9 @@ jobs:
         working-directory: ui
 
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v7.0.1
 
-      - uses: actions/setup-node@v4.4.0
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
@@ -167,7 +167,7 @@ jobs:
       # every retry re-downloads chromium — worst exactly when you iterate most.
       - name: Restore Playwright browsers
         id: playwright-cache
-        uses: actions/cache/restore@v5.0.5
+        uses: actions/cache/restore@v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
@@ -178,7 +178,7 @@ jobs:
 
       - name: Save Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v5.0.5
+        uses: actions/cache/save@v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: ${{ steps.playwright-cache.outputs.cache-primary-key }}
