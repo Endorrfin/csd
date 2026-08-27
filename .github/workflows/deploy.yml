@@ -37,6 +37,17 @@ env:
   # === ADDED: single source of truth for Node version (matches local 22.17.0) ===
   NODE_VERSION: '22.17.0'
   # ============================================================================
+  # === ADDED: the three prod deploy targets that used to sit inline in shell
+  # steps, named in one place (staging, P1-5). The VALUES ARE UNCHANGED and this
+  # file stays prod-only — staging deploys from deploy-staging.yml, a separate
+  # file, so there is deliberately no conditional here. Naming them makes the two
+  # workflows readable as siblings and makes an accidental cross-target obvious
+  # in review. The AWS Console links in the summary steps are documentation for
+  # this workflow only and stay literal on purpose. ===
+  DEPLOY_STAGE: prod
+  STATIC_BUCKET: csd-fund-static
+  CF_DISTRIBUTION_ID: E3U465AMSVR9PN
+  # ============================================================================
 
 jobs:
   deploy-backend:
@@ -176,7 +187,8 @@ jobs:
           # pass Turnstile secret into serverless deploy → Lambda env
           # (guard is fail-closed in prod; empty secret = 403 on recovery upload+submit)
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
-        run: npx serverless deploy --stage prod
+        # CHANGED: literal `prod` -> env.DEPLOY_STAGE (same value)
+        run: npx serverless deploy --stage "${DEPLOY_STAGE}"
 
       - name: Smoke test backend
         env:
@@ -288,15 +300,16 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-central-1
+        # CHANGED: literal bucket name -> env.STATIC_BUCKET (same value)
         run: |
           # Hashed assets — довгий кеш
-          aws s3 sync dist/ui/browser/ s3://csd-fund-static/ \
+          aws s3 sync dist/ui/browser/ "s3://${STATIC_BUCKET}/" \
             --delete \
             --cache-control "public, max-age=31536000, immutable" \
             --exclude "*.html"
 
           # HTML — без кешу
-          aws s3 sync dist/ui/browser/ s3://csd-fund-static/ \
+          aws s3 sync dist/ui/browser/ "s3://${STATIC_BUCKET}/" \
             --exclude "*" \
             --include "*.html" \
             --cache-control "public, max-age=0, must-revalidate"
@@ -306,16 +319,18 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
-        run: npx serverless deploy --stage prod
+        # CHANGED: literal `prod` -> env.DEPLOY_STAGE (same value)
+        run: npx serverless deploy --stage "${DEPLOY_STAGE}"
 
       - name: Invalidate CloudFront cache
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: eu-central-1
+        # CHANGED: literal distribution id -> env.CF_DISTRIBUTION_ID (same value)
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id E3U465AMSVR9PN \
+            --distribution-id "${CF_DISTRIBUTION_ID}" \
             --paths "/*"
 
       - name: Smoke test frontend

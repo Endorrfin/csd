@@ -1,6 +1,40 @@
 org: csd2019
 service: csd-ssr
 
+# === ADDED: per-stage environment blocks (staging, P1-5).
+# The `prod` block below is character-for-character what used to be inlined under
+# provider.environment, so `serverless package --stage prod` must emit the same
+# CloudFormation template as before this change. Only `staging` is new. ===
+custom:
+  environment:
+    prod:
+      NODE_ENV: production
+      # public hostname for SSR — restores Host behind API Gateway so
+      # Angular host validation passes and absolute URLs are correct (audit P0-3)
+      PUBLIC_HOST: www.csd-fund.org
+    staging:
+      NODE_ENV: production
+      # Staging hostname = the staging CloudFront domain, injected from the
+      # GitHub `staging` environment.
+      # The '' default is NOT optional: Serverless v4 resolves the WHOLE config
+      # graph regardless of --stage, so a bare ${env:PUBLIC_HOST} here aborts the
+      # PROD deploy too. Fail-closed therefore lives in deploy-staging.yml, which
+      # refuses to deploy when PUBLIC_HOST is empty — not in this file.
+      PUBLIC_HOST: ${env:PUBLIC_HOST, ''}
+      # Angular bakes angular.json -> security.allowedHosts into
+      # dist/ui/server/angular-app-engine-manifest.mjs at BUILD time, and that
+      # baked list holds prod hostnames only. At runtime AngularAppEngine unions
+      # the manifest list with NG_ALLOWED_HOSTS (@angular/ssr ssr.mjs,
+      # getAllowedHosts), so setting it here is what lets staging pass SSR host
+      # validation without a prod rebuild. Omit it and the PUBLIC_HOST middleware
+      # in src/server.ts pins Host to a value that is not on the baked list ->
+      # 400 / CSR shell, and hydration never happens on staging.
+      NG_ALLOWED_HOSTS: ${env:PUBLIC_HOST, ''}
+    dev:
+      NODE_ENV: production
+      PUBLIC_HOST: www.csd-fund.org
+# =====================================================================
+
 provider:
   name: aws
   runtime: nodejs22.x
@@ -8,11 +42,8 @@ provider:
   stage: ${opt:stage, 'dev'}
   memorySize: 512
   timeout: 29
-  environment:
-    NODE_ENV: production
-    # public hostname for SSR — restores Host behind API Gateway so
-    # Angular host validation passes and absolute URLs are correct (audit P0-3)
-    PUBLIC_HOST: www.csd-fund.org
+  # was an inline block; now picked per stage from custom.environment
+  environment: ${self:custom.environment.${sls:stage}}
 
 functions:
   ssr:
