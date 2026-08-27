@@ -3,12 +3,27 @@ org: csd2019
 service: csd-api
 useDotenv: true
 
-# private media bucket name in one place (env override wins),
-# reused by both the IAM resource ARN and the AWS_S3_PRIVATE_BUCKET env var so
-# they can never drift. Vasyl must CREATE this bucket (private, no public
-# policy, CORS allowing POST from the site origin) before recovery uploads go live.
+# media bucket names in one place (env override still wins), reused by both the
+# IAM resource ARNs and the AWS_S3_* env vars so they can never drift. Vasyl must
+# CREATE each bucket (private one: no public policy, CORS allowing POST from the
+# site origin) before uploads go live on that stage.
+#
+# === ADDED: per-stage defaults (staging, P1-5). Before this, both bucket names
+# resolved to the PROD buckets on every stage — a staging deploy would have
+# written QA attachments straight into csd-media-private, next to real defect
+# acts (PII). The `prod` and `dev` rows keep exactly the values that were here,
+# so `serverless package --stage prod` emits an unchanged template. ===
 custom:
-  privateMediaBucket: ${env:AWS_S3_PRIVATE_BUCKET, 'csd-media-private'}
+  mediaBucketByStage:
+    prod: csd-media
+    staging: csd-media-staging
+    dev: csd-media
+  privateBucketByStage:
+    prod: csd-media-private
+    staging: csd-media-private-staging
+    dev: csd-media-private
+  mediaBucket: ${env:AWS_S3_MEDIA_BUCKET, self:custom.mediaBucketByStage.${sls:stage}}
+  privateMediaBucket: ${env:AWS_S3_PRIVATE_BUCKET, self:custom.privateBucketByStage.${sls:stage}}
 
 provider:
   name: aws
@@ -30,7 +45,8 @@ provider:
         - Effect: Allow
           Action:
             - s3:PutObject
-          Resource: "arn:aws:s3:::csd-media/*"
+          # was the literal csd-media — now per-stage (custom.mediaBucket)
+          Resource: "arn:aws:s3:::${self:custom.mediaBucket}/*"
         # private recovery bucket: upload (POST/PUT) + read
         # (presigned GET for the admin detail view). GetObject also covers HEAD.
         - Effect: Allow
@@ -52,7 +68,8 @@ provider:
     # (audit P0-1). Missing env now fails `serverless deploy` in CI, before prod.
     # Format: comma-separated allowlist, canonical origin first.
     FRONTEND_URL: ${env:FRONTEND_URL}
-    AWS_S3_MEDIA_BUCKET: csd-media
+    # was the literal csd-media — now per-stage (custom.mediaBucket)
+    AWS_S3_MEDIA_BUCKET: ${self:custom.mediaBucket}
     # private bucket for recovery uploads (PII: defect acts).
     AWS_S3_PRIVATE_BUCKET: ${self:custom.privateMediaBucket}
     # CHANGED: PR-2 — Cloudflare Turnstile secret. '' default keeps deploy green
