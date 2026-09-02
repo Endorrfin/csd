@@ -1,0 +1,183 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyProdOutright",
+      "Effect": "Deny",
+      "Action": "*",
+      "Resource": [
+        "arn:aws:cloudformation:eu-central-1:*:stack/csd-api-prod/*",
+        "arn:aws:cloudformation:eu-central-1:*:stack/csd-ssr-prod/*",
+        "arn:aws:lambda:eu-central-1:*:function:csd-api-prod-*",
+        "arn:aws:lambda:eu-central-1:*:function:csd-ssr-prod-*",
+        "arn:aws:iam::*:role/csd-api-prod-*",
+        "arn:aws:iam::*:role/csd-ssr-prod-*",
+        "arn:aws:s3:::csd-fund-static",
+        "arn:aws:s3:::csd-fund-static/*",
+        "arn:aws:s3:::csd-media",
+        "arn:aws:s3:::csd-media/*",
+        "arn:aws:s3:::csd-media-private",
+        "arn:aws:s3:::csd-media-private/*",
+        "arn:aws:rds:eu-central-1:*:db:csd-postgres",
+        "arn:aws:cloudfront::*:distribution/E3U465AMSVR9PN"
+      ]
+    },
+    {
+      "Sid": "DenyProdApiGateway",
+      "Effect": "Deny",
+      "Action": "apigateway:*",
+      "Resource": [
+        "arn:aws:apigateway:eu-central-1::/restapis/vzdw0zf80h",
+        "arn:aws:apigateway:eu-central-1::/restapis/vzdw0zf80h/*"
+      ]
+    },
+    {
+      "Sid": "DenyProdDeploymentArtifacts",
+      "Effect": "Deny",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::serverless-framework-deployments-eu-central-1-*/serverless/csd-api/prod/*",
+        "arn:aws:s3:::serverless-framework-deployments-eu-central-1-*/serverless/csd-ssr/prod/*"
+      ]
+    },
+    {
+      "Sid": "StagingStacks",
+      "Effect": "Allow",
+      "Action": "cloudformation:*",
+      "Resource": [
+        "arn:aws:cloudformation:eu-central-1:*:stack/csd-api-staging/*",
+        "arn:aws:cloudformation:eu-central-1:*:stack/csd-ssr-staging/*",
+        "arn:aws:cloudformation:eu-central-1:aws:transform/*"
+      ]
+    },
+    {
+      "Sid": "CloudFormationGlobalReads",
+      "Effect": "Allow",
+      "Action": [
+        "cloudformation:ValidateTemplate",
+        "cloudformation:ListStacks",
+        "cloudformation:DescribeStacks",
+        "cloudformation:ListExports"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ComputeAndLogs",
+      "Effect": "Allow",
+      "Action": [
+        "lambda:*",
+        "apigateway:*",
+        "logs:*"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "StagingBuckets",
+      "Effect": "Allow",
+      "Action": "s3:*",
+      "Resource": [
+        "arn:aws:s3:::csd-api-staging-*",
+        "arn:aws:s3:::csd-api-staging-*/*",
+        "arn:aws:s3:::csd-ssr-staging-*",
+        "arn:aws:s3:::csd-ssr-staging-*/*",
+        "arn:aws:s3:::csd-fund-static-staging",
+        "arn:aws:s3:::csd-fund-static-staging/*"
+      ]
+    },
+    {
+      "Sid": "S3GlobalReads",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListAllMyBuckets",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "StagingLambdaRolesOnly",
+      "Effect": "Allow",
+      "Action": [
+        "iam:GetRole",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:PassRole",
+        "iam:PutRolePolicy",
+        "iam:GetRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:TagRole",
+        "iam:UntagRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::*:role/csd-api-staging-*",
+        "arn:aws:iam::*:role/csd-ssr-staging-*"
+      ]
+    },
+    {
+      "Sid": "CloudFrontInvalidateNonProd",
+      "Effect": "Allow",
+      "Action": [
+        "cloudfront:CreateInvalidation",
+        "cloudfront:GetDistribution",
+        "cloudfront:ListDistributions"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "StagingRdsStartStop",
+      "Effect": "Allow",
+      "Action": [
+        "rds:StartDBInstance",
+        "rds:StopDBInstance"
+      ],
+      "Resource": "arn:aws:rds:eu-central-1:*:db:csd-postgres-staging"
+    },
+    {
+      "Sid": "RdsDescribeGlobal",
+      "Effect": "Allow",
+      "Action": "rds:DescribeDBInstances",
+      "Resource": "*"
+    },
+    {
+      "Sid": "ServerlessDeploymentBucketParamRead",
+      "Effect": "Allow",
+      "Action": [
+        "ssm:GetParameter",
+        "ssm:GetParameters"
+      ],
+      "Resource": "arn:aws:ssm:eu-central-1:*:parameter/serverless-framework/deployment/s3-bucket"
+    },
+    {
+      "Sid": "ServerlessSharedBucketEnsureExists",
+      "Effect": "Allow",
+      "Action": "s3:CreateBucket",
+      "Resource": "arn:aws:s3:::serverless-framework-deployments-eu-central-1-*"
+    },
+    {
+      "Sid": "ServerlessSharedBucketRead",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetBucketLocation",
+        "s3:GetEncryptionConfiguration"
+      ],
+      "Resource": "arn:aws:s3:::serverless-framework-deployments-eu-central-1-*"
+    },
+    {
+      "Sid": "ServerlessSharedBucketStagingObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::serverless-framework-deployments-eu-central-1-*/serverless/csd-api/staging/*",
+        "arn:aws:s3:::serverless-framework-deployments-eu-central-1-*/serverless/csd-ssr/staging/*"
+      ]
+    }
+  ]
+}

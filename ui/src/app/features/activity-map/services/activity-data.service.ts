@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { EMPTY, Observable, catchError, tap } from 'rxjs';
 import { Activity, ActivityMapData, TypeId } from '../activity-map.interfaces';
 
 @Injectable({ providedIn: 'root' })
@@ -41,6 +41,11 @@ export class ActivityDataService {
           this._loading.set(false);
         },
       }),
+      // the failure is already modelled as `error()` state. Letting it
+      // ALSO reach subscribers made it an unhandled rejection - both call sites
+      // (ImpactStatsService, ActivityMap) use a bare .subscribe() - which kills
+      // the SSR process and turns every page into a 502. Complete instead.
+      catchError(() => EMPTY),
     );
   }
 }

@@ -94,14 +94,15 @@ The project is built, maintained, and deployed by a small team on a tight budget
 ```mermaid
 graph TB
     User[Public User / Staff] --> CF[CloudFront CDN]
+    User -->|"/api/* — direct, cross-origin"| APIGWBE[API Gateway: csd-api]
     CF --> S3[S3: Angular SSR assets]
-    CF --> APIGW[API Gateway]
-    APIGW --> LambdaBE[Lambda: NestJS Backend]
-    APIGW --> LambdaUI[Lambda: Angular SSR]
+    CF -->|"HTML"| APIGWUI[API Gateway: csd-ssr]
+    APIGWBE --> LambdaBE[Lambda: NestJS Backend]
+    APIGWUI --> LambdaUI[Lambda: Angular SSR]
     LambdaBE --> RDS[(RDS PostgreSQL)]
     LambdaBE --> S3Media[S3: csd-media<br/>public media]
     LambdaBE --> S3Priv[S3: csd-media-private<br/>PII uploads, registry PDFs]
-    LambdaUI -.-> LambdaBE
+    LambdaUI -.->|"same public API URL"| APIGWBE
 
     style User fill:#EEEDFE
     style CF fill:#E6F1FB
@@ -115,10 +116,12 @@ graph TB
 ### Request flow
 
 1. User visits `https://www.csd-fund.org/some/page`
-2. CloudFront (`E3U465AMSVR9PN`) serves the matching asset: static files from S3, API calls proxied to API Gateway, HTML page rendered by the SSR Lambda.
-3. SSR Lambda calls the backend Lambda (same API Gateway) to fetch data needed for initial render.
+2. CloudFront (`E3U465AMSVR9PN`) serves it: hashed assets from `csd-fund-static`, HTML from the SSR Lambda behind the `csd-ssr` API Gateway.
+3. SSR Lambda fetches the data it needs for the initial render from the backend, using the **public** API URL in `ui/src/environments/environment.prod.ts`.
 4. Backend Lambda connects to RDS PostgreSQL, processes the request, returns JSON.
-5. Hydration happens in the browser; subsequent navigation is client-side.
+5. Hydration happens in the browser; subsequent navigation is client-side, and **every one of those XHR calls goes from the browser straight to API Gateway, not through CloudFront**.
+
+> **The API is NOT fronted by CloudFront.** There is no `/api/*` cache behaviour on `E3U465AMSVR9PN` — `curl https://www.csd-fund.org/api/health` returns the Angular 404 page, while `curl https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com/prod/api/health` returns `{"status":"ok",…}` (verified 2026-08-27). The browser talks to API Gateway on a **different origin**, which is precisely why `FRONTEND_URL` exists as a CORS allowlist (§9) and why the CSP `connect-src` must list the `execute-api` host (`infra/SECURITY-HEADERS.md`). Three practical consequences: a CloudFront invalidation never affects API responses; an API outage cannot be masked by the CDN; and the two apps sit behind **two separate REST APIs** — each Serverless service (`csd-api`, `csd-ssr`) creates its own.
 
 ### Key design decisions
 
@@ -1086,7 +1089,8 @@ graph TB
         end
 
         subgraph Compute["Lambda + API Gateway"]
-            APIGW[API Gateway]
+            APIGWBE[API Gateway: csd-api<br/>vzdw0zf80h…/prod]
+            APIGWUI[API Gateway: csd-ssr]
             LambdaBE[Backend Lambda<br/>NestJS]
             LambdaUI[SSR Lambda<br/>Angular Universal]
         end
@@ -1099,12 +1103,12 @@ graph TB
     end
 
     Browser --> CF
+    Browser -->|"/api/* — direct, cross-origin (CORS)"| APIGWBE
     CF -->|"/* static"| S3Static
-    CF -->|"/api/*"| APIGW
-    CF -->|"HTML fallback (SSR)"| APIGW
-    APIGW --> LambdaBE
-    APIGW --> LambdaUI
-    LambdaUI -.->|"internal fetch"| APIGW
+    CF -->|"HTML fallback (SSR)"| APIGWUI
+    APIGWBE --> LambdaBE
+    APIGWUI --> LambdaUI
+    LambdaUI -.->|"public API URL, not internal"| APIGWBE
     LambdaBE --> RDS
     LambdaBE -->|"signs uploads"| S3Media
     LambdaBE -->|"signs uploads + reads"| S3Priv
@@ -1118,7 +1122,8 @@ graph TB
     style S3Static fill:#E1F5EE
     style S3Media fill:#E1F5EE
     style S3Priv fill:#FAEEDA
-    style APIGW fill:#E1F5EE
+    style APIGWBE fill:#E1F5EE
+    style APIGWUI fill:#E1F5EE
     style LambdaBE fill:#E1F5EE
     style LambdaUI fill:#E1F5EE
     style RDS fill:#FAEEDA
@@ -1133,7 +1138,7 @@ graph TB
 | Domain | `www.csd-fund.org` | CNAME → CloudFront |
 | Backend Lambda | `csd-api-prod-api` | CloudFormation stack `csd-api-prod`; 512 MB / 29 s timeout |
 | SSR Lambda | `csd-ssr-prod-ssr` | CloudFormation stack `csd-ssr-prod`; 512 MB / 29 s timeout |
-| API Gateway base (prod) | `https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com/prod` | Direct URL behind CloudFront; embedded in `ui/src/environments/environment.prod.ts` |
+| API Gateway base (prod) | `https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com/prod` | **Called directly by the browser — not behind CloudFront** (§3). Embedded in `ui/src/environments/environment.prod.ts` |
 | S3 bucket (browser bundle) | `csd-fund-static` | Public read via CloudFront; hashed assets 1y immutable, HTML no-cache. **No user uploads.** |
 | S3 bucket (public media) | `csd-media` | Blog + testimonial images. Backend IAM: `s3:PutObject` on `csd-media/*` |
 | S3 bucket (private media) | `csd-media-private` | Needs-form evidence + About registry PDFs. Backend IAM: `s3:PutObject` **and `s3:GetObject`**. Created and CORS-configured **manually** — not owned by Serverless |
