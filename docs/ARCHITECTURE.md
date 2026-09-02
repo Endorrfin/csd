@@ -30,6 +30,8 @@
     - 7.10 [Shared Needs Infrastructure](#710-shared-needs-infrastructure)
 8. [Deployment Topology (AWS)](#8-deployment-topology-aws)
     - 8.1 [Media Buckets & Upload Matrix](#81-media-buckets--upload-matrix)
+    - 8.2 [Staging Environment](#82-staging-environment)
+    - 8.3 [SSR Static-Asset Resolution — an invariant](#83-ssr-static-asset-resolution--an-invariant)
 9. [Environment Variables Reference](#9-environment-variables-reference)
 10. [Local Development Setup](#10-local-development-setup)
 11. [Common Commands](#11-common-commands)
@@ -37,6 +39,7 @@
     - 12.1 [Pre-merge — PR Checks](#121-pre-merge--githubworkflowstestyml-pr-checks)
     - 12.2 [Post-merge — deploy](#122-post-merge--githubworkflowsdeployyml)
     - 12.3 [Dependency updates](#123-dependency-updates)
+    - 12.4 [Post-merge to a staging branch](#124-post-merge-to-a-staging-branch--githubworkflowsdeploy-stagingyml)
 13. [Database Migrations](#13-database-migrations)
 14. [Security & Vulnerabilities](#14-security--vulnerabilities)
     - 14.1 [Resolved Issues](#141-resolved-issues)
@@ -1190,6 +1193,62 @@ All presigned URLs expire in **300 s**. The POST flows enforce their cap as an S
 
 ---
 
+### 8.2 Staging Environment
+
+A second, self-contained stage of the same two CloudFormation stacks. It exists because merging to `main` deploys production with no intermediate step (§12.2): a routing change, a migration or an SSR behaviour has to be observable against real AWS first.
+
+| Resource | Production | Staging |
+|---|---|---|
+| Backend stack / Lambda | `csd-api-prod` / `csd-api-prod-api` | `csd-api-staging` / `csd-api-staging-api` |
+| SSR stack / Lambda | `csd-ssr-prod` / `csd-ssr-prod-ssr` | `csd-ssr-staging` / `csd-ssr-staging-ssr` |
+| Database | `csd-postgres` | `csd-postgres-staging` |
+| Browser bundle bucket | `csd-fund-static` | `csd-fund-static-staging` |
+| Public media bucket | `csd-media` | `csd-media-staging` |
+| Private media bucket | `csd-media-private` | `csd-media-private-staging` |
+| CloudFront | `E3U465AMSVR9PN` | **not created yet** — see below |
+| Entry point | `https://www.csd-fund.org` | `https://<ssr-api-id>.execute-api.eu-central-1.amazonaws.com/staging/` |
+| Turnstile | real site key + secret | Cloudflare test site key, **no** `TURNSTILE_SECRET_KEY` |
+
+All three staging buckets are `BucketOwnerEnforced`. `csd-media-private-staging` has no bucket policy and must never be given one.
+
+**Turnstile is deliberately not exercised on staging.** The production site key is bound to `www.csd-fund.org` and could not validate here. `backend/serverless.yml` defaults `TURNSTILE_SECRET_KEY` to `''` and `TurnstileGuard` fails closed, so the two needs-form upload/submit routes answer 403 on staging; `environment.staging.ts` pairs that with Cloudflare's always-passing test site key. Accepted trade-off: Turnstile remains a production-only path.
+
+**Deploy credentials cannot reach production.** The managed policy `csd-deploy-staging` (`infra/iam/csd-deploy-staging-policy.json`) grants the staging stacks, buckets, Lambda roles and RDS start/stop, and carries explicit `Deny` statements covering every production stack, Lambda, role and bucket, the prod REST API and distribution `E3U465AMSVR9PN`. Serverless Framework v4 keeps **one** deployment bucket per account and region — named in the SSM parameter `/serverless-framework/deployment/s3-bucket`, whose value is JSON — so staging and production share it. The policy therefore grants object access only under `serverless/csd-api/staging/*` and `serverless/csd-ssr/staging/*` and denies the `prod` prefixes outright. `s3:CreateBucket` on that bucket **is** required: v4 calls CreateBucket unconditionally and relies on `BucketAlreadyOwnedByYou`. `PutBucketPolicy`, `PutBucketPublicAccessBlock` and `DeleteBucket` are never granted on the shared bucket — the production deployment artefacts in it contain plaintext environment values. Any change to the policy is verifiable with `aws iam simulate-principal-policy` before it is applied.
+
+**CloudFront is missing, and that is the one place staging is not a mirror.** AWS refuses `cloudfront:CreateDistribution` on this account until Support verifies it, so staging is reached at the SSR API Gateway URL directly. While that lasts:
+
+- `/assets/*`, `*.js` and `*.css` are not served at all — the SSR Lambda excludes `dist/ui/browser/**` from its package (`ui/serverless.yml`), so browser chunks 404 and the page does not hydrate.
+- `PUBLIC_HOST` is a **Host header** and cannot carry API Gateway's `/staging` stage prefix, so any absolute URL built from it loses the stage and API Gateway answers 403. This is why §8.3 is not optional.
+- `X-Robots-Tag: noindex, nofollow` is served by the response-headers policy `csd-frontend-security-headers-staging` (`4d0f7144-3381-4ae5-a9dd-85011c716a83`), which nothing is attached to yet — **the staging URL is unprotected against indexing.**
+
+The distribution config is written and ready at `infra/cloudfront-distribution-staging.json`: OAC `E461R3XKPTF4H`, `/assets/*` · `*.js` · `*.css` · the favicons and manifest to `csd-fund-static-staging`, everything else to the SSR origin with `OriginPath: /staging`. Deliberately **not** done as a workaround: packing the browser bundle into the SSR Lambda. It would stop staging resembling production, and the missing stage prefix defeats it anyway.
+
+### 8.3 SSR Static-Asset Resolution — an invariant
+
+> **During server-side rendering the application must never fetch its own static assets over HTTP.**
+
+Angular SSR resolves a root-relative URL against the *current request host*, so `http.get('/assets/data/activities.json')` becomes a real outbound HTTPS request from the SSR Lambda back to whatever host is serving it. In production that happens to work, because CloudFront routes `/assets/*` to `csd-fund-static`. It is still a network round trip per render, and it does not survive leaving that topology:
+
+- the SSR Lambda does not carry `dist/ui/browser/**`, so it cannot answer such a request itself;
+- behind a bare API Gateway the URL loses the stage prefix (§8.2) and is answered 403 regardless of what the Lambda contains;
+- **the failure is not graceful.** An `HttpErrorResponse` raised inside a `.subscribe()` with no error callback surfaces *outside* the `angularApp.handle(req).catch(next)` chain in `ui/src/server.ts`, so Node terminates the process and API Gateway returns `502 {"message": "Internal server error"}` for **every** page, not just the one that needed the asset.
+
+Three mechanisms enforce the invariant, all wired for the server only:
+
+| Mechanism | File | What it does |
+|---|---|---|
+| `ServerTranslateLoader` | `ui/src/app/core/i18n/server-translate.loader.ts` | Returns `src/assets/i18n/{ua,en}.json` from static imports. Provided with `provideTranslateLoader()` in `app.config.server.ts`, which overrides `provideTranslateHttpLoader()` from `app.config.ts` — `mergeApplicationConfig` concatenates provider arrays and Angular keeps the **last** provider for a token. |
+| `serverAssetsInterceptor` | `ui/src/app/core/interceptors/server-assets.interceptor.ts` | Answers any server-side `GET` under `/assets/` from a bundled map. Registered in `app.config.ts` for both platforms but a **no-op in the browser**, because the map token is provided only in `app.config.server.ts` — which is also what keeps the JSON payloads out of the browser bundle. An unregistered path logs `console.error` and returns a null body: loud, never fatal. |
+| `SERVER_STATIC_ASSETS` | `ui/src/app/core/tokens/server-static-assets.token.ts` | The map itself. `activities.json` (~107 KB) is bundled. **`locations.json` (~4.7 MB) is deliberately mapped to `[]`** — bundling it would dominate the Lambda package and, through the hydration transfer cache, inline 4.7 MB into every server-rendered page carrying a location selector. It is a client-only dataset, and `LocationSelector` already renders an empty list until it arrives. |
+
+**If you add a build-time JSON under `src/assets/` and read it with `HttpClient`, register it in `SERVER_STATIC_ASSETS`.** Otherwise SSR logs an error and renders that feature empty.
+
+**Related rule for services.** Model a fetch failure as state *and* stop it reaching subscribers. `ActivityDataService.load()` ends with `catchError(() => EMPTY)` for exactly this reason: it already exposes `error()`, and both of its call sites (`ImpactStatsService`, `ActivityMap`) use a bare `.subscribe()`.
+
+**Consequence for the hydration transfer cache — intentional, do not "fix" it.** `provideClientHydration()` enables the HTTP transfer cache by default, and that cache is an interceptor sitting *after* the ones registered with `withInterceptors`. Because the mechanisms above short-circuit earlier or bypass `HttpClient` entirely, asset responses are no longer captured into `<script id="ng-state">`, and the browser fetches them itself after hydration. Measured on the live site immediately after the change shipped: `ng-state` holds only `__nghData__` and the two `/api/blog*` responses; no i18n, no activities. Moving the interceptor to restore the old behaviour would re-introduce the 502 class above.
+
+---
+
 ## 9. Environment Variables Reference
 
 ### Backend (`backend/.env` — runtime; see `.env.example` for the canonical list)
@@ -1262,7 +1321,7 @@ SUPER_ADMIN_PASSWORD=...          # ≥16 chars, upper+lower+digit+symbol
 
 ### Frontend (`ui/src/environments/`)
 
-Both files export the same **four** keys:
+All **three** files export the same four keys:
 
 ```ts
 // environment.ts — dev
@@ -1280,7 +1339,20 @@ export const environment = {
   turnstileSiteKey: '0x4AAAAAAD6hWkWqejU3bzrN',
   winterizationHouseholdEnabled: false,
 };
+
+// environment.staging.ts — swapped via the `staging` configuration in angular.json.
+// Built as `ng build --configuration production,staging`: Angular has no config
+// inheritance, so `staging` carries ONLY the fileReplacements and composes on top
+// of `production` for budgets and outputHashing.
+export const environment = {
+  production: true,
+  apiUrl: '__STAGING_API_BASE__',                 // substituted in CI — see below
+  turnstileSiteKey: '1x00000000000000000000AA',   // test key; staging has no TURNSTILE_SECRET_KEY
+  winterizationHouseholdEnabled: false,
+};
 ```
+
+> **`__STAGING_API_BASE__` is a sentinel, never edited by hand.** `deploy-staging.yml` reads the `ServiceEndpoint` output of stack `csd-api-staging` and substitutes it before `ng build`, failing the run if the sentinel survives (§12.4). A checked-in `execute-api` id would silently point at a stale host the moment the REST API is recreated. Consequence: a **local** `ng build --configuration production,staging` produces a bundle whose API calls 404 — that is intended, staging is built in CI only. To exercise a staging build locally, copy the file aside, substitute the sentinel, build, then restore it.
 
 > **Never commit real values.** Production values for backend are injected via GitHub Actions secrets and Serverless Framework's `${env:VAR}` interpolation. The frontend's prod `apiUrl` is checked in only because it's the direct API Gateway URL (not a secret — anyone hitting <https://www.csd-fund.org> sees the same).
 
@@ -1480,6 +1552,28 @@ Whether `PR Checks` is a *required* status check lives in GitHub branch-protecti
 - **`sanitize-html` is ignored at every level.** It is pinned to an exact version because 2.17.6 pulls an ESM-only `htmlparser2`, which cannot load in the Lambda runtime — Incident #4.
 
 GitHub Actions majors *are* allowed, since a broken action fails the workflow rather than production.
+
+---
+
+### 12.4 Post-merge to a staging branch — `.github/workflows/deploy-staging.yml`
+
+- **Trigger:** push to `staging/**`, or manual `workflow_dispatch`. Never fires on `main`.
+- **Concurrency:** group `deploy-staging` with `cancel-in-progress: **true**` — the opposite of production, and deliberate: superseding a staging deploy is cheap because the data is synthetic and a broken staging blocks nobody. Know what it still costs, though — killing `serverless deploy` kills only the CLI, CloudFormation keeps going server-side, and the stack can be left in `UPDATE_IN_PROGRESS`. If a run dies that way, wait for a terminal state before re-running; do not force anything.
+- **A separate file, not a branch inside `deploy.yml`.** Conditional logic in the one workflow that can touch production would make it harder to read, and that is the last place to trade clarity for reuse. The step order mirrors `deploy.yml` on purpose, so drift between the two is visible in review.
+
+**Two fail-closed guards, and the reason each lives where it does.**
+
+`Require PUBLIC_HOST` (frontend job) refuses to build when the `staging` environment's `PUBLIC_HOST` secret is empty. The check **cannot** live in `ui/serverless.yml`: Serverless v4 resolves the *whole* config graph regardless of `--stage`, so a bare `${env:PUBLIC_HOST}` in the staging block would abort the **production** deploy too. Hence `${env:PUBLIC_HOST, ''}` there and the guard here. Without it the SSR Lambda fails Angular host validation and silently serves a CSR shell — a green deploy with no SSR.
+
+`Point the staging build at the deployed API` substitutes the `__STAGING_API_BASE__` sentinel in `ui/src/environments/environment.staging.ts` and **fails the run** if the value is empty or the sentinel survives.
+
+**Where the API base comes from — the rule worth keeping.** `deploy-backend` publishes the `ServiceEndpoint` output of stack `csd-api-staging` as a job output (`steps.smoke.outputs.api_base`, written *before* the retry loop, which exits `0` from inside — anything after the loop would never run), and `deploy-frontend` consumes it through `needs`. Nothing about the API host is hand-maintained: both the frontend build and the backend smoke test read the same stack output, which cannot go stale the way a secret or a checked-in id can.
+
+**Other differences from production:**
+
+- The smoke URL is the `STAGING_SMOKE_URL` **variable**, not a secret, and it is not the same thing as `FRONTEND_URL`: the latter is the backend's CORS allowlist (origin only, no path), the former is the exact page to fetch. They differ while staging is reached at the API Gateway URL with its `/staging` prefix.
+- `Invalidate CloudFront cache` is guarded by `vars.CF_DISTRIBUTION_ID != ''`, so an empty variable **skips** the step instead of failing the run. Setting that variable once the distribution exists turns invalidation on with no edit to this file.
+- The `staging` GitHub environment carries every production secret **name** except `TURNSTILE_SECRET_KEY` (§8.2), and no `BACKEND_URL`.
 
 ---
 
