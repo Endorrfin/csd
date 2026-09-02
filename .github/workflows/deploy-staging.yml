@@ -1,0 +1,342 @@
+# .github/workflows/deploy-staging.yml
+#
+# staging deploy (P1-5). A SEPARATE file, not a branch inside
+# deploy.yml: conditional logic in the prod deploy would make the one workflow
+# that can touch production harder to read, and that is the last place to trade
+# clarity for reuse. The step ORDER mirrors deploy.yml on purpose, so the two
+# read as siblings and a drift between them is visible in review. ===
+name: Deploy to AWS (staging)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'staging/**'
+
+# vs deploy.yml: cancel-in-progress is TRUE here. Superseding a staging
+# deploy is cheap - the data is synthetic and a broken staging blocks nobody.
+# Know what it costs, though: killing `serverless deploy` kills only the CLI,
+# CloudFormation keeps going server-side, and the stack can be left in
+# UPDATE_IN_PROGRESS until it settles. If a run dies that way, wait for the stack
+# to reach a terminal state before re-running - do not force anything.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  NODE_VERSION: '22.17.0'
+  AWS_REGION: eu-central-1
+  # staging counterparts of deploy.yml's DEPLOY_STAGE / STATIC_BUCKET.
+  # There is deliberately no CF_DISTRIBUTION_ID here: staging's distribution does
+  # not exist yet (the AWS account is pending CloudFront verification), so it
+  # comes from the `staging` environment VARIABLE of the same name. Empty
+  # variable => the invalidation step is skipped instead of failing the run.
+  DEPLOY_STAGE: staging
+  STATIC_BUCKET: csd-fund-static-staging
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend (NestJS -> Lambda) [staging]
+    runs-on: ubuntu-latest
+    environment: staging
+    # publish the API base so deploy-frontend builds against the API that
+    # was just deployed, instead of an id pasted into environment.staging.ts.
+    outputs:
+      api_base: ${{ steps.smoke.outputs.api_base }}
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Same cold-start guard as prod, and for the same reason: `nest build`
+      # emits CommonJS, the managed nodejs22.x runtime has no require(esm), and a
+      # single ESM-only transitive dependency bricks every route at init.
+      # Before the migrations on purpose - never mutate a database for a build we
+      # already know cannot boot.
+      - name: CommonJS load check (Lambda cold-start guard)
+        run: npm run check:cjs
+
+      - name: Show migration status (before)
+        id: migrations-before
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          NODE_ENV: production
+        run: |
+          set -euo pipefail
+          echo "Migration status BEFORE deploy:"
+          npm run migration:show 2>&1 | tee /tmp/migrations-before.txt
+          PENDING=$(grep -c '\[ \]' /tmp/migrations-before.txt 2>/dev/null || true)
+          PENDING="${PENDING:-0}"
+          echo "pending=$PENDING" >> "$GITHUB_OUTPUT"
+          echo "Pending migrations: $PENDING"
+
+      - name: Run DB migrations
+        id: migrations-run
+        if: steps.migrations-before.outputs.pending != '0'
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          NODE_ENV: production
+        run: |
+          set -euo pipefail
+          echo "Running ${{ steps.migrations-before.outputs.pending }} pending migration(s)..."
+          npm run migration:run 2>&1 | tee /tmp/migrations-run.txt
+
+      - name: Build
+        run: npm run build
+
+      # TURNSTILE_SECRET_KEY is deliberately NOT passed. backend/serverless.yml
+      # defaults it to '' and TurnstileGuard fails closed, so the two needs-form
+      # upload/submit endpoints answer 403 on staging. That is the accepted
+      # trade: the prod Turnstile site key is bound to www.csd-fund.org and could
+      # not validate here anyway. environment.staging.ts pairs this with
+      # Cloudflare's always-passing TEST site key.
+      - name: Deploy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+        run: npx serverless deploy --stage "${DEPLOY_STAGE}"
+
+      # CHANGED vs deploy.yml: the smoke URL is READ FROM THE STACK, not from a
+      # BACKEND_URL secret. Serverless exports the API Gateway base as the
+      # `ServiceEndpoint` output of csd-api-staging, so this cannot silently
+      # probe a stale host after the API is recreated - which is exactly the
+      # failure mode a hand-maintained secret has. Also means staging needs one
+      # secret fewer.
+      - name: Smoke test backend
+        id: smoke
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+        run: |
+          set -euo pipefail
+          BACKEND_URL=$(aws cloudformation describe-stacks \
+            --stack-name "csd-api-${DEPLOY_STAGE}" \
+            --query "Stacks[0].Outputs[?OutputKey=='ServiceEndpoint'].OutputValue" \
+            --output text)
+          if [ -z "$BACKEND_URL" ] || [ "$BACKEND_URL" = "None" ]; then
+            echo "Could not read ServiceEndpoint from stack csd-api-${DEPLOY_STAGE}"
+            exit 1
+          fi
+          echo "Backend base URL: ${BACKEND_URL}"
+          echo "BACKEND_URL=${BACKEND_URL}" >> "$GITHUB_ENV"
+          # written BEFORE the retry loop on purpose - the loop exits 0
+          # from inside, so anything after it would never run.
+          echo "api_base=${BACKEND_URL}" >> "$GITHUB_OUTPUT"
+          for i in 1 2 3 4 5; do
+            echo "Attempt $i: GET ${BACKEND_URL}/api/health"
+            HTTP_CODE=$(curl -s -o /tmp/health.json -w "%{http_code}" "${BACKEND_URL}/api/health" || echo "000")
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Backend healthy:"
+              cat /tmp/health.json
+              exit 0
+            fi
+            echo "Got HTTP $HTTP_CODE, retrying in 10s..."
+            sleep 10
+          done
+          echo "Backend smoke test failed after 5 attempts"
+          exit 1
+
+      - name: Backend summary
+        if: always()
+        run: |
+          {
+            echo "## Staging backend"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Stack | \`csd-api-${DEPLOY_STAGE}\` |"
+            echo "| Lambda | \`csd-api-${DEPLOY_STAGE}-api\` |"
+            echo "| API base | \`${BACKEND_URL:-unknown}\` |"
+            echo "| Pending migrations before deploy | ${{ steps.migrations-before.outputs.pending }} |"
+            echo ""
+            echo '```bash'
+            echo "aws logs tail /aws/lambda/csd-api-${DEPLOY_STAGE}-api --since 10m --region ${AWS_REGION}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-frontend:
+    name: Deploy Frontend (Angular SSR -> Lambda + S3) [staging]
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    environment: staging
+    defaults:
+      run:
+        working-directory: ui
+
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      # === ADDED: the fail-closed half of ui/serverless.yml's staging block.
+      # That file must default PUBLIC_HOST to '' because Serverless v4 resolves
+      # the WHOLE config graph regardless of --stage, so a bare ${env:PUBLIC_HOST}
+      # there would abort the PROD deploy too. The guard therefore has to live
+      # here. Without PUBLIC_HOST the SSR Lambda fails Angular host validation
+      # and silently serves the CSR shell - a green deploy with no SSR. ===
+      - name: Require PUBLIC_HOST
+        env:
+          PUBLIC_HOST: ${{ secrets.PUBLIC_HOST }}
+        run: |
+          if [ -z "${PUBLIC_HOST}" ]; then
+            echo "PUBLIC_HOST is empty in the 'staging' environment."
+            echo "Set it to the staging hostname WITHOUT scheme or path."
+            exit 1
+          fi
+          echo "PUBLIC_HOST is set."
+
+      - name: Install dependencies
+        run: npm ci
+
+      # `production,staging` and not just `staging`: Angular has no config
+      # inheritance, so the staging configuration carries ONLY the
+      # fileReplacements and composes on top of production for budgets and
+      # outputHashing.
+      # the frontend counterpart of the backend's "read it from the
+      # stack, never from a hand-maintained value" rule. environment.staging.ts
+      # ships a sentinel; if the substitution does not happen the build must FAIL
+      # rather than emit a bundle that points at a host which does not exist.
+      - name: Point the staging build at the deployed API
+        env:
+          API_BASE: ${{ needs.deploy-backend.outputs.api_base }}
+        run: |
+          set -euo pipefail
+          if [ -z "${API_BASE}" ]; then
+            echo "deploy-backend published an empty api_base."
+            exit 1
+          fi
+          sed -i "s#__STAGING_API_BASE__#${API_BASE%/}#" src/environments/environment.staging.ts
+          if grep -q '__STAGING_API_BASE__' src/environments/environment.staging.ts; then
+            echo "Sentinel __STAGING_API_BASE__ survived substitution."
+            exit 1
+          fi
+          grep -n 'apiUrl' src/environments/environment.staging.ts
+
+      - name: Build
+        run: npx ng build --configuration production,staging
+
+      - name: Sync static assets to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+        run: |
+          set -euo pipefail
+          aws s3 sync dist/ui/browser/ "s3://${STATIC_BUCKET}/" \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "*.html"
+          aws s3 sync dist/ui/browser/ "s3://${STATIC_BUCKET}/" \
+            --exclude "*" \
+            --include "*.html" \
+            --cache-control "public, max-age=0, must-revalidate"
+
+      - name: Deploy SSR Lambda
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+          PUBLIC_HOST: ${{ secrets.PUBLIC_HOST }}
+        run: npx serverless deploy --stage "${DEPLOY_STAGE}"
+
+      # Skipped while the staging distribution does not exist. Set the
+      # CF_DISTRIBUTION_ID variable on the `staging` environment once it does and
+      # this starts running - no edit to this file.
+      - name: Invalidate CloudFront cache
+        if: ${{ vars.CF_DISTRIBUTION_ID != '' }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CF_DISTRIBUTION_ID }}" \
+            --paths "/*"
+
+      # STAGING_SMOKE_URL is a VARIABLE, not a secret, and it is NOT the same
+      # thing as FRONTEND_URL: FRONTEND_URL is the backend's CORS allowlist
+      # (origin only, no path), while this is the exact page to fetch. They
+      # differ today because staging is reached at the API Gateway URL, which
+      # carries a /staging stage prefix. When CloudFront lands, point this at
+      # https://<domain>/ and drop the prefix.
+      - name: Smoke test frontend
+        env:
+          SMOKE_URL: ${{ vars.STAGING_SMOKE_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SMOKE_URL}" ]; then
+            echo "STAGING_SMOKE_URL variable is not set on the 'staging' environment."
+            exit 1
+          fi
+          for i in 1 2 3 4 5 6; do
+            echo "Attempt $i: GET ${SMOKE_URL}"
+            HTTP_CODE=$(curl -s -o /tmp/index.html -w "%{http_code}" "${SMOKE_URL}" || echo "000")
+            # Grep for the server-render marker, never for a literal <app-root>:
+            # the bare tag also matches the CSR shell, so that check passes
+            # exactly when SSR is broken.
+            if [ "$HTTP_CODE" = "200" ] && grep -q 'ng-server-context' /tmp/index.html; then
+              echo "Frontend healthy: HTTP 200 + server-rendered content"
+              exit 0
+            fi
+            echo "HTTP $HTTP_CODE, SSR marker present: $(grep -c 'ng-server-context' /tmp/index.html || echo 0). Retrying in 15s..."
+            sleep 15
+          done
+          echo "Frontend smoke test failed after 6 attempts"
+          echo "--- Last response head: ---"
+          head -30 /tmp/index.html || true
+          exit 1
+
+      - name: Frontend summary
+        if: always()
+        run: |
+          {
+            echo "## Staging frontend"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Entry point | ${{ vars.STAGING_SMOKE_URL }} |"
+            echo "| Stack | \`csd-ssr-${DEPLOY_STAGE}\` |"
+            echo "| Static bucket | \`${STATIC_BUCKET}\` |"
+            echo "| CloudFront | ${{ vars.CF_DISTRIBUTION_ID != '' && vars.CF_DISTRIBUTION_ID || 'not configured - invalidation skipped' }} |"
+            echo ""
+            echo "Staging is noindex: X-Robots-Tag is served by the CloudFront"
+            echo "response-headers policy csd-frontend-security-headers-staging."
+            echo "Until the distribution exists, that header is NOT served -"
+            echo "the API Gateway URL is unprotected against indexing."
+          } >> "$GITHUB_STEP_SUMMARY"

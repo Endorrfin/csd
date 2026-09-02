@@ -1,0 +1,38 @@
+{
+  "Name": "csd-frontend-security-headers-staging",
+  "Comment": "Staging: same security headers as prod + X-Robots-Tag noindex. No CSP by design - see infra/SECURITY-HEADERS.md",
+  "SecurityHeadersConfig": {
+    "StrictTransportSecurity": {
+      "Override": true,
+      "IncludeSubdomains": true,
+      "Preload": false,
+      "AccessControlMaxAgeSec": 63072000
+    },
+    "ContentTypeOptions": {
+      "Override": true
+    },
+    "FrameOptions": {
+      "Override": true,
+      "FrameOption": "SAMEORIGIN"
+    },
+    "ReferrerPolicy": {
+      "Override": true,
+      "ReferrerPolicy": "strict-origin-when-cross-origin"
+    },
+    "XSSProtection": {
+      "Override": true,
+      "Protection": false,
+      "ModeBlock": false
+    }
+  },
+  "CustomHeadersConfig": {
+    "Quantity": 1,
+    "Items": [
+      {
+        "Header": "X-Robots-Tag",
+        "Override": true,
+        "Value": "noindex, nofollow"
+      }
+    ]
+  }
+}
