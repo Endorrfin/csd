@@ -1305,6 +1305,8 @@ Also passed through from GitHub Secrets: `DB_HOST`, `DB_USERNAME`, `DB_PASSWORD`
 
 > Note: `AWS_S3_PRIVATE_BUCKET` and `WINTERIZATION_HOUSEHOLD_ENABLED` are **not** in the deploy step's `env:` block, so both take their `serverless.yml` defaults regardless of what is configured in GitHub.
 
+> **Staging carries the same names, with one deliberate hole.** The `staging` GitHub environment defines every secret above except `TURNSTILE_SECRET_KEY`, so the `''` default in `backend/serverless.yml` applies and `TurnstileGuard` fails closed on the two needs-form routes (§8.2). `BACKEND_URL` exists only in `production`; staging's smoke test reads the `csd-api-staging` stack output instead (§12.4).
+
 **Bootstrap-only (used by `npm run seed:super-admin` — do NOT commit, do NOT keep in `.env*`):**
 
 ```
@@ -1318,6 +1320,26 @@ SUPER_ADMIN_PASSWORD=...          # ≥16 chars, upper+lower+digit+symbol
 - No `DATABASE_SSL` flag — SSL is controlled implicitly by `NODE_ENV === 'production'`.
 - No `JWT_EXPIRES_IN` — value is hardcoded `'7d'` in `auth.module.ts`.
 - No `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` at runtime — Lambda uses its IAM role: `s3:PutObject` on `csd-media/*`, and `s3:PutObject` + `s3:GetObject` on `csd-media-private/*`. Those are the **only two** IAM statements; there is no `s3:DeleteObject` and no `s3:ListBucket`, which is why deleting a form leaves its S3 objects behind (§7.7).
+
+### SSR Lambda (`ui/serverless.yml` — runtime)
+
+Picked per stage from `custom.environment.${sls:stage}` rather than written inline under `provider.environment`. Three variables, and two of them exist to get one hostname past two different checks.
+
+| Variable | Stages | Value | Read by |
+| --- | --- | --- | --- |
+| `NODE_ENV` | prod · staging · dev | `production` | the Angular server bundle |
+| `PUBLIC_HOST` | prod · staging · dev | `www.csd-fund.org`; on staging the entry hostname, injected from the GitHub `staging` environment | `ui/src/server.ts` |
+| `NG_ALLOWED_HOSTS` | **staging only** | the same value as `PUBLIC_HOST` | `@angular/ssr` |
+
+**`PUBLIC_HOST` fixes the hostname Angular validates; `NG_ALLOWED_HOSTS` puts that hostname on the allowlist.** Behind API Gateway a request arrives with the `execute-api` host, which Angular's SSRF protection rejects, so `server.ts` pins `host` / `x-forwarded-host` / `x-forwarded-proto` on every request when `PUBLIC_HOST` is set — see `ui/README.md` for that middleware and the header-stripping it does alongside. Production needs nothing further, because `www.csd-fund.org` is already in `angular.json` → `…build.options.security.allowedHosts` (`["www.csd-fund.org", "csd-fund.org", "localhost"]`) — and **the builder bakes that list into `dist/ui/server/angular-app-engine-manifest.mjs` at build time.** A staging hostname is not in it and should not be: one source tree builds both stages.
+
+`NG_ALLOWED_HOSTS` is the runtime escape hatch for exactly that. `AngularNodeAppEngine` falls back to `getAllowedHostsFromEnv()` when the constructor gets no `allowedHosts` option — `server.ts` passes only `trustProxyHeaders`, so it does — and `AngularAppEngine` then validates against the **union** of that list and the baked manifest list (`new Set([...options.allowedHosts, ...manifest.allowedHosts])`). Staging therefore passes host validation without a production rebuild, and production keeps exactly the three baked hosts.
+
+**Both failure modes are silent, and they look identical.** Without `PUBLIC_HOST` the host is never pinned; without `NG_ALLOWED_HOSTS` on staging the pinned host is not on the allowlist. Either way `@angular/ssr` logs nothing, serves the CSR shell and returns 200 — a green deploy with no server-rendered content, no hydration and no SEO. The only thing that catches it is the deploy smoke test, and only because it greps the response for `ng-server-context`.
+
+**The `''` defaults in the staging block are load-bearing.** Both are written `${env:PUBLIC_HOST, ''}`. Serverless Framework v4 resolves the *whole* configuration graph regardless of `--stage`, so a bare `${env:PUBLIC_HOST}` in the staging block would abort the **production** deploy too. The fail-closed check therefore lives in `deploy-staging.yml` (§12.4), which refuses to build when the secret is empty — not in this file.
+
+> **Deliberately not set: `NG_TRUST_PROXY_HEADERS`.** `server.ts` passes `trustProxyHeaders` to the `AngularNodeAppEngine` constructor, and a constructor option takes precedence over the environment variable — setting it through env would be silently ignored.
 
 ### Frontend (`ui/src/environments/`)
 

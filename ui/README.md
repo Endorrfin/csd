@@ -39,19 +39,31 @@ URLs from `environment.apiUrl`.
 
 ### Environment files
 
-Both files export the same **four** keys, swapped at build time by
-`angular.json`'s `fileReplacements` for the `production` configuration:
+All **three** files export the same **four** keys, swapped at build time by
+`angular.json`'s `fileReplacements`:
 
-| Key | dev | prod |
-| --- | --- | --- |
-| `production` | `false` | `true` |
-| `apiUrl` | `http://localhost:3000` | `https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com/prod` |
-| `turnstileSiteKey` | `1x00000000000000000000AA` (Cloudflare's always-passes test key) | the real site key |
-| `winterizationHouseholdEnabled` | `false` | `false` |
+| Key | dev | prod | staging |
+| --- | --- | --- | --- |
+| `production` | `false` | `true` | `true` |
+| `apiUrl` | `http://localhost:3000` | `https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com/prod` | `__STAGING_API_BASE__` |
+| `turnstileSiteKey` | `1x00000000000000000000AA` (Cloudflare's always-passes test key) | the real site key | the same test key |
+| `winterizationHouseholdEnabled` | `false` | `false` | `false` |
+
+Staging builds as `ng build --configuration production,staging`: Angular has no
+configuration inheritance, so `staging` carries **only** the `fileReplacements`
+and composes on top of `production` for budgets and output hashing.
+
+**`__STAGING_API_BASE__` is a sentinel and is never edited by hand** —
+`deploy-staging.yml` substitutes it from the `csd-api-staging` stack's
+`ServiceEndpoint` output and fails the run if it survives. So a local
+`ng build --configuration production,staging` yields a bundle whose API calls
+404; that is intended. To exercise one locally, copy the file aside, substitute
+the sentinel, build, then restore it. Full reference:
+[`../docs/ARCHITECTURE.md` §9](../docs/ARCHITECTURE.md#9-environment-variables-reference).
 
 `winterizationHouseholdEnabled` is **UX only** — it renders the household card
 disabled. The real gate is the backend's `WINTERIZATION_HOUSEHOLD_ENABLED`,
-which answers 422 regardless of what the UI allows. Keep the two files in
+which answers 422 regardless of what the UI allows. Keep all three files in
 lockstep.
 
 Site keys are public and safe to commit. Nothing secret belongs in
@@ -157,7 +169,8 @@ rendered on the SSR Lambda at request time. `activity-map` is client-only
 because `map-view.ts` reads Leaflet off `globalThis.L`, which only exists once
 the CDN `<script>` in `index.html` has run in a browser.
 
-Two SSR hardening details in `src/server.ts` that are easy to break:
+Three SSR hardening details that are easy to break — the first two live in
+`src/server.ts`, the third in `serverless.yml`:
 
 - `AngularNodeAppEngine` is constructed with
   `trustProxyHeaders: ['x-forwarded-host', 'x-forwarded-proto']`, and the
@@ -167,32 +180,67 @@ Two SSR hardening details in `src/server.ts` that are easy to break:
 - `PUBLIC_HOST` (set only in `serverless.yml`) restores the public hostname
   behind API Gateway so host validation passes. Locally the middleware is a
   no-op.
+- **`NG_ALLOWED_HOSTS` is the other half of `PUBLIC_HOST`, and staging needs
+  both.** `PUBLIC_HOST` only fixes the hostname the middleware pins; the
+  allowlist it is checked against comes from `angular.json`'s
+  `security.allowedHosts`, which the builder **bakes into the server manifest at
+  build time** — prod hosts only. `@angular/ssr` unions that baked list with
+  `NG_ALLOWED_HOSTS` at runtime, which is what lets staging pass without a prod
+  rebuild. It is set in the `staging` block of `serverless.yml` and nowhere
+  else.
 
 If SSR "stops working" while the page still returns 200, this is the first place
 to look. The symptom is a CSR shell with no `ng-server-context` attribute —
 exactly what the deploy smoke test greps for.
+
+### SSR must not fetch its own static assets
+
+The invariant and the incident behind it are in
+[`../docs/ARCHITECTURE.md` §8.3](../docs/ARCHITECTURE.md#83-ssr-static-asset-resolution--an-invariant).
+The rule you need while editing this app is short:
+
+**Add a build-time JSON under `src/assets/` and read it with `HttpClient`, and
+you must register it in `SERVER_STATIC_ASSETS`**
+(`core/tokens/server-static-assets.token.ts`). During SSR a root-relative URL
+resolves against the *request host*, so an unregistered path becomes a real
+outbound request from the Lambda — which cannot answer it, because
+`serverless.yml` excludes `dist/ui/browser/**`. `serverAssetsInterceptor` serves
+registered paths from the bundle and, for anything else, logs `console.error`
+and returns a null body: loud, never fatal. Translations bypass `HttpClient`
+altogether via `ServerTranslateLoader`.
+
+Both are server-only: the interceptor is registered in `app.config.ts` for both
+platforms but no-ops in the browser, because the token is provided only in
+`app.config.server.ts` — which is also what keeps the JSON out of the browser
+bundle. `locations.json` (4.7 MB) is deliberately mapped to `[]` on the server;
+it is a client-only dataset, and bundling it would inline 4.7 MB into every
+rendered page carrying a location selector.
 
 ## Application structure
 
 ```
 ui/
 ├── lambda.mjs                 # serverless-http wrapper around the built SSR Express app
-├── serverless.yml             # csd-ssr — ANY / and ANY /{proxy+}, PUBLIC_HOST env
+├── serverless.yml             # csd-ssr — ANY / and ANY /{proxy+}; per-stage env
+│                              #   (PUBLIC_HOST; + NG_ALLOWED_HOSTS on staging)
 ├── angular.json
 └── src/
     ├── index.html             # Leaflet CSS/JS <link>/<script> from unpkg
     ├── server.ts              # SSR Express entry (see Rendering above)
-    ├── environments/          # environment.ts + environment.prod.ts
+    ├── environments/          # environment.ts + .prod.ts + .staging.ts
     ├── assets/
     │   ├── i18n/{ua,en}.json  # full UI translations
     │   └── data/              # locations.json, activities.json (fed by ../convertors)
     └── app/
-        ├── app.config.ts      # providers: router, http+interceptor, hydration, translate
+        ├── app.config.ts      # providers: router, http+interceptors, hydration, translate
+        ├── app.config.server.ts               # SSR-only overrides (see Rendering above)
         ├── app.routes.ts      # public routes
         ├── app.routes.server.ts
         ├── core/
         │   ├── guards/auth.guard.ts          # managerGuard, adminGuard, superAdminGuard
-        │   ├── interceptors/auth.interceptor.ts
+        │   ├── i18n/server-translate.loader.ts    # SSR-only TranslateLoader
+        │   ├── interceptors/                 # auth.interceptor, server-assets.interceptor
+        │   ├── tokens/server-static-assets.token.ts
         │   └── services/                     # api, auth, language, page-title
         ├── shared/
         │   ├── components/    # carousel, file-upload, form-stepper,
@@ -313,6 +361,11 @@ Real, committed, and worth knowing before you copy the surrounding code.
 
 The production `ng build` in step 2 is the first time this app is compiled in
 CI. Nothing lints, typechecks or tests it, before or after.
+
+A push to `staging/**` runs the parallel `deploy-staging.yml` instead — same
+step order, a `staging` stage of both stacks, and two fail-closed guards of its
+own:
+[`../docs/ARCHITECTURE.md` §12.4](../docs/ARCHITECTURE.md#124-post-merge-to-a-staging-branch--githubworkflowsdeploy-stagingyml).
 
 Rollback, log inspection and cache-invalidation procedures are in
 [`../docs/ARCHITECTURE.md` §16](../docs/ARCHITECTURE.md#16-runbook--operational-procedures).
