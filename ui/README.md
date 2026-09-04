@@ -39,15 +39,32 @@ URLs from `environment.apiUrl`.
 
 ### Environment files
 
-All **three** files export the same **four** keys, swapped at build time by
-`angular.json`'s `fileReplacements`:
+**`environment.model.ts` is the key list — read it there, not here.** All three
+files declare `: Environment` (every member `readonly`), and `tsconfig.app.json`
+includes `src/**/*.ts`, so all three are type-checked on every build, `ng serve`
+included. That closes a real hole: `fileReplacements` swaps the module *after*
+the import site is resolved, so consumers are only ever checked against
+`environment.ts` — a key missing from `environment.prod.ts` used to compile
+cleanly and ship `undefined`, first visible on the live site. It now fails
+locally with `TS2741`. Adding a key means declaring it in the interface, then in
+all three files. Full per-file reference:
+[`../docs/ARCHITECTURE.md` §9](../docs/ARCHITECTURE.md#9-environment-variables-reference).
 
-| Key | dev | prod | staging |
-| --- | --- | --- | --- |
-| `production` | `false` | `true` | `true` |
-| `apiUrl` | `http://localhost:3000` | `https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com/prod` | `__STAGING_API_BASE__` |
-| `turnstileSiteKey` | `1x00000000000000000000AA` (Cloudflare's always-passes test key) | the real site key | the same test key |
-| `winterizationHouseholdEnabled` | `false` | `false` | `false` |
+What the interface cannot express is **why three of the values differ by build
+target**:
+
+| Key | Why it differs |
+| --- | --- |
+| `apiUrl` | dev → `http://localhost:3000`; prod → the API Gateway URL, called directly by the browser and not fronted by CloudFront; staging → the `__STAGING_API_BASE__` sentinel (below) |
+| `turnstileSiteKey` | dev and staging use Cloudflare's always-passing test key. The real key is bound to `www.csd-fund.org` and must pair with the `TURNSTILE_SECRET_KEY` GitHub secret, which staging deliberately does not define — Turnstile stays a production-only path |
+| `cartoBasemapKey` | the **same** key in all three, but it is restricted by referring domain and the staging host is not registered, so basemap tiles there keep the "API KEY REQUIRED" watermark |
+
+The other two do not vary. `production` is `true` for the prod **and** the
+staging build. `winterizationHouseholdEnabled` is **UX only** — it renders the
+household card disabled, while the real gate is the backend's
+`WINTERIZATION_HOUSEHOLD_ENABLED`, which answers 422 regardless of what the UI
+allows. The compiler guarantees that key *exists* in all three files; keeping its
+*value* in step is still manual.
 
 Staging builds as `ng build --configuration production,staging`: Angular has no
 configuration inheritance, so `staging` carries **only** the `fileReplacements`
@@ -58,16 +75,15 @@ and composes on top of `production` for budgets and output hashing.
 `ServiceEndpoint` output and fails the run if it survives. So a local
 `ng build --configuration production,staging` yields a bundle whose API calls
 404; that is intended. To exercise one locally, copy the file aside, substitute
-the sentinel, build, then restore it. Full reference:
-[`../docs/ARCHITECTURE.md` §9](../docs/ARCHITECTURE.md#9-environment-variables-reference).
+the sentinel, build, then restore it.
 
-`winterizationHouseholdEnabled` is **UX only** — it renders the household card
-disabled. The real gate is the backend's `WINTERIZATION_HOUSEHOLD_ENABLED`,
-which answers 422 regardless of what the UI allows. Keep all three files in
-lockstep.
-
-Site keys are public and safe to commit. Nothing secret belongs in
-`src/environments/`.
+**Both keys in these files are public by design and belong in git.**
+`turnstileSiteKey` is a Turnstile *site* key — its secret half is
+`TURNSTILE_SECRET_KEY`, a GitHub secret the browser never sees — and
+`cartoBasemapKey` is restricted by referring domain rather than kept secret. Both
+ship in the client bundle, so moving either into a GitHub secret would hide
+nothing from anyone and would silently break whichever build forgot to inject it.
+Nothing that is actually secret belongs in `src/environments/`.
 
 ## npm scripts
 
