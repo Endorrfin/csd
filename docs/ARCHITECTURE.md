@@ -886,7 +886,7 @@ The token travels in the **`x-turnstile-token` request header**, not the body �
 
 Turnstile does **not** cover the other anonymous endpoints (complaints, testimonials, inquiries, WASH submit, `POST /api/upload/testimonial-presigned`). Retrofitting them was deferred; there is no rate limiting either — see §14.2.
 
-There is **no Swagger, no `@nestjs/throttler`, no global exception filter, no global interceptor and no `APP_GUARD`** anywhere in the backend. The only global registrations are `helmet` and the single `ValidationPipe`.
+There is **no Swagger, no `@nestjs/throttler`, no global interceptor and no `APP_GUARD`** anywhere in the backend. The global registrations are `helmet`, the single `ValidationPipe`, `LoggerModule` (nestjs-pino) and `AllExceptionsFilter` via `APP_FILTER` — the last two added by PR 1, see §14.1.
 
 ### 7.3 WASH Needs Assessment
 
@@ -1147,7 +1147,7 @@ graph TB
 | S3 bucket (private media) | `csd-media-private` | Needs-form evidence + About registry PDFs. Backend IAM: `s3:PutObject` **and `s3:GetObject`**. Created and CORS-configured **manually** — not owned by Serverless |
 | CloudFront response-headers policy | `csd-frontend-security-headers` — `0dfcb167-3b72-4c89-8574-0465ee42283c` | Attached to the default behaviour **and all 9 additional behaviours** of `E3U465AMSVR9PN`. Verified against live CloudFront 2026-07-29 (not derivable from the repo) |
 | RDS endpoint | `csd-postgres.cfgy4a0e2bo6.eu-central-1.rds.amazonaws.com` | PostgreSQL **16.13**, `db.t4g.micro` — **console/CLI state, not repo state**; verify with `aws rds describe-db-instances`. SSL required (`rejectUnauthorized: false`), reached over the public endpoint — the Lambda is **not** in a VPC |
-| CloudWatch log groups | `/aws/lambda/csd-api-prod-api` · `/aws/lambda/csd-ssr-prod-ssr` | ⚠ **No retention configured** in either `serverless.yml` → CloudWatch default is *never expire*. Whether a retention policy was set by hand in the console cannot be determined from the repo |
+| CloudWatch log groups | `/aws/lambda/csd-api-prod-api` · `/aws/lambda/csd-ssr-prod-ssr` | **30-day retention**, set by `logRetentionInDays` in both `serverless.yml` (PR 1). Applies retroactively to what is already stored |
 
 ### Cost profile (monthly)
 
@@ -1254,6 +1254,9 @@ Three mechanisms enforce the invariant, all wired for the server only:
 ### Backend (`backend/.env` — runtime; see `.env.example` for the canonical list)
 
 ```
+# Observability (consumed by src/common/logger/logger.config.ts)
+LOG_LEVEL=info          # fatal|error|warn|info|debug|trace|silent; unknown -> info
+
 # Database (consumed by AppModule TypeOrmModule.forRootAsync and CLI data-source)
 DB_HOST=localhost
 DB_PORT=5432            # Homebrew postgresql@14 default; Docker users override to 5433
@@ -1683,6 +1686,23 @@ This section documents the portal's security posture — what's been fixed, what
 
 > The earlier claim that this constituted **defence in depth across procurement, vacancy, blog and content** was wrong. Blog and `/api/pages` never had server-side sanitization. See §14.2.
 
+#### No observability beyond raw logs
+
+**Issue:** Nothing correlated a failed request with a log line, nothing alerted on failure, and `lambda.ts` ran with `logger: ['error','warn']` — unstructured ConsoleLogger text with `log`/`debug` silently dropped. Incidents #2 and #4 were both discovered by a person looking at the site.
+
+**Resolution (PR 1, `feat/observability-baseline`):**
+- **Structured JSON logging** via `nestjs-pino` (`src/common/logger/logger.config.ts`). One JSON object per line, so CloudWatch Logs Insights and metric filters have something to match.
+- **A correlation id on every line** — `event.requestContext.requestId`, the same value API Gateway returns in `x-amzn-RequestId`, echoed to the client as `x-request-id` and included in every error body. An inbound `x-request-id` is deliberately ignored (all public endpoints are anonymous).
+- **`AllExceptionsFilter`** registered through `APP_FILTER`, giving all 16 controllers one error contract. Nest's own `statusCode` / `message` / `error` pass through unchanged — 44 places in the Angular app read `err.error?.message` and two branch on `Array.isArray` — with `requestId`, `timestamp` and `path` added. 5xx bodies are masked; the real message and stack go to the log only.
+- **X-Ray** (`provider.tracing`) and **30-day log retention** on both stacks.
+- **Nine CloudWatch alarms → SNS email**: Lambda `Errors` / `Duration p99` / `Throttles`, API Gateway `5XXError`, RDS `CPUUtilization` / `DatabaseConnections` / `FreeableMemory` on `csd-api`; `Errors` and `Duration p99` on `csd-ssr`. Prod only.
+
+**Two things this closed that were not on the list:**
+- `console.error('...', err)` in the needs services printed the error through `util.inspect`, i.e. with every own property — and those errors come from the database, so a TypeORM `QueryFailedError` put `.query` and `.parameters` (an applicant's name and phone) into CloudWatch, where retention was unset. The `err` serializer is an allow-list of `type`/`message`/`stack`/`code`, and nothing in the request path logs a body.
+- Query strings were never logged: `?search=` exists in the admin and export DTOs of nine modules and is free text an operator types names into. The request serializer logs the path and the parameter **names** only, three allow-listed headers, and no IP address at all.
+
+**Verified by:** unit specs over the serializers and the filter (`logger.config.spec.ts`, `all-exceptions.filter.spec.ts`, `request-id.spec.ts`), plus invoking the built `dist/lambda.js` with a realistic API Gateway event and asserting that no token, cookie, source IP or query value appears in the output.
+
 #### Pure-ESM dependency breaking CommonJS Lambda
 
 **Issue:** `isomorphic-dompurify` transitively pulled in `@exodus/bytes`, a pure-ESM package. AWS Lambda's Node 22 CommonJS loader threw `ERR_REQUIRE_ESM` before Nest even bootstrapped, causing a total prod outage.
@@ -1779,19 +1799,27 @@ See Incident #3.
 
 #### Password-reset links are logged, not emailed
 
-**Status:** `auth.service.ts` builds the reset link and writes it with `this.logger.log(...)` under a `TODO: Replace with EmailService`. There is no mailer dependency in `backend/package.json`. In production this means a **valid, single-use reset token is written to CloudWatch Logs** — which have no retention policy configured (§8), so it persists indefinitely.
+**Status:** `auth.service.ts` builds the reset link and writes it with `this.logger.log(...)` under a `TODO: Replace with EmailService`. There is no mailer dependency in `backend/package.json`. In production this means a **valid, single-use reset token is written to CloudWatch Logs**. Since PR 1 those logs expire after 30 days (§8), which bounds the residue but does not remove it — and structured logging makes the line easier to find in Logs Insights, not harder. The line stays deliberately: it is the only password-reset channel the fund has until PR 3 wires SES, and removing it first would lock staff out of their own accounts.
 
 **Impact:** Medium. Exploitation requires CloudWatch read access, so the blast radius is anyone with AWS log access rather than the public. Token TTL is 1 hour, which limits but does not remove the window.
 
-**Plan:** Wire an `EmailService` (SES is the obvious choice given the AWS footprint). Until then, at minimum stop logging the full link in production and set log retention.
+**Plan:** Wire an `EmailService` (SES is the obvious choice given the AWS footprint) — `ROADMAP.md` PR 3. Log retention is already set; the log line goes away in the same change that gives it somewhere else to go.
 
-#### No observability beyond raw logs
+#### Traces stop at the Lambda boundary
 
-**Status:** No CloudWatch alarms, no X-Ray, no global exception filter and no global interceptor anywhere in the backend. Errors surface only as unstructured log lines, and nothing alerts on them. Both smoke tests in `deploy.yml` are the entire automated production health signal, and they run once per deploy.
+**Status:** X-Ray is enabled on both stacks (§14.1), which yields the API Gateway segment and the Lambda segment — enough to separate cold-start init from handler time. It does **not** break out the RDS round-trip: that needs `aws-xray-sdk-core` with `capturePostgres`, i.e. a new runtime dependency, another `check:cjs` surface and more cold-start weight.
 
-**Impact:** Medium — outages are discovered by someone looking. Incident #2 and Incident #4 were both found that way.
+**Impact:** Low — a slow request is visible, but "slow in Postgres" versus "slow in our code" still has to be inferred from the log line rather than read off the trace.
 
-**Plan:** A CloudWatch alarm on Lambda `Errors` and on API Gateway 5xx is the cheapest meaningful step. A global exception filter would also stop internal error text reaching clients.
+**Plan:** Only if a latency question actually arises that the logs cannot answer. Measure before adding the dependency.
+
+#### No product or database observability
+
+**Status:** `pg_stat_statements` is not enabled on the RDS parameter group, there is no alert on transaction-id wraparound (`age(backend_xmin)`), and no dashboards. Lambda, API Gateway and RDS host metrics are alarmed (§14.1); nothing looks inside the database.
+
+**Impact:** Low–medium — a slow query is invisible until it shows up as Duration or CPU.
+
+**Plan:** `pg_stat_statements` needs a parameter group change and a reboot window. Grafana Cloud's free tier over the CloudWatch datasource is the cheapest dashboard option (`ROADMAP.md` §6, tier 1).
 
 #### CloudFront cache invalidation is not path-specific
 
@@ -1995,6 +2023,69 @@ npx serverless logs --function ssr --stage prod --tail
 
 Or via CloudWatch Logs console: log group `/aws/lambda/csd-api-prod-api` and `/aws/lambda/csd-ssr-prod-ssr`.
 
+Both groups keep **30 days** (`logRetentionInDays` in each `serverless.yml`). Confirm:
+
+```bash
+aws logs describe-log-groups --region eu-central-1 \
+  --log-group-name-prefix /aws/lambda/csd- \
+  --query 'logGroups[].[logGroupName,retentionInDays]' --output table
+```
+
+### Trace one request end to end
+
+Every log line inside a request carries `requestId`, which is the API Gateway
+request id — the same value the response returns in `x-request-id`. Ask a user
+for it, or read it off a failed response, then in CloudWatch Logs Insights:
+
+```
+fields @timestamp, level, msg, context, req.path, res.statusCode, err.type, err.message
+| filter requestId = 'PASTE-THE-ID'
+| sort @timestamp asc
+```
+
+Useful companions over the same log group:
+
+```
+# every 5xx in the window, newest first
+fields @timestamp, requestId, req.method, req.path, err.type, err.message
+| filter res.statusCode >= 500
+| sort @timestamp desc
+
+# audit-log writes that failed (the submit still succeeded — that is by design)
+fields @timestamp, requestId, auditOp, err.type, err.message
+| filter msg = 'audit log write failed'
+| stats count() by auditOp
+```
+
+Field names come from `src/common/logger/logger.config.ts`. `level` is a string
+(`"warn"`, not `40`), so filters read without a lookup table.
+
+### Test that an alarm actually reaches the inbox
+
+An alarm is worthless until the SNS subscription is confirmed. Both stacks own a
+topic, so there are two subscriptions to check and two confirmation emails to
+click after the first deploy.
+
+```bash
+# 1. the subscription must not be "PendingConfirmation"
+aws sns list-subscriptions --region eu-central-1 \
+  --query "Subscriptions[?contains(TopicArn,'-prod-alarms')].[TopicArn,Endpoint,SubscriptionArn]" \
+  --output table
+
+# 2. force one alarm into ALARM and wait for the mail
+aws cloudwatch set-alarm-state --region eu-central-1 \
+  --alarm-name csd-api-prod-api-errors \
+  --state-value ALARM --state-reason 'manual delivery test'
+
+# 3. put it back; the OK action sends a recovery mail too
+aws cloudwatch set-alarm-state --region eu-central-1 \
+  --alarm-name csd-api-prod-api-errors \
+  --state-value OK --state-reason 'manual delivery test complete'
+```
+
+`set-alarm-state` is a manual override — CloudWatch re-evaluates on the next
+data point, so nothing needs undoing beyond step 3.
+
 ### Export complaints for donor reporting
 
 As admin+ in the UI: `/admin/complaints` → set filters → click "Export CSV". The file includes UTF-8 BOM for Excel compatibility.
@@ -2064,7 +2155,6 @@ Ordered by approximate priority.
 - [ ] **Promote the frontend CSP from Report-Only to enforce** — only after the item above, and after a clean Report-Only run over `/needs/recovery-form`, `/needs/winterization-form` and `/about/documents`. Promoting today breaks all three (§14.3).
 - [ ] **Sanitize blog and CMS page HTML server-side** (§14.2). `contentUa`/`contentEn` are not in the pipe's field allow-list either.
 - [ ] **Gate Recovery/Winterization hard-delete by status**, and decide what happens to the orphaned S3 objects the delete leaves in `csd-media-private` (§14.2).
-- [ ] **Set CloudWatch log retention** on both Lambda log groups — currently unconfigured, so logs never expire and password-reset links are among them (§14.2).
 - [ ] **Add rate limiting** to public `POST` endpoints, including `POST /api/upload/testimonial-presigned`, and extend `TurnstileGuard` to the remaining anonymous submits.
 - [ ] **Remove legacy `/publish`, `/approve`, `/reject` endpoints** after full UI migration to `/status` is verified in production.
 - [ ] **Remove safety RDS snapshot** `csd-postgres-safety-20260423-0003` (created 2026-04-23; 2-week window expired 2026-05-07 — **~3 months overdue** as of 2026-07-29). Verify it still exists in the AWS Console first; if present, delete and remove this item.
@@ -2076,7 +2166,6 @@ Ordered by approximate priority.
 - [ ] **Extend the Playwright suite to the scenarios a stub API cannot reach** — needs-form submit with an attachment (presigned POST into `csd-media-private`), admin login → JWT → guarded route, admin CRUD, and the document registry. Needs `docker compose` with `postgres:16-alpine` plus the real backend, and a Turnstile bypass for the two guarded forms. Keep the whole suite under 12 tests (§12.1).
 - [ ] **Add a retention / PII policy for `media/needs/*`.** No lifecycle rule exists on either media bucket; the private one holds defect acts and photographs of private property indefinitely.
 - [ ] **Replace the logged password-reset link with a real `EmailService`** (SES) (§14.2).
-- [ ] **Add CloudWatch alarms** on Lambda `Errors` and API Gateway 5xx, and a global exception filter (§14.2).
 - [ ] **Route admin XLSX/CSV exports through `ApiService`** to remove the five unguarded `localStorage` reads (§14.2).
 - [ ] **Grow the `ui` unit test suite** — 2 spec files for 107 source files, with no `vitest.config.ts`. The Playwright suite covers six user-facing flows but is not a substitute for service, interceptor and guard specs.
 - [ ] **Type the 130+ `any` usages** across the frontend, especially `home.ts`, image upload flows, blog components.
@@ -2092,7 +2181,7 @@ Ordered by approximate priority.
 - [ ] **Finish the `LanguageService` migration** — 35 files still read the non-reactive `translate.currentLang` in a zoneless app.
 - [ ] **Remove the squatted `"ngx-translate": "^0.0.1-security"`** dependency from `ui/package.json` — it is the npm placeholder package, not the real one (`@ngx-translate/core`), and nothing imports it.
 - [ ] **Delete or wire up `src/database/run-seeds-standalone.ts`** — no npm script references it and it seeds equipment only.
-- [ ] **Set a size cap on `POST /api/upload/presigned-url`** (§8.1) — presigned PUT cannot enforce one; either move it to presigned POST or accept and document the risk. Its MIME rejection also returns 500 instead of 400.
+- [ ] **Set a size cap on `POST /api/upload/presigned-url`** (§8.1) — presigned PUT cannot enforce one; either move it to presigned POST or accept and document the risk. (Its MIME rejection now returns 400; that half is closed — PR 1.)
 - [ ] **CSV export for procurements/vacancies/testimonials** (only complaints and inquiries have export now).
 - [ ] **Migrate JWT to httpOnly cookies** if XSS controls prove inadequate.
 - [ ] **Consider soft-delete on users** (currently hard delete breaks `createdBy` references).

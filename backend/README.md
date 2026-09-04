@@ -453,12 +453,14 @@ is a habit, not a hook.
 
 ## Known gaps — do not assume these exist
 
-- No Swagger/OpenAPI, no `@nestjs/throttler`, no global exception filter, no
-  global interceptors, no CloudWatch alarms, no X-Ray.
+- No Swagger/OpenAPI, no `@nestjs/throttler`, no global interceptors.
+  (A global exception filter, structured JSON logging, a correlation id, X-Ray
+  and nine CloudWatch alarms landed with PR 1 — `ARCHITECTURE.md` §14.1.)
 - **Password-reset links are logged, not emailed** (`auth.service.ts`, marked
   `TODO: Replace with EmailService`). There is no SMTP integration.
-- No CloudWatch log-retention setting in either `serverless.yml`, so the default
-  is *never expire*.
+- Password-reset links stay in CloudWatch for 30 days (`logRetentionInDays`),
+  which bounds the exposure above but does not remove it. SES replaces the log
+  line in PR 3.
 - The IAM role has no `s3:DeleteObject` — deleting a needs form leaves its S3
   objects behind, by necessity rather than by choice.
 - `RolesGuard` returns `true` when `@Roles()` is absent or empty, so
