@@ -934,7 +934,10 @@ export class HomeComponent implements OnInit {
     this.impactStats.ensureLoaded();
     this.loadFeatured();
     this.loadPosts(1);
-    this.pageTitle.setTitle('HOME.TITLE');
+    // moved here from HeroFeaturedComponent, and setTitle -> updateSeo.
+    // setTitle passes no description key, so the home page was clearing its own
+    // description and relying on the child's ngOnInit to put it back.
+    this.pageTitle.updateSeo('HOME.TITLE', 'HOME.DESCRIPTION');
   }
 
   private loadFeatured(): void {

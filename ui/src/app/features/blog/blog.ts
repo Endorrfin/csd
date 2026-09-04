@@ -99,24 +99,27 @@ interface PaginatedPosts {
 })
 export class BlogComponent implements OnInit {
   private readonly api = inject(ApiService);
-  // === ADDED: Page title service for SEO ===
+  protected readonly isUa = inject(LanguageService).isUa;
+
+  private readonly PAGE_SIZE = 20;
+
+  // === ADDED: inject page title service for dynamic SEO tags ===
   private readonly pageTitle = inject(PageTitleService);
   // === END ADDED ===
 
-  private readonly PAGE_SIZE = 20;
-  posts = signal<BlogPost[]>([]); // CHANGED: was signal<any[]>
+  posts = signal<BlogPost[]>([]);
   page = signal(1);
   hasMore = signal(false);
   loading = signal(false);
 
-  protected readonly isUa = inject(LanguageService).isUa;
-
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadPosts(1);
-    this.pageTitle.setTitle('NAV.BLOG');
+    // === ADDED: update page dynamic metadata and SEO tags ===
+    this.pageTitle.updateSeo('NAV.BLOG', 'BLOG.PAGE.DESCRIPTION');
+    // === END ADDED ===
   }
 
-  loadPosts(page: number) {
+  loadPosts(page: number): void {
     this.loading.set(true);
     this.api.get<PaginatedPosts>(`blog?page=${page}&limit=${this.PAGE_SIZE}`).subscribe({
       next: (res) => {
@@ -129,7 +132,7 @@ export class BlogComponent implements OnInit {
     });
   }
 
-  loadMore() {
+  loadMore(): void {
     if (!this.hasMore() || this.loading()) return;
     this.loadPosts(this.page() + 1);
   }

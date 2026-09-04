@@ -1,12 +1,13 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Meta, Title } from '@angular/platform-browser';
+import { Meta } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
 import { CarouselComponent } from '../../shared/components/carousel/carousel';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
 import { LanguageService } from '../../core/services/language.service';
 import { BlogPost } from './blog.interfaces';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
   selector: 'app-blog-post',
@@ -150,7 +151,10 @@ import { BlogPost } from './blog.interfaces';
 export class BlogPostComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly meta = inject(Meta);
-  private readonly title = inject(Title);
+  // was a bare Title. This route set no name="description" of its own,
+  // so it inherited the previously visited page's tag, and that page's language
+  // watcher stayed armed and overwrote this title on a language switch.
+  private readonly pageTitle = inject(PageTitleService);
   private readonly sanitizer = inject(DomSanitizer);
 
   post = signal<BlogPost | null>(null);
@@ -178,7 +182,7 @@ export class BlogPostComponent implements OnInit {
       'https://www.csd-fund.org/web-app-manifest-512x512.png';
     const url = `https://www.csd-fund.org/blog/${post.slug}`;
 
-    this.title.setTitle(pageTitle);
+    this.pageTitle.setStaticSeo(pageTitle, description);
     this.meta.updateTag({ property: 'og:title', content: pageTitle });
     this.meta.updateTag({ property: 'og:description', content: description });
     this.meta.updateTag({ property: 'og:image', content: image });

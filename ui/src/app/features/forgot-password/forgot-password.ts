@@ -218,7 +218,8 @@ export class ForgotPasswordComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
-  // === ADDED: Page title service for SEO ===
+
+  // === ADDED: inject page title service for dynamic SEO tags ===
   private readonly pageTitle = inject(PageTitleService);
   // === END ADDED ===
 
@@ -245,7 +246,9 @@ export class ForgotPasswordComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // === ADDED: update dynamic page title for the browser tab ===
     this.pageTitle.setTitle('auth.forgot.title');
+    // === END ADDED ===
   }
 
   onSubmit(): void {

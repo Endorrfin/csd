@@ -6,6 +6,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SlicePipe } from '@angular/common';
 import { ProcurementListItem, ProcurementStatus } from './procurement.interfaces';
+import { PageTitleService } from '../../../core/services/page-title.service';
 
 // Statuses counted as "active" on public page (bids still accepted or being evaluated)
 const ACTIVE_STATUSES: ProcurementStatus[] = [
@@ -269,6 +270,10 @@ export class ProcurementListComponent implements OnInit {
   readonly items = signal<ProcurementListItem[]>([]);
   readonly isLoading = signal(true);
 
+  // === ADDED: inject page title service for dynamic SEO tags ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
+
   // computed count of currently active tenders
   readonly activeCount = computed(
     () => this.items().filter((i) => ACTIVE_STATUSES.includes(i.status)).length,
@@ -290,5 +295,12 @@ export class ProcurementListComponent implements OnInit {
       },
       error: () => this.isLoading.set(false),
     });
+
+    // === ADDED: update page dynamic metadata and SEO tags ===
+    this.pageTitle.updateSeo(
+      'cooperation.tabs.procurement',
+      'cooperation.descriptions.procurement',
+    );
+    // === END ADDED ===
   }
 }

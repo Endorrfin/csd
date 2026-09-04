@@ -11,8 +11,11 @@ import { PageTitleService } from '../../core/services/page-title.service';
   styleUrl: './not-found.component.scss',
 })
 export class NotFoundComponent implements OnInit {
-  private readonly pageTitle = inject(PageTitleService);
   private readonly responseInit = inject(RESPONSE_INIT, { optional: true });
+
+  // === ADDED: inject page title service for dynamic SEO tags ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   constructor() {
     if (this.responseInit) {
@@ -21,6 +24,8 @@ export class NotFoundComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // === ADDED: update dynamic page title for the browser tab ===
     this.pageTitle.setTitle('NOT_FOUND.TITLE');
+    // === END ADDED ===
   }
 }

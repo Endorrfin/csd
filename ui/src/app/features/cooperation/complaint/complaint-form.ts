@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import {
   ReactiveFormsModule,
   FormBuilder,
@@ -10,6 +10,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
 import { LocationValue } from '../../../shared/interfaces/location.interfaces';
 import { ApiService } from '../../../core/services/api.service';
+import { PageTitleService } from '../../../core/services/page-title.service';
 
 type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | 'delay' | 'other';
 
@@ -340,15 +341,25 @@ type ComplaintCategory = 'service_quality' | 'staff_behavior' | 'corruption' | '
     `,
   ],
 })
-export class ComplaintFormComponent {
+export class ComplaintFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private api = inject(ApiService);
   private translate = inject(TranslateService);
+
+  // === ADDED: page title service for SEO ===
+  private pageTitle = inject(PageTitleService);
+  // === END ADDED ===
 
   protected saving = signal(false);
   protected submitted = signal(false);
   protected error = signal<string | null>(null);
   protected showForm = signal(false);
+
+  ngOnInit(): void {
+    // === ADDED: update page dynamic metadata and SEO tags ===
+    this.pageTitle.updateSeo('cooperation.tabs.complaint', 'cooperation.descriptions.complaint');
+    // === END ADDED ===
+  }
 
   protected get lang(): string {
     return this.translate.currentLang ?? 'ua';

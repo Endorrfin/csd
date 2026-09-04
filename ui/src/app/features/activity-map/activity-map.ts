@@ -121,7 +121,8 @@ import { PageTitleService } from '../../core/services/page-title.service';
 export class ActivityMapComponent implements OnInit {
   readonly data = inject(ActivityDataService);
   readonly filter = inject(ActivityFilterService);
-  // === ADDED: Page title service for SEO ===
+
+  // === ADDED: inject page title service for dynamic SEO tags ===
   private readonly pageTitle = inject(PageTitleService);
   // === END ADDED ===
 
@@ -136,6 +137,8 @@ export class ActivityMapComponent implements OnInit {
 
   ngOnInit(): void {
     this.data.load().subscribe();
-    this.pageTitle.setTitle('ACTIVITY_MAP.TITLE');
+    // === ADDED: update page dynamic metadata and SEO tags ===
+    this.pageTitle.updateSeo('ACTIVITY_MAP.TITLE', 'ACTIVITY_MAP.DESCRIPTION');
+    // === END ADDED ===
   }
 }

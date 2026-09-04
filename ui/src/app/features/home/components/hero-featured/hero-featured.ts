@@ -3,7 +3,6 @@ import { TranslateModule, TranslateService, LangChangeEvent } from '@ngx-transla
 import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { BlogPost } from '../../../blog/blog.interfaces'; // CHANGED: typed post input instead of any
-
 /**
  * Hero block on the home page, driven by the "featured" post.
  *

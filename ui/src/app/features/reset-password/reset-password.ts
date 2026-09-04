@@ -233,7 +233,7 @@ export class ResetPasswordComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly translate = inject(TranslateService);
-  // === ADDED: Page title service for SEO ===
+  // === ADDED: inject page title service for dynamic SEO tags ===
   private readonly pageTitle = inject(PageTitleService);
   // === END ADDED ===
   get isUa(): boolean {
@@ -252,7 +252,9 @@ export class ResetPasswordComponent implements OnInit {
 
   ngOnInit(): void {
     this.token = this.route.snapshot.queryParamMap.get('token') ?? '';
+    // === ADDED: update dynamic page title for the browser tab ===
     this.pageTitle.setTitle('auth.reset.title');
+    // === END ADDED ===
   }
 
   showError(field: string): boolean {
