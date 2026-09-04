@@ -1,6 +1,8 @@
 import { DataSource } from 'typeorm';
 import * as dotenv from 'dotenv';
 
+import { getDatabaseSslOptions } from './db-ssl';
+
 dotenv.config();
 
 // Standalone DataSource used by TypeORM CLI (migrations)
@@ -15,8 +17,8 @@ export const AppDataSource = new DataSource({
   migrations: ['src/database/migrations/*.ts'],
   migrationsTransactionMode: 'each',
   synchronize: false,
-  ssl:
-    process.env.NODE_ENV === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  // was `{ rejectUnauthorized: false }` in production — encrypted but
+  // UNVERIFIED, i.e. no defence against an active MITM. The AWS RDS CA bundle is
+  // now checked. Shared with app.module.ts so the two can never drift apart.
+  ssl: getDatabaseSslOptions(),
 });

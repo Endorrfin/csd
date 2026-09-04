@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import { EquipmentCategory } from '../modules/equipment-catalog/entities/equipment-category.entity';
 import { EquipmentItem } from '../modules/equipment-catalog/entities/equipment-item.entity';
 import { seedEquipmentCatalog } from './seed-equipment';
+import { getDatabaseSslOptions } from './db-ssl';
 
 config();
 
@@ -17,10 +18,8 @@ async function run(): Promise<void> {
     entities: [EquipmentCategory, EquipmentItem],
     synchronize: false,
     // synchronize: true, // initial create table RDS
-    ssl:
-      process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }
-        : false,
+    // was `{ rejectUnauthorized: false }`. See db-ssl.ts.
+    ssl: getDatabaseSslOptions(),
   });
 
   await ds.initialize();

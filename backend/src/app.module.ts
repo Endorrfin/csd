@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { getDatabaseSslOptions } from './database/db-ssl';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './modules/users/users.module';
@@ -40,11 +41,10 @@ import { AboutModule } from './modules/about/about.module';
         // synchronize: config.get<string>('NODE_ENV') !== 'production',
         synchronize: false,
         // synchronize: true, // initial create table RDS
-        // ── SSL for AWS RDS (added) ──
-        ssl:
-          config.get<string>('NODE_ENV') === 'production'
-            ? { rejectUnauthorized: false }
-            : false,
+        // was `{ rejectUnauthorized: false }` — encrypted but UNVERIFIED.
+        // The TLS decision now lives in db-ssl.ts and is shared with the CLI
+        // DataSource used by migration:run, so the two cannot drift apart.
+        ssl: getDatabaseSslOptions(config.get<string>('NODE_ENV')),
       }),
     }),
     UsersModule,

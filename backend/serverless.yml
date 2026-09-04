@@ -116,6 +116,10 @@ package:
   patterns:
     - 'dist/**'
     - 'node_modules/**'
+    # the AWS RDS CA bundle must reach /var/task, otherwise
+    # db-ssl.ts refuses to boot rather than fall back to an unverified TLS
+    # connection. Resolved at runtime from $LAMBDA_TASK_ROOT.
+    - 'certs/**'
     - '!node_modules/.cache/**'
     - '!src/**'
     - '!test/**'
