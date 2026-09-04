@@ -34,9 +34,13 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Params } from 'nestjs-pino';
 import pino from 'pino';
+import { resolveRequestId } from './request-id';
 
 /** The deploy smoke test hits this path five times in a row: noise, not signal. */
 const HEALTH_PATH = '/api/health';
+
+/** Echoed back so a caller can quote the id of a request that went wrong. */
+const REQUEST_ID_HEADER = 'x-request-id';
 
 const LOG_LEVELS = [
   'fatal',
@@ -122,7 +126,6 @@ function serializeRequest(req: LoggedRequest): Record<string, unknown> {
   // Express rewrites req.url under mounted middleware; originalUrl survives.
   const { path, queryKeys } = splitUrl(req.originalUrl ?? req.url);
   return {
-    id: req.id,
     method: req.method,
     path,
     ...(queryKeys ? { queryKeys } : {}),
@@ -226,6 +229,22 @@ export const loggerConfig: Params = {
         ],
         censor: '[redacted]',
       },
+      // `quietReqLogger` is what puts the correlation id on EVERY line of a
+      // request instead of only the completion line. With it, pino-http builds
+      // `req.log` as `logger.child({ requestId })` — and nestjs-pino stores
+      // exactly that logger in its AsyncLocalStorage, so an injected
+      // `PinoLogger` and any `new Logger()` call site inherit the id with no
+      // plumbing. The completion line still gets the full `req` object on top.
+      quietReqLogger: true,
+      customAttributeKeys: { reqId: 'requestId' },
+      genReqId: (req, res) => {
+        const id = resolveRequestId();
+        // pino-http runs this before the route handler, so the headers are
+        // never sent yet; the guard is here only so a future middleware
+        // ordering change degrades into a missing header, not a crash.
+        if (!res.headersSent) res.setHeader(REQUEST_ID_HEADER, id);
+        return id;
+      },
       autoLogging: { ignore: isHealthProbe },
       // pino-http's default message is `!req.readableAborted &&
       // res.writableEnded ? 'request completed' : 'request aborted'`. Under
@@ -248,8 +267,9 @@ export const loggerConfig: Params = {
   ],
 };
 
-// Step 17 replaces pino-http's default `req.id` counter with the API Gateway
-// request id. Step 19 (ExceptionFilter) must attach the real error to
-// `res.err`, otherwise pino-http synthesises its own `new Error('failed with
-// status code 500')` for every 5xx, carrying pino-http's own stack — bytes
-// without information.
+// Step 19 (ExceptionFilter) must attach the real error to `res.err`, otherwise
+// pino-http synthesises its own `new Error('failed with status code 500')` for
+// every 5xx, carrying pino-http's own stack — bytes without information. It
+// should also put `requestId` in the error response body: the browser cannot
+// read the `x-request-id` header cross-origin unless the CORS config starts
+// exposing it, and the API is served from a different origin than the site.
