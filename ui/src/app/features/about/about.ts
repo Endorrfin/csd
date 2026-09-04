@@ -6,6 +6,7 @@ import { LanguageService } from '../../core/services/language.service';
 import { ApiService } from '../../core/services/api.service';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
 import { AboutSection } from '../admin/about/about.interfaces';
+import { PageTitleService } from '../../core/services/page-title.service';
 
 // PR-D3 — the registry moved to the "Documents" sub-tab
 // (features/about/documents/about-documents.ts), so GET /api/about is sections-only
@@ -173,18 +174,21 @@ interface PublicAboutResponse {
 })
 export class AboutComponent implements OnInit {
   private readonly api = inject(ApiService);
+  protected readonly isUa = inject(LanguageService).isUa;
+
+  // inject page title service for dynamic SEO tags
+  private readonly pageTitle = inject(PageTitleService);
 
   // ----- State -----
   loading = signal(true);
   errorMessage = signal('');
   sections = signal<AboutSection[]>([]);
 
-  // signal-based language flag (reactive in zoneless) — call as isUa() everywhere
-  protected readonly isUa = inject(LanguageService).isUa;
-
   ngOnInit(): void {
     // PR-D3 — the page title is set by AboutShellComponent for both sub-tabs.
     this.loadAbout();
+    // update page dynamic metadata and SEO tags
+    this.pageTitle.updateSeo('about.page.title', 'about.page.description');
   }
 
   private loadAbout(): void {

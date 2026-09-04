@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { LanguageService } from '../../core/services/language.service';
 import { PageTitleService } from '../../core/services/page-title.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-needs',
@@ -148,10 +149,14 @@ import { PageTitleService } from '../../core/services/page-title.service';
   ],
 })
 export class NeedsComponent implements OnInit {
+  private readonly translate = inject(TranslateService);
+
+  // inject page title service for dynamic SEO tags
   protected readonly isUa = inject(LanguageService).isUa;
   private readonly pageTitle = inject(PageTitleService);
 
   ngOnInit(): void {
-    this.pageTitle.setTitle('NAV.NEEDS');
+    // update page dynamic metadata and SEO tags
+    this.pageTitle.updateSeo('NAV.NEEDS', 'NEEDS.PAGE.DESCRIPTION');
   }
 }

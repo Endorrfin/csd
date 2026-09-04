@@ -374,7 +374,8 @@ type GuideItemKey = 'GENERAL' | 'TESTIMONIAL' | 'COMPLAINT' | 'VACANCY' | 'PROCU
 export class ContactComponent implements OnInit {
   readonly email = 'office.ua.csd@gmail.com';
   readonly facebookUrl = 'https://www.facebook.com/profile.php?id=61566893468669';
-  // === ADDED: Page title service for SEO ===
+
+  // === ADDED: inject page title service for dynamic SEO tags ===
   private readonly pageTitle = inject(PageTitleService);
   // === END ADDED ===
 
@@ -394,6 +395,8 @@ export class ContactComponent implements OnInit {
   ];
 
   ngOnInit() {
-    this.pageTitle.setTitle('CONTACT.PAGE.TITLE');
+    // === ADDED: update page dynamic metadata and SEO tags ===
+    this.pageTitle.updateSeo('CONTACT.PAGE.TITLE', 'CONTACT.PAGE.DESCRIPTION');
+    // === END ADDED ===
   }
 }

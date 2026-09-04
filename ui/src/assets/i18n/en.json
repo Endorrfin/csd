@@ -13,6 +13,7 @@
   },
   "HOME": {
     "TITLE": "«Charitable Fund «Centre for Support and Development»»",
+    "DESCRIPTION": "Charitable Foundation 'Center for Support and Development' (CSD Fund). Areas of activity: WASH (water, sanitation, and hygiene), infrastructure restoration, and shelter.",
     "SUBTITLE": "WASH · Repair & Recovery · Shelters",
     "CTA": {
       "LABEL": "Cooperation"
@@ -37,6 +38,24 @@
     "TITLE": "Page not found",
     "TEXT": "Sorry, but this page does not exist.",
     "LINK": "Back to home"
+  },
+  "NEEDS": {
+    "PAGE": {
+      "TITLE": "Needs and Requests for Assistance",
+      "DESCRIPTION": "Submit a request for humanitarian aid from the CSD Fund charity. Assistance to communities and institutions in the areas of water, sanitation, and hygiene (WASH), infrastructure restoration, and shelter equipment."
+    }
+  },
+  "PARTNERS": {
+    "PAGE": {
+      "TITLE": "Our Partners and International Donors",
+      "DESCRIPTION": "International organizations, foundations, and partners supporting the activities of the CSD Fund charity. Together, we restore infrastructure, improve water, sanitation, and hygiene (WASH) systems, and assist communities."
+    }
+  },
+  "BLOG": {
+    "PAGE": {
+      "TITLE": "News and Activity Reports",
+      "DESCRIPTION": "The latest news, reports, and work results of the CSD Fund charitable foundation. Find out how we are helping communities."
+    }
   },
   "about": {
     "admin": {
@@ -212,6 +231,12 @@
       "vacancy": "Vacancies",
       "testimonial": "Testimonials",
       "complaint": "Complaints"
+    },
+    "descriptions": {
+      "procurement": "Tenders, procurement, and requests for proposals (RFPs) from the CSD Fund charitable foundation. We invite suppliers to cooperate.",
+      "vacancy": "Current job openings and career opportunities at the CSD Fund. Join our team of professionals in the charitable sector.",
+      "testimonial": "Feedback from partners, donors, and beneficiaries about the activities of the CSD Fund charitable foundation and the results of our assistance.",
+      "complaint": "Confidential channel for submitting complaints and appeals (PSEA, anti-fraud). We guarantee privacy and the review of every case."
     }
   },
   "common": {
@@ -491,6 +516,7 @@
   "CONTACT": {
     "PAGE": {
       "TITLE": "Contacts",
+      "DESCRIPTION": "Contact information of the CSD Fund charitable foundation. Contact us via the feedback form or reach out using the provided addresses.",
       "INTRO": "Reach out to us through the channel that works best for you. All inquiries are handled with respect for your privacy."
     },
     "PRIMARY": {

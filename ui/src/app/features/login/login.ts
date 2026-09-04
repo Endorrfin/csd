@@ -206,7 +206,8 @@ export class LoginComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
-  // === ADDED: Page title service for SEO ===
+
+  // === ADDED: inject page title service for dynamic SEO tags ===
   private readonly pageTitle = inject(PageTitleService);
   // === END ADDED ===
 
@@ -228,7 +229,9 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // === ADDED: update dynamic page title for the browser tab ===
     this.pageTitle.setTitle('NAV.LOGIN');
+    // === END ADDED ===
   }
 
   onSubmit(): void {

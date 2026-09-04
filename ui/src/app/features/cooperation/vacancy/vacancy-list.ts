@@ -7,6 +7,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 // use shared interfaces + VacancyStatus enum
 import { VacancyListItem, VacancyStatus } from './vacancy.interfaces';
+import { PageTitleService } from '../../../core/services/page-title.service';
 
 // Statuses counted as "open" on the public page (still accepting applications)
 const OPEN_STATUSES: VacancyStatus[] = [VacancyStatus.PUBLISHED, VacancyStatus.EXTENDED];
@@ -208,6 +209,11 @@ const OPEN_STATUSES: VacancyStatus[] = [VacancyStatus.PUBLISHED, VacancyStatus.E
 export class VacancyListComponent implements OnInit {
   private api = inject(ApiService);
   private translate = inject(TranslateService);
+
+  // === ADDED: inject page title service for dynamic SEO tags ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
+
   protected auth = inject(AuthService);
 
   protected vacancies = signal<VacancyListItem[]>([]);
@@ -230,5 +236,9 @@ export class VacancyListComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+
+    // === ADDED: update page dynamic metadata and SEO tags ===
+    this.pageTitle.updateSeo('cooperation.tabs.vacancy', 'cooperation.descriptions.vacancy');
+    // === END ADDED ===
   }
 }

@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ApiService } from '../../../core/services/api.service';
 import { TestimonialItem } from './testimonial.interfaces';
+import { PageTitleService } from '../../../core/services/page-title.service';
 
 @Component({
   selector: 'app-testimonial-list',
@@ -234,6 +235,10 @@ import { TestimonialItem } from './testimonial.interfaces';
 export class TestimonialListComponent implements OnInit {
   private api = inject(ApiService);
 
+  // === ADDED: inject page title service for dynamic SEO tags ===
+  private readonly pageTitle = inject(PageTitleService);
+  // === END ADDED ===
+
   protected items = signal<TestimonialItem[]>([]);
   protected loading = signal(true);
   protected lightbox = signal<string | null>(null);
@@ -262,5 +267,12 @@ export class TestimonialListComponent implements OnInit {
       },
       error: () => this.loading.set(false),
     });
+
+    // === ADDED: update page dynamic metadata and SEO tags ===
+    this.pageTitle.updateSeo(
+      'cooperation.tabs.testimonial',
+      'cooperation.descriptions.testimonial',
+    );
+    // === END ADDED ===
   }
 }

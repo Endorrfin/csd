@@ -47,13 +47,16 @@ interface Partner {
 export class PartnersComponent implements OnInit {
   private readonly api = inject(ApiService);
   private readonly translate = inject(TranslateService);
-  // === ADDED: Page title service for SEO ===
+
+  // === ADDED: inject page title service for dynamic SEO tags ===
   private readonly pageTitle = inject(PageTitleService);
   // === END ADDED ===
 
   ngOnInit() {
     this.api.get<Partner[]>('partners').subscribe((data) => (this.partners = data));
-    this.pageTitle.setTitle('NAV.PARTNERS');
+    // === ADDED: update page dynamic metadata and SEO tags ===
+    this.pageTitle.updateSeo('NAV.PARTNERS', 'PARTNERS.PAGE.DESCRIPTION');
+    // === END ADDED ===
   }
 
   partners: Partner[] = [];
