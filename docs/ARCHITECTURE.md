@@ -1343,38 +1343,45 @@ Picked per stage from `custom.environment.${sls:stage}` rather than written inli
 
 ### Frontend (`ui/src/environments/`)
 
-All **three** files export the same four keys:
+All **three** files export the same five keys and are annotated with the `Environment` interface from `environment.model.ts`:
 
 ```ts
 // environment.ts — dev
-export const environment = {
+export const environment: Environment = {
   production: false,
   apiUrl: 'http://localhost:3000',
   turnstileSiteKey: '1x00000000000000000000AA',   // Cloudflare's always-passes test key
   winterizationHouseholdEnabled: false,           // UX only — the real gate is server-side
+  cartoBasemapKey: 'cb1_2vtu_1_5e5755ebee6c3e3b73e9cd9c',   // public, domain-bound
 };
 
 // environment.prod.ts — swapped via angular.json fileReplacements
-export const environment = {
+export const environment: Environment = {
   production: true,
   apiUrl: 'https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com/prod',
   turnstileSiteKey: '0x4AAAAAAD6hWkWqejU3bzrN',
   winterizationHouseholdEnabled: false,
+  cartoBasemapKey: 'cb1_2vtu_1_5e5755ebee6c3e3b73e9cd9c',   // same key in all three files
 };
 
 // environment.staging.ts — swapped via the `staging` configuration in angular.json.
 // Built as `ng build --configuration production,staging`: Angular has no config
 // inheritance, so `staging` carries ONLY the fileReplacements and composes on top
 // of `production` for budgets and outputHashing.
-export const environment = {
+export const environment: Environment = {
   production: true,
   apiUrl: '__STAGING_API_BASE__',                 // substituted in CI — see below
   turnstileSiteKey: '1x00000000000000000000AA',   // test key; staging has no TURNSTILE_SECRET_KEY
   winterizationHouseholdEnabled: false,
+  cartoBasemapKey: 'cb1_2vtu_1_5e5755ebee6c3e3b73e9cd9c',   // watermarked here — host not registered
 };
 ```
 
 > **`__STAGING_API_BASE__` is a sentinel, never edited by hand.** `deploy-staging.yml` reads the `ServiceEndpoint` output of stack `csd-api-staging` and substitutes it before `ng build`, failing the run if the sentinel survives (§12.4). A checked-in `execute-api` id would silently point at a stale host the moment the REST API is recreated. Consequence: a **local** `ng build --configuration production,staging` produces a bundle whose API calls 404 — that is intended, staging is built in CI only. To exercise a staging build locally, copy the file aside, substitute the sentinel, build, then restore it.
+
+> **`environment.model.ts` is what makes the three files stay in sync.** `fileReplacements` swaps the module *after* the import site is resolved, so consumers are only ever type-checked against `environment.ts`: a key present there and missing from `environment.prod.ts` used to compile cleanly and ship `undefined` — no build error, no failing test, the first symptom visible on the live site. Every file now declares `: Environment`, and `tsconfig.app.json` includes `src/**/*.ts`, so all three are checked on every build (`ng serve` included) and a missing key fails locally with `TS2741` before CI ever runs. Adding a key means declaring it in the interface and then in all three files; the compiler enforces the rest. The interface is imported with `import type`, so it is erased at compile time and costs nothing in the bundle.
+
+> **The CARTO basemap key is not a secret, but it *is* load-bearing.** CARTO began requiring an API key on `basemaps.cartocdn.com` in 08/2026; without `?key=` every raster tile is stamped with an "API KEY REQUIRED" watermark. The key is public by design (it ships in the client bundle and is restricted by referring domain instead), registered for `csd-fund.org`, `www.csd-fund.org` and `localhost`, with a free fair-use limit of 5M tile requests/month. **Omitting it from `environment.prod.ts` does not fail the build** — TypeScript type-checks against `environment.ts` and `fileReplacements` swaps the file afterwards — so prod would silently render `?key=undefined`. The staging CloudFront host is deliberately not registered: the basemap, like Turnstile (§12.4), stays a production-only clean path. CARTO is deprecating this legacy raster service, so the exit plan is self-hosted Protomaps PMTiles on the existing S3 + CloudFront, rendered through `protomaps-leaflet` so Leaflet stays.
 
 > **Never commit real values.** Production values for backend are injected via GitHub Actions secrets and Serverless Framework's `${env:VAR}` interpolation. The frontend's prod `apiUrl` is checked in only because it's the direct API Gateway URL (not a secret — anyone hitting <https://www.csd-fund.org> sees the same).
 

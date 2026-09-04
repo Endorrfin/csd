@@ -16,6 +16,7 @@ import type * as Leaflet from 'leaflet';
 import { ActivityDataService } from '../../services/activity-data.service';
 import { ActivityFilterService } from '../../services/activity-filter.service';
 import { ActivityMapService, MapPoint } from '../../services/activity-map.service';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-map-view',
@@ -276,6 +277,7 @@ export class MapViewComponent {
     }
 
     const container = this.mapContainerRef.nativeElement;
+    const CARTO_KEY = environment.cartoBasemapKey;
 
     this.map = L.map(container, {
       center: [49.5, 35.5],
@@ -284,7 +286,7 @@ export class MapViewComponent {
       zoomControl: true,
     });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer(`https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?key=${CARTO_KEY}`, {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       subdomains: 'abcd',
