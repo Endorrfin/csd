@@ -222,6 +222,55 @@ After it runs:
 3. Clear clipboard / terminal scrollback (`clear`, scrollback flush in your terminal app).
 4. Remove the entry from shell history if it slipped in: `history | tail`, then `history -d <number>`.
 
+### Create the super-admin on staging
+
+A freshly deployed staging stack has **no super-admin and nobody can log in**.
+Nothing creates one: `lambda.ts` never calls `runSeeds()`, and even the local
+bootstrap chain seeds only equipment and about-documents. The account has to be
+created by hand, once per environment.
+
+Same script, staging credentials. They live in the GitHub Environment `staging`
+(`DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`) — read them from
+there or from the AWS console, never from a file in this repository.
+
+```bash
+cd backend
+ SUPER_ADMIN_EMAIL='you@example.com' \
+ SUPER_ADMIN_PASSWORD='<from password manager>' \
+ NODE_ENV=production \
+ DB_HOST='csd-postgres-staging.<...>.eu-central-1.rds.amazonaws.com' \
+ DB_PORT='5432' \
+ DB_USERNAME='<staging user>' \
+ DB_PASSWORD='<staging db password>' \
+ DB_NAME='<staging db>' \
+ npm run seed:super-admin
+```
+
+Use a **different password from production**. Staging data is synthetic; a
+shared admin password is not a staging concern.
+
+Three things that will bite you:
+
+- **`NODE_ENV=production` is what turns TLS on** — not the host you point at.
+  `db-ssl.ts` keys the decision on `NODE_ENV`, so without it the script opens an
+  unencrypted connection and RDS refuses it (`rds.force_ssl = 1`) with an error
+  that does not mention TLS. Set it for **any** RDS target, staging included.
+- **The CA bundle is resolved relative to the working directory.** That is why
+  every command in this section starts with `cd backend`. Run from the repository
+  root and it fails with *"Cannot read the AWS RDS CA bundle"*. The fix is to
+  `cd backend`, not to set `DB_CA_BUNDLE_PATH`.
+- **`csd-postgres-staging` is meant to be stopped outside working hours**
+  (`docs/CONCERNS.md` P1-5, item 18). Start it and wait for status `available`
+  before running the script.
+
+> **This runbook has a shelf life.** It works because the RDS instances are
+> publicly reachable and your laptop can open 5432 (`docs/CONCERNS.md` P0-5).
+> When P0-5 closes and the instances move into a private VPC, seeding from a
+> laptop stops working — exactly like `migration:run` from a GitHub runner. Both
+> need the same replacement, so whatever migration path is built (a small
+> in-VPC Lambda, or a self-hosted runner) must be able to run this script too.
+> Do not plan the migration path without it.
+
 ## Migrations
 
 TypeORM CLI is wired via the `typeorm` npm script and reads
