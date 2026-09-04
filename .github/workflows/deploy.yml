@@ -187,6 +187,13 @@ jobs:
           # pass Turnstile secret into serverless deploy → Lambda env
           # (guard is fail-closed in prod; empty secret = 403 on recovery upload+submit)
           TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+          # === ADDED: PR 1 / Step 21 — recipient of the CloudWatch alarm mail.
+          # Kept out of serverless.yml so a personal inbox is not committed.
+          # An unset secret does NOT fail the deploy: the alarms are still
+          # created, only the SNS subscription is skipped. That is silent, so
+          # verify the subscription state after the first deploy with
+          # `aws sns list-subscriptions-by-topic`. ===
+          ALARM_EMAIL: ${{ secrets.ALARM_EMAIL }}
         # CHANGED: literal `prod` -> env.DEPLOY_STAGE (same value)
         run: npx serverless deploy --stage "${DEPLOY_STAGE}"
 
@@ -319,6 +326,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+          # PR 1 / Step 21 — the SSR stack has its own topic and subscription
+          ALARM_EMAIL: ${{ secrets.ALARM_EMAIL }}
         # CHANGED: literal `prod` -> env.DEPLOY_STAGE (same value)
         run: npx serverless deploy --stage "${DEPLOY_STAGE}"
 

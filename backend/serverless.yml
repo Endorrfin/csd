@@ -24,6 +24,13 @@ custom:
     dev: csd-media-private
   mediaBucket: ${env:AWS_S3_MEDIA_BUCKET, self:custom.mediaBucketByStage.${sls:stage}}
   privateMediaBucket: ${env:AWS_S3_PRIVATE_BUCKET, self:custom.privateBucketByStage.${sls:stage}}
+  # PR 1 / Step 21 — the RDS instance the alarms watch, per stage for the same
+  # reason the bucket names are: a staging stack must never alarm on prod.
+  rdsInstanceByStage:
+    prod: csd-postgres
+    staging: csd-postgres-staging
+    dev: csd-postgres
+  rdsInstance: ${self:custom.rdsInstanceByStage.${sls:stage}}
 
 provider:
   name: aws
@@ -150,3 +157,233 @@ package:
     - '!test/**'
     - '!.env*'
     - '!coverage/**'
+
+# === ADDED: PR 1 / Step 21 — CloudWatch alarms → SNS email ===
+#
+# The recipient is deliberately NOT a literal here: it is a personal inbox and
+# this file is read by everyone with repo access. CI passes it in from the
+# ALARM_EMAIL secret (see .github/workflows/deploy.yml).
+#
+# The '' default is load-bearing, not laziness. Serverless v4 resolves the WHOLE
+# config graph regardless of --stage, so a bare ${env:ALARM_EMAIL} would abort
+# every local `serverless package` — the same trap already documented in
+# ui/serverless.yml. The HasAlarmEmail condition below is what keeps an empty
+# value from reaching CloudFormation, where it would fail resource validation at
+# deploy time instead.
+#
+# Note the failure mode this leaves: with ALARM_EMAIL unset the deploy still
+# succeeds and the alarms are still created — only nobody is subscribed, and
+# nothing says so. Verify once after the first deploy:
+#   aws sns list-subscriptions-by-topic --topic-arn <arn> --query 'Subscriptions[].SubscriptionArn'
+# A value of "PendingConfirmation" means the inbox link was never clicked.
+params:
+  default:
+    alarmEmail: ${env:ALARM_EMAIL, ''}
+
+resources:
+  Conditions:
+    # Alarms are prod-only on purpose. csd-postgres-staging is stopped on a
+    # schedule for most of the day (CONCERNS.md §2), so on staging every alarm
+    # would sit in INSUFFICIENT_DATA and email on each scheduled start and stop.
+    IsProd: !Equals ['${sls:stage}', 'prod']
+    HasAlarmEmail: !And
+      - !Condition IsProd
+      - !Not [!Equals ['${param:alarmEmail}', '']]
+
+  Resources:
+    # One topic per stack rather than one shared through Export/ImportValue: an
+    # import would lock csd-api and csd-ssr together (the export cannot be
+    # renamed or removed while the other stack references it, and stack deletion
+    # order becomes constrained) to save a resource that costs nothing.
+    AlarmTopic:
+      Type: AWS::SNS::Topic
+      Condition: IsProd
+      Properties:
+        TopicName: ${self:service}-${self:provider.stage}-alarms
+
+    # SNS email subscriptions are created as PENDING_CONFIRMATION and require a
+    # click in the inbox. That step is inherent to SNS email, not a shortcut —
+    # until it is confirmed, no alarm mail is delivered.
+    AlarmTopicSubscription:
+      Type: AWS::SNS::Subscription
+      Condition: HasAlarmEmail
+      Properties:
+        Protocol: email
+        Endpoint: ${param:alarmEmail}
+        TopicArn: !Ref AlarmTopic
+
+    # ── API Lambda ─────────────────────────────────────────────────────────
+    ApiErrorsAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Condition: IsProd
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-api-errors
+        AlarmDescription: 'API Lambda reported >= 1 error in 5 min'
+        Namespace: AWS/Lambda
+        MetricName: Errors
+        Dimensions:
+          - Name: FunctionName
+            Value: ${self:service}-${self:provider.stage}-api
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 1
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        # Zero traffic is not an incident. This portal is quiet at night.
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - !Ref AlarmTopic
+        OKActions:
+          - !Ref AlarmTopic
+
+    ApiDurationP99Alarm:
+      Type: AWS::CloudWatch::Alarm
+      Condition: IsProd
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-api-duration-p99
+        AlarmDescription: 'API Lambda p99 duration > 20s (timeout is 29s — early signal)'
+        Namespace: AWS/Lambda
+        MetricName: Duration
+        Dimensions:
+          - Name: FunctionName
+            Value: ${self:service}-${self:provider.stage}-api
+        ExtendedStatistic: p99
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 20000
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - !Ref AlarmTopic
+        OKActions:
+          - !Ref AlarmTopic
+
+    ApiThrottlesAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Condition: IsProd
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-api-throttles
+        AlarmDescription: 'API Lambda was throttled (>= 1 in 5 min)'
+        Namespace: AWS/Lambda
+        MetricName: Throttles
+        Dimensions:
+          - Name: FunctionName
+            Value: ${self:service}-${self:provider.stage}-api
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 1
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - !Ref AlarmTopic
+        OKActions:
+          - !Ref AlarmTopic
+
+    # Not redundant with ApiErrorsAlarm. A Lambda that returns a malformed
+    # response, or fails during init, surfaces as an API Gateway 502/504 and can
+    # miss the Lambda Errors metric entirely — which is exactly the shape of
+    # Incidents #2 and #4 (ESM cold-start, 502 on every route).
+    # ApiName is `${stage}-${service}`, the name Serverless gives the REST API.
+    # ApiName+Stage metrics are published by default; the per-method breakdown
+    # would need detailed metrics enabled, and is not needed here.
+    ApiGateway5xxAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Condition: IsProd
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-apigw-5xx
+        AlarmDescription: 'API Gateway returned >= 1 5xx in 5 min'
+        Namespace: AWS/ApiGateway
+        MetricName: 5XXError
+        Dimensions:
+          - Name: ApiName
+            Value: ${self:provider.stage}-${self:service}
+          - Name: Stage
+            Value: ${self:provider.stage}
+        Statistic: Sum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 1
+        ComparisonOperator: GreaterThanOrEqualToThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - !Ref AlarmTopic
+        OKActions:
+          - !Ref AlarmTopic
+
+    # ── RDS ────────────────────────────────────────────────────────────────
+    # The instance is not managed by this stack; the dimension is just its
+    # identifier, taken per stage so that enabling alarms on staging later
+    # cannot point them at the production database — the same reason
+    # custom.mediaBucketByStage exists.
+    RdsCpuAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Condition: IsProd
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-rds-cpu
+        AlarmDescription: 'RDS CPU > 80% for 10 min'
+        Namespace: AWS/RDS
+        MetricName: CPUUtilization
+        Dimensions:
+          - Name: DBInstanceIdentifier
+            Value: ${self:custom.rdsInstance}
+        Statistic: Average
+        Period: 300
+        EvaluationPeriods: 2
+        Threshold: 80
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - !Ref AlarmTopic
+        OKActions:
+          - !Ref AlarmTopic
+
+    # Connection exhaustion is a real failure mode here, not a theoretical one.
+    # No pool size is configured, so node-postgres keeps its default of 10 per
+    # container; roughly 8 warm Lambdas reach this threshold and ~11 saturate a
+    # db.t4g.micro (max_connections ≈ 112 at 1 GB). Confirm the class before
+    # trusting the number: aws rds describe-db-instances --db-instance-identifier
+    # csd-postgres --query 'DBInstances[0].DBInstanceClass'
+    RdsConnectionsAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Condition: IsProd
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-rds-connections
+        AlarmDescription: 'RDS connections > 80 (~70% of a t4g.micro cap; each warm Lambda holds up to 10)'
+        Namespace: AWS/RDS
+        MetricName: DatabaseConnections
+        Dimensions:
+          - Name: DBInstanceIdentifier
+            Value: ${self:custom.rdsInstance}
+        Statistic: Maximum
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 80
+        ComparisonOperator: GreaterThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - !Ref AlarmTopic
+        OKActions:
+          - !Ref AlarmTopic
+
+    RdsFreeableMemoryAlarm:
+      Type: AWS::CloudWatch::Alarm
+      Condition: IsProd
+      Properties:
+        AlarmName: ${self:service}-${self:provider.stage}-rds-freeable-memory
+        AlarmDescription: 'RDS FreeableMemory < 100MB (~10% of 1GB)'
+        Namespace: AWS/RDS
+        MetricName: FreeableMemory
+        Dimensions:
+          - Name: DBInstanceIdentifier
+            Value: ${self:custom.rdsInstance}
+        Statistic: Average
+        Period: 300
+        EvaluationPeriods: 1
+        Threshold: 104857600
+        ComparisonOperator: LessThanThreshold
+        TreatMissingData: notBreaching
+        AlarmActions:
+          - !Ref AlarmTopic
+        OKActions:
+          - !Ref AlarmTopic
