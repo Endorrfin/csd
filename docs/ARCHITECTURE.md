@@ -2149,6 +2149,11 @@ Task 3.1: Expand procurement status enum from 3 to 8 values
 - Angular: standalone components only, signals for state, `inject()` over constructor injection.
 - Nest: feature modules with controller + service + entity + dto/. Avoid inline DTOs.
 - No comments explaining "what" — only "why" when non-obvious.
+- Comments are **English**, in every file type. The one exception is Ukrainian domain
+  terms quoted from the ТЗ or from law (`ЄДРПОУ`, `ОМС`, `«Підготовка до зими»`), which
+  are lookup keys into the requirements document — see [`CONTRIBUTING.md` §6](../CONTRIBUTING.md).
+- `// CHANGED:` / `// === ADDED: … ===` markers are review scaffolding and get stripped
+  after review; a comment must still make sense once its marker line is gone.
 
 ---
 

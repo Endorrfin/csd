@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LoggerModule } from 'nestjs-pino';
+import { loggerConfig } from './common/logger/logger.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getDatabaseSslOptions } from './database/db-ssl';
 import { AppController } from './app.controller';
@@ -22,6 +24,10 @@ import { AboutModule } from './modules/about/about.module';
 
 @Module({
   imports: [
+    // First in the list on purpose: LoggerModule registers pino-http as
+    // middleware, and it has to wrap every other one.
+    LoggerModule.forRoot(loggerConfig),
+
     // Loads .env into process.env, accessible via ConfigService
     ConfigModule.forRoot({
       isGlobal: true,
@@ -60,7 +66,7 @@ import { AboutModule } from './modules/about/about.module';
     VacancyModule,
     TestimonialModule,
     ComplaintModule,
-    InquiryModule, // CHANGED: contact-form inquiries
+    InquiryModule,
     AboutModule,
   ],
   controllers: [AppController],

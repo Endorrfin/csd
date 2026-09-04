@@ -395,8 +395,22 @@ npm run format      # inside ui/ or backend/
 
 ### Language
 
-- **Code, comments, commit messages, PR descriptions:** English.
+- **Code, comments, commit messages, PR descriptions:** English. Comments in
+  every file type count — `.ts`, `.yml`, `.mjs`, `.env.example`, workflow files.
 - **UI copy and i18n files** (`ui/src/assets/i18n/{ua,en}.json`): bilingual (Ukrainian + English).
+- **Exception — quoted domain terms stay Ukrainian.** `ЄДРПОУ`, `ОМС`,
+  `«Підготовка до зими»`, `ТЗ Сценарій Б`, `«Включено в проєкт»` and the other
+  labels lifted verbatim from the ТЗ or from Ukrainian law are lookup keys into
+  the requirements document and the i18n files. Translating them breaks the
+  trace, so keep the term in guillemets and put the explanation around it in
+  English:
+
+  ```typescript
+  /** Legal-entity code «ЄДРПОУ» (8 digits) — cheap verification + dedup. */
+  ```
+
+  Prose is never exempt. A comment that merely explains your own code has no
+  reason to be in Ukrainian.
 
 ### No `console.log` in committed code
 
@@ -436,6 +450,17 @@ Every non-trivial edit must be marked so diff review is easy:
 // new code here
 // === END ADDED ===
 ```
+
+**These markers are review scaffolding and get stripped once the change is
+reviewed.** Write every comment so it still reads correctly after the marker
+line is deleted:
+
+- Never continue a sentence that began on the marker line. `// CHANGED: was
+  ['error','warn'], so the lines were unstructured` becomes the orphan
+  `// so the lines were unstructured` the moment the marker goes.
+- Never leave a `===` terminator whose opener has been removed.
+- Rationale that must outlive review belongs in an ordinary comment (or a block
+  comment above the code). The marker line carries only *what* changed.
 
 ---
 
