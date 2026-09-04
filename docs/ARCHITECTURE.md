@@ -2086,6 +2086,14 @@ aws cloudwatch set-alarm-state --region eu-central-1 \
 `set-alarm-state` is a manual override — CloudWatch re-evaluates on the next
 data point, so nothing needs undoing beyond step 3.
 
+> **An unconfirmed subscription receives nothing.** If step 1 shows
+> `PendingConfirmation`, step 2 fires the alarm but no mail is sent and the test
+> proves nothing. Confirm first, then test.
+
+Measured baselines for these thresholds — taken the day the alarms first
+reported — are in [`CONCERNS.md` §4](./CONCERNS.md). Read them before tuning a
+threshold: every one of them was set without a measurement.
+
 ### Export complaints for donor reporting
 
 As admin+ in the UI: `/admin/complaints` → set filters → click "Export CSV". The file includes UTF-8 BOM for Excel compatibility.
