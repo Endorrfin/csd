@@ -1,4 +1,4 @@
-// === ADDED: Factory that builds the full Nest app against the test PG container ===
+// Factory that builds the full Nest app against the test PG container
 //
 // Mirrors src/main.ts bootstrap (global prefix + ValidationPipe) so e2e tests
 // hit the SAME wiring as production. Anything skipped here is a test/prod
@@ -6,6 +6,7 @@
 
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { Logger } from 'nestjs-pino';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 
@@ -19,7 +20,12 @@ export async function createTestApp(): Promise<TestApp> {
     imports: [AppModule],
   }).compile();
 
-  const app = moduleRef.createNestApplication();
+  const app = moduleRef.createNestApplication({ bufferLogs: true });
+
+  // Same three lines as main.ts and lambda.ts. Without them e2e would exercise
+  // ConsoleLogger, i.e. not the wiring that actually ships.
+  app.useLogger(app.get(Logger));
+  app.flushLogs();
 
   // Must match src/main.ts — otherwise tests hit /foo while prod expects /api/foo.
   app.setGlobalPrefix('api');

@@ -4,6 +4,7 @@
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { Logger } from 'nestjs-pino';
 import { AppModule } from './app.module';
 import { DataSource } from 'typeorm';
 import { runSeeds } from './database/run-seeds';
@@ -15,7 +16,13 @@ import { securityHeaders } from './common/security-headers';
 
 async function bootstrap() {
   assertRequiredEnv();
-  const app = await NestFactory.create(AppModule);
+  // bufferLogs + nestjs-pino, like lambda.ts
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  app.useLogger(app.get(Logger));
+  // `app.listen()` below drains the log buffer on its own, but calling
+  // flushLogs() explicitly keeps this bootstrap identical to the Lambda one,
+  // where it is mandatory (see the note in lambda.ts).
+  app.flushLogs();
 
   // Batch 1 — security headers (helmet) registered before CORS/routing
   app.use(securityHeaders());

@@ -2,6 +2,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
+import { Logger } from 'nestjs-pino';
 import serverlessExpress from '@codegenie/serverless-express';
 import type {
   APIGatewayProxyEvent,
@@ -12,7 +13,6 @@ import type {
 import express from 'express';
 import { AppModule } from './src/app.module';
 import { assertRequiredEnv } from './src/common/assert-required-env';
-// explicit CORS allowlist parsed from FRONTEND_URL (audit P0-1)
 import { getFrontendOrigins } from './src/common/frontend-urls';
 // Batch 1 — centralised security headers (helmet)
 import { securityHeaders } from './src/common/security-headers';
@@ -31,9 +31,26 @@ async function bootstrap(): Promise<ApiHandler> {
   assertRequiredEnv();
   const expressApp = express();
   const adapter = new ExpressAdapter(expressApp);
+  /*
+   * bufferLogs -> useLogger -> flushLogs, in that order, and all three are
+   * load-bearing.
+   *
+   * `bufferLogs` holds the bootstrap messages until the logger is swapped in,
+   * so they come out as JSON instead of as a second format in the same log
+   * stream. Nest drains that buffer inside `app.listen()` only — and a Lambda
+   * never calls it: this entry point runs `app.init()` and hands the Express
+   * app to the adapter. Without `flushLogs()` the buffer stays attached for the
+   * life of the container and every Nest log line is swallowed: the bootstrap
+   * lines and, far worse, every runtime `new Logger().warn()` — the password
+   * reset link (auth.service.ts) and all four TurnstileGuard warnings. Verified
+   * against the built dist/lambda.js: nothing on stdout without it, everything
+   * with it. `flushLogs()` is idempotent.
+   */
   const app = await NestFactory.create(AppModule, adapter, {
-    logger: ['error', 'warn'],
+    bufferLogs: true,
   });
+  app.useLogger(app.get(Logger));
+  app.flushLogs();
 
   // Batch 1 — security headers (helmet) registered before CORS/routing
   app.use(securityHeaders());

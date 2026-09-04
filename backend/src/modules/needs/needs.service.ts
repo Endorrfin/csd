@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { DataSource, In, Repository } from 'typeorm';
 import { WashForm, FormStatus } from './entities/wash-form.entity';
 import { WashFormItem } from './entities/wash-form-item.entity';
@@ -43,7 +44,21 @@ export class NeedsService {
     private readonly pumpRepo: Repository<WashFormPump>,
     private readonly auditLog: AuditLogService,
     private readonly dataSource: DataSource,
+    @InjectPinoLogger(NeedsService.name)
+    private readonly logger: PinoLogger,
   ) {}
+
+  /**
+   * Audit writes are fire-and-forget by design: an audit gap is preferable to a
+   * rejected community submission (`ARCHITECTURE.md` §14.3). That trade-off only
+   * holds while the failure stays visible, so this is the single place it is
+   * recorded. The message is deliberately stable and the operation goes in a
+   * field rather than the text — that is what a CloudWatch metric filter matches
+   * and what Logs Insights groups by.
+   */
+  private logAuditFailure(err: unknown, auditOp: string): void {
+    this.logger.error({ err, auditOp }, 'audit log write failed');
+  }
 
   // ══════════════════════════════════════════════════════════════
   // CREATE
@@ -98,7 +113,7 @@ export class NeedsService {
         itemsCount: saved.items.length,
       });
     } catch (err) {
-      console.error('[audit-log] failed to log create:', err);
+      this.logAuditFailure(err, 'wash.create');
     }
 
     return saved;
@@ -230,7 +245,7 @@ export class NeedsService {
         try {
           await this.auditLog.logStatusChange(f.id, actor, f.status, status);
         } catch (err) {
-          console.error('[audit-log] failed to log bulk status change:', err);
+          this.logAuditFailure(err, 'wash.bulkStatusChange');
         }
       }
     }
@@ -307,7 +322,7 @@ export class NeedsService {
         ]);
       }
     } catch (err) {
-      console.error('[audit-log] failed to log quick update:', err);
+      this.logAuditFailure(err, 'wash.quickUpdate');
     }
 
     return saved;
@@ -438,7 +453,7 @@ export class NeedsService {
         await this.auditLog.logUpdate(id, actor, nonStatusChanges);
       }
     } catch (err) {
-      console.error('[audit-log] failed to log full update:', err);
+      this.logAuditFailure(err, 'wash.fullUpdate');
     }
 
     return updated;
@@ -455,7 +470,7 @@ export class NeedsService {
     try {
       await this.auditLog.logDelete(id, actor);
     } catch (err) {
-      console.error('[audit-log] failed to log delete:', err);
+      this.logAuditFailure(err, 'wash.delete');
     }
     await this.washFormRepo.remove(form);
   }

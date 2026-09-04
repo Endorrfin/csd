@@ -98,8 +98,10 @@ CODEOWNERS: `@Kirnadz` is the default reviewer for everything.
 ## Repo-wide conventions
 
 - Formatting: shared `.prettierrc` at root (semi, single-quote, trailing comma all, 100 col, 2-space). Run `npm run format` in the changed app.
-- File language: code, comments, commit messages — **English**. UI copy and i18n files (`ui/src/assets/i18n/{ua,en}.json`) are bilingual.
+- File language: code, comments, commit messages — **English**. This covers comments in every file type, `.yml` and `.env.example` included. UI copy and i18n files (`ui/src/assets/i18n/{ua,en}.json`) are bilingual.
+  - **One exception:** Ukrainian domain terms quoted verbatim stay Ukrainian, in guillemets — `ЄДРПОУ`, `ОМС`, `«Підготовка до зими»`, `ТЗ Сценарій Б`, status labels shown in the UI. They are lookup keys into the ТЗ and the i18n files; translating them breaks the trace. Explain them in English around the quote.
 - Mark every non-trivial edit with `// CHANGED:` or `// === ADDED: … ===` so diffs are easy to review (existing convention used across the codebase, e.g. `deploy.yml`, `auth.controller.ts`, `lambda.mjs`).
+  - **Markers are review scaffolding, not documentation.** Vasyl strips them once a change is reviewed, so every comment must still read as a complete thought with the marker line deleted. Never continue a sentence started on the marker line (`// CHANGED: was X, so…`), and never leave a `===` terminator that outlives its opener. Durable rationale goes in a normal comment or a block comment above the code; the marker line says only what changed.
 - Never commit secrets. `.env*` (except `.env.example`) is git-ignored. Real secrets live in GitHub Secrets and Lambda env vars set by Serverless.
 - `package-lock.json` is committed and consumed by `npm ci` in CI — do not delete or regenerate without a reason.
 
@@ -110,7 +112,7 @@ These override generic Claude defaults. They apply everywhere in the repo.
 1. No generic answers — propose a concrete solution tied to this project and stack.
 2. Skip lengthy explanations unless asked; explain *why* in 1–2 sentences.
 3. Before changing files, briefly state what will change and why, then implement.
-4. Mark every edit with `// CHANGED:` (or `// === ADDED: ===` for inserted blocks).
+4. Mark every edit with `// CHANGED:` (or `// === ADDED: ===` for inserted blocks) — as a standalone line, so the surrounding comment survives the marker being stripped.
 5. Respect the linters (`backend/eslint.config.mjs`, `ui/eslint.config.mjs`) and `.prettierrc` — do not introduce code that will fail `npm run lint`.
 6. Reliability, security and best practices come before convenience.
 7. If something is unclear — ask. Don't guess at intent.

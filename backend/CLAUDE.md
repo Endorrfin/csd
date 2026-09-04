@@ -198,10 +198,10 @@ Full env-var reference — including the variables read in code but **absent fro
 Each of these looks like a bug and is a recorded decision. The full list is in [`README.md` § Known gaps](./README.md); the ones most likely to trigger a wrong edit:
 
 - **Password-reset links are logged, not emailed** (`auth.service.ts`, `TODO: Replace with EmailService`). There is no SMTP integration. Don't wire one in as a side effect of another change.
-- **No Swagger/OpenAPI, no `@nestjs/throttler`, no global exception filter, no global interceptors.** Their absence is deliberate for Lambda cold-start size. Adding any of them is its own PR with its own justification.
+- **No Swagger/OpenAPI, no `@nestjs/throttler`, no global interceptors.** Their absence is deliberate for Lambda cold-start size. Adding any of them is its own PR with its own justification. (A global **exception filter** now exists — `APP_FILTER` → `AllExceptionsFilter`; see the logging section below.)
 - **`WINTERIZATION_HOUSEHOLD_ENABLED` is off and must stay off** until a management decision. The household scenario is fully implemented (DTO, columns, UI card) and the service answers 422 for `applicantType='household'` unless the value is exactly `'true'`. The rationale — Ukrainian tax-reporting duties and unresolved retention rules for the vulnerability data — is in `.env.example`. Flipping it is not a code decision.
 - **`run-seeds-standalone.ts` is dead code.** Don't extend it thinking it is the prod seed path; `seed-about-documents-standalone.ts` is.
-- **No CloudWatch log retention** is set in either `serverless.yml`, so the default is *never expire*.
+- **Log retention is 30 days** on both log groups (`logRetentionInDays`), and nine CloudWatch alarms publish to a per-stack SNS topic. Both are prod-only (`Condition: IsProd`) — a staging deploy creates neither.
 - The stale-looking `ssr-lambda.mjs` in `ui/` and the frozen `partners` route are also deliberate — see `ui/CLAUDE.md`.
 
 ## Migrations workflow
@@ -223,6 +223,38 @@ Rules — non-negotiable:
 - One migration = one concern.
 - **You are authoring on PostgreSQL 14 and it will run on 16.13.** Avoid syntax that only one of them accepts, and prefer `npm run test:e2e` (which runs on 16-alpine) over local-only confidence.
 - `deploy.yml` runs `migration:show` → `migration:run` **before** `serverless deploy`, and `check:cjs` before both — a build known not to boot never mutates prod RDS. A failing migration aborts the deploy.
+
+## Logging (PR 1 — read before adding a log line)
+
+Configuration lives in **one** place: `src/common/logger/logger.config.ts`. Do not
+add a second logger, a `pino-pretty` transport, or per-module options.
+
+- **Never `console.*` outside `src/database/`.** Those seed scripts are CLI tools
+  and `console` is right there. Everywhere else it bypasses the serializers, and
+  `console.error('...', err)` prints every own property of the error — which is
+  how a TypeORM `QueryFailedError` used to put `.query` and `.parameters` (an
+  applicant's name and phone) into CloudWatch. Inject `PinoLogger` with
+  `@InjectPinoLogger(MyService.name)`, or use `new Logger()` from `@nestjs/common`
+  — both route through pino and both inherit `requestId` automatically.
+- **Log objects, not interpolated strings:** `this.logger.error({ err, auditOp }, 'audit log write failed')`.
+  The message must stay stable — it is what a CloudWatch metric filter matches;
+  put what varies in fields, which is what Logs Insights groups by.
+- **Never log a request body**, and do not turn `pino-http` body logging on. This
+  API carries PSEA complaints, needs forms and defect acts.
+- The `req` serializer is an allow-list: path **without** the query string, query
+  parameter **names** only, three headers, no IP. The `err` serializer is an
+  allow-list too: `type`/`message`/`stack`/`code` and one level of `cause`.
+  Widening either is a security decision — `logger.config.spec.ts` will fail.
+- **Errors are logged by the framework, not by you.** `AllExceptionsFilter`
+  attaches the exception to `res.err` and `pino-http` emits exactly one line per
+  request. Do not `catch` an error only to log and rethrow it — that duplicates
+  the line and the stack.
+- Both entry points do `bufferLogs: true` → `useLogger()` → **`app.flushLogs()`**.
+  The explicit flush is load-bearing in `lambda.ts`: Nest drains the buffer inside
+  `app.listen()`, which a Lambda never calls, so without it every Nest log line is
+  swallowed for the life of the container. Keep the three lines together.
+- `LOG_LEVEL` sets the level (default `info`; an unknown value falls back rather
+  than throwing at cold start). e2e pins it to `warn` in `test/setup-env.ts`.
 
 ## Don'ts
 

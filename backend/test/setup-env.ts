@@ -1,4 +1,4 @@
-// === ADDED: Jest setupFiles — runs in EVERY worker before AppModule loads ===
+// Jest setupFiles — runs in EVERY worker before AppModule loads
 //
 // Reads the PG connection info written by setup-pg.ts (globalSetup) and
 // injects it into process.env, so ConfigService inside AppModule resolves
@@ -25,7 +25,7 @@ process.env.DB_USERNAME = info.username;
 process.env.DB_PASSWORD = info.password;
 process.env.DB_NAME = info.database;
 
-// CHANGED: generate a fresh JWT secret per test run instead of hardcoding one.
+// generate a fresh JWT secret per test run instead of hardcoding one.
 // Hardcoded values trip GitGuardian/secret scanners even when they're clearly
 // throw-away. Random per-run also gives better test isolation — a token
 // signed in one CI run can't be replayed in another.
@@ -33,3 +33,8 @@ process.env.JWT_SECRET =
   process.env.JWT_SECRET ?? randomBytes(32).toString('hex');
 
 process.env.NODE_ENV = 'test';
+
+// The middleware and serializers run exactly as in production; this only keeps
+// Nest's bootstrap from burying the test output under two dozen JSON lines.
+// Override from outside when debugging: LOG_LEVEL=info npm run test:e2e
+process.env.LOG_LEVEL = process.env.LOG_LEVEL ?? 'warn';
