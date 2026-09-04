@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { DataSource, In, Repository } from 'typeorm';
 import { WinterizationForm } from './entities/winterization-form.entity';
 import { WinterizationFormNeed } from './entities/winterization-form-need.entity';
@@ -154,7 +155,21 @@ export class WinterizationService {
     private readonly dataSource: DataSource,
     private readonly uploadService: UploadService,
     private readonly config: ConfigService,
+    @InjectPinoLogger(WinterizationService.name)
+    private readonly logger: PinoLogger,
   ) {}
+
+  /**
+   * Audit writes are fire-and-forget by design: an audit gap is preferable to a
+   * rejected community submission (`ARCHITECTURE.md` §14.3). That trade-off only
+   * holds while the failure stays visible, so this is the single place it is
+   * recorded. The message is deliberately stable and the operation goes in a
+   * field rather than the text — that is what a CloudWatch metric filter matches
+   * and what Logs Insights groups by.
+   */
+  private logAuditFailure(err: unknown, auditOp: string): void {
+    this.logger.error({ err, auditOp }, 'audit log write failed');
+  }
 
   // ══════════════════════════════════════════════════════════════
   // CREATE (public submit)
@@ -222,10 +237,7 @@ export class WinterizationService {
         documentsCount: documents.length,
       });
     } catch (err) {
-      console.error(
-        '[needs-audit-log] failed to log winterization create:',
-        err,
-      );
+      this.logAuditFailure(err, 'winterization.create');
     }
 
     return { id: saved.id, trackingNumber: saved.trackingNumber };
@@ -316,10 +328,10 @@ export class WinterizationService {
         let url: string | null = null;
         try {
           url = await this.uploadService.getNeedsFileUrl(a.s3Key);
-        } catch (err) {
-          console.error(
-            `[winterization] failed to presign GET for ${a.s3Key}:`,
-            err,
+        } catch (err: unknown) {
+          this.logger.error(
+            { err, s3Key: a.s3Key },
+            'failed to presign a needs attachment URL',
           );
         }
         return Object.assign(a, { url });
@@ -373,10 +385,7 @@ export class WinterizationService {
         ]);
       }
     } catch (err) {
-      console.error(
-        '[needs-audit-log] failed to log winterization update:',
-        err,
-      );
+      this.logAuditFailure(err, 'winterization.update');
     }
 
     return this.findById(id);
@@ -483,10 +492,7 @@ export class WinterizationService {
         changes,
       );
     } catch (err) {
-      console.error(
-        '[needs-audit-log] failed to log winterization full-update:',
-        err,
-      );
+      this.logAuditFailure(err, 'winterization.fullUpdate');
     }
 
     return updated;
@@ -519,7 +525,7 @@ export class WinterizationService {
         }
       }
     } catch (err) {
-      console.error('[needs-audit-log] failed to log winterization bulk:', err);
+      this.logAuditFailure(err, 'winterization.bulkStatusChange');
     }
 
     return { updated: forms.length };
@@ -556,10 +562,7 @@ export class WinterizationService {
         },
       ]);
     } catch (err) {
-      console.error(
-        '[needs-audit-log] failed to log winterization delete:',
-        err,
-      );
+      this.logAuditFailure(err, 'winterization.delete');
     }
 
     return { deleted: true };

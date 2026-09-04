@@ -18,6 +18,11 @@ import { FormNumberService } from './form-number.service';
 import { CreateWinterizationFormDto } from './dto/create-winterization-form.dto';
 import { AuditActor } from './audit-log.service';
 import { UploadService } from '../upload/upload.service';
+import { getLoggerToken } from 'nestjs-pino';
+
+// PR 1 / Step 18 — the services log audit failures through an injected
+// PinoLogger instead of console.error, so the spec asserts on the logger.
+const logger = { error: jest.fn(), warn: jest.fn(), info: jest.fn() };
 
 const actor: AuditActor = { userId: null, email: null };
 
@@ -194,6 +199,10 @@ describe('WinterizationService', () => {
         { provide: DataSource, useValue: dataSource },
         { provide: UploadService, useValue: uploadService },
         { provide: ConfigService, useValue: config },
+        {
+          provide: getLoggerToken(WinterizationService.name),
+          useValue: logger,
+        },
       ],
     }).compile();
 
@@ -336,21 +345,16 @@ describe('WinterizationService', () => {
     });
 
     it('does not fail the submit when audit logging throws', async () => {
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => undefined);
-
       auditLog.logCreate.mockRejectedValueOnce(new Error('boom'));
       await expect(service.create(baseDto(), actor)).resolves.toEqual({
         id: 'form-1',
         trackingNumber: 'CSD-W-2026-0001',
       });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        '[needs-audit-log] failed to log winterization create:',
-        expect.any(Error),
+      expect(logger.error).toHaveBeenCalledWith(
+        { err: expect.any(Error) as Error, auditOp: 'winterization.create' },
+        'audit log write failed',
       );
-      consoleErrorSpy.mockRestore();
     });
   });
 
@@ -668,14 +672,17 @@ describe('WinterizationService', () => {
         { s3Key: 'media/needs/winterization/photo/p-1.jpg', kind: 'photo' },
       ]);
       uploadService.getNeedsFileUrl.mockRejectedValueOnce(new Error('s3 down'));
-      const consoleErrorSpy = jest
-        .spyOn(console, 'error')
-        .mockImplementation(() => undefined);
 
       const result = await service.findByIdWithUrls('form-1');
 
       expect(result.attachments[0].url).toBeNull();
-      consoleErrorSpy.mockRestore();
+      expect(logger.error).toHaveBeenCalledWith(
+        {
+          err: expect.any(Error) as Error,
+          s3Key: 'media/needs/winterization/photo/p-1.jpg',
+        },
+        'failed to presign a needs attachment URL',
+      );
     });
   });
 });

@@ -167,7 +167,12 @@ function fromSerialized(
 ): Record<string, unknown> {
   const safe: Record<string, unknown> = {};
   for (const field of ERROR_FIELDS) {
-    if (value[field] !== undefined) safe[field] = value[field];
+    const field_value = value[field];
+    if (field_value === undefined) continue;
+    // pino stamps `stack: ''` on anything it decides is error-like; an empty
+    // stack is twelve bytes of nothing on every 4xx.
+    if (field === 'stack' && field_value === '') continue;
+    safe[field] = field_value;
   }
   if (depth === 0 && value.cause !== undefined) {
     safe.cause = serializeError(value.cause, depth + 1);
@@ -176,20 +181,26 @@ function fromSerialized(
 }
 
 /**
- * Accepts both a raw `Error` and an already-serialized object: pino-http wraps
- * any custom error serializer in `stdSerializers.wrapErrorSerializer`, so on
- * the HTTP path this receives the output of `stdSerializers.err(err)` (with its
- * `raw` field), not the exception itself. A direct `logger.error({ err })`
- * passes an `Error`. Both paths funnel into the same allowlist, which is why
- * TypeORM's `.query`, `.parameters` and `.driverError` reach the log through
- * neither of them.
+ * Accepts a raw `Error`, an already-serialized error object, and the plain
+ * `{ type, message }` summary the exception filter attaches for a 4xx.
+ *
+ * pino-http wraps any custom error serializer in
+ * `stdSerializers.wrapErrorSerializer`, so on the HTTP path this receives the
+ * output of `stdSerializers.err(err)`, not the value that was logged. That
+ * wrapper is NOT a pass-through for non-Errors: `isErrorLike()` accepts any
+ * object with a string `message`, and for those it rewrites `type` to the
+ * constructor name of the plain object — literally `"Object"` — and appends an
+ * empty `stack` (`pino-std-serializers/lib/err.js`). It does keep the value it
+ * was handed on `raw`, so `raw` is the honest source whenever it is present.
+ *
+ * Every path funnels into the same allowlist, which is why TypeORM's `.query`,
+ * `.parameters` and `.driverError` reach the log through none of them.
  */
 function serializeError(value: unknown, depth = 0): Record<string, unknown> {
   if (value instanceof Error) return fromError(value, depth);
   if (isRecord(value)) {
-    return value.raw instanceof Error
-      ? fromError(value.raw, depth)
-      : fromSerialized(value, depth);
+    if (value.raw instanceof Error) return fromError(value.raw, depth);
+    return fromSerialized(isRecord(value.raw) ? value.raw : value, depth);
   }
   return { message: String(value) };
 }

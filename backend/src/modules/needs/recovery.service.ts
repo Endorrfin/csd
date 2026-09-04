@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { DataSource, In, Repository } from 'typeorm';
 import { RecoveryForm } from './entities/recovery-form.entity';
 import { RecoveryFormDamage } from './entities/recovery-form-damage.entity';
@@ -73,7 +74,21 @@ export class RecoveryService {
     private readonly formNumber: FormNumberService,
     private readonly dataSource: DataSource,
     private readonly uploadService: UploadService,
+    @InjectPinoLogger(RecoveryService.name)
+    private readonly logger: PinoLogger,
   ) {}
+
+  /**
+   * Audit writes are fire-and-forget by design: an audit gap is preferable to a
+   * rejected community submission (`ARCHITECTURE.md` §14.3). That trade-off only
+   * holds while the failure stays visible, so this is the single place it is
+   * recorded. The message is deliberately stable and the operation goes in a
+   * field rather than the text — that is what a CloudWatch metric filter matches
+   * and what Logs Insights groups by.
+   */
+  private logAuditFailure(err: unknown, auditOp: string): void {
+    this.logger.error({ err, auditOp }, 'audit log write failed');
+  }
 
   // ══════════════════════════════════════════════════════════════
   // CREATE (public submit)
@@ -132,7 +147,7 @@ export class RecoveryService {
         documentsCount: documents?.length ?? 0,
       });
     } catch (err) {
-      console.error('[needs-audit-log] failed to log recovery create:', err);
+      this.logAuditFailure(err, 'recovery.create');
     }
 
     return { id: saved.id, trackingNumber: saved.trackingNumber };
@@ -215,10 +230,10 @@ export class RecoveryService {
         let url: string | null = null;
         try {
           url = await this.uploadService.getNeedsFileUrl(a.s3Key);
-        } catch (err) {
-          console.error(
-            `[recovery] failed to presign GET for ${a.s3Key}:`,
-            err,
+        } catch (err: unknown) {
+          this.logger.error(
+            { err, s3Key: a.s3Key },
+            'failed to presign a needs attachment URL',
           );
         }
         return Object.assign(a, { url });
@@ -272,7 +287,7 @@ export class RecoveryService {
         ]);
       }
     } catch (err) {
-      console.error('[needs-audit-log] failed to log recovery update:', err);
+      this.logAuditFailure(err, 'recovery.update');
     }
 
     return this.findById(id);
@@ -365,10 +380,7 @@ export class RecoveryService {
       }
       await this.auditLog.logUpdate(RECOVERY_FORM_TYPE, id, actor, changes);
     } catch (err) {
-      console.error(
-        '[needs-audit-log] failed to log recovery full-update:',
-        err,
-      );
+      this.logAuditFailure(err, 'recovery.fullUpdate');
     }
 
     return updated;
@@ -399,7 +411,7 @@ export class RecoveryService {
         }
       }
     } catch (err) {
-      console.error('[needs-audit-log] failed to log recovery bulk:', err);
+      this.logAuditFailure(err, 'recovery.bulkStatusChange');
     }
 
     return { updated: forms.length };
@@ -436,7 +448,7 @@ export class RecoveryService {
         },
       ]);
     } catch (err) {
-      console.error('[needs-audit-log] failed to log recovery delete:', err);
+      this.logAuditFailure(err, 'recovery.delete');
     }
 
     return { deleted: true };

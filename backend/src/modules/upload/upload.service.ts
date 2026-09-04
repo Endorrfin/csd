@@ -88,7 +88,14 @@ export class UploadService {
     contentType: string,
   ): Promise<{ uploadUrl: string; publicUrl: string }> {
     if (!ALLOWED_MIME_TYPES.includes(contentType)) {
-      throw new InternalServerErrorException('Unsupported file type');
+      // was InternalServerErrorException
+      // A rejected MIME type is the caller's mistake, not a server fault, and
+      // ARCHITECTURE.md §17 already listed the wrong status as debt. It has to
+      // change here rather than later: from Step 19 on, the global filter masks
+      // every 5xx body, so leaving this a 500 would replace a useful message in
+      // the admin image uploader with "Internal server error". As a 400 the text
+      // reaches the client exactly as before — `err.error?.message` is untouched.
+      throw new BadRequestException('Unsupported file type');
     }
 
     const ext = filename.split('.').pop()?.toLowerCase() ?? 'jpg';

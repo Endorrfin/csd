@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { loggerConfig } from './common/logger/logger.config';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getDatabaseSslOptions } from './database/db-ssl';
 import { AppController } from './app.controller';
@@ -70,6 +72,12 @@ import { AboutModule } from './modules/about/about.module';
     AboutModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Registered through APP_FILTER rather than `app.useGlobalFilters()` so
+    // that main.ts, lambda.ts and the e2e factory all get it from the module
+    // graph — one wiring, no third place to forget it.
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+  ],
 })
 export class AppModule {}
