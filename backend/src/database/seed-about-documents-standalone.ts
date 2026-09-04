@@ -5,6 +5,7 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
 import { seedAboutDocuments } from './seed-about-documents';
+import { getDatabaseSslOptions } from './db-ssl';
 
 config();
 
@@ -19,10 +20,9 @@ async function run(): Promise<void> {
     // raw SQL only — no entity metadata needed
     entities: [],
     synchronize: false,
-    ssl:
-      process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }
-        : false,
+    // was `{ rejectUnauthorized: false }`. Run on demand against
+    // production (`npm run seed:about-documents`). See db-ssl.ts.
+    ssl: getDatabaseSslOptions(),
   });
 
   await ds.initialize();

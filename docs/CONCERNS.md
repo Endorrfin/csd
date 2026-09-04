@@ -97,7 +97,17 @@ aws ec2 describe-security-groups --group-ids sg-00490c96bfbce5a7a
 
 1. ~~`rds.force_ssl`~~ — **перевірено 2026-08-27: `default.postgres16` має `rds.force_ssl = 1`**, сервер відхиляє нешифровані підключення. Половина TLS-питання вже закрита; друга половина — пункт 2.
 2. ~~Замінити `rejectUnauthorized: false` на перевірку сертифіката~~ — **зроблено в робочому дереві 2026-09-04 (PR 0, чекає CA-бандл і мерж).** Рішення винесене в новий `src/database/db-ssl.ts`, який імпортують обидва місця; у продакшні `{ rejectUnauthorized: true, ca }`, поза продакшном `false`. Якщо бандл не читається — застосунок **падає на старті** замість тихого відкату до неперевіреного з'єднання (та сама політика, що в `assert-required-env.ts`). Бандл додається руками: `backend/certs/README.md`.
-   ⚠️ **Поправка до попереднього формулювання «один файл, два рядки».** Місць було **два**, і з різними літералами: `src/database/data-source.ts:20` (CLI-DataSource, який використовує `migration:run` у `deploy.yml`) і `src/app.module.ts` (рантайм Nest). Виправлення лише одного з них лишило б `migration:run` з GitHub-раннера ходити в прод-БД без перевірки сертифіката — тобто рівно там, де довіряти каналу треба найбільше.
+   ⚠️ **Поправка до попереднього формулювання «один файл, два рядки».** Місць було **п'ять**, кожне з власною копією того самого літерала:
+
+   | Файл | Що це за з'єднання |
+   |---|---|
+   | `src/app.module.ts` | рантайм Nest — Lambda і локальний `main.ts` |
+   | `src/database/data-source.ts` | CLI-DataSource: `migration:show` / `migration:run` з GitHub-раннера |
+   | `src/database/seed-super-admin.ts` | `npm run seed:super-admin` — **пише адмінський пароль у прод-RDS** |
+   | `src/database/seed-about-documents-standalone.ts` | `npm run seed:about-documents` — виконується проти прода на вимогу |
+   | `src/database/run-seeds-standalone.ts` | мертвий код (`ARCHITECTURE.md` §17: «Delete or wire up») — виправлено разом з рештою, щоб не лишати зразок для копіювання |
+
+   Це і є аргумент за спільний модуль: чотири з п'яти місць — окремі скрипти, які ніхто не згадує, коли думає «де ми підключаємось до бази». Найдорожчий із них — `seed-super-admin.ts`, бо він передає по каналу нову адмінську credential.
 3. `SELECT rolname, rolsuper, rolcreatedb FROM pg_roles WHERE rolcanlogin;` — прикладний користувач не має бути суперюзером.
 4. Змінити майстер-пароль на 32+ випадкових символи, покласти в GitHub Environment `production`.
 5. Прибрати з SG два поглинуті правила — захисту не додає, але прибирає хибне враження.

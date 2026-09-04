@@ -20,16 +20,16 @@ import { config } from 'dotenv';
 import * as bcrypt from 'bcrypt';
 import { isEmail } from 'class-validator';
 import { User, UserRole } from '../modules/users/entities/user.entity';
+import { getDatabaseSslOptions } from './db-ssl';
 
 config(); // load .env
 
-// === ADDED: fail-fast validation, no plaintext logging, no defaults ===
 function die(msg: string): never {
   console.error(`❌ ${msg}`);
   process.exit(1);
 }
 
-// CHANGED: helper returns `string` (not `string | undefined`) so type narrowing
+// helper returns `string` (not `string | undefined`) so type narrowing
 // carries across function boundaries into seed().
 function requireEnv(name: string): string {
   const v = process.env[name];
@@ -67,10 +67,10 @@ async function seed(): Promise<void> {
     database: process.env.DB_NAME || 'csd',
     entities: [User],
     synchronize: false,
-    ssl:
-      process.env.NODE_ENV === 'production'
-        ? { rejectUnauthorized: false }
-        : false,
+    // was `{ rejectUnauthorized: false }`. This script writes an
+    // ADMIN CREDENTIAL to production RDS — of every connection in this repo it
+    // is the one that must not be MITM-able. See db-ssl.ts.
+    ssl: getDatabaseSslOptions(),
   });
 
   await ds.initialize();
