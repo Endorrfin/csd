@@ -13,13 +13,25 @@
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />
+    <!-- added integrity + crossorigin -->
+    <!--
+      SRI on a cross-origin resource requires CORS: without crossorigin the browser
+      will not hash the response and blocks the tag outright. Dropping either
+      attribute kills /activity-map, and it fails silently — that route is
+      RenderMode.Client, so SSR surfaces nothing.
+    -->
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"
+      integrity="sha384-pmjIAcz2bAn0xukfxADbZIb3t8oRT9Sv0rvO+BR5Csr6Dhqq+nZs59P0pPKQJkEV"
+      crossorigin=""
     />
+    <!-- added integrity + crossorigin -->
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"
+      integrity="sha384-wgw+aLYNQ7dlhK47ZPK7FRACiq7ROZwgFNg0m04avm4CaXS+Z9Y7nMu8yNjBKYC+"
+      crossorigin=""
     />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CO CF Centre for Support and Development</title>
@@ -29,7 +41,12 @@
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <!-- added integrity + crossorigin -->
+    <script
+      src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"
+      integrity="sha384-eXVCORTRlv4FUUgS/xmOyr66XBVraen8ATNLMESp92FKXLAMiKkerixTiBvXriZr"
+      crossorigin=""
+    ></script>
 
     <!-- NEW: default Open Graph fallback tags -->
     <meta property="og:site_name" content="CSD Fund" />
