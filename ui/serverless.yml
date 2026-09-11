@@ -1,10 +1,10 @@
 org: csd2019
 service: csd-ssr
 
-# === ADDED: per-stage environment blocks (staging, P1-5).
+# per-stage environment blocks (staging, P1-5).
 # The `prod` block below is character-for-character what used to be inlined under
 # provider.environment, so `serverless package --stage prod` must emit the same
-# CloudFormation template as before this change. Only `staging` is new. ===
+# CloudFormation template as before this change. Only `staging` is new.
 custom:
   environment:
     prod:
@@ -30,6 +30,13 @@ custom:
       # in src/server.ts pins Host to a value that is not on the baked list ->
       # 400 / CSR shell, and hydration never happens on staging.
       NG_ALLOWED_HOSTS: ${env:PUBLIC_HOST, ''}
+      # X-Robots-Tag at the origin (CONCERNS.md P1-5 rows 17, 21).
+      # Hardcoded, not ${env:...}: staging is always noindex, so there is nothing
+      # for CI to pass, and a key that is simply ABSENT from the prod and dev
+      # blocks below cannot deindex www.csd-fund.org through a mistyped secret.
+      # src/server.ts compares against the literal 'true'; the quotes are required
+      # because CloudFormation only accepts string values here.
+      SSR_NOINDEX: 'true'
     dev:
       NODE_ENV: production
       PUBLIC_HOST: www.csd-fund.org
@@ -57,7 +64,7 @@ provider:
     apiGateway: true
     lambda: true
 
-  # === ADDED: PR 1 / Step 20 — log retention ===
+  # PR 1 / Step 20 — log retention
   # Unset means "never expire". This group holds SSR render errors and the
   # request URLs behind them, including the paths of the needs and complaint
   # forms; keeping that forever is storage nobody audits. Matches the 30 days

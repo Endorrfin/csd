@@ -32,6 +32,33 @@ const angularApp = new AngularNodeAppEngine({
  * ```
  */
 
+// X-Robots-Tag at the ORIGIN, not only at the edge (CONCERNS.md P1-5 rows 17, 21).
+//
+// Staging has two entrances. The CloudFront distribution (E2OQ1H0LD6DAVP) serves
+// `noindex, nofollow` through the response-headers policy
+// csd-frontend-security-headers-staging, on the default behaviour and all nine
+// static ones. The SSR stack's API Gateway URL answers the same content directly,
+// past CloudFront and therefore past that policy - and its hostname is published in
+// infra/cloudfront-distribution-staging.json as the distribution's own origin, so it
+// is not obscure. A header set here covers both entrances; an edge policy covers one.
+//
+// Hardcoded per stage in ui/serverless.yml rather than injected from CI: staging is
+// ALWAYS noindex, so there is no value to pass, and an unset-by-default flag cannot
+// deindex production by accident. Read strictly - anything but the literal 'true' is
+// off - for the same reason. The prod and dev blocks do not define it at all.
+//
+// Placed before express.static and before the PUBLIC_HOST middleware so every
+// response carries it, whatever answers the request. @angular/ssr's
+// writeResponseToNodeResponse() copies its headers with setHeader() one at a time and
+// never emits x-robots-tag, so nothing downstream clears this (verified in
+// node_modules/@angular/ssr/fesm2022/node.mjs).
+if (process.env['SSR_NOINDEX'] === 'true') {
+  app.use((_req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    next();
+  });
+}
+
 /**
  * Serve static files from /browser
  */
