@@ -1,9 +1,9 @@
 # Security headers — CloudFront and the API
 
 > **Location:** `infra/SECURITY-HEADERS.md`
-> **Scope:** the *procedure* — the CSP allowlist and why each entry exists, how to apply the policy, how to verify it, and how to promote it to enforce.
+> **Scope:** the *procedure* — the CSP allowlist and why each entry exists, how to apply the policy, how to verify it, how to promote it to enforce, and (§3) what **staging** serves instead.
 > **Status of record** lives in [`docs/ARCHITECTURE.md` §14.3](../docs/ARCHITECTURE.md#csp-status--single-source-of-truth) and is not repeated here.
-> **Last verified against code:** 2026-07-31 (commit `4ee8195`) · **live AWS values verified:** 2026-07-29
+> **Last verified against code:** 2026-09-11 (§3 only; §§0–2 last verified 2026-07-31 at `4ee8195`) · **live AWS values verified:** 2026-07-29 (prod)
 
 Originally written as "Batch 1". Two independent pieces, deployed separately:
 
@@ -253,6 +253,93 @@ contents. **Rollback** is the same call with the header renamed back — one
 no deploy and no invalidation.
 
 Both steps are tracked as separate items in `ARCHITECTURE.md` §17, in this order.
+
+---
+
+## 3. Staging — the same headers minus the CSP, plus `X-Robots-Tag`
+
+Everything above describes production. Staging (`CONCERNS.md` P1-5) runs its own
+distribution and its own policy, and the difference between the two is
+deliberate in both directions.
+
+| | Production | Staging |
+| --- | --- | --- |
+| Policy name | `csd-frontend-security-headers` | `csd-frontend-security-headers-staging` |
+| Policy ID | `0dfcb167-3b72-4c89-8574-0465ee42283c` † | `4d0f7144-3381-4ae5-a9dd-85011c716a83` |
+| Distribution | `E3U465AMSVR9PN` (`www.csd-fund.org`) † | `E2OQ1H0LD6DAVP`, no alias — the domain is **not** recorded in any tracked file |
+| Committed JSON | `cloudfront-response-headers-policy.json` | `cloudfront-response-headers-policy-staging.json` |
+| Attached to | default + 9 behaviours (10) † | default + 9 behaviours (10) |
+| HSTS / nosniff / `SAMEORIGIN` / `strict-origin-when-cross-origin` | yes | **byte-identical** — same `SecurityHeadersConfig` block |
+| `Content-Security-Policy-Report-Only` | yes | **no — by design**, see below |
+| `X-Robots-Tag` | no | `noindex, nofollow` |
+
+Unlike prod's, the staging attachment count **is** derivable from this
+repository — `infra/cloudfront-distribution-staging.json` is the config the
+distribution was created from, and every one of its ten behaviours names the
+policy above:
+
+```bash
+# 10 occurrences, one per behaviour
+grep -c 4d0f7144-3381-4ae5-a9dd-85011c716a83 infra/cloudfront-distribution-staging.json
+
+# and what the edge actually serves (host lives in the GitHub `staging` environment)
+curl -sI "$STAGING_URL" | grep -i 'strict-transport\|x-robots-tag\|content-security'
+```
+
+### Why staging carries no CSP
+
+Four reasons, in order of weight. The first is the one that makes the others
+academic.
+
+1. **The prod CSP names prod hosts, and a rewritten one would prove nothing.**
+   `connect-src` allowlists `https://vzdw0zf80h.execute-api.eu-central-1.amazonaws.com`
+   — the prod API. Staging's API is a different REST API whose id is resolved at
+   deploy time from the `csd-api-staging` stack output (the `__STAGING_API_BASE__`
+   sentinel in `ui/src/environments/environment.staging.ts`), so a staging CSP
+   would need the same CI substitution applied to a policy that **no pipeline
+   touches at all** — this is a by-hand artefact on both environments. And the
+   moment the two policies differ, a green staging stops being evidence about
+   prod. A near-copy is worse than nothing here: it is the failure mode where the
+   test passes and the thing under test still breaks.
+2. **Prod's CSP is still `Report-Only`, so it blocks nothing.** Staging without a
+   CSP is therefore not *weaker* than prod today — it is exactly as strict.
+   Nothing is being skipped; there is currently nothing to skip.
+3. **The two hosts the CSP exists to police are unreachable from staging anyway.**
+   Cloudflare Turnstile is bound to `www.csd-fund.org` and its secret is
+   deliberately absent from the staging backend, so the guard stays in bypass; the
+   CARTO key is domain-restricted and the staging host is not registered. Both are
+   recorded as accepted trade-offs in `CONCERNS.md` P1-5 and in the comments in
+   `environment.staging.ts`. A CSP exercised against neither proves neither.
+4. **The real verification is §2.5 on prod itself**, Report-Only, with DevTools
+   open. Staging cannot stand in for it, and pretending otherwise would make §2.5
+   look optional.
+
+**When to revisit:** at the moment the CSP is promoted to enforce (§2.6). Then
+staging *should* carry the same policy — an enforce mistake costs a broken prod
+page, which is precisely what staging exists to absorb — and the `connect-src`
+API host becomes the one value that has to be substituted per environment. Not
+before then.
+
+### `X-Robots-Tag` covers only one of two entrances
+
+Staging is a public, unauthenticated copy of the site, so the point of
+`X-Robots-Tag: noindex, nofollow` is keeping it out of search results. The
+response-headers policy delivers it **at the edge only**.
+
+The SSR stack's API Gateway URL — `fyq2zwzcqi.execute-api.eu-central-1.amazonaws.com`,
+which is this distribution's `ssr-lambda` origin and is published in
+`infra/cloudfront-distribution-staging.json` and in git history — answers
+requests directly, past CloudFront and therefore past this policy. That second
+entrance is tracked as `CONCERNS.md` P1-5 row 21; the header half of it is row 17,
+which sets `X-Robots-Tag` in `ui/src/server.ts` behind an env flag so the origin
+carries it whichever way the request arrived. Removing the id from the tree would
+undo nothing — it is already in history, and the origin is discoverable from the
+distribution config regardless.
+
+### Backend
+
+Unchanged. The staging backend runs the same code and the same `helmet`
+configuration as prod (§1); nothing in §1 is environment-dependent.
 
 ---
 

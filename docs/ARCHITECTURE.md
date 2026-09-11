@@ -1532,7 +1532,14 @@ In practice, both are triggered by GitHub Actions on merge to `main`.
 
 ## 12. CI/CD & Release Process
 
-There are **two** workflows. Keeping them straight matters, because only one of them can block a bad merge.
+There are **four** workflows. Keeping them straight matters, because only one of them can block a bad merge, and only two of them can reach AWS.
+
+| Workflow | Fires on | Reaches |
+| --- | --- | --- |
+| `test.yml` (§12.1) | `pull_request` → `main` | nothing — **the only pre-merge gate** |
+| `deploy.yml` (§12.2) | push to `main`, `workflow_dispatch` | production |
+| `deploy-staging.yml` (§12.4) | push to `staging/**`, `workflow_dispatch` | staging |
+| `staging-rds-schedule.yml` (§12.5) | cron (Mon–Fri 08:00 / 20:00 Europe/Kyiv), `workflow_dispatch` | staging RDS only |
 
 ### 12.1 Pre-merge — `.github/workflows/test.yml` ("PR Checks")
 
@@ -1607,9 +1614,23 @@ GitHub Actions majors *are* allowed, since a broken action fails the workflow ra
 
 **Other differences from production:**
 
-- The smoke URL is the `STAGING_SMOKE_URL` **variable**, not a secret, and it is not the same thing as `FRONTEND_URL`: the latter is the backend's CORS allowlist (origin only, no path), the former is the exact page to fetch. They differ while staging is reached at the API Gateway URL with its `/staging` prefix.
+- The smoke URL is the `STAGING_SMOKE_URL` **variable**, not a secret, and it is not the same thing as `FRONTEND_URL`: the latter is the backend's CORS allowlist (origin only, no path), the former is the exact page to fetch. Both now point at the CloudFront domain and neither carries the `/staging` stage prefix — the `ssr-lambda` origin appends it through `OriginPath`. The smoke test also asserts `X-Robots-Tag: noindex` and fails the deploy without it; that covers the **edge** only, and the origin half is `SSR_NOINDEX` (§9).
 - `Invalidate CloudFront cache` is guarded by `vars.CF_DISTRIBUTION_ID != ''`, so an empty variable **skips** the step instead of failing the run. Setting that variable once the distribution exists turns invalidation on with no edit to this file.
 - The `staging` GitHub environment carries every production secret **name** except `TURNSTILE_SECRET_KEY` (§8.2), and no `BACKEND_URL`.
+
+### 12.5 Scheduled — `.github/workflows/staging-rds-schedule.yml`
+
+- **Trigger:** two crons, `0 8 * * 1-5` and `0 20 * * 1-5`, both with `timezone: Europe/Kyiv`; plus `workflow_dispatch` with a `start` / `stop` choice. Window: **Mon–Fri 08:00–20:00 Kyiv, weekends off.**
+- **Concurrency:** group `deploy-staging` — the same group as §12.4 — with `cancel-in-progress: **false**`, so an evening stop queues behind a running deploy instead of pulling the database out from under its migration step. A deploy starting afterwards *does* cancel a queued or running stop, which costs one evening of uptime and nothing else.
+- **Touches nothing but `csd-postgres-staging`.** The identifier is a literal in the workflow, never a secret or a variable, so it cannot be empty. The IAM policy is the second barrier: `StagingRdsStartStop` is scoped to that one ARN, and `DenyProdOutright` denies `"*"` on `arn:aws:rds:eu-central-1:*:db:csd-postgres` — an explicit `Deny` outranks any `Allow`.
+
+**Why it exists, in order of weight.** `csd-postgres-staging` inherits P0-5: it accepts 5432 from `0.0.0.0/0`, because the staging Lambda is outside the VPC and migrations run from GitHub runners. A stopped instance is not reachable at all, so this schedule **is** the mitigation `CONCERNS.md` P0-5 claims for staging. The money is the smaller half — `db.t4g.micro` at ~$0.019/h, so ~108 h/week of downtime is ~$9/month; storage bills either way.
+
+**Two failure modes to recognise rather than debug.** A stopped RDS instance is **restarted by AWS after seven days**, so the recurring stop is what keeps it down — a one-off stop is not an off switch. And GitHub disables scheduled workflows after **60 days with no repository activity**, silently apart from the Actions tab. Both present the same symptom: staging is unexpectedly up and stays up.
+
+**Why GitHub Actions rather than EventBridge Scheduler.** This is repository state — reviewable, diffable, in git history — which is exactly the distinction §8 *Key resources* draws when it marks the RDS row “console/CLI state, not repo state”. It also needs no new IAM: `StagingRdsStartStop` and `RdsDescribeGlobal` already exist, while EventBridge would need a scheduler role plus `scheduler:CreateSchedule` and `iam:PassRole`. The trade accepted in exchange is that GitHub may delay a scheduled run under load; at $0.019/h a 40-minute delay costs about one cent. Timezone handling is no longer a differentiator — GitHub cron accepts an IANA `timezone` and handles DST, as does EventBridge Scheduler.
+
+**The deploy-side half.** `deploy-staging.yml` gained `Ensure the staging database is available`, placed after `check:cjs` and before `migration:show` — same reasoning as `check:cjs`'s own position: do not wake a database for a build already known not to boot. It polls, and issues `start` on **every** observation of `stopped` rather than deciding once, because the instance may still be `stopping` when a deploy lands moments after the evening cron; deciding once would skip the start and then wait 15 minutes for an `available` that never arrives. The same loop shape is in the schedule workflow — keep the two in step. It deliberately does **not** stop the instance again afterwards: a deploy at 23:00 means somebody is working, and the next evening's cron is cheap enough to wait for.
 
 ---
 

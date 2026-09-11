@@ -135,6 +135,18 @@ Anything else goes through `ApiService`. If you add a third category, document w
 
 - `authInterceptor` and every `*Guard` check `isPlatformBrowser(inject(PLATFORM_ID))` before touching `localStorage` or navigating. **Replicate that pattern in any new browser-only code.**
 - Server-side, guards return `true` so SSR can render; auth is enforced on the client after hydration. **Guards are not security** — security is the backend's job.
+- **A build-time JSON under `src/assets/` that you read with `HttpClient` must be
+  registered in `SERVER_STATIC_ASSETS`** (`core/tokens/server-static-assets.token.ts`).
+  During SSR a root-relative URL resolves against the *request host*, so an
+  unregistered path leaves the Lambda as a real outbound request — which it cannot
+  answer, because `serverless.yml` excludes `dist/ui/browser/**`. `serverAssetsInterceptor`
+  now catches that and returns a null body with a `console.error`, so the feature
+  renders empty; before it existed, this class of miss returned **502 for every page**,
+  not just the one that needed the asset. Registering a *large* dataset has its own
+  cost — `locations.json` is deliberately mapped to `[]` — so read
+  [`README.md` § SSR must not fetch its own static assets](./README.md) and
+  [`../docs/ARCHITECTURE.md` §8.3](../docs/ARCHITECTURE.md#83-ssr-static-asset-resolution--an-invariant)
+  before adding one. Translations bypass `HttpClient` entirely via `ServerTranslateLoader`.
 - **Known violation, do not copy:** `admin/complaints/complaints-list.ts`, `admin/inquiries/inquiries-list.ts`, `admin/recovery-forms-list/recovery-forms-list.ts`, `admin/wash-forms-list/wash-forms-list.ts` and `admin/winterization-forms-list/winterization-forms-list.ts` all call `localStorage.getItem('token')` with **no `isPlatformBrowser` guard**, to attach a bearer token to their raw export `fetch`. They happen to work because the calls are user-triggered, post-hydration. They are tracked as debt in `README.md`; if you touch one of those files, guard it.
 
 ### Turnstile contract (frontend half)
@@ -145,16 +157,33 @@ The token travels in the **`x-turnstile-token` header**, never in the body — t
 
 ## Environments
 
-`src/environments/environment.ts` and `environment.prod.ts` export **four** keys — keep both files in lockstep or the production build silently loses a flag:
+**There are three environment files, not two:** `environment.ts` (dev),
+`environment.prod.ts` and `environment.staging.ts`. The key list is
+`environment.model.ts` and the per-key reasoning is
+[`README.md` § Environment files](./README.md) — read the count there, never from
+here. The rules:
 
-| Key | dev | prod |
-| --- | --- | --- |
-| `production` | `false` | `true` |
-| `apiUrl` | `http://localhost:3000` | the API Gateway URL |
-| `turnstileSiteKey` | Cloudflare test key (always passes) | the real site key (public, safe to commit) |
-| `winterizationHouseholdEnabled` | `false` | `false` |
-
-`winterizationHouseholdEnabled` is **UX only** — the real gate is the backend's `WINTERIZATION_HOUSEHOLD_ENABLED`, which answers 422 regardless of what the UI allows. Flipping the frontend flag alone changes nothing except that users can now submit a form that fails. There is no staging environment file.
+- **Adding a key means editing four files**: declare it in `environment.model.ts`,
+  then add it to all three environment files. All three annotate `: Environment`
+  and `tsconfig.app.json` includes `src/**/*.ts`, so a forgotten file fails the
+  build with `TS2741` rather than shipping `undefined` — which is what used to
+  happen, and was first visible on the live site.
+- **Never hand-edit `__STAGING_API_BASE__`** in `environment.staging.ts`.
+  `deploy-staging.yml` substitutes it from the `csd-api-staging` stack output and
+  fails the run if the sentinel survives. A hardcoded `execute-api` id points at a
+  stale host the moment the REST API is recreated.
+- **Never move `turnstileSiteKey` or `cartoBasemapKey` into a GitHub secret.**
+  Both are public by design — a Turnstile *site* key and a domain-restricted CARTO
+  key — and both ship in the client bundle, so a secret would hide nothing and
+  would silently break whichever build forgot to inject it.
+- **`winterizationHouseholdEnabled` is UX only.** The real gate is the backend's
+  `WINTERIZATION_HOUSEHOLD_ENABLED`, which answers 422 regardless. Flipping the
+  frontend flag alone only lets users submit a form that fails. The compiler
+  guarantees the key *exists* in all three files; keeping its *value* in step is
+  still manual.
+- **Staging builds as `ng build --configuration production,staging`.** Angular has
+  no configuration inheritance, so `staging` carries only the `fileReplacements`
+  and composes on top of `production`. A plain `--configuration staging` is wrong.
 
 ## Build, test, lint — the traps
 
@@ -183,6 +212,8 @@ Run with `npm run e2e`. Details and the two local gotchas (stop your backend fir
 
 - **Don't read `translate.currentLang` in new code** — use `LanguageService`. See the language rule above.
 - **Don't `import` Leaflet or remove `unpkg.com` from the CSP.** See the Leaflet section.
+- **Don't read a `src/assets/*.json` with `HttpClient` without registering it in `SERVER_STATIC_ASSETS`.** See the SSR-safety rule above.
+- **Don't assume two environment files.** There are three, and a key must land in all of them plus `environment.model.ts`.
 - **Don't use `localStorage`/`sessionStorage` without an `isPlatformBrowser` check** — and don't copy the five admin list components that do.
 - **Don't add NgModules.** The project is fully standalone.
 - **Don't add eager route imports.** `loadComponent` / `loadChildren` only.

@@ -46,6 +46,7 @@
 | `chore/` | Dependency updates, config changes, tooling |
 | `perf/` | Performance improvement |
 | `hotfix/` | Urgent production fix — branch off `main` directly |
+| `staging/` | **Deploys on push.** Work aimed at the staging environment — see the warning below |
 
 ### Examples
 
@@ -60,7 +61,42 @@ test/location-service-unit-tests
 chore/angular-21-upgrade
 perf/blog-lazy-load-images
 hotfix/wash-form-submit-crash
+staging/p1-5-env
 ```
+
+### `staging/` is not an ordinary prefix — read this before using it
+
+Every other prefix in the table above is inert: the name affects nothing but
+readability, and code reaches AWS only when the PR merges to `main`. `staging/`
+is different in two ways.
+
+- **A push deploys.** `.github/workflows/deploy-staging.yml` triggers on
+  `push` to `staging/**`, so `git push` on such a branch builds and deploys both
+  stacks to the staging environment — no PR, no review, no merge. There is also a
+  `workflow_dispatch` entry point for redeploying without a push. Outside
+  Mon-Fri 08:00-20:00 Kyiv the staging database is stopped, so the run starts it
+  and waits (~2-5 min) before touching migrations - a deploy at midnight works,
+  it is just slower.
+- **The branch name is half of an access-control boundary.** Both jobs declare
+  `environment: staging`, and that GitHub environment — which holds the staging
+  AWS credentials and the staging hostname — is scoped to `staging/**` and
+  `main` (`docs/CONCERNS.md` P1-5, row 1). A `workflow_dispatch` run started from
+  any other branch is therefore refused by GitHub before it reaches AWS, instead
+  of deploying with whatever credentials it could otherwise find.
+
+That makes the prefix cheap to use and safe to get wrong in only one direction:
+misname the branch and nothing deploys; name it `staging/…` by accident and it
+does. Staging data is synthetic and a broken staging blocks nobody —
+`cancel-in-progress` is `true` there for exactly that reason — so the cost of a
+stray deploy is a wasted run, not an incident. Prod is unreachable from those
+credentials by explicit IAM `Deny`.
+
+Use it for work that has to be exercised on real infrastructure before it can
+reach `main`: routing changes, SSR behaviour, migrations. Merge it to `main`
+through a PR like any other branch when it is done.
+
+Workflow walkthrough: [`docs/ARCHITECTURE.md` §12.4](./docs/ARCHITECTURE.md#124-post-merge-to-a-staging-branch--githubworkflowsdeploy-stagingyml).
+What staging deliberately does *not* exercise: `docs/CONCERNS.md` P1-5.
 
 ### Rules
 
