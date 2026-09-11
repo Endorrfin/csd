@@ -1205,8 +1205,8 @@ A second, self-contained stage of the same two CloudFormation stacks. It exists 
 | Browser bundle bucket | `csd-fund-static` | `csd-fund-static-staging` |
 | Public media bucket | `csd-media` | `csd-media-staging` |
 | Private media bucket | `csd-media-private` | `csd-media-private-staging` |
-| CloudFront | `E3U465AMSVR9PN` | **not created yet** — see below |
-| Entry point | `https://www.csd-fund.org` | `https://<ssr-api-id>.execute-api.eu-central-1.amazonaws.com/staging/` |
+| CloudFront | `E3U465AMSVR9PN` | `E2OQ1H0LD6DAVP` — created 2026-09-09 |
+| Entry point | `https://www.csd-fund.org` | the distribution's `*.cloudfront.net` domain — deliberately not written here, see below |
 | Turnstile | real site key + secret | Cloudflare test site key, **no** `TURNSTILE_SECRET_KEY` |
 
 All three staging buckets are `BucketOwnerEnforced`. `csd-media-private-staging` has no bucket policy and must never be given one.
@@ -1215,13 +1215,17 @@ All three staging buckets are `BucketOwnerEnforced`. `csd-media-private-staging`
 
 **Deploy credentials cannot reach production.** The managed policy `csd-deploy-staging` (`infra/iam/csd-deploy-staging-policy.json`) grants the staging stacks, buckets, Lambda roles and RDS start/stop, and carries explicit `Deny` statements covering every production stack, Lambda, role and bucket, the prod REST API and distribution `E3U465AMSVR9PN`. Serverless Framework v4 keeps **one** deployment bucket per account and region — named in the SSM parameter `/serverless-framework/deployment/s3-bucket`, whose value is JSON — so staging and production share it. The policy therefore grants object access only under `serverless/csd-api/staging/*` and `serverless/csd-ssr/staging/*` and denies the `prod` prefixes outright. `s3:CreateBucket` on that bucket **is** required: v4 calls CreateBucket unconditionally and relies on `BucketAlreadyOwnedByYou`. `PutBucketPolicy`, `PutBucketPublicAccessBlock` and `DeleteBucket` are never granted on the shared bucket — the production deployment artefacts in it contain plaintext environment values. Any change to the policy is verifiable with `aws iam simulate-principal-policy` before it is applied.
 
-**CloudFront is missing, and that is the one place staging is not a mirror.** AWS refuses `cloudfront:CreateDistribution` on this account until Support verifies it, so staging is reached at the SSR API Gateway URL directly. While that lasts:
+**CloudFront is in place since 2026-09-09**, and staging now mirrors production's topology. AWS had refused `cloudfront:CreateDistribution` on this account until Support verified it (case 178835737200328, verified 2026-09-08); the distribution was created from `infra/cloudfront-distribution-staging.json` on the next day. What it gives, each verified on the live edge:
 
-- `/assets/*`, `*.js` and `*.css` are not served at all — the SSR Lambda excludes `dist/ui/browser/**` from its package (`ui/serverless.yml`), so browser chunks 404 and the page does not hydrate.
-- `PUBLIC_HOST` is a **Host header** and cannot carry API Gateway's `/staging` stage prefix, so any absolute URL built from it loses the stage and API Gateway answers 403. This is why §8.3 is not optional.
-- `X-Robots-Tag: noindex, nofollow` is served by the response-headers policy `csd-frontend-security-headers-staging` (`4d0f7144-3381-4ae5-a9dd-85011c716a83`), which nothing is attached to yet — **the staging URL is unprotected against indexing.**
+- `/assets/*`, `*.js` and `*.css` are served from `csd-fund-static-staging` through OAC `E461R3XKPTF4H`, so the page hydrates. The bucket policy is `infra/s3-csd-fund-static-staging-policy.json` — `s3:GetObject` to `Principal.Service = cloudfront.amazonaws.com`, conditioned on this distribution's ARN.
+- The stage prefix is handled by the origin itself: the `ssr-lambda` origin carries `OriginPath: /staging`, so viewers reach `/` and API Gateway still receives `/staging/`. `PUBLIC_HOST` remains a **Host header** and still cannot carry that prefix — which is why the prefix belongs on the origin and why §8.3 is not optional.
+- `X-Robots-Tag: noindex, nofollow` is served by the response-headers policy `csd-frontend-security-headers-staging` (`4d0f7144-3381-4ae5-a9dd-85011c716a83`), attached to the default behaviour and all nine static behaviours.
 
-The distribution config is written and ready at `infra/cloudfront-distribution-staging.json`: OAC `E461R3XKPTF4H`, `/assets/*` · `*.js` · `*.css` · the favicons and manifest to `csd-fund-static-staging`, everything else to the SSR origin with `OriginPath: /staging`. Deliberately **not** done as a workaround: packing the browser bundle into the SSR Lambda. It would stop staging resembling production, and the missing stage prefix defeats it anyway.
+**The staging hostname is treated as semi-private and is not written into tracked files.** This repository is public, so the CloudFront domain lives only in the `staging` GitHub environment: the `PUBLIC_HOST` secret (which is also what `ui/serverless.yml` derives `NG_ALLOWED_HOSTS` from) and the `STAGING_SMOKE_URL` variable. Job summaries render it as `https://***/` because GitHub redacts every occurrence of a secret — that redaction is deliberate and must not be "fixed" by demoting `PUBLIC_HOST` to a variable.
+
+**What the distribution does *not* close: the SSR stack's own API Gateway URL still answers directly.** It bypasses CloudFront, and therefore the response-headers policy, so that entry point serves staging without `X-Robots-Tag`. Its id is already public — `infra/cloudfront-distribution-staging.json` carries it as an origin `DomainName`, and it is in this repository's git history — so removing it from the working tree would not unpublish it. The origin-level fix is `CONCERNS.md` P1-5 row 17 (`X-Robots-Tag` from `ui/src/server.ts` behind an env flag), which covers both entry points; restricting access to the execute-api endpoint is row 21.
+
+Deliberately **not** done, then or now: packing the browser bundle into the SSR Lambda. It would stop staging resembling production, and the missing stage prefix defeated it anyway.
 
 ### 8.3 SSR Static-Asset Resolution — an invariant
 
