@@ -31,10 +31,11 @@ env:
   NODE_VERSION: '22.17.0'
   AWS_REGION: eu-central-1
   # staging counterparts of deploy.yml's DEPLOY_STAGE / STATIC_BUCKET.
-  # There is deliberately no CF_DISTRIBUTION_ID here: staging's distribution does
-  # not exist yet (the AWS account is pending CloudFront verification), so it
-  # comes from the `staging` environment VARIABLE of the same name. Empty
-  # variable => the invalidation step is skipped instead of failing the run.
+  # There is deliberately no CF_DISTRIBUTION_ID here. The distribution exists
+  # since 2026-09-09 (E2OQ1H0LD6DAVP), but its id stays in the `staging`
+  # environment VARIABLE of the same name, next to the hostname it belongs with -
+  # this repository is public and staging has no authentication. Empty variable
+  # => the invalidation step is skipped instead of failing the run.
   DEPLOY_STAGE: staging
   STATIC_BUCKET: csd-fund-static-staging
 
@@ -275,9 +276,9 @@ jobs:
           PUBLIC_HOST: ${{ secrets.PUBLIC_HOST }}
         run: npx serverless deploy --stage "${DEPLOY_STAGE}"
 
-      # Skipped while the staging distribution does not exist. Set the
-      # CF_DISTRIBUTION_ID variable on the `staging` environment once it does and
-      # this starts running - no edit to this file.
+      # Live since 2026-09-09: the CF_DISTRIBUTION_ID variable is set on the
+      # `staging` environment, so this runs. It stays guarded so that clearing the
+      # variable degrades to "no invalidation" instead of failing the run.
       - name: Invalidate CloudFront cache
         if: ${{ vars.CF_DISTRIBUTION_ID != '' }}
         env:
@@ -330,13 +331,21 @@ jobs:
             echo ""
             echo "| | |"
             echo "| --- | --- |"
-            echo "| Entry point | ${{ vars.STAGING_SMOKE_URL }} |"
+            echo "| Entry point | ${{ vars.STAGING_SMOKE_URL }} (host redacted on purpose - see below) |"
             echo "| Stack | \`csd-ssr-${DEPLOY_STAGE}\` |"
             echo "| Static bucket | \`${STATIC_BUCKET}\` |"
             echo "| CloudFront | ${{ vars.CF_DISTRIBUTION_ID != '' && vars.CF_DISTRIBUTION_ID || 'not configured - invalidation skipped' }} |"
             echo ""
-            echo "Staging is noindex: X-Robots-Tag is served by the CloudFront"
-            echo "response-headers policy csd-frontend-security-headers-staging."
-            echo "Until the distribution exists, that header is NOT served -"
-            echo "the API Gateway URL is unprotected against indexing."
+            echo "Staging is noindex: X-Robots-Tag: noindex, nofollow is served by"
+            echo "the CloudFront response-headers policy"
+            echo "csd-frontend-security-headers-staging, on the default behaviour and"
+            echo "all nine static behaviours."
+            echo ""
+            echo "NOT covered by that policy: the SSR stack's API Gateway URL answers"
+            echo "directly and bypasses CloudFront, so it serves staging without the"
+            echo "header. CONCERNS.md P1-5 rows 17 and 21."
+            echo ""
+            echo "The entry point above is redacted because its value contains the"
+            echo "PUBLIC_HOST secret and this repository is public. That is deliberate:"
+            echo "do not demote PUBLIC_HOST to a variable to make this line readable."
           } >> "$GITHUB_STEP_SUMMARY"
