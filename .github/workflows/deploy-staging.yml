@@ -72,6 +72,66 @@ jobs:
       - name: CommonJS load check (Lambda cold-start guard)
         run: npm run check:cjs
 
+      # The staging database is stopped outside Mon-Fri 08:00-20:00 Europe/Kyiv
+      # (staging-rds-schedule.yml, CONCERNS.md P1-5 row 18), and every step below
+      # this one needs it: migration:show is the first thing that would fail, and
+      # it would fail as a confusing connection timeout rather than "the database
+      # is off". So a deploy outside the window wakes it and waits.
+      #
+      # Placed AFTER check:cjs and before the migrations, for the same reason
+      # check:cjs is where it is: do not wake a database for a build that is
+      # already known not to boot.
+      #
+      # This does NOT stop the instance again afterwards. A deploy at 23:00 means
+      # somebody is working; the 20:00 cron takes it down the next evening. An extra
+      # night of uptime costs about $0.20 - cheaper than a job that pulls the
+      # database out from under whoever is still using it.
+      #
+      # The loop issues start on EVERY observation of 'stopped' rather than deciding
+      # once, because the instance may still be 'stopping' when this runs (the
+      # evening cron fired moments ago). Deciding once would skip the start and then
+      # wait for an 'available' that never comes. Same shape as the loop in
+      # staging-rds-schedule.yml - keep the two in step.
+      - name: Ensure the staging database is available
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          # literal, never a secret or a variable - see staging-rds-schedule.yml
+          DB_ID: csd-postgres-staging
+        run: |
+          set -euo pipefail
+
+          status() {
+            aws rds describe-db-instances --db-instance-identifier "${DB_ID}" \
+              --query 'DBInstances[0].DBInstanceStatus' --output text
+          }
+
+          DEADLINE=$(( $(date +%s) + 900 ))
+          CURRENT="$(status)"
+          echo "Current status: ${CURRENT}"
+          while :; do
+            case "${CURRENT}" in
+              available)
+                echo "Database is available."
+                exit 0
+                ;;
+              stopped)
+                echo "Stopped - requesting start."
+                aws rds start-db-instance --db-instance-identifier "${DB_ID}" >/dev/null
+                ;;
+              *)
+                echo "  status=${CURRENT}, waiting..."
+                ;;
+            esac
+            if [ "$(date +%s)" -ge "${DEADLINE}" ]; then
+              echo "Still '${CURRENT}' after 15 minutes - refusing to run migrations blind."
+              exit 1
+            fi
+            sleep 20
+            CURRENT="$(status)"
+          done
+
       - name: Show migration status (before)
         id: migrations-before
         env:
@@ -292,10 +352,13 @@ jobs:
 
       # STAGING_SMOKE_URL is a VARIABLE, not a secret, and it is NOT the same
       # thing as FRONTEND_URL: FRONTEND_URL is the backend's CORS allowlist
-      # (origin only, no path), while this is the exact page to fetch. They
-      # differ today because staging is reached at the API Gateway URL, which
-      # carries a /staging stage prefix. When CloudFront lands, point this at
-      # https://<domain>/ and drop the prefix.
+      # (origin only, no path), while this is the exact page to fetch. Both now
+      # point at the CloudFront domain, and the /staging stage prefix is gone from
+      # this value - the ssr-lambda origin appends it via OriginPath.
+      #
+      # It therefore tests the EDGE. The origin's own X-Robots-Tag (SSR_NOINDEX,
+      # src/server.ts) is not reachable from here; the two entrances fail
+      # independently, so a green check on this one proves nothing about the other.
       - name: Smoke test frontend
         env:
           SMOKE_URL: ${{ vars.STAGING_SMOKE_URL }}
@@ -307,12 +370,23 @@ jobs:
           fi
           for i in 1 2 3 4 5 6; do
             echo "Attempt $i: GET ${SMOKE_URL}"
-            HTTP_CODE=$(curl -s -o /tmp/index.html -w "%{http_code}" "${SMOKE_URL}" || echo "000")
+            HTTP_CODE=$(curl -s -D /tmp/headers.txt -o /tmp/index.html -w "%{http_code}" "${SMOKE_URL}" || echo "000")
             # Grep for the server-render marker, never for a literal <app-root>:
             # the bare tag also matches the CSR shell, so that check passes
             # exactly when SSR is broken.
             if [ "$HTTP_CODE" = "200" ] && grep -q 'ng-server-context' /tmp/index.html; then
               echo "Frontend healthy: HTTP 200 + server-rendered content"
+              # noindex is not optional on a public, unauthenticated copy of the
+              # live site, and an indexed staging page competing with prod is
+              # expensive to undo. Fail the deploy instead of leaving it crawlable.
+              if ! grep -qi '^x-robots-tag:[[:space:]]*noindex' /tmp/headers.txt; then
+                echo "X-Robots-Tag: noindex is missing from the edge response."
+                echo "Edge half:   the response-headers policy on the distribution."
+                echo "Origin half: SSR_NOINDEX in ui/serverless.yml -> src/server.ts."
+                grep -i '^HTTP/\|^x-robots-tag' /tmp/headers.txt || true
+                exit 1
+              fi
+              echo "noindex confirmed at the edge"
               exit 0
             fi
             echo "HTTP $HTTP_CODE, SSR marker present: $(grep -c 'ng-server-context' /tmp/index.html || echo 0). Retrying in 15s..."
@@ -341,9 +415,12 @@ jobs:
             echo "csd-frontend-security-headers-staging, on the default behaviour and"
             echo "all nine static behaviours."
             echo ""
-            echo "NOT covered by that policy: the SSR stack's API Gateway URL answers"
-            echo "directly and bypasses CloudFront, so it serves staging without the"
-            echo "header. CONCERNS.md P1-5 rows 17 and 21."
+            echo "The SSR stack's API Gateway URL answers directly and bypasses"
+            echo "CloudFront, so that policy never sees it. It is covered instead by"
+            echo "SSR_NOINDEX in ui/serverless.yml, which makes src/server.ts set the"
+            echo "same header at the origin - both entrances, not just the edge."
+            echo "CONCERNS.md P1-5 rows 17 and 21. The smoke test above asserts the"
+            echo "edge half only; the origin half is not reachable from this job."
             echo ""
             echo "The entry point above is redacted because its value contains the"
             echo "PUBLIC_HOST secret and this repository is public. That is deliberate:"

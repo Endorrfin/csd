@@ -1,0 +1,196 @@
+# .github/workflows/staging-rds-schedule.yml
+#
+# Scheduled stop/start for the staging database (CONCERNS.md P1-5 row 18).
+#
+# Two reasons, in order of weight:
+#   1. SECURITY. csd-postgres-staging inherits P0-5 - it accepts 5432 from
+#      0.0.0.0/0, because the staging Lambda is outside the VPC and migrations
+#      run from GitHub runners. A stopped instance cannot be reached at all, so
+#      this schedule is the mitigation CONCERNS.md P0-5 claims for staging, not
+#      a cost tweak that happens to help.
+#   2. Money, and it is the smaller half: db.t4g.micro is ~$0.019/h, so the
+#      ~108 h/week of downtime is ~$9/month. Storage bills either way.
+#
+# Why GitHub Actions and not EventBridge Scheduler: this is repo state, visible
+# in review and in git history, which is the same reason ARCHITECTURE.md:1149
+# flags console-only values as a hazard. The IAM it needs already exists
+# (StagingRdsStartStop, RdsDescribeGlobal in infra/iam/csd-deploy-staging-policy.json);
+# EventBridge would need a new role plus scheduler:CreateSchedule and iam:PassRole.
+# The trade accepted in exchange: GitHub may delay a scheduled run under load.
+# At $0.019/h a 40-minute delay costs about one cent.
+#
+# TWO THINGS THAT WILL BITE LATER:
+#   - `schedule` only fires from the DEFAULT branch. This file does nothing until
+#     it is merged to main. The `staging` environment is scoped to staging/** AND
+#     main, so the AWS credentials are reachable from there.
+#   - GitHub disables scheduled workflows after 60 days with no repository
+#     activity. It is visible in the Actions tab and silent everywhere else. If
+#     the instance is unexpectedly up for a week, check that first - and note that
+#     RDS restarts a stopped instance on its own after 7 days, so a dead schedule
+#     means the database comes back and stays up.
+name: Staging RDS schedule
+
+on:
+  schedule:
+    # 08:00 Europe/Kyiv, Mon-Fri - start
+    - cron: '0 8 * * 1-5'
+      timezone: Europe/Kyiv
+    # 20:00 Europe/Kyiv, Mon-Fri - stop. Weekends stay off entirely.
+    - cron: '0 20 * * 1-5'
+      timezone: Europe/Kyiv
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'start = bring staging up now, stop = take it down now'
+        required: true
+        type: choice
+        options:
+          - start
+          - stop
+
+# Shares deploy-staging.yml's group so an evening stop cannot land in the middle
+# of a deploy's migration step. cancel-in-progress is FALSE here (it is true
+# there): this run waits for a deploy to finish instead of killing it. A deploy
+# starting later still cancels this one - losing an evening's stop costs cents,
+# and deploy-staging.yml's own "Ensure the staging database is available" step
+# polls through `stopping` to `stopped` before starting, so the reverse race is
+# handled too.
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: eu-central-1
+  # A LITERAL on purpose - never a secret or a variable. An empty or mistyped
+  # value is the only way this workflow could point somewhere unintended, and
+  # a literal in a reviewed file cannot be empty. The IAM policy is the second
+  # barrier: StagingRdsStartStop is scoped to this ARN alone, and
+  # DenyProdOutright denies "*" on arn:...:db:csd-postgres, so an explicit Deny
+  # beats any Allow even if this line were somehow wrong.
+  DB_ID: csd-postgres-staging
+
+jobs:
+  schedule-rds:
+    name: Start / stop csd-postgres-staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      # Fail-closed on an unrecognised trigger. If someone edits a cron above and
+      # forgets this mapping, the run fails loudly rather than quietly stopping
+      # the database at 08:00.
+      - name: Decide start or stop
+        id: decide
+        env:
+          DISPATCH_ACTION: ${{ inputs.action }}
+          SCHEDULE: ${{ github.event.schedule }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DISPATCH_ACTION}" ]; then
+            ACTION="${DISPATCH_ACTION}"
+            echo "Manual dispatch: ${ACTION}"
+          elif [ "${SCHEDULE}" = "0 8 * * 1-5" ]; then
+            ACTION=start
+          elif [ "${SCHEDULE}" = "0 20 * * 1-5" ]; then
+            ACTION=stop
+          else
+            echo "Unrecognised trigger. schedule='${SCHEDULE}', inputs.action='${DISPATCH_ACTION}'."
+            echo "A cron above was changed without updating this mapping."
+            exit 1
+          fi
+          echo "action=${ACTION}" >> "$GITHUB_OUTPUT"
+
+      - name: Start or stop the instance
+        id: act
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+          ACTION: ${{ steps.decide.outputs.action }}
+        run: |
+          set -euo pipefail
+
+          status() {
+            aws rds describe-db-instances --db-instance-identifier "${DB_ID}" \
+              --query 'DBInstances[0].DBInstanceStatus' --output text
+          }
+
+          BEFORE="$(status)"
+          echo "Current status: ${BEFORE}"
+          echo "before=${BEFORE}" >> "$GITHUB_OUTPUT"
+
+          # Both branches are idempotent: a transitional or already-correct state
+          # is a no-op, not a failure. A retried run, a manual dispatch minutes
+          # after the cron, and a run that raced a deploy all end the same way.
+          if [ "${ACTION}" = "stop" ]; then
+            if [ "${BEFORE}" != "available" ]; then
+              echo "Not 'available' - nothing to stop. Leaving it alone."
+              echo "after=${BEFORE}" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            aws rds stop-db-instance --db-instance-identifier "${DB_ID}" >/dev/null
+            echo "Stop requested. Not waiting: nothing downstream depends on it,"
+            echo "and 'stopping' -> 'stopped' takes several minutes."
+            echo "after=stopping" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Poll and issue start on EVERY observation of 'stopped', rather than
+          # deciding once up front. The case that needs it: this run arrives while
+          # the instance is still 'stopping' (a deploy raced the evening stop, or a
+          # dispatch followed a cron too closely). Deciding once would skip the
+          # start, then wait for an 'available' that is never coming and fail on the
+          # timeout. Waiting, rather than only firing the API call, is what makes a
+          # green tick mean the database is reachable. 15 min against a ~2-5 min
+          # start: a timeout here is a real problem, not flakiness.
+          DEADLINE=$(( $(date +%s) + 900 ))
+          CURRENT="${BEFORE}"
+          while :; do
+            case "${CURRENT}" in
+              available)
+                echo "Available."
+                echo "after=available" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+              stopped)
+                echo "Stopped - requesting start."
+                aws rds start-db-instance --db-instance-identifier "${DB_ID}" >/dev/null
+                ;;
+              *)
+                echo "  status=${CURRENT}, waiting..."
+                ;;
+            esac
+            if [ "$(date +%s)" -ge "${DEADLINE}" ]; then
+              echo "Still '${CURRENT}' after 15 minutes. Check the RDS console."
+              echo "after=${CURRENT}" >> "$GITHUB_OUTPUT"
+              exit 1
+            fi
+            sleep 20
+            CURRENT="$(status)"
+          done
+
+      - name: Summary
+        if: always()
+        env:
+          ACTION: ${{ steps.decide.outputs.action }}
+          BEFORE: ${{ steps.act.outputs.before }}
+          AFTER: ${{ steps.act.outputs.after }}
+        run: |
+          {
+            echo "## Staging RDS"
+            echo ""
+            echo "| | |"
+            echo "| --- | --- |"
+            echo "| Instance | \`${DB_ID}\` |"
+            echo "| Action | ${ACTION:-unknown} |"
+            echo "| Status before | ${BEFORE:-unknown} |"
+            echo "| Status after | ${AFTER:-unknown} |"
+            echo "| Trigger | ${{ github.event_name }} ${{ github.event.schedule }} |"
+            echo ""
+            echo "Window: Mon-Fri 08:00-20:00 Europe/Kyiv, weekends off."
+            echo "A staging deploy outside that window starts the database itself"
+            echo "before running migrations - see deploy-staging.yml."
+          } >> "$GITHUB_STEP_SUMMARY"
