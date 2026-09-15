@@ -227,7 +227,7 @@ Routes are defined in `app.routes.ts` (public) and `features/admin/admin.routes.
 - `core/services/api.service.ts` — central HTTP client prepending `/api`
 - `core/services/auth.service.ts` — JWT storage + role helpers (`isManager`, `isAdmin`, `isSuperAdmin`)
 - `core/services/language.service.ts` — **signal-based** current language; mandatory for language-dependent logic because the app is zoneless and `translate.currentLang` is not reactive
-- `core/services/page-title.service.ts` — per-route document title
+- `core/services/page-title.service.ts` — per-route document title, `meta name="description"` and their Open Graph twins (`og:title`, `og:description`)
 - `core/interceptors/auth.interceptor.ts` — attaches `Authorization: Bearer …`
 - `shared/components/` — `carousel`, `file-upload`, `form-stepper`, `location-selector`, `sticky-cta`, `turnstile`
 - `shared/services/location.service.ts` + `assets/data/locations.json` — Ukraine oblast / hromada selector

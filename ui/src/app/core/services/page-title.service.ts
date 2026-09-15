@@ -4,7 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 
 /**
- * Single owner of <title> and <meta name="description">.
+ * Single owner of <title>, <meta name="description"> and their Open Graph twins
+ * (og:title, og:description).
  *
  * The service is a root singleton, so BOTH the description tag and the language
  * subscription are shared by every route. Anything that leaves them pointing at
@@ -37,14 +38,25 @@ export class PageTitleService implements OnDestroy {
     // no descriptionKey now means "site default", not "no description".
     const descKey = descriptionKey ?? PageTitleService.DEFAULT_DESCRIPTION_KEY;
 
+    // CHANGED: drive og:title and og:description alongside the page tags
+    // Without this only /blog/:slug sets og:* of its own, so every other route
+    // was shared with the static card in index.html — one title and one
+    // description for the whole site, whichever page the link pointed at.
     const applyTags = () => {
       this.translate.get(titleKey).subscribe((title: string) => {
         const fullTitle = isAdmin ? `${title} | Admin | CSD Fund` : `${title} | CSD Fund`;
         this.titleService.setTitle(fullTitle);
+
+        // og:title takes the bare title, not fullTitle. og:site_name already
+        // renders "CSD Fund" as its own line on the card, and social scrapers
+        // truncate around 60-70 characters — with the suffix the home page's
+        // 72-character legal name lost its tail to make room for a duplicate.
+        this.metaService.updateTag({ property: 'og:title', content: title });
       });
 
       this.translate.get(descKey).subscribe((desc: string) => {
         this.metaService.updateTag({ name: 'description', content: desc });
+        this.metaService.updateTag({ property: 'og:description', content: desc });
       });
     };
 
@@ -67,6 +79,10 @@ export class PageTitleService implements OnDestroy {
 
     this.titleService.setTitle(title);
     this.metaService.updateTag({ name: 'description', content: description });
+
+    // CHANGED: mirror into Open Graph, same reason as in updateSeo
+    this.metaService.updateTag({ property: 'og:title', content: title });
+    this.metaService.updateTag({ property: 'og:description', content: description });
   }
 
   ngOnDestroy(): void {
