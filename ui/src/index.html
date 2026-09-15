@@ -48,13 +48,40 @@
       crossorigin=""
     ></script>
 
-    <!-- NEW: default Open Graph fallback tags -->
+    <!-- og:description, og:image; added image dimensions, locale and Twitter tags -->
+    <!--
+      Site-wide Open Graph defaults. Every route except /blog/:slug ships this
+      card; PageTitleService overrides og:title and og:description per route, and
+      blog-post.ts additionally overrides og:image and og:url.
+
+      og:description must stay at 100 characters or more — LinkedIn's Post
+      Inspector rejects anything shorter with a visible warning, and the previous
+      28-character value ("WASH · Відновлення · Укриття") triggered it. The text
+      here mirrors HOME.DESCRIPTION in assets/i18n/ua.json; keep the two in step.
+
+      og:image must be the 1.91:1 card, not an app icon. Pointing this at
+      web-app-manifest-512x512.png made every shared link render as the logo
+      floating in a white box, because the scrapers pad a square to card ratio.
+    -->
     <meta property="og:site_name" content="CSD Fund" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="CSD — Centre for Support and Development" />
-    <meta property="og:description" content="WASH · Відновлення · Укриття" />
-    <meta property="og:image" content="https://www.csd-fund.org/web-app-manifest-512x512.png" />
-    <meta property="og:url" content="https://www.csd-fund.org" />
+    <meta
+      property="og:description"
+      content="Благодійний фонд «Центр підтримки та розвитку» (CSD Fund). Напрямки діяльності: WASH (водопостачання, санітарія, гігієна), відновлення інфраструктури та укриття."
+    />
+    <meta property="og:url" content="https://www.csd-fund.org/" />
+    <meta property="og:image" content="https://www.csd-fund.org/og-cover.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Charitable Organization “Charitable Fund “Centre for Support and Development”” — WASH, recovery and shelter programmes in Ukraine."
+    />
+    <meta property="og:locale" content="uk_UA" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://www.csd-fund.org/og-cover.png" />
   </head>
   <body>
     <app-root></app-root>
