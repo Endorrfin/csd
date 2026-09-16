@@ -359,6 +359,24 @@ jobs:
             # server-render marker itself (matches both "ssr" and future "ssg").
             if [ "$HTTP_CODE" = "200" ] && grep -q 'ng-server-context' /tmp/index.html; then
               echo "✅ Frontend healthy: HTTP 200 + server-rendered content (ng-server-context)"
+              # the Open Graph card must answer as an image. A root-level file
+              # without its own CloudFront behaviour falls through to the SSR Lambda and
+              # returns the HTML 404 page - invisible to the GET / check above. This is
+              # the URL LinkedIn fetches, so it is tested exactly as published.
+              OG_IMAGE=$(grep -oE '<meta property="og:image" content="[^"]+"' /tmp/index.html | head -n 1 | sed -E 's/.*content="([^"]+)"/\1/' || true)
+              if [ -z "$OG_IMAGE" ]; then
+                echo "❌ og:image meta tag not found in the server-rendered page"
+                exit 1
+              fi
+              OG_STATUS=$(curl -s --max-time 20 -o /dev/null -w "%{http_code} %{content_type}" "$OG_IMAGE" || true)
+              case "$OG_STATUS" in
+                "200 image/"*) echo "✅ og:image ${OG_IMAGE} -> ${OG_STATUS}" ;;
+                *)
+                  echo "❌ og:image ${OG_IMAGE} -> '${OG_STATUS}', expected '200 image/*'"
+                  echo "A file outside /assets/ needs its own CloudFront behaviour (see ui/src/index.html)."
+                  exit 1
+                  ;;
+              esac
               exit 0
             fi
             echo "⚠️  HTTP $HTTP_CODE, SSR marker present: $(grep -c 'ng-server-context' /tmp/index.html || echo 0). Retrying in 15s..."

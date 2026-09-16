@@ -177,9 +177,7 @@ export class BlogPostComponent implements OnInit {
       (ua ? post.contentUa : post.contentEn)?.slice(0, 160) ||
       '';
     const image =
-      post.images?.[0] ||
-      post.coverImage ||
-      'https://www.csd-fund.org/web-app-manifest-512x512.png';
+      post.images?.[0] || post.coverImage || 'https://www.csd-fund.org/assets/images/og-cover.png';
     const url = `https://www.csd-fund.org/blog/${post.slug}`;
 
     this.pageTitle.setStaticSeo(pageTitle, description);
