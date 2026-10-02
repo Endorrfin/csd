@@ -23,9 +23,9 @@
 
 'use strict';
 
-// CHANGED: 22.12 was the require(esm) threshold, which no longer applies here.
-// Lambda's runtime is nodejs22.x, so just keep local/CI on the same major.
-const MIN_NODE = [22, 0, 0];
+// Lambda's runtime is nodejs24.x, so keep local/CI on the same major.
+// MIN_NODE 22 -> 24
+const MIN_NODE = [24, 0, 0];
 
 function parseVersion(v) {
   return v.replace(/^v/, '').split('.').map(Number);
@@ -42,7 +42,7 @@ function isBelow(actual, min) {
 const actual = parseVersion(process.version);
 if (isBelow(actual, MIN_NODE)) {
   console.error(
-    `✖ Node ${process.version} is too old — Lambda runs nodejs22.x, so this check\n` +
+    `✖ Node ${process.version} is too old — Lambda runs nodejs24.x, so this check\n` +
       `  must run on Node >= ${MIN_NODE.join('.')} to be meaningful.`,
   );
   process.exit(1);

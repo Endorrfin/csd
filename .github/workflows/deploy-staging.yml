@@ -28,7 +28,8 @@ permissions:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  NODE_VERSION: '22.17.0'
+  # Node 22 -> 24 LTS, keep equal to the Lambda runtime major
+  NODE_VERSION: '24.21.0'
   AWS_REGION: eu-central-1
   # staging counterparts of deploy.yml's DEPLOY_STAGE / STATIC_BUCKET.
   # There is deliberately no CF_DISTRIBUTION_ID here. The distribution exists
@@ -65,7 +66,7 @@ jobs:
         run: npm ci
 
       # Same cold-start guard as prod, and for the same reason: `nest build`
-      # emits CommonJS, the managed nodejs22.x runtime has no require(esm), and a
+      # emits CommonJS, the managed nodejs24.x runtime has no require(esm) by default, and a
       # single ESM-only transitive dependency bricks every route at init.
       # Before the migrations on purpose - never mutate a database for a build we
       # already know cannot boot.

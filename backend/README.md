@@ -4,7 +4,7 @@ NestJS 11 + TypeORM + PostgreSQL. Deploys to AWS Lambda via GitHub Actions when 
 
 ## Stack
 
-- **Runtime**: Node.js 22 (LTS)
+- **Runtime**: Node.js 24 (LTS)
 - **Framework**: NestJS 11
 - **DB**: PostgreSQL — local Homebrew `postgresql@14`, prod AWS RDS **16.13** (live AWS value, not in this repo; read 2026-07-29), e2e `postgres:16-alpine` via Testcontainers
 - **ORM**: TypeORM with migrations (no `synchronize`)

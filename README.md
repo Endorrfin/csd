@@ -26,7 +26,7 @@ csd-fund/
 ## 1. Technology stack
 
 ### Backend (`backend/`)
-- **Runtime:** Node.js 22 (LTS)
+- **Runtime:** Node.js 24 (LTS)
 - **Framework:** NestJS 11 + TypeScript 5.7
 - **ORM / DB:** TypeORM 0.3 + PostgreSQL — **local dev 14** (Homebrew `postgresql@14`), **production 16.13** (AWS RDS, SSL in prod)
 - **Auth:** Passport (`passport-local`, `passport-jwt`) + `@nestjs/jwt`, role-based guards (`public` / `donor` / `manager` / `admin` / `super_admin`)
@@ -280,7 +280,7 @@ source ~/.zshrc
 brew --version   # should print a version number
 ```
 
-#### Step 3 — Install Node.js 22 via fnm *(one-time)*
+#### Step 3 — Install Node.js 24 via fnm *(one-time)*
 
 [fnm](https://github.com/Schniz/fnm) is a fast Node version manager. It reads `.nvmrc` files automatically so you always get the right Node version per project.
 
@@ -296,7 +296,7 @@ fnm install 22.17.0
 fnm use 22.17.0
 
 # Verify:
-node --version   # must print v22.17.0
+node --version   # must print v24.21.0
 npm --version    # must print 10.x
 ```
 
@@ -480,7 +480,7 @@ Set-ItemProperty `
 
 Restart your terminal after this step.
 
-#### Step 3 — Install Node.js 22 via fnm *(one-time)*
+#### Step 3 — Install Node.js 24 via fnm *(one-time)*
 
 ```powershell
 # Install fnm via winget (Windows Package Manager, built into Windows 10/11):
@@ -491,11 +491,11 @@ fnm install 22.17.0
 fnm use 22.17.0
 
 # Verify:
-node --version   # must print v22.17.0
+node --version   # must print v24.21.0
 npm --version    # must print 10.x
 ```
 
-> If `winget` is not available, download fnm from <https://github.com/Schniz/fnm/releases> and add it to your `PATH` manually. Alternatively download Node.js 22.17.0 directly from <https://nodejs.org>.
+> If `winget` is not available, download fnm from <https://github.com/Schniz/fnm/releases> and add it to your `PATH` manually. Alternatively download Node.js 24.21.0 directly from <https://nodejs.org>.
 
 #### Step 4 — Install Docker Desktop and start PostgreSQL *(one-time)*
 

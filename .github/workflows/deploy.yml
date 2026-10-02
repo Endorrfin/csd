@@ -35,7 +35,8 @@ concurrency:
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   # === ADDED: single source of truth for Node version (matches local 22.17.0) ===
-  NODE_VERSION: '22.17.0'
+  # Node 22 -> 24 LTS, keep equal to the Lambda runtime major
+  NODE_VERSION: '24.21.0'
   # ============================================================================
   # === ADDED: the three prod deploy targets that used to sit inline in shell
   # steps, named in one place (staging, P1-5). The VALUES ARE UNCHANGED and this
@@ -74,7 +75,7 @@ jobs:
 
       # cold-start guard, BEFORE migrations and before deploy.
       # `nest build` emits CommonJS and Lambda loads it with require(). AWS's
-      # managed nodejs22.x runtime has NO require(esm) support, so a single
+      # managed nodejs24.x runtime has NO require(esm) support by default, so a single
       # ESM-only transitive dep bricks every route with ERR_REQUIRE_ESM at init
       # (this is exactly what sanitize-html 2.17.6 -> htmlparser2 v12 did).
       # The script runs node with --no-experimental-require-module to reproduce

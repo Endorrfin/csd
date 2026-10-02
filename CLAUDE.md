@@ -32,7 +32,7 @@ Several `docs/` subfolders are **gitignored** (`forms/`, `about-documents/`, `sc
 
 | Layer        | Backend                                  | Frontend                                       |
 | ------------ | ---------------------------------------- | ---------------------------------------------- |
-| Language     | TypeScript 5.7 (Node 22)                 | TypeScript 5.9 (Node 22)                       |
+| Language     | TypeScript 5.7 (Node 24)                 | TypeScript 5.9 (Node 24)                       |
 | Framework    | NestJS 11                                | Angular 21 standalone + signals + SSR          |
 | HTTP entry   | `backend/lambda.ts` (serverless-express) | `ui/lambda.mjs` (serverless-http) + `ui/src/server.ts` |
 | Persistence  | TypeORM 0.3 + PostgreSQL (see below)     | localStorage for JWT (browser only)            |
