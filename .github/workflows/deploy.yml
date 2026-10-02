@@ -173,6 +173,11 @@ jobs:
       - name: Build
         run: npm run build
 
+      # === ADDED: handler signature check, needs the dist/ from the step above ===
+      # nodejs24.x fails init on a callback-style handler (Incident #5).
+      - name: Lambda handler signature check
+        run: npm run check:handler
+
       - name: Deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

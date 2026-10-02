@@ -172,6 +172,11 @@ jobs:
       - name: Build
         run: npm run build
 
+      # === ADDED: handler signature check, needs the dist/ from the step above ===
+      # nodejs24.x fails init on a callback-style handler (Incident #5).
+      - name: Lambda handler signature check
+        run: npm run check:handler
+
       # TURNSTILE_SECRET_KEY is deliberately NOT passed. backend/serverless.yml
       # defaults it to '' and TurnstileGuard fails closed, so the two needs-form
       # upload/submit endpoints answer 403 on staging. That is the accepted
