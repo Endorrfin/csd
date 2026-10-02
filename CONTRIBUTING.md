@@ -73,10 +73,18 @@ is different in two ways.
 - **A push deploys.** `.github/workflows/deploy-staging.yml` triggers on
   `push` to `staging/**`, so `git push` on such a branch builds and deploys both
   stacks to the staging environment — no PR, no review, no merge. There is also a
-  `workflow_dispatch` entry point for redeploying without a push. Outside
-  Mon-Fri 08:00-20:00 Kyiv the staging database is stopped, so the run starts it
-  and waits (~2-5 min) before touching migrations - a deploy at midnight works,
-  it is just slower.
+  `workflow_dispatch` entry point for redeploying without a push. The staging
+  database is normally stopped (it is stopped every day at 20:00 Kyiv and is not
+  started on a timer), so a deploy starts it and waits (~2-5 min) before touching
+  migrations - every staging deploy pays that wait, and the database goes down
+  again at the next 20:00.
+- **Testing staging without a deploy, or after 20:00.** The 20:00 stop also takes
+  the database down under anyone still testing. Start it by hand: Actions →
+  *Staging RDS schedule* → Run workflow → `start` (the run waits until the
+  instance is `available`, ~2-5 min). The next 20:00 stops it again; `stop` in
+  the same form takes it down sooner. Do this from `main` or a `staging/**`
+  branch - the `staging` environment holding the AWS credentials is not
+  reachable from other branches.
 - **The branch name is half of an access-control boundary.** Both jobs declare
   `environment: staging`, and that GitHub environment — which holds the staging
   AWS credentials and the staging hostname — is scoped to `staging/**` and

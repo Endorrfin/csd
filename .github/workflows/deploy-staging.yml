@@ -72,19 +72,22 @@ jobs:
       - name: CommonJS load check (Lambda cold-start guard)
         run: npm run check:cjs
 
-      # The staging database is stopped outside Mon-Fri 08:00-20:00 Europe/Kyiv
-      # (staging-rds-schedule.yml, CONCERNS.md P1-5 row 18), and every step below
-      # this one needs it: migration:show is the first thing that would fail, and
-      # it would fail as a confusing connection timeout rather than "the database
-      # is off". So a deploy outside the window wakes it and waits.
+      # comment rewritten for the daily-stop-only schedule
+      # The staging database is normally stopped: staging-rds-schedule.yml stops it
+      # every day at 20:00 Europe/Kyiv and nothing starts it on a timer
+      # (CONCERNS.md P1-5 row 18). Every step below this one needs it:
+      # migration:show is the first thing that would fail, and it would fail as a
+      # confusing connection timeout rather than "the database is off". So a
+      # deploy wakes it and waits.
       #
       # Placed AFTER check:cjs and before the migrations, for the same reason
       # check:cjs is where it is: do not wake a database for a build that is
       # already known not to boot.
       #
       # This does NOT stop the instance again afterwards. A deploy at 23:00 means
-      # somebody is working; the 20:00 cron takes it down the next evening. An extra
-      # night of uptime costs about $0.20 - cheaper than a job that pulls the
+      # somebody is working; the 20:00 cron takes it down that evening, or the next
+      # one if the deploy came after 20:00. An extra night of uptime costs about
+      # $0.20 - cheaper than a job that pulls the
       # database out from under whoever is still using it.
       #
       # The loop issues start on EVERY observation of 'stopped' rather than deciding
