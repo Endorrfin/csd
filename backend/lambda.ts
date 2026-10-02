@@ -90,8 +90,11 @@ async function bootstrap(): Promise<ApiHandler> {
 }
 
 // was `(event: any, context: any, callback: any)`
-export const handler: ApiHandler = async (event, context, callback) => {
+// The runtime rejects any exported handler that declares a `callback` parameter
+// (Runtime.CallbackHandlerDeprecated on nodejs24.x), so this takes two.
+// dropped the callback parameter
+export const handler: ApiHandler = async (event, context) => {
   // Reuse the bootstrap result across warm invocations
   cachedServer ??= await bootstrap();
-  return cachedServer(event, context, callback);
+  return cachedServer(event, context);
 };

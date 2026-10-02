@@ -142,7 +142,7 @@ graph TB
 
 | Layer | Technology | Version |
 |-------|-----------|---------|
-| Runtime | Node.js | 22.x (CI pins `22.17.0`) |
+| Runtime | Node.js | 24.x (CI pins `24.21.0`) |
 | Language | TypeScript | 5.7.x |
 | Framework | NestJS | 11.x |
 | Database (prod) | PostgreSQL on RDS `csd-postgres` | **16.13** † |
@@ -1398,8 +1398,8 @@ export const environment: Environment = {
 
 ### Prerequisites
 
-- **Node.js 22.x** (matches Lambda runtime) — use `nvm install 22` if needed
-- **npm 10.x** (ships with Node 22)
+- **Node.js 24.x** (matches Lambda runtime) — use `nvm install 24` if needed
+- **npm 11.x** (ships with Node 24)
 - **PostgreSQL** — pick one:
     - **Homebrew** `postgresql@14` on host port **5432** (the README walkthrough and `.env.example` default): `brew install postgresql@14 && brew services start postgresql@14`
     - **Docker** `postgres:16` mapped to host port **5433** to avoid collision with a system postgres: `docker run -d --name csd-pg -e POSTGRES_PASSWORD=postgres -p 5433:5432 postgres:16`
@@ -1479,10 +1479,11 @@ Full provisioning + rotation runbook (including prod against RDS): see [`backend
 | `npm run start:prod` | Run compiled dist (matches Lambda) |
 | `npm run build` | `nest build` — compile TypeScript to `dist/` |
 | `npm run typecheck` | `tsc --noEmit` |
-| **`npm run verify`** | Full gate: `typecheck` → `lint:check` → `check:cjs` → `test` → `build` |
+| **`npm run verify`** | Full gate: `typecheck` → `lint:check` → `check:cjs` → `test` → `build` → `check:handler` |
 | `npm run lint` | ESLint **with `--fix`** — mutates files |
 | `npm run lint:check` | ESLint without `--fix` — this is what CI runs |
 | **`npm run check:cjs`** | Loads every runtime dependency under plain CommonJS with `--no-experimental-require-module`, emulating the Lambda runtime. See Incident #4 — do not remove this |
+| **`npm run check:handler`** | Loads the compiled `dist/lambda.js` and fails if the exported `handler` declares more than two parameters (nodejs24.x rejects callback handlers). Needs a prior `npm run build`. See Incident #5 |
 | `npm run format` | Prettier on `src/` and `test/` |
 | `npm run test` | Jest unit tests — 17 suites, `rootDir: src`, so **`test/` is excluded** |
 | `npm run test:e2e` | Testcontainers e2e — starts `postgres:16-alpine`, runs **all** migrations, then `test/*.e2e-spec.ts`. Requires Docker |
@@ -1969,6 +1970,22 @@ Jest could not catch it either: `transformIgnorePatterns` + ts-jest downlevel th
 1. Green CI is only evidence about the environment CI runs in. When production runs a *different* runtime configuration, some check must reproduce that configuration explicitly.
 2. Incident #2's lesson ("audit transitive ESM deps") was recorded but not automated, so the same class of failure recurred three months later. Record a lesson **and** make something enforce it.
 
+### Incident #5: nodejs24.x rejected the callback-style Lambda handler — caught on staging
+
+**Date:** 2026-10-02 (Node 22 → 24 migration, `staging/node-24` deploy). Production was not affected; it was still on `nodejs22.x`.
+**Severity:** None in production. On staging, 502 on every route and a failed backend smoke test.
+
+**Symptoms:** `deploy-staging.yml` failed at the backend smoke test with five consecutive HTTP 502s. CloudWatch (`/aws/lambda/csd-api-staging-api`) showed `Runtime.CallbackHandlerDeprecated` at init. `npm run verify`, unit tests, e2e and `check:cjs` were all green on Node 24 locally.
+
+**Root cause:** From `nodejs24.x` the managed runtime no longer supports callback-based handlers and rejects any exported handler whose declared arity exceeds two. `backend/lambda.ts` exported `async (event, context, callback)` and forwarded `callback` to `serverless-express`, so init failed before any request was served. Nothing in `verify` invokes the real handler: Jest exercises the Nest services and `check:cjs` only `require()`s dependencies, so the failure was invisible until a real Lambda started.
+
+**Resolution:**
+- `backend/lambda.ts` handler is now `(event, context)`; the library returns a Promise without a callback.
+- Added `backend/scripts/check-handler-signature.cjs` and `npm run check:handler`: it loads the compiled `dist/lambda.js` and fails if `handler.length > 2`. It needs `dist/`, so it runs after `nest build` — last link of `verify`, and right after the Build step in `test.yml`, `deploy.yml` and `deploy-staging.yml`.
+- The UI handler (`serverlessHttp(app)` in `ui/lambda.mjs`) has arity 1 and needed no change.
+
+**Lesson:** Same as Incident #4, again: a Lambda runtime-major upgrade changes the contract of the runtime itself, and a check has to reproduce that contract. Deploying to staging first is what made this a non-incident — keep staging in front of production for every runtime bump.
+
 ---
 
 ## 16. Runbook — Operational Procedures
@@ -2324,7 +2341,7 @@ A: There isn't one yet. All changes merge to `main` and deploy to prod. Staging 
 A: 22.x. This matches the Lambda runtime. `nvm use 22` if you have `nvm`.
 
 **Q: How do I test Lambda cold-start behavior locally?**
-A: `npm run check:cjs` in `backend/` — it loads every runtime dependency with `--no-experimental-require-module`, which is what AWS's managed `nodejs22.x` actually does. `npx serverless invoke local --function api --stage prod` is a broader smoke test but, being plain Node, will *not* reproduce the ESM failure mode from Incident #4.
+A: `npm run check:cjs` in `backend/` — it loads every runtime dependency with `--no-experimental-require-module`, which is what AWS's managed Lambda Node runtime does (`nodejs24.x`; `22.x` before it). `npx serverless invoke local --function api --stage prod` is a broader smoke test but, being plain Node, will *not* reproduce the ESM failure mode from Incident #4.
 
 **Q: Why is `sanitize-html` pinned to an exact version and excluded from Dependabot?**
 A: Incident #4. 2.17.6 pulls an ESM-only `htmlparser2` that cannot load in the Lambda runtime. Do not bump it without running `npm run check:cjs`.

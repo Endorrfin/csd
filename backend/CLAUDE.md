@@ -6,7 +6,7 @@ This file holds the **rules an agent must not break**. Everything descriptive �
 
 ## Stack (verified against `package.json`)
 
-- **Runtime:** Node.js 22 (LTS). Both workflows pin `NODE_VERSION: '22.17.0'`; `.nvmrc` at the repo root is the local pin.
+- **Runtime:** Node.js 24 (LTS). All three workflows pin `NODE_VERSION: '24.21.0'`; `.nvmrc` at the repo root is the local pin.
 - **Framework:** NestJS 11 (`@nestjs/common@^11`, `@nestjs/core@^11`).
 - **ORM:** TypeORM `^0.3.28` + `pg@^8`. `synchronize: false` everywhere — migrations only. 14 migrations on `main`.
 - **DB:** **local dev PostgreSQL 14, e2e `postgres:16-alpine` via Testcontainers, production 16.13 on RDS.** The dev/prod major skew is real and deliberate — migrations are authored on 14 and applied to 16 (`ARCHITECTURE.md` §13). RDS uses `ssl: { rejectUnauthorized: false }`; local is plain TCP.
@@ -26,6 +26,7 @@ backend/
 ├── serverless.yml                  # Serverless v4 config
 ├── scripts/
 │   ├── check-cjs-load.cjs          # `npm run check:cjs` — the ESM cold-start guard (see Don'ts)
+│   ├── check-handler-signature.cjs # `npm run check:handler` — Lambda handler arity guard (needs dist/)
 │   └── verify-baseline-against-prod-schema.ts
 ├── test/jest-e2e.json              # tracked via the `!test/jest-e2e.json` negation in .gitignore
 ├── .env.example                    # local defaults (DB_PORT=5432 = Homebrew postgresql@14; Docker users override to 5433)
@@ -86,10 +87,11 @@ All routes are prefixed `/api` (`setGlobalPrefix('api')` in both entry points). 
 
 | Script | What it is |
 | --- | --- |
-| `npm run verify` | `typecheck → lint:check → check:cjs → test → build`. The pre-push gate |
+| `npm run verify` | `typecheck → lint:check → check:cjs → test → build → check:handler`. The pre-push gate |
 | `npm run lint` | ESLint **with `--fix`** — it rewrites your files. Never use it in CI |
 | `npm run lint:check` | ESLint without `--fix`. This is what `test.yml` runs |
 | `npm run check:cjs` | `require()`s every runtime dependency under `node --no-experimental-require-module`. Guards against the ESM cold-start crash — see Don'ts |
+| `npm run check:handler` | Fails if the compiled Lambda `handler` declares more than two parameters (`nodejs24.x` rejects callback handlers; `ARCHITECTURE.md` §15, Incident #5). Run after `npm run build` |
 | `npm run test:e2e` | Testcontainers `postgres:16-alpine`, `maxWorkers: 1`. **Needs Docker.** Not part of `verify` |
 | `npm run seed:about-documents` | Standalone About-registry seed. The only path to prod |
 | `npm run seed:super-admin` | Standalone. Not in the bootstrap chain |
@@ -258,7 +260,7 @@ add a second logger, a `pino-pretty` transport, or per-module options.
 
 ## Don'ts
 
-- **Don't unpin or bump `sanitize-html`.** `2.17.5` is exact for a reason: ≥ 2.17.6 pulls ESM-only `htmlparser2` v12, and AWS's managed `nodejs22.x` is built without `require(esm)`. Local Node 22.12+ and GitHub Actions both *do* support it, so every check stayed green while production returned 502 on every route — twice. `.github/dependabot.yml` ignores it at every level. Full write-up: `ARCHITECTURE.md` §15, Incident #4.
+- **Don't unpin or bump `sanitize-html`.** `2.17.5` is exact for a reason: ≥ 2.17.6 pulls ESM-only `htmlparser2` v12, and AWS's managed `nodejs22.x`/`nodejs24.x` is built without `require(esm)`. Local Node 22.12+ and GitHub Actions both *do* support it, so every check stayed green while production returned 502 on every route — twice. `.github/dependabot.yml` ignores it at every level. Full write-up: `ARCHITECTURE.md` §15, Incident #4.
 - **Don't add a runtime dependency without running `npm run check:cjs`.** It is the only check that catches the failure above; Jest cannot, because `transformIgnorePatterns` downlevels ESM-only files to CJS.
 - Don't run `nest start` in prod — `lambda.ts` is the entry, `main.ts` is local-only.
 - Don't hand-edit `dist/` — wiped on every `nest build` (`deleteOutDir: true`). Don't import from it either.

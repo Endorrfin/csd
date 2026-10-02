@@ -463,8 +463,9 @@ Use `// TODO: remove` or a logger service instead. CI does not block on this, bu
 ### Dependencies — the rule that came from two outages
 
 **Adding a runtime dependency to `backend/` requires `npm run check:cjs` to
-pass.** AWS's managed `nodejs22.x` runtime is built **without** `require(esm)`
-support and it cannot be re-enabled via `NODE_OPTIONS` — but plain Node 22.12+
+pass.** AWS's managed `nodejs24.x` runtime (like `nodejs22.x` before it) is built **without** `require(esm)`
+support by default (on 22 it cannot be re-enabled; on 24 AWS allows an
+experimental opt-in with no SLA, which we do not use) — but plain Node 22.12+
 locally and on GitHub Actions *does* support it. So an ESM-only transitive
 dependency passes every check and takes production down with a 502 on every
 route. Jest cannot catch it either: `transformIgnorePatterns` downlevels those
