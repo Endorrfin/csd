@@ -1,6 +1,8 @@
 # .github/workflows/staging-rds-schedule.yml
 #
-# Scheduled stop/start for the staging database (CONCERNS.md P1-5 row 18).
+# Daily stop for the staging database (CONCERNS.md P1-5 row 18). There is no
+# scheduled start: staging is needed rarely, so it stays stopped until a deploy
+# (deploy-staging.yml wakes it) or a manual `start` dispatch needs it.
 #
 # Two reasons, in order of weight:
 #   1. SECURITY. csd-postgres-staging inherits P0-5 - it accepts 5432 from
@@ -8,8 +10,10 @@
 #      run from GitHub runners. A stopped instance cannot be reached at all, so
 #      this schedule is the mitigation CONCERNS.md P0-5 claims for staging, not
 #      a cost tweak that happens to help.
-#   2. Money, and it is the smaller half: db.t4g.micro is ~$0.019/h, so the
-#      ~108 h/week of downtime is ~$9/month. Storage bills either way.
+#   2. Money, and it is the smaller half: db.t4g.micro is ~$0.019/h, so every
+#      hour it stays down is ~2 cents saved. Storage (~$2.7/month) and the
+#      public IPv4 (~$3.65/month, billed as IdleAddress while stopped) bill
+#      either way; only deleting the instance stops them.
 #
 # Why GitHub Actions and not EventBridge Scheduler: this is repo state, visible
 # in review and in git history, which is the same reason ARCHITECTURE.md:1149
@@ -32,11 +36,11 @@ name: Staging RDS schedule
 
 on:
   schedule:
-    # 08:00 Europe/Kyiv, Mon-Fri - start
-    - cron: '0 8 * * 1-5'
-      timezone: Europe/Kyiv
-    # 20:00 Europe/Kyiv, Mon-Fri - stop. Weekends stay off entirely.
-    - cron: '0 20 * * 1-5'
+    # the 08:00 Mon-Fri start cron was removed and the stop made daily
+    # 20:00 Europe/Kyiv, every day - stop. Daily rather than Mon-Fri so a deploy
+    # or a manual start on a weekend is also taken down, and so RDS's own
+    # 7-day auto-restart of a stopped instance never lets it stay up.
+    - cron: '0 20 * * *'
       timezone: Europe/Kyiv
   workflow_dispatch:
     inputs:
@@ -79,9 +83,9 @@ jobs:
     environment: staging
 
     steps:
-      # Fail-closed on an unrecognised trigger. If someone edits a cron above and
-      # forgets this mapping, the run fails loudly rather than quietly stopping
-      # the database at 08:00.
+      # Fail-closed on an unrecognised trigger. If someone edits or adds a cron
+      # above and forgets this mapping, the run fails loudly rather than quietly
+      # stopping the database at the wrong time.
       - name: Decide start or stop
         id: decide
         env:
@@ -92,9 +96,8 @@ jobs:
           if [ -n "${DISPATCH_ACTION}" ]; then
             ACTION="${DISPATCH_ACTION}"
             echo "Manual dispatch: ${ACTION}"
-          elif [ "${SCHEDULE}" = "0 8 * * 1-5" ]; then
-            ACTION=start
-          elif [ "${SCHEDULE}" = "0 20 * * 1-5" ]; then
+          # single daily stop; the scheduled start branch was removed
+          elif [ "${SCHEDULE}" = "0 20 * * *" ]; then
             ACTION=stop
           else
             echo "Unrecognised trigger. schedule='${SCHEDULE}', inputs.action='${DISPATCH_ACTION}'."
@@ -190,7 +193,7 @@ jobs:
             echo "| Status after | ${AFTER:-unknown} |"
             echo "| Trigger | ${{ github.event_name }} ${{ github.event.schedule }} |"
             echo ""
-            echo "Window: Mon-Fri 08:00-20:00 Europe/Kyiv, weekends off."
-            echo "A staging deploy outside that window starts the database itself"
-            echo "before running migrations - see deploy-staging.yml."
+            echo "Schedule: stop every day at 20:00 Europe/Kyiv; there is no scheduled start."
+            echo "A staging deploy starts the database itself before running"
+            echo "migrations - see deploy-staging.yml - and a manual dispatch can start it."
           } >> "$GITHUB_STEP_SUMMARY"
