@@ -6,19 +6,23 @@ import { CarouselComponent } from '../../shared/components/carousel/carousel';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { QuillHtmlPipe } from '../../shared/pipes/quill-html.pipe';
 import { LanguageService } from '../../core/services/language.service';
-import { BlogPost } from './blog.interfaces';
+import { BlogPost, categoryKey } from './blog.interfaces';
+import { TranslateModule } from '@ngx-translate/core';
 import { PageTitleService } from '../../core/services/page-title.service';
 
 @Component({
   selector: 'app-blog-post',
   standalone: true,
-  imports: [DatePipe, CarouselComponent, QuillHtmlPipe],
+  imports: [DatePipe, CarouselComponent, QuillHtmlPipe, TranslateModule],
   template: `
     <!-- bind the signal to a non-null local (as post) so strictTemplates narrows it -->
     @if (post(); as post) {
       <article class="post">
         <div class="post__body">
-          <span class="post__category">{{ post.category }}</span>
+          <!-- CHANGED: translate known categories, fall back to the raw value -->
+          <span class="post__category">{{
+            categoryKey(post.category) ? (categoryKey(post.category)! | translate) : post.category
+          }}</span>
           <small class="post__date">{{
             post.publishedAt || post.createdAt | date: 'mediumDate'
           }}</small>
@@ -160,6 +164,7 @@ export class BlogPostComponent implements OnInit {
   post = signal<BlogPost | null>(null);
   showVideo = signal(false);
   protected readonly isUa = inject(LanguageService).isUa;
+  protected readonly categoryKey = categoryKey;
 
   ngOnInit(): void {
     // read from resolver data — available synchronously during SSR

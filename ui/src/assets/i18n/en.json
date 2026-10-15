@@ -12,7 +12,7 @@
     "REGISTER": "Register"
   },
   "HOME": {
-    "TITLE": "«Charitable Fund «Centre for Support and Development»»",
+    "TITLE": "“Charitable Fund “Centre for Support and Development””",
     "DESCRIPTION": "Charitable Foundation 'Center for Support and Development' (CSD Fund). Areas of activity: WASH (water, sanitation, and hygiene), infrastructure restoration, and shelter.",
     "SUBTITLE": "WASH · Repair & Recovery · Shelters",
     "CTA": {
@@ -55,6 +55,11 @@
     "PAGE": {
       "TITLE": "News and Activity Reports",
       "DESCRIPTION": "The latest news, reports, and work results of the CSD Fund charitable foundation. Find out how we are helping communities."
+    },
+    "CATEGORIES": {
+      "NEWS": "News",
+      "STORY": "Success story",
+      "UPDATE": "Update"
     }
   },
   "about": {
@@ -211,7 +216,12 @@
       "TITLE": "Filters",
       "NO_COORDS": "No coordinates available"
     },
-    "MAP_LOAD_ERROR": "Failed to load map"
+    "MAP_LOAD_ERROR": "Failed to load map",
+    "POPUP": {
+      "COMPLETED": "Completed",
+      "BENEFICIARIES": "Beneficiaries",
+      "DONOR": "Donor"
+    }
   },
   "HEADER": {
     "SWITCH_TO_EN": "Switch language to English",
@@ -222,7 +232,7 @@
     "LOGOUT": "Logout"
   },
   "FOOTER": {
-    "TITLE": "«Charitable Fund «Centre for Support and Development»»",
+    "TITLE": "“Charitable Fund “Centre for Support and Development””",
     "RIGHTS": "All rights reserved"
   },
   "cooperation": {

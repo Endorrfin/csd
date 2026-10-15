@@ -21,6 +21,32 @@ export interface MapPoint {
   dominantCategory: CategoryId | null;
 }
 
+// CHANGED: translated popup captions are passed in, so this service stays free of TranslateService
+export interface PopupLabels {
+  completed: string;
+  beneficiaries: string;
+  donor: string;
+}
+
+/**
+ * «2024-06» → «червень 2024» / «June 2024». Anything that is not a valid YYYY-MM value
+ * is returned unchanged, so free-form spreadsheet text is never mangled.
+ */
+export function formatCompletedAt(value: string, lang: 'uk' | 'en'): string {
+  const m = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(value.trim());
+  if (!m) return value;
+  const date = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1));
+  // formatToParts drops the trailing «р.» that the uk locale appends to a bare month + year
+  const parts = new Intl.DateTimeFormat(lang, {
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).formatToParts(date);
+  const month = parts.find((p) => p.type === 'month')?.value ?? '';
+  const year = parts.find((p) => p.type === 'year')?.value ?? m[1];
+  return `${month} ${year}`;
+}
+
 const CATEGORY_COLORS: Record<CategoryId, string> = {
   wash: '#3182ce',
   recovery: '#ed8936',
@@ -103,7 +129,12 @@ export class ActivityMapService {
     });
   }
 
-  buildPopupHtml(point: MapPoint, data: ActivityMapData, lang: 'uk' | 'en'): string {
+  buildPopupHtml(
+    point: MapPoint,
+    data: ActivityMapData,
+    lang: 'uk' | 'en',
+    labels: PopupLabels,
+  ): string {
     const pick = (t: LocalizedText | null | undefined) => (t ? (t[lang] ?? t.uk) : '');
     const settlementName = pick(point.settlement) || '—';
     const items = point.activities
@@ -111,21 +142,21 @@ export class ActivityMapService {
         const meta = data.types[a.typeId];
         const typeLabel = pick(meta.label);
 
-        // (Step 7+): stacked metadata, always-English labels per user request.
+        // CHANGED: captions follow the active language (the always-English rule was reversed)
         const fields: string[] = [];
         if (a.completedAt) {
           fields.push(
-            `<div class="amp__field"><span class="amp__key">Completed:</span> ${a.completedAt}</div>`,
+            `<div class="amp__field"><span class="amp__key">${this.escapeHtml(labels.completed)}:</span> ${this.escapeHtml(formatCompletedAt(a.completedAt, lang))}</div>`,
           );
         }
         if (a.beneficiaries) {
           fields.push(
-            `<div class="amp__field"><span class="amp__key">Beneficiaries:</span> ${a.beneficiaries}</div>`,
+            `<div class="amp__field"><span class="amp__key">${this.escapeHtml(labels.beneficiaries)}:</span> ${a.beneficiaries}</div>`,
           );
         }
         if (a.donor) {
           fields.push(
-            `<div class="amp__field"><span class="amp__key">Donor:</span> ${this.escapeHtml(a.donor)}</div>`,
+            `<div class="amp__field"><span class="amp__key">${this.escapeHtml(labels.donor)}:</span> ${this.escapeHtml(a.donor)}</div>`,
           );
         }
 

@@ -8,12 +8,12 @@ import {
   effect,
   inject,
 } from '@angular/core';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { LanguageService } from '../../../../core/services/language.service';
 import {
   ActivityCategory,
   ActivityTypeMeta,
   CategoryId,
-  Lang,
   LocalizedText,
   TypeId,
 } from '../../activity-map.interfaces';
@@ -368,7 +368,7 @@ interface TypeView {
 export class CategorySidebarComponent {
   readonly filter = inject(ActivityFilterService);
   private readonly dataService = inject(ActivityDataService);
-  private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
 
   // (Step 7): query all settlement buttons to enable auto-scroll on selection.
   @ViewChildren('settlementBtn')
@@ -440,8 +440,8 @@ export class CategorySidebarComponent {
 
   pick(text: LocalizedText | null | undefined): string {
     if (!text) return '';
-    const lang = (this.translate.currentLang || 'ua') as Lang;
-    const key: 'uk' | 'en' = lang === 'en' ? 'en' : 'uk';
+    // CHANGED: read the language signal so templates calling pick() re-render on switch
+    const key: 'uk' | 'en' = this.language.lang() === 'en' ? 'en' : 'uk';
     return text[key] ?? text.uk;
   }
 

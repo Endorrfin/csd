@@ -17,7 +17,7 @@ import { DOCUMENT } from '@angular/common';
 import { QUILL_MODULES } from '../../shared/config/quill.config';
 import { ImpactStatsComponent } from './components/impact-stats/impact-stats';
 import { HeroFeaturedComponent } from './components/hero-featured/hero-featured';
-import { BlogPost } from '../blog/blog.interfaces';
+import { BlogPost, categoryKey } from '../blog/blog.interfaces';
 import { PageTitleService } from '../../core/services/page-title.service';
 
 // Editable shape backing the create/edit form.
@@ -345,7 +345,12 @@ interface PaginatedPosts {
         >
           <div class="news-card__body">
             <div class="news-card__top">
-              <span class="news-card__category">{{ post.category }}</span>
+              <!-- CHANGED: translate known categories, fall back to the raw value -->
+              <span class="news-card__category">{{
+                categoryKey(post.category)
+                  ? (categoryKey(post.category)! | translate)
+                  : post.category
+              }}</span>
               <small class="news-card__date">{{ getPostDate(post) | date: 'mediumDate' }}</small>
               @if (auth.isManager) {
                 <button
@@ -925,6 +930,7 @@ export class HomeComponent implements OnInit {
 
   // signal-based language flag (reactive in zoneless) — call as isUa() everywhere
   protected readonly isUa = inject(LanguageService).isUa;
+  protected readonly categoryKey = categoryKey;
 
   isAnyImageUploading(): boolean {
     return this.uploadingImages().some(Boolean);

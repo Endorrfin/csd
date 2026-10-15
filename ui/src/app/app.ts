@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, afterNextRender, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { LanguageService } from './core/services/language.service';
 import { HeaderComponent } from './layout/header/header';
 import { FooterComponent } from './layout/footer/footer';
 
@@ -34,9 +35,18 @@ import { FooterComponent } from './layout/footer/footer';
 export class App {
   protected readonly title = signal('ui');
   private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
 
   constructor() {
     this.translate.addLangs(['ua', 'en']);
     this.translate.use('ua');
+    // CHANGED: SSR and the first client render are always UA; apply the saved language only
+    // after hydration, otherwise text would differ from the server HTML (NG0500).
+    afterNextRender(() => {
+      const saved = this.language.readSaved();
+      if (saved && saved !== this.language.lang()) {
+        this.translate.use(saved);
+      }
+    });
   }
 }

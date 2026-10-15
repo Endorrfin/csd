@@ -15,7 +15,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import type * as Leaflet from 'leaflet';
 import { ActivityDataService } from '../../services/activity-data.service';
 import { ActivityFilterService } from '../../services/activity-filter.service';
-import { ActivityMapService, MapPoint } from '../../services/activity-map.service';
+import { ActivityMapService, MapPoint, PopupLabels } from '../../services/activity-map.service';
+import { LanguageService } from '../../../../core/services/language.service';
 import { environment } from '../../../../../environments/environment';
 
 @Component({
@@ -216,6 +217,7 @@ export class MapViewComponent {
   private readonly filter = inject(ActivityFilterService);
   private readonly mapHelper = inject(ActivityMapService);
   private readonly translate = inject(TranslateService);
+  private readonly language = inject(LanguageService);
 
   protected readonly ready = signal(false);
   protected readonly loadError = signal<string | null>(null);
@@ -253,6 +255,8 @@ export class MapViewComponent {
 
     effect(() => {
       this.visiblePoints();
+      // CHANGED: re-render markers and popups when the language changes
+      this.language.lang();
       if (this.ready()) {
         this.refreshMarkers();
       }
@@ -312,12 +316,18 @@ export class MapViewComponent {
     this.markerByPointKey.clear();
 
     const points = this.visiblePoints();
-    const lang = (this.translate.currentLang === 'en' ? 'en' : 'uk') as 'uk' | 'en';
+    // CHANGED: language from LanguageService; popup captions come from i18n
+    const lang: 'uk' | 'en' = this.language.lang() === 'en' ? 'en' : 'uk';
+    const labels: PopupLabels = {
+      completed: this.translate.instant('ACTIVITY_MAP.POPUP.COMPLETED'),
+      beneficiaries: this.translate.instant('ACTIVITY_MAP.POPUP.BENEFICIARIES'),
+      donor: this.translate.instant('ACTIVITY_MAP.POPUP.DONOR'),
+    };
 
     for (const point of points) {
       const icon = this.mapHelper.createMarkerIcon(L, point, data);
       const marker = L.marker([point.lat, point.lng], { icon });
-      const popupHtml = this.mapHelper.buildPopupHtml(point, data, lang);
+      const popupHtml = this.mapHelper.buildPopupHtml(point, data, lang, labels);
       marker.bindPopup(popupHtml, { maxWidth: 320 });
 
       // CHANGED (Step 7): on marker click, sync sidebar state.
