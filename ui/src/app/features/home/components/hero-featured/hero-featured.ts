@@ -23,7 +23,15 @@ import { BlogPost } from '../../../blog/blog.interfaces'; // CHANGED: typed post
     <section class="hero" [class.hero--loading]="loading()">
       <!-- Background image rendered when present; gradient overlay sits on top -->
       @if (backgroundUrl(); as url) {
-        <img [src]="url" [alt]="title()" class="hero__image" loading="eager" decoding="async" />
+        <!-- CHANGED: fetchpriority="high" — this image is the LCP element -->
+        <img
+          [src]="url"
+          [alt]="title()"
+          class="hero__image"
+          loading="eager"
+          decoding="async"
+          fetchpriority="high"
+        />
       }
       <div class="hero__overlay"></div>
 

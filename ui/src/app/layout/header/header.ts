@@ -13,10 +13,13 @@ import { Router } from '@angular/router';
     <header class="header">
       <div class="header__container">
         <a routerLink="/" class="header__logo">
+          <!-- CHANGED: 184x76 file (2x of the 38px CSS height); new name because /assets/* is immutable-cached -->
           <img
-            src="/assets/images/logo/csd_logo_text-white_right.png"
+            src="/assets/images/logo/csd_logo_text-white_right-2x.png"
             alt="CSD Fund"
             class="header__logo-img"
+            width="184"
+            height="76"
           />
         </a>
 
