@@ -1,7 +1,7 @@
-import { Component, input, computed, inject, signal, OnInit, OnDestroy } from '@angular/core';
-import { TranslateModule, TranslateService, LangChangeEvent } from '@ngx-translate/core';
+import { Component, input, computed, inject } from '@angular/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { LanguageService } from '../../../../core/services/language.service';
 import { BlogPost } from '../../../blog/blog.interfaces'; // CHANGED: typed post input instead of any
 /**
  * Hero block on the home page, driven by the "featured" post.
@@ -194,39 +194,22 @@ import { BlogPost } from '../../../blog/blog.interfaces'; // CHANGED: typed post
     `,
   ],
 })
-export class HeroFeaturedComponent implements OnInit, OnDestroy {
+export class HeroFeaturedComponent {
   private readonly translate = inject(TranslateService);
 
   readonly post = input<BlogPost | null>(null); // CHANGED: was input<any | null>
   readonly loading = input<boolean>(false);
 
-  // track current language as a signal so computed title()
-  // reacts to language switches. ngx-translate's TranslateService
-  // exposes currentLang as a plain property + onLangChange event;
-  // we mirror it into a signal here.
-  private readonly currentLang = signal<string>(this.translate.currentLang || 'ua');
-  private langSub?: Subscription;
-
-  ngOnInit(): void {
-    // Sync once in case currentLang was set after construction
-    // (e.g. by a parent component or guard).
-    this.currentLang.set(this.translate.currentLang || 'ua');
-    this.langSub = this.translate.onLangChange.subscribe((e: LangChangeEvent) => {
-      this.currentLang.set(e.lang);
-    });
-  }
-
-  ngOnDestroy(): void {
-    this.langSub?.unsubscribe();
-  }
+  // CHANGED: reactive language comes from LanguageService (was a local signal + onLangChange subscription)
+  private readonly language = inject(LanguageService);
 
   /**
-   * Title resolution — reacts to both post() and currentLang() signals,
+   * Title resolution — reacts to both post() and language.lang() signals,
    * so language switches re-render immediately.
    */
   readonly title = computed(() => {
     const p = this.post();
-    const lang = this.currentLang();
+    const lang = this.language.lang();
     if (!p) {
       return this.translate.instant('HOME.HERO.FALLBACK_TITLE');
     }

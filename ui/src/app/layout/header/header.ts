@@ -1,6 +1,6 @@
 import { Component, inject, signal, HostListener } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
 import { Router } from '@angular/router';
@@ -361,11 +361,11 @@ import { Router } from '@angular/router';
   ],
 })
 export class HeaderComponent {
-  private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   readonly auth = inject(AuthService);
   // read language from the shared signal instead of a local duplicate `currentLang` field
-  protected readonly isUa = inject(LanguageService).isUa;
+  private readonly language = inject(LanguageService);
+  protected readonly isUa = this.language.isUa;
 
   // signal for menu state
   readonly isMenuOpen = signal(false);
@@ -386,8 +386,8 @@ export class HeaderComponent {
   }
 
   switchLang(): void {
-    // only drive translate.use(); LanguageService updates the signal via onLangChange
-    this.translate.use(this.isUa() ? 'en' : 'ua');
+    // CHANGED: go through LanguageService so the choice is persisted
+    this.language.setLang(this.isUa() ? 'en' : 'ua');
   }
 
   logout(): void {
