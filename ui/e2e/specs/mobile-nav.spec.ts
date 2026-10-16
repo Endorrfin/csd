@@ -20,3 +20,17 @@ test('mobile navigation opens and routes', async ({ page }) => {
   await nav.getByRole('link', { name: 'Контакти' }).click();
   await expect(page).toHaveURL(/\/contact$/);
 });
+
+test('Escape closes the mobile menu and refocuses the burger', async ({ page }) => {
+  await page.goto('/');
+
+  const nav = page.getByRole('navigation');
+  const burger = page.getByRole('button', { name: 'Відкрити меню' });
+  await burger.click();
+  await expect(nav).toBeInViewport();
+
+  await page.keyboard.press('Escape');
+
+  await expect(nav).not.toBeInViewport();
+  await expect(page.getByRole('button', { name: 'Відкрити меню' })).toBeFocused();
+});
