@@ -1,6 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+// CHANGED: status audit log collaborators (spec 003)
+import { DataSource } from 'typeorm';
+import { EntityAuditService } from '../audit/entity-audit.service';
+import { AuditedEntityType } from '../audit/audit-entity-type';
 import { InquiryService } from './inquiry.service';
 import {
   Inquiry,
@@ -19,15 +23,33 @@ const repoMock = () => ({
   createQueryBuilder: jest.fn(),
 });
 
+const ACTOR = { userId: 'staff-1', email: 'admin@test.local' };
+
 describe('InquiryService', () => {
   let service: InquiryService;
   let repo: ReturnType<typeof repoMock>;
+  // CHANGED: transactional writes go through the manager handed out by DataSource.transaction
+  let manager: { findOne: jest.Mock; update: jest.Mock; delete: jest.Mock };
+  let audit: {
+    recordUpdate: jest.Mock;
+    recordDeleted: jest.Mock;
+  };
 
   beforeEach(async () => {
+    manager = { findOne: jest.fn(), update: jest.fn(), delete: jest.fn() };
+    audit = { recordUpdate: jest.fn(), recordDeleted: jest.fn() };
+    const dataSource = {
+      transaction: jest.fn((cb: (m: typeof manager) => Promise<unknown>) =>
+        cb(manager),
+      ),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         InquiryService,
         { provide: getRepositoryToken(Inquiry), useFactory: repoMock },
+        { provide: DataSource, useValue: dataSource },
+        { provide: EntityAuditService, useValue: audit },
       ],
     }).compile();
 
@@ -101,42 +123,109 @@ describe('InquiryService', () => {
   });
 
   describe('updateStatus', () => {
-    it('omits managerNotes from the update when not provided', async () => {
-      const existing = { id: 'uuid-1', status: InquiryStatus.NEW } as Inquiry;
-      repo.findOne.mockResolvedValue(existing);
-      repo.update.mockResolvedValue(undefined);
+    const existing = { id: 'uuid-1', status: InquiryStatus.NEW } as Inquiry;
 
-      await service.updateStatus('uuid-1', InquiryStatus.READ);
-
-      expect(repo.update).toHaveBeenCalledWith('uuid-1', {
+    beforeEach(() => {
+      manager.findOne.mockResolvedValue(existing);
+      repo.findOne.mockResolvedValue({
+        ...existing,
         status: InquiryStatus.READ,
       });
+    });
+
+    it('omits managerNotes from the update when not provided', async () => {
+      await service.updateStatus(
+        'uuid-1',
+        InquiryStatus.READ,
+        undefined,
+        ACTOR,
+      );
+
+      expect(manager.update).toHaveBeenCalledWith(Inquiry, 'uuid-1', {
+        status: InquiryStatus.READ,
+      });
+    });
+
+    it('locks the row for update before reading the old status', async () => {
+      await service.updateStatus(
+        'uuid-1',
+        InquiryStatus.READ,
+        undefined,
+        ACTOR,
+      );
+
+      expect(manager.findOne).toHaveBeenCalledWith(
+        Inquiry,
+        expect.objectContaining({ lock: { mode: 'pessimistic_write' } }),
+      );
+    });
+
+    it('records the change inside the same transaction with the verified actor', async () => {
+      await service.updateStatus('uuid-1', InquiryStatus.READ, 'note', ACTOR);
+
+      expect(audit.recordUpdate).toHaveBeenCalledWith(
+        manager,
+        AuditedEntityType.INQUIRY,
+        'uuid-1',
+        ACTOR,
+        expect.objectContaining({
+          oldStatus: InquiryStatus.NEW,
+          newStatus: InquiryStatus.READ,
+          newNotes: 'note',
+        }),
+      );
+    });
+
+    it('rejects when the audit write fails, so the transaction rolls back', async () => {
+      audit.recordUpdate.mockRejectedValue(new Error('audit down'));
+
+      await expect(
+        service.updateStatus('uuid-1', InquiryStatus.READ, undefined, ACTOR),
+      ).rejects.toThrow('audit down');
+    });
+
+    it('throws NotFound for an unknown id and writes nothing', async () => {
+      manager.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.updateStatus('nope', InquiryStatus.READ, undefined, ACTOR),
+      ).rejects.toBeInstanceOf(NotFoundException);
+      expect(manager.update).not.toHaveBeenCalled();
+      expect(audit.recordUpdate).not.toHaveBeenCalled();
     });
   });
 
   describe('remove', () => {
     it('rejects deletion unless the inquiry is ARCHIVED', async () => {
-      repo.findOne.mockResolvedValue({
+      manager.findOne.mockResolvedValue({
         id: 'uuid-1',
         status: InquiryStatus.NEW,
       });
 
-      await expect(service.remove('uuid-1')).rejects.toBeInstanceOf(
+      await expect(service.remove('uuid-1', ACTOR)).rejects.toBeInstanceOf(
         BadRequestException,
       );
-      expect(repo.delete).not.toHaveBeenCalled();
+      expect(manager.delete).not.toHaveBeenCalled();
+      expect(audit.recordDeleted).not.toHaveBeenCalled();
     });
 
     it('deletes an ARCHIVED inquiry', async () => {
-      repo.findOne.mockResolvedValue({
+      manager.findOne.mockResolvedValue({
         id: 'uuid-1',
         status: InquiryStatus.ARCHIVED,
       });
-      repo.delete.mockResolvedValue(undefined);
+      manager.delete.mockResolvedValue(undefined);
 
-      await service.remove('uuid-1');
+      await service.remove('uuid-1', ACTOR);
 
-      expect(repo.delete).toHaveBeenCalledWith('uuid-1');
+      expect(manager.delete).toHaveBeenCalledWith(Inquiry, 'uuid-1');
+      expect(audit.recordDeleted).toHaveBeenCalledWith(
+        manager,
+        AuditedEntityType.INQUIRY,
+        'uuid-1',
+        ACTOR,
+        InquiryStatus.ARCHIVED,
+      );
     });
   });
 });

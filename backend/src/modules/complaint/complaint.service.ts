@@ -5,12 +5,21 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import { Complaint, ComplaintStatus } from './entities/complaint.entity';
 import { CreateComplaintDto } from './dto/create-complaint.dto';
 import { UpdateComplaintDto } from './dto/update-complaint.dto';
 import { AdminComplaintQueryDto } from './dto/admin-query.dto';
 import { ExportComplaintsQueryDto } from './dto/export-query.dto';
+// CHANGED: status audit log (spec 003)
+import { AuditActor } from '../audit/audit-actor';
+import { AuditedEntityType } from '../audit/audit-entity-type';
+import { EntityAuditService } from '../audit/entity-audit.service';
 
 export interface PaginatedComplaints {
   data: Complaint[];
@@ -24,6 +33,9 @@ export class ComplaintService {
   constructor(
     @InjectRepository(Complaint)
     private readonly repo: Repository<Complaint>,
+    // CHANGED: status changes and their audit entries share one transaction
+    private readonly dataSource: DataSource,
+    private readonly audit: EntityAuditService,
   ) {}
 
   findAll(): Promise<Complaint[]> {
@@ -114,42 +126,99 @@ export class ComplaintService {
     return this.repo.save(entity);
   }
 
-  async update(id: string, dto: UpdateComplaintDto): Promise<Complaint> {
-    await this.findById(id);
-    await this.repo.update(id, dto);
+  // CHANGED: runs in a transaction under a row lock; the audit entry commits with the change
+  async update(
+    id: string,
+    dto: UpdateComplaintDto,
+    actor: AuditActor,
+  ): Promise<Complaint> {
+    await this.dataSource.transaction(async (manager) => {
+      const existing = await this.lockById(manager, id);
+      await manager.update(Complaint, id, dto);
+      await this.audit.recordUpdate(
+        manager,
+        AuditedEntityType.COMPLAINT,
+        id,
+        actor,
+        {
+          oldStatus: existing.status,
+          newStatus: dto.status,
+          oldNotes: existing.managerNotes,
+          newNotes: dto.managerNotes,
+        },
+      );
+    });
     return this.findById(id);
   }
 
   async updateStatus(
     id: string,
     status: ComplaintStatus,
-    managerNotes?: string,
+    managerNotes: string | undefined,
+    actor: AuditActor,
   ): Promise<Complaint> {
-    await this.findById(id);
+    await this.dataSource.transaction(async (manager) => {
+      const existing = await this.lockById(manager, id);
 
-    const updates: Partial<Complaint> = { status };
-    if (managerNotes !== undefined) {
-      updates.managerNotes = managerNotes;
-    }
+      const updates: Partial<Complaint> = { status };
+      if (managerNotes !== undefined) {
+        updates.managerNotes = managerNotes;
+      }
 
-    await this.repo.update(id, updates);
+      await manager.update(Complaint, id, updates);
+      await this.audit.recordUpdate(
+        manager,
+        AuditedEntityType.COMPLAINT,
+        id,
+        actor,
+        {
+          oldStatus: existing.status,
+          newStatus: status,
+          oldNotes: existing.managerNotes,
+          newNotes: managerNotes,
+        },
+      );
+    });
     return this.findById(id);
   }
 
   // CHANGED: only CLOSED complaints can be hard-deleted (initial stage — test complaints)
-  async remove(id: string): Promise<void> {
-    const existing = await this.findById(id);
+  async remove(id: string, actor: AuditActor): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      const existing = await this.lockById(manager, id);
 
-    if (existing.status !== ComplaintStatus.CLOSED) {
-      throw new BadRequestException(
-        'Only closed complaints can be deleted. Close it first to remove.',
+      if (existing.status !== ComplaintStatus.CLOSED) {
+        throw new BadRequestException(
+          'Only closed complaints can be deleted. Close it first to remove.',
+        );
+      }
+
+      await manager.delete(Complaint, id);
+      await this.audit.recordDeleted(
+        manager,
+        AuditedEntityType.COMPLAINT,
+        id,
+        actor,
+        existing.status,
       );
-    }
-
-    await this.repo.delete(id);
+    });
   }
 
   // ── Private helpers ──
+
+  // CHANGED: FOR UPDATE keeps the recorded old status truthful under concurrent edits.
+  // Complaint has no relations, so the lock cannot span a join.
+  private async lockById(
+    manager: EntityManager,
+    id: string,
+  ): Promise<Complaint> {
+    const record = await manager.findOne(Complaint, {
+      where: { id },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!record) throw new NotFoundException(`Complaint ${id} not found`);
+    return record;
+  }
 
   // Shared filter logic for paginated admin grid + CSV export
   private buildFilterQuery(

@@ -10,6 +10,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Query,
+  Req,
   Res,
 } from '@nestjs/common';
 import type { Response } from 'express';
@@ -22,6 +23,9 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
+// CHANGED: staff routes pass the verified actor to the audit log (spec 003)
+import { requireActor } from '../audit/audit-actor';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('inquiries')
 export class InquiryController {
@@ -74,14 +78,23 @@ export class InquiryController {
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateInquiryStatusDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.updateStatus(id, dto.status, dto.managerNotes);
+    return this.service.updateStatus(
+      id,
+      dto.status,
+      dto.managerNotes,
+      requireActor(req),
+    );
   }
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.remove(id, requireActor(req));
   }
 }
