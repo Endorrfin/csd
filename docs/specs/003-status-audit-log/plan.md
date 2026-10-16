@@ -95,18 +95,21 @@ Rules applied everywhere:
 - **UI (Vitest)**: component renders entries, empty state, and both languages. Playwright is not extended: its stub API cannot
   exercise admin auth (suite cap of 12 tests is untouched).
 
-## 5. Delivery: 3 PRs (D8)
+## 5. Delivery: 4 PRs (D8)
 
-| PR | Commits inside | Behaviour visible to users |
-| --- | --- | --- |
-| **PR 1** | (a) specs `docs/specs/003-status-audit-log/`; (b) foundation: `audit` module, service additions, read endpoint, actor helper, tests; (c) complaint + inquiry staff-side write path, tests | none (history exists in the database, no UI yet) |
-| **PR 2** | procurement + vacancy + testimonial staff-side write path, tests (the lock/join case lives here) | none until PR 3 |
-| **PR 3** | `audit-timeline` component, five integrations, i18n, `ARCHITECTURE.md` (describe the log, remove the §17 debt item) | history visible |
+The first plan said 3 PRs. PR 1 was merged early with only the specs and the foundation, so the work now ships as 4.
 
-Order is strict: PR 1 → PR 2 → PR 3. PR 1 deliberately pilots the pattern on the two modules without joins or publication side effects;
-PR 2 repeats it where the risk is higher. One commit per step inside a PR keeps the history readable and `git bisect` usable.
-The deploy pipeline already deploys the backend before the frontend. Each PR passes the release gate in §8.2 before merge
-(`verify`, `test:e2e`, staging check). The user creates branches and commits; a branch name and commit messages are proposed per PR.
+| PR | Content | State | Behaviour visible to users |
+| --- | --- | --- | --- |
+| **PR 1** | specs, `audit` module, read endpoint, `EntityAuditService`, tests | merged (#207) | none (endpoint returns `[]`) |
+| **PR 2** | complaint + inquiry staff-side write path (`update`/`updateStatus`/`remove`), tests | in review | none until PR 4 |
+| **PR 3** | procurement + vacancy + testimonial staff-side write path, tests (the lock/join case lives here) | next | none until PR 4 |
+| **PR 4** | `audit-timeline` component, five integrations, i18n, `ARCHITECTURE.md` (describe the log, remove the §17 debt item, fix the module count) | planned | history visible |
+
+Order is strict: PR 1 → PR 2 → PR 3 → PR 4. PR 2 pilots the pattern on the two modules without joins or publication side effects;
+PR 3 repeats it where the risk is higher. The deploy pipeline already deploys the backend before the frontend. Each PR passes the
+release gate in §8.2 before merge (`verify`, `test:e2e`, staging check). The user creates branches and commits; a branch name and
+commit message are proposed per PR.
 
 ## 6. Risks and mitigations
 - **A route is missed** → required `actor` parameter (compile error) + one test per wrapper route.

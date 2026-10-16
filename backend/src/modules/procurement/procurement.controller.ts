@@ -24,6 +24,8 @@ import { SanitizeHtmlPipe } from '../../common/pipes/sanitize-html.pipe';
 import { UpdateProcurementStatusDto } from './dto/update-status.dto';
 import { AdminProcurementQueryDto } from './dto/admin-query.dto';
 import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
+// CHANGED: staff routes pass the verified actor to the audit log (spec 003)
+import { requireActor } from '../audit/audit-actor';
 
 @Controller('procurement')
 export class ProcurementController {
@@ -51,7 +53,7 @@ export class ProcurementController {
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UsePipes(SanitizeHtmlPipe)
   create(@Body() dto: CreateProcurementDto, @Req() req: AuthenticatedRequest) {
-    return this.service.create(dto, req.user.id);
+    return this.service.create(dto, req.user.id, requireActor(req));
   }
 
   @Patch(':id')
@@ -61,8 +63,9 @@ export class ProcurementController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProcurementDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.update(id, dto);
+    return this.service.update(id, dto, requireActor(req));
   }
 
   @Patch(':id/status')
@@ -71,8 +74,9 @@ export class ProcurementController {
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateProcurementStatusDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.updateStatus(id, dto.status);
+    return this.service.updateStatus(id, dto.status, requireActor(req));
   }
 
   // Legacy publish endpoint — kept for backward compat, will be removed
@@ -80,17 +84,25 @@ export class ProcurementController {
   @Patch(':id/publish')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  publish(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.update(id, {
-      status: 'published',
-    } as UpdateProcurementDto);
+  publish(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.update(
+      id,
+      { status: 'published' } as UpdateProcurementDto,
+      requireActor(req),
+    );
   }
 
   // Hard delete — service enforces draft-only rule
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.remove(id, requireActor(req));
   }
 }

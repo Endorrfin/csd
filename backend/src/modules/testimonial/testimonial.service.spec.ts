@@ -4,6 +4,9 @@ import { plainToInstance } from 'class-transformer';
 import { TestimonialService } from './testimonial.service';
 import { Testimonial } from './entities/testimonial.entity';
 import { AdminTestimonialQueryDto } from './dto/admin-query.dto';
+// CHANGED: the service now takes the status audit collaborators (spec 003)
+import { DataSource } from 'typeorm';
+import { EntityAuditService } from '../audit/entity-audit.service';
 
 // Chainable QueryBuilder stub — only the methods findAllForAdmin calls
 const qbMock = () => ({
@@ -32,6 +35,8 @@ describe('TestimonialService.findAllForAdmin', () => {
       providers: [
         TestimonialService,
         { provide: getRepositoryToken(Testimonial), useFactory: repoMock },
+        { provide: DataSource, useValue: { transaction: jest.fn() } },
+        { provide: EntityAuditService, useValue: {} },
       ],
     }).compile();
 

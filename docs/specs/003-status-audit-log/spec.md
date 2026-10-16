@@ -117,7 +117,7 @@ Resolved with the priorities **1. security, 2. best practice, 3. usability for t
 | D5 | Build one new shared timeline component. Do **not** touch the WASH/Recovery/Winterization timelines. | Avoids regressions in working code (AC19). Migrating them is a later, optional change |
 | D6 | Testimonial `/verify` is out of scope. | It is a separate flag, confirmed in the code |
 | D7 | Keep records indefinitely, no cleanup job. | A retention rule for personal data is a policy decision, tracked under the open PII item in §17 |
-| D8 | Ship in **3 PRs**: (1) specs + foundation + complaint/inquiry, (2) procurement/vacancy/testimonial, (3) UI + docs. | The riskiest backend part is isolated in PR 2; the log is write-only until the UI lands, so no feature flag is needed; every PR reverts cleanly. Specs travel with the code they describe |
+| D8 | Ship in **4 PRs**: (1) specs + foundation (merged), (2) complaint + inquiry, (3) procurement/vacancy/testimonial, (4) UI + docs. | The riskiest backend part is isolated in PR 2; the log is write-only until the UI lands, so no feature flag is needed; every PR reverts cleanly. Specs travel with the code they describe |
 | D9 | The actor comes only from the authenticated token on the server, never from the request body. | Prevents forging who made a change |
 | D10 | The log is append-only: no API to edit or delete entries. | Evidence value |
 | D11 | The old status is read under a row lock inside the transaction. | Makes AC22 true under concurrent edits |
