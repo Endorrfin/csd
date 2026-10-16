@@ -5,11 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Not, Repository } from 'typeorm';
+import { DataSource, EntityManager, Not, Repository } from 'typeorm';
 import { Vacancy, VacancyStatus } from './entities/vacancy.entity';
 import { CreateVacancyDto } from './dto/create-vacancy.dto';
 import { UpdateVacancyDto } from './dto/update-vacancy.dto';
 import { AdminVacancyQueryDto } from './dto/admin-query.dto';
+// CHANGED: status audit log (spec 003)
+import { AuditActor } from '../audit/audit-actor';
+import { AuditedEntityType } from '../audit/audit-entity-type';
+import { EntityAuditService } from '../audit/entity-audit.service';
 
 // paginated shape mirrors PaginatedProcurements
 export interface PaginatedVacancies {
@@ -24,6 +28,9 @@ export class VacancyService {
   constructor(
     @InjectRepository(Vacancy)
     private readonly repo: Repository<Vacancy>,
+    // CHANGED: status changes and their audit entries share one transaction
+    private readonly dataSource: DataSource,
+    private readonly audit: EntityAuditService,
   ) {}
 
   // renamed from findAllPublished — now returns every non-draft record
@@ -72,7 +79,11 @@ export class VacancyService {
     return record;
   }
 
-  async create(dto: CreateVacancyDto, userId: string): Promise<Vacancy> {
+  async create(
+    dto: CreateVacancyDto,
+    userId: string,
+    actor: AuditActor,
+  ): Promise<Vacancy> {
     const entity = this.repo.create({
       ...dto,
       applicationDeadline: dto.applicationDeadline
@@ -85,59 +96,120 @@ export class VacancyService {
           : null,
       createdById: userId,
     });
-    return this.repo.save(entity);
+    // CHANGED: a staff-created record is audited in the same transaction as the insert
+    return this.dataSource.transaction(async (manager) => {
+      const saved = await manager.save(entity);
+      const status =
+        saved.status ??
+        (await manager.findOneByOrFail(Vacancy, { id: saved.id })).status;
+      await this.audit.recordCreated(
+        manager,
+        AuditedEntityType.VACANCY,
+        saved.id,
+        actor,
+        status,
+      );
+      return saved;
+    });
   }
 
-  async update(id: string, dto: UpdateVacancyDto): Promise<Vacancy> {
-    const existing = await this.findById(id);
+  // CHANGED: transaction + row lock; also serves the legacy PATCH :id/publish wrapper
+  async update(
+    id: string,
+    dto: UpdateVacancyDto,
+    actor: AuditActor,
+  ): Promise<Vacancy> {
+    await this.dataSource.transaction(async (manager) => {
+      const existing = await this.lockById(manager, id);
 
-    const updates: Partial<Vacancy> = {
-      ...dto,
-      applicationDeadline: dto.applicationDeadline
-        ? new Date(dto.applicationDeadline)
-        : existing.applicationDeadline,
-      publishedAt: dto.publishedAt
-        ? new Date(dto.publishedAt)
-        : existing.publishedAt,
-    };
+      const updates: Partial<Vacancy> = {
+        ...dto,
+        applicationDeadline: dto.applicationDeadline
+          ? new Date(dto.applicationDeadline)
+          : existing.applicationDeadline,
+        publishedAt: dto.publishedAt
+          ? new Date(dto.publishedAt)
+          : existing.publishedAt,
+      };
 
-    if (dto.status === VacancyStatus.PUBLISHED && !existing.publishedAt) {
-      updates.publishedAt = dto.publishedAt
-        ? new Date(dto.publishedAt)
-        : new Date();
-    }
+      if (dto.status === VacancyStatus.PUBLISHED && !existing.publishedAt) {
+        updates.publishedAt = dto.publishedAt
+          ? new Date(dto.publishedAt)
+          : new Date();
+      }
 
-    await this.repo.update(id, updates);
+      await manager.update(Vacancy, id, updates);
+      await this.audit.recordUpdate(
+        manager,
+        AuditedEntityType.VACANCY,
+        id,
+        actor,
+        { oldStatus: existing.status, newStatus: dto.status },
+      );
+    });
     return this.findById(id);
   }
 
-  async updateStatus(id: string, status: VacancyStatus): Promise<Vacancy> {
-    const existing = await this.findById(id);
-    const updates: Partial<Vacancy> = { status };
+  async updateStatus(
+    id: string,
+    status: VacancyStatus,
+    actor: AuditActor,
+  ): Promise<Vacancy> {
+    await this.dataSource.transaction(async (manager) => {
+      const existing = await this.lockById(manager, id);
+      const updates: Partial<Vacancy> = { status };
 
-    const isFirstPublication =
-      existing.status === VacancyStatus.DRAFT &&
-      status !== VacancyStatus.DRAFT &&
-      !existing.publishedAt;
+      const isFirstPublication =
+        existing.status === VacancyStatus.DRAFT &&
+        status !== VacancyStatus.DRAFT &&
+        !existing.publishedAt;
 
-    if (isFirstPublication) {
-      updates.publishedAt = new Date();
-    }
+      if (isFirstPublication) {
+        updates.publishedAt = new Date();
+      }
 
-    await this.repo.update(id, updates);
+      await manager.update(Vacancy, id, updates);
+      await this.audit.recordUpdate(
+        manager,
+        AuditedEntityType.VACANCY,
+        id,
+        actor,
+        { oldStatus: existing.status, newStatus: status },
+      );
+    });
     return this.findById(id);
   }
 
   // enforce draft-only delete (non-drafts must be cancelled via status change)
-  async remove(id: string): Promise<void> {
-    const existing = await this.findById(id);
+  async remove(id: string, actor: AuditActor): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      const existing = await this.lockById(manager, id);
 
-    if (existing.status !== VacancyStatus.DRAFT) {
-      throw new BadRequestException(
-        'Only draft vacancies can be deleted. To remove a published vacancy, change its status to "cancelled".',
+      if (existing.status !== VacancyStatus.DRAFT) {
+        throw new BadRequestException(
+          'Only draft vacancies can be deleted. To remove a published vacancy, change its status to "cancelled".',
+        );
+      }
+
+      await manager.delete(Vacancy, id);
+      await this.audit.recordDeleted(
+        manager,
+        AuditedEntityType.VACANCY,
+        id,
+        actor,
+        existing.status,
       );
-    }
+    });
+  }
 
-    await this.repo.delete(id);
+  // CHANGED: FOR UPDATE keeps the recorded old status truthful under concurrent edits.
+  // Vacancy has no relations loaded here, so the lock cannot span a join.
+  private async lockById(manager: EntityManager, id: string): Promise<Vacancy> {
+    const record = await manager.findOne(Vacancy, {
+      where: { id },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!record) throw new NotFoundException(`Vacancy ${id} not found`);
+    return record;
   }
 }

@@ -25,6 +25,8 @@ import { SanitizeHtmlPipe } from '../../common/pipes/sanitize-html.pipe';
 import { UpdateVacancyStatusDto } from './dto/update-status.dto';
 import { AdminVacancyQueryDto } from './dto/admin-query.dto';
 import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
+// CHANGED: staff routes pass the verified actor to the audit log (spec 003)
+import { requireActor } from '../audit/audit-actor';
 
 @Controller('vacancies')
 export class VacancyController {
@@ -52,7 +54,7 @@ export class VacancyController {
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @UsePipes(SanitizeHtmlPipe)
   create(@Body() dto: CreateVacancyDto, @Req() req: AuthenticatedRequest) {
-    return this.service.create(dto, req.user.id);
+    return this.service.create(dto, req.user.id, requireActor(req));
   }
 
   @Patch(':id')
@@ -62,8 +64,9 @@ export class VacancyController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateVacancyDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.update(id, dto);
+    return this.service.update(id, dto, requireActor(req));
   }
 
   // Legacy /publish kept for backward compat — will be removed after UI migrates fully
@@ -74,8 +77,13 @@ export class VacancyController {
   publish(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateVacancyDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.update(id, { ...dto, status: VacancyStatus.PUBLISHED });
+    return this.service.update(
+      id,
+      { ...dto, status: VacancyStatus.PUBLISHED },
+      requireActor(req),
+    );
   }
 
   @Patch(':id/status')
@@ -84,15 +92,19 @@ export class VacancyController {
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateVacancyStatusDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.updateStatus(id, dto.status);
+    return this.service.updateStatus(id, dto.status, requireActor(req));
   }
 
   // DELETE lowered from ADMIN+ to MANAGER+ (draft-only rule enforced in service)
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.remove(id, requireActor(req));
   }
 }

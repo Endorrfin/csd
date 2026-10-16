@@ -10,6 +10,7 @@ import {
   UseGuards,
   ParseUUIDPipe,
   Query,
+  Req,
 } from '@nestjs/common';
 import { TestimonialService } from './testimonial.service';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
@@ -22,6 +23,9 @@ import { TestimonialStatus } from './entities/testimonial.entity';
 import { UpdateTestimonialStatusDto } from './dto/update-status.dto';
 import { AdminTestimonialQueryDto } from './dto/admin-query.dto';
 import { VerifyTestimonialDto } from './dto/verify.dto';
+// CHANGED: staff routes pass the verified actor to the audit log (spec 003)
+import { requireActor } from '../audit/audit-actor';
+import type { AuthenticatedRequest } from '../../common/types/authenticated-request';
 
 @Controller('testimonials')
 export class TestimonialController {
@@ -56,8 +60,9 @@ export class TestimonialController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTestimonialDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.update(id, dto);
+    return this.service.update(id, dto, requireActor(req));
   }
 
   // Legacy /approve, /reject kept for backward compat
@@ -67,11 +72,13 @@ export class TestimonialController {
   approve(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTestimonialDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.update(id, {
-      ...dto,
-      status: TestimonialStatus.APPROVED,
-    });
+    return this.service.update(
+      id,
+      { ...dto, status: TestimonialStatus.APPROVED },
+      requireActor(req),
+    );
   }
 
   @Patch(':id/reject')
@@ -80,11 +87,13 @@ export class TestimonialController {
   reject(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTestimonialDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.update(id, {
-      ...dto,
-      status: TestimonialStatus.REJECTED,
-    });
+    return this.service.update(
+      id,
+      { ...dto, status: TestimonialStatus.REJECTED },
+      requireActor(req),
+    );
   }
 
   @Patch(':id/status')
@@ -93,8 +102,14 @@ export class TestimonialController {
   updateStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateTestimonialStatusDto,
+    @Req() req: AuthenticatedRequest,
   ) {
-    return this.service.updateStatus(id, dto.status, dto.managerNotes);
+    return this.service.updateStatus(
+      id,
+      dto.status,
+      dto.managerNotes,
+      requireActor(req),
+    );
   }
 
   // dedicated verify toggle — independent of status
@@ -112,7 +127,10 @@ export class TestimonialController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.service.remove(id);
+  remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.service.remove(id, requireActor(req));
   }
 }
