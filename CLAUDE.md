@@ -71,7 +71,7 @@ Two workflows. Neither of them ever invokes `npm run verify` by name, but `test.
 **`.github/workflows/test.yml` ("PR Checks")** — on `pull_request` → `main`. **Three jobs, running in parallel: `backend`, `ui`, `e2e`.** No `paths:` filters — all three run on every PR, deliberately, because a path-skipped job never reports a status and would hang a PR if these ever become required checks.
 
 - **`backend`** — `typecheck` → `lint:check` → `check:cjs` → `test` → `build` → `test:e2e` (Testcontainers). That is the whole `verify` chain plus e2e; `build` runs before e2e so a broken build fails in seconds instead of waiting on a Postgres image pull. It still does not run `format`.
-- **`ui`** — `typecheck` → `lint` → `format:check` → `test:ci` → `build`, i.e. `ui/package.json`'s `verify` verbatim. Remember what that chain does *not* cover: `format:check` is SCSS-only, and `ng test` is two spec files.
+- **`ui`** — `typecheck` → `lint` → `format:check` → `test:ci` → `build`, i.e. `ui/package.json`'s `verify` verbatim. Remember what that chain does *not* cover: `format:check` is SCSS-only, and `ng test` is five spec files.
 - **`e2e`** — `typecheck:e2e` → Playwright (chromium) against a locally built SSR app plus the stub API in `ui/e2e/stub-api`. On failure it uploads `playwright-report/` and `test-results/`.
 
 A green PR now means both apps typecheck, lint, unit-test and build, and six browser scenarios pass. It still says nothing about `.ts`/`.html` formatting or about anything the stub API cannot exercise (real uploads, admin auth, CRUD).

@@ -28,6 +28,7 @@
     - 7.8 [Winterization Form](#78-winterization-form)
     - 7.9 [About Document Registry](#79-about-document-registry)
     - 7.10 [Shared Needs Infrastructure](#710-shared-needs-infrastructure)
+    - 7.11 [Status Audit Log](#711-status-audit-log-procurement-vacancy-testimonial-complaint-inquiry)
 8. [Deployment Topology (AWS)](#8-deployment-topology-aws)
     - 8.1 [Media Buckets & Upload Matrix](#81-media-buckets--upload-matrix)
     - 8.2 [Staging Environment](#82-staging-environment)
@@ -261,9 +262,10 @@ csd-fund/
 │       │   ├── seed-about-documents.ts   # 32 register entries, INSERT … ON CONFLICT (code) DO UPDATE
 │       │   ├── seed-about-documents-standalone.ts  # `npm run seed:about-documents` — the prod path
 │       │   └── seed-super-admin.ts       # MANUAL one-shot script; not in bootstrap chain
-│       └── modules/             # 15 feature modules (mount in parens where ≠ folder name)
+│       └── modules/             # 16 feature modules (mount in parens where ≠ folder name)
 │           ├── auth/            # /api/auth
 │           ├── about/           # /api/about — sections; /api/about/documents — the registry
+│           ├── audit/           # /api/audit-log — read-only status history of five records (§7.11)
 │           ├── blog/            # /api/blog
 │           ├── complaint/       # /api/complaints (plural)
 │           ├── content/         # /api/pages
@@ -1054,7 +1056,7 @@ Four objects introduced with Recovery and reused by Winterization. WASH predates
 
 **`needs_form_attachments`** — polymorphic `(formType, formId)`, no FK. Holds `s3Key` into `csd-media-private`, original name, MIME, size.
 
-**`needs_form_audit_log`** — polymorphic, 11 columns, FK only to `users` (`SET NULL`). `changedById` is NULL for anonymous public submits; `changedByEmail` is a snapshot so the row survives user deletion. Every write is wrapped in try/catch — **audit logging is fire-and-forget and can never break a public submit**. Actions: `created`, `updated`, `status_changed`, `deleted`.
+**`needs_form_audit_log`** — polymorphic, 11 columns, FK only to `users` (`SET NULL`). `changedById` is NULL for anonymous public submits; `changedByEmail` is a snapshot so the row survives user deletion. For Recovery and Winterization every write is wrapped in try/catch — **that audit logging is fire-and-forget and can never break a public submit**. The same table also holds the status history of procurement, vacancy, testimonial, complaint and inquiry (§7.11), whose writes are **transactional** instead. Actions: `created`, `updated`, `status_changed`, `deleted`.
 
 **`needs_form_status_enum`** — `new`, `in_review`, `approved`, `rejected`, `in_progress`, `completed`. Shared by both forms; the TypeScript side is the single `FormStatus` enum in `wash-form.entity.ts`.
 
@@ -1069,6 +1071,39 @@ Four objects introduced with Recovery and reused by Winterization. WASH predates
 ```
 
 The admin detail screen imports the public component and passes `[mode]="'edit'"`. In edit mode the component renders no Turnstile, no upload dropzones and no draft banner, and hydrates from `initialData` instead of the localStorage draft. **Files, cloud link and consent are excluded from the edit payload** — an admin edit never touches attachments. The same pattern is used for WASH.
+
+### 7.11 Status Audit Log (procurement, vacancy, testimonial, complaint, inquiry)
+
+Spec and decisions: `docs/specs/003-status-audit-log/`. Staff changes to these five records are written to the shared `needs_form_audit_log` table (§7.10), with `formType` set to `procurement`, `vacancy`, `testimonial`, `complaint` or `inquiry`.
+
+**What is recorded.** `created` (procurement and vacancy, when staff create them), `status_changed`, `updated` (a `managerNotes` change with no status change) and `deleted`. An entry holds the actor id and an email snapshot, the old and new status, and `metadata` limited to `requestId`, `status` and `notesChanged`. **Note text and record snapshots are never stored**: the log is append-only and complaints and inquiries carry personal data. Anonymous submissions of complaints, inquiries and testimonials are deliberately **not** audited, so a log fault cannot cost a community member their submission. There is no field-level history and no back-fill, so records older than the release show an empty history.
+
+**Write path.** `EntityAuditService` (`modules/audit/`). Every `record*` method takes the caller's `EntityManager` as a required first argument, so each service writes the entry **in the same transaction as the change**, after `SELECT … FOR UPDATE` on the record. If the audit insert fails, the change rolls back. This is the opposite trade-off to the Recovery and Winterization audit writes (§17 decisions). Three details that are easy to break:
+
+- The lock query must not load relations. Procurement's `findById` joins `createdBy`, and PostgreSQL rejects `FOR UPDATE` across the nullable side of an outer join (`FOR UPDATE cannot be applied to the nullable side of an outer join`). Each service has a `lockById` without relations and re-reads with `findById` after the transaction.
+- `createdAt` is stamped in code after the lock. The column default `now()` is the transaction *start* time, so concurrent changes could otherwise be ordered differently from the order they were applied.
+- The actor comes only from the verified JWT through `requireActor(req)` and the service parameter is required, so a route that forgets it does not compile.
+
+All 13 status-changing routes funnel into `update` / `updateStatus` of their module, including the legacy `/publish`, `/approve` and `/reject` wrappers, so they are audited without separate code.
+
+**Read path.** `AuditController`, `GET /api/audit-log/:entityType/:entityId?limit=`.
+
+| Aspect | Rule |
+|--------|------|
+| Guards | Jwt + Roles(MANAGER, ADMIN, SUPER_ADMIN); `donor` and `public` get 403 |
+| `entityType` | One of the five above, otherwise 400, so the endpoint cannot read the Recovery / Winterization / WASH logs |
+| `entityId` | UUID, otherwise 400 |
+| `limit` | Default 100, maximum 500 |
+| Order | Newest first |
+| Unknown or deleted id | `[]`; `deleted` entries survive the record |
+| Response | `id, action, oldValue, newValue, changedByEmail, createdAt, details`; never a user id or the request id |
+| Writes | None. The API has no route that edits or deletes an audit row |
+
+**UI.** `shared/components/audit-timeline` (`<app-audit-timeline entityType entityId>`) is shown in the complaint and inquiry drawers, the testimonial edit page and the procurement and vacancy forms (edit mode only). It fetches in the browser only, contains its own failure (error plus retry) and renders values as text. Status labels reuse the existing `<entity>.status.<value>` i18n keys.
+
+**Tests.** A unit spec per service; e2e on real PostgreSQL in `test/audit-log.e2e-spec.ts`, `test/status-audit-complaint-inquiry.e2e-spec.ts` and `test/status-audit-staff-entities.e2e-spec.ts` (role matrix, atomicity through a blocking constraint, concurrency, the lock-with-join regression); Vitest `audit-timeline.spec.ts` for the component.
+
+**Known limits.** Entries are kept indefinitely (no cleanup job; retention is tracked with the PII debt in §17). The testimonial `verify` toggle is a separate flag and is not audited. Entry order under near-simultaneous changes depends on application server clocks.
 
 ---
 
@@ -1485,7 +1520,7 @@ Full provisioning + rotation runbook (including prod against RDS): see [`backend
 | **`npm run check:cjs`** | Loads every runtime dependency under plain CommonJS with `--no-experimental-require-module`, emulating the Lambda runtime. See Incident #4 — do not remove this |
 | **`npm run check:handler`** | Loads the compiled `dist/lambda.js` and fails if the exported `handler` declares more than two parameters (nodejs24.x rejects callback handlers). Needs a prior `npm run build`. See Incident #5 |
 | `npm run format` | Prettier on `src/` and `test/` |
-| `npm run test` | Jest unit tests — 17 suites, `rootDir: src`, so **`test/` is excluded** |
+| `npm run test` | Jest unit tests — 27 suites, `rootDir: src`, so **`test/` is excluded** |
 | `npm run test:e2e` | Testcontainers e2e — starts `postgres:16-alpine`, runs **all** migrations, then `test/*.e2e-spec.ts`. Requires Docker |
 | `npm run verify:prod-baseline` | Read-only diff of the `InitialSchema` baseline against a live database. Manual pre-merge step for baseline changes; not wired into CI |
 | `npm run migration:generate -- src/database/migrations/NameOfMigration` | Generate migration from entity diff |
@@ -1506,13 +1541,13 @@ Full provisioning + rotation runbook (including prod against RDS): see [`backend
 | `npm run lint` / `lint:fix` | `ng lint` / `ng lint --fix` |
 | `npm run format` | Prettier on **ts + html + scss** |
 | `npm run format:check` | ⚠ Prettier on **`src/**/*.scss` only** |
-| `npm run test` / `test:ci` | Vitest 4 (via `@angular/build:unit-test`) — **2 spec files exist** |
+| `npm run test` / `test:ci` | Vitest 4 (via `@angular/build:unit-test`) — **5 spec files exist** |
 
 > **Two `ui` caveats that matter more than they look.**
 >
 > `format:check` globs SCSS only while `format` rewrites TS, HTML and SCSS. `npm run verify` therefore **never catches TypeScript or template formatting drift** — a file can be reformatted by `npm run format` on one machine and pass `verify` unchanged on another.
 >
-> `ng test` has no `vitest.config.ts` and `angular.json`'s `test` target has no `options` block, so it runs on builder defaults over 2 spec files against 107 source files. Treat a green `ui` test run as evidence of almost nothing.
+> `ng test` has no `vitest.config.ts` and `angular.json`'s `test` target has no `options` block, so it runs on builder defaults over 5 spec files against 109 source files. Treat a green `ui` test run as evidence of almost nothing.
 
 ### Deployment
 
@@ -1561,7 +1596,7 @@ The `e2e` job caches `~/.cache/ms-playwright` keyed on the resolved `@playwright
 **What this workflow does NOT do — read this before assuming CI has your back:**
 
 - **Formatting of `.ts` and `.html` is verified nowhere.** `ui`'s `format:check` is SCSS-only; the backend has no `format:check` at all.
-- **`ui` unit coverage is two spec files.** A green `test:ci` proves very little — see §17.
+- **`ui` unit coverage is five spec files.** A green `test:ci` proves very little — see §17.
 - **The `e2e` job runs against a stub API** (`ui/e2e/stub-api/server.mjs`), not the real backend. Uploads to `csd-media-private`, admin login, admin CRUD and the document registry are exercised by nothing before merge.
 - `verify:prod-baseline` is manual.
 
@@ -1870,8 +1905,8 @@ These are conscious decisions, not bugs:
 - **No soft-delete anywhere.** We use `@deprecated` enum values and `cancelled` status instead. Hard deletes are gated by state in exactly **three** places: only `draft` procurement, only `draft` vacancy, only `closed` complaint. ⚠ **Recovery, Winterization and testimonial are ungated and none of it was a decision** — those deletes carry a role check only. That is a gap, tracked in §14.2, not a trade-off.
 - **Legacy `/publish`, `/approve`, `/reject` endpoints kept** for backward compat until UI fully uses `/status`. To be removed after stabilization.
 - **Quill HTML stored as raw string, not JSON delta.** Simpler rendering, but editing requires the exact same Quill version. Acceptable for current needs.
-- **Audit logging covers the needs forms only, across two tables.** `wash_form_audit_log` (`wash-form-audit-log.entity.ts`) records WASH changes; the newer shared `needs_form_audit_log` (§7.10) records Recovery and Winterization changes polymorphically. Both capture `action` (created/updated/status_changed/deleted), `changedById` + `changedByEmail` snapshot, `fieldName`, `oldValue`, `newValue` and a `metadata` JSONB. WASH was deliberately **not** migrated onto the shared table — working code was left alone. Procurement, vacancy, testimonial, complaint and inquiry changes are still **not** audited (only `createdBy` captures creation there). Extend the shared table to those modules if donor compliance requires it.
-- **Audit writes are fire-and-forget.** Every `auditLog.*` call in the recovery and winterization services is wrapped in try/catch so a logging failure can never fail a public submit. The trade-off is explicit: an audit gap is preferable to a rejected community submission. It also means the audit log cannot be treated as a guaranteed-complete record.
+- **Audit logging spans two tables.** `wash_form_audit_log` (`wash-form-audit-log.entity.ts`) records WASH changes; the newer shared `needs_form_audit_log` (§7.10) records Recovery and Winterization changes polymorphically, and since spec 003 also the status history of procurement, vacancy, testimonial, complaint and inquiry (§7.11). Both capture `action` (created/updated/status_changed/deleted), `changedById` + `changedByEmail` snapshot, `fieldName`, `oldValue`, `newValue` and a `metadata` JSONB. WASH was deliberately **not** migrated onto the shared table — working code was left alone.
+- **Recovery and Winterization audit writes are fire-and-forget.** Every `auditLog.*` call in the recovery and winterization services is wrapped in try/catch so a logging failure can never fail a public submit. The trade-off is explicit: an audit gap is preferable to a rejected community submission. It also means that log cannot be treated as a guaranteed-complete record. The staff-side status audit of §7.11 makes the opposite choice (same transaction, fail closed) because its purpose is donor evidence, and it leaves public submissions out of the log altogether.
 - **JWT in localStorage, not httpOnly cookies.** Accepted XSS risk in exchange for simpler cross-origin dev setup and serverless-friendliness. If XSS controls prove inadequate, migrate to cookies.
 - **Security headers are split between CloudFront and the API.** The backend API applies `helmet` (in `common/security-headers.ts`, used by both `main.ts` and `lambda.ts`) — locking its own CSP to `default-src 'none'` since it serves only JSON. The browser-facing headers for `www.csd-fund.org` come from a CloudFront response-headers policy. See the CSP status note below, which supersedes the older split entries in this document.
 
@@ -2217,10 +2252,9 @@ Ordered by approximate priority.
 - [ ] **Add a retention / PII policy for `media/needs/*`.** No lifecycle rule exists on either media bucket; the private one holds defect acts and photographs of private property indefinitely.
 - [ ] **Replace the logged password-reset link with a real `EmailService`** (SES) (§14.2).
 - [ ] **Route admin XLSX/CSV exports through `ApiService`** to remove the five unguarded `localStorage` reads (§14.2).
-- [ ] **Grow the `ui` unit test suite** — 2 spec files for 107 source files, with no `vitest.config.ts`. The Playwright suite covers six user-facing flows but is not a substitute for service, interceptor and guard specs.
+- [ ] **Grow the `ui` unit test suite** — 5 spec files for 109 source files, with no `vitest.config.ts`. The Playwright suite covers six user-facing flows but is not a substitute for service, interceptor and guard specs.
 - [ ] **Type the 130+ `any` usages** across the frontend, especially `home.ts`, image upload flows, blog components.
 - [ ] **Write E2E tests** for admin workflows (create procurement → publish → change status → delete). The Testcontainers harness now exists; `app.e2e-spec.ts` has 2 tests.
-- [ ] **Add audit log** for status changes on procurement, vacancy, testimonial, complaint, inquiry — the shared `needs_form_audit_log` is polymorphic and could absorb them.
 - [ ] **Wrap SSR API calls** in try/catch with graceful fallback rendering.
 - [ ] **Invalidate CloudFront selectively** based on deploy diff.
 - [ ] **Dashboard landing on `/admin`** with counts (pending complaints, draft procurements, pending testimonials) — currently redirects to `/admin/wash-forms`.
@@ -2311,7 +2345,7 @@ A: There isn't one. `runSeeds()` seeds the equipment catalogue and the About reg
 A: Because `AWS_CLOUDFRONT_MEDIA_URL` is never set in `serverless.yml`, so public media URLs are direct S3 (§8.1). Private media is never public at all — it is handed out as 5-minute presigned GETs.
 
 **Q: My PR is green. Is the frontend actually tested?**
-A: No. `test.yml` runs backend checks only, and `ui` has 2 spec files (§12.1). Run `npm run verify` in `ui/` locally.
+A: No. `test.yml` runs backend checks only, and `ui` has 5 spec files (§12.1). Run `npm run verify` in `ui/` locally.
 
 **Q: Why not `synchronize: true`?**
 A: It was used early on, then removed after migrations were set up (Task 3.1). `synchronize` is dangerous in any environment that isn't a throwaway dev DB — it will silently drop columns.

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { LanguageService } from '../../../core/services/language.service';
 import { InquiryItem } from './inquiry.interfaces';
+// CHANGED: status history section (spec 003)
+import { AuditTimelineComponent } from '../../../shared/components/audit-timeline/audit-timeline';
 
 /**
  * Right-side drawer showing a full inquiry.
@@ -12,7 +14,7 @@ import { InquiryItem } from './inquiry.interfaces';
 @Component({
   selector: 'app-inquiry-drawer',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [CommonModule, TranslateModule, AuditTimelineComponent],
   template: `
     <button
       type="button"
@@ -124,6 +126,9 @@ import { InquiryItem } from './inquiry.interfaces';
             <p class="text-block">{{ item.managerNotes }}</p>
           </section>
         }
+
+        <!-- CHANGED: status history (spec 003) -->
+        <app-audit-timeline entityType="inquiry" [entityId]="item.id" />
       </div>
     </aside>
   `,

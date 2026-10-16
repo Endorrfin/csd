@@ -34,10 +34,10 @@ Four PRs (see plan §5). Task numbers keep their original T1–T4 prefixes. Tick
 - [ ] T3.6 `npm run verify` + `npm run test:e2e`; staging check (plan §8.2–8.3); production smoke after deploy
 
 ## PR 4 — UI + docs
-- [ ] T4.1 `audit-timeline` shared component (signals, `LanguageService`, `ApiService`, no `innerHTML`) (AC16–AC18)
-- [ ] T4.2 i18n keys in `ua.json` and `en.json`
-- [ ] T4.3 Integrate into complaint drawer, inquiry drawer, procurement / vacancy / testimonial admin edit views
-- [ ] T4.4 Vitest spec for the component (entries, empty state, error/retry, both languages) (AC17, AC18, AC23)
-- [ ] T4.5 `ARCHITECTURE.md`: describe the log and the endpoint; delete the §17 debt item; re-derive any counts from code (AC21)
+- [x] T4.1 `audit-timeline` shared component (signals, `LanguageService`, `ApiService`, no `innerHTML`) (AC16–AC18)
+- [x] T4.2 i18n keys in `ua.json` and `en.json`
+- [x] T4.3 Integrate into complaint drawer, inquiry drawer, procurement / vacancy / testimonial admin edit views
+- [x] T4.4 Vitest spec (13 tests, mutation-checked: dropping `catchError`, swapping `switchMap` for `mergeMap`, or removing the browser-only guard each fails the suite) for the component (entries, empty state, error/retry, both languages) (AC17, AC18, AC23)
+- [x] T4.5 `ARCHITECTURE.md`: describe the log and the endpoint; delete the §17 debt item; re-derive any counts from code (AC21)
 - [ ] T4.6 `npm run verify` in `ui`; manual matrix 5 views × UA/EN × manager/admin; blocked-request simulation; staging check; production smoke
 - [ ] T4.7 Walk the AC table against the diff; set spec Status to Implemented

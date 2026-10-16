@@ -16,7 +16,7 @@ This file holds the **rules an agent must not break**. The descriptive material 
 - **Rich text:** `ngx-quill@^30` + Quill 2 (CSS imported globally in `angular.json`).
 - **Maps:** Leaflet + `leaflet.markercluster` — **loaded from the unpkg CDN, not npm.** See the section below before touching anything map-related.
 - **Icons:** `lucide-angular`.
-- **Tests:** Vitest 4 via `@angular/build:unit-test` (`ng test`). **Exactly 2 spec files exist** — `app.spec.ts` and `features/contact/inquiry-form.spec.ts`. A green `npm test` proves almost nothing.
+- **Tests:** Vitest 4 via `@angular/build:unit-test` (`ng test`). **5 spec files exist** — `app.spec.ts`, `core/services/language.service.spec.ts`, `features/contact/inquiry-form.spec.ts`, `features/activity-map/services/activity-map.service.spec.ts` and `shared/components/audit-timeline/audit-timeline.spec.ts`. A green `npm test` proves little.
 - **Lint:** ESLint 10 + `angular-eslint@21` + `typescript-eslint` + `eslint-plugin-prettier`.
 - ⚠ `package.json` contains a squatted placeholder dependency, `"ngx-translate": "^0.0.1-security"`. The real package is `@ngx-translate/core`. Don't import from `ngx-translate`, and don't "fix" the version — the entry should be removed, which is tracked in `README.md` § Known debt.
 
@@ -52,7 +52,7 @@ ui/
     │   │   └── guards/auth.guard.ts        # authGuard / managerGuard / adminGuard / superAdminGuard
     │   ├── layout/{header,footer}/
     │   ├── shared/
-    │   │   ├── components/         # carousel · file-upload · form-stepper · location-selector · sticky-cta · turnstile
+    │   │   ├── components/         # audit-timeline · carousel · file-upload · form-stepper · location-selector · sticky-cta · turnstile
     │   │   ├── config/quill.config.ts      # keep in sync with backend SanitizeHtmlPipe
     │   │   ├── pipes/quill-html.pipe.ts    # the only pipe in the app
     │   │   ├── directives/ · interfaces/ · services/

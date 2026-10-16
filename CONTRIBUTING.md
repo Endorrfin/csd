@@ -287,7 +287,7 @@ npm run verify        # typecheck → lint:check → check:cjs → test → buil
 | `typecheck` | `tsc --noEmit -p tsconfig.json` | in `verify` |
 | `lint:check` | `eslint "{src,apps,libs,test}/**/*.ts" lambda.ts` | in `verify`. Read-only — this is what `test.yml` runs |
 | `check:cjs` | `node --no-experimental-require-module scripts/check-cjs-load.cjs` | in `verify`. `require()`s every runtime dependency — see §6 "Dependencies" |
-| `test` | `jest` | in `verify`. 17 unit suites under `src/` |
+| `test` | `jest` | in `verify`. 27 unit suites under `src/` |
 | `build` | `nest build` | in `verify` |
 | `lint` | same as `lint:check` **plus `--fix`** | *not* in `verify` — it rewrites your files. Never use it in CI |
 | `format` | `prettier --write "src/**/*.ts" "test/**/*.ts"` | **write-only — there is no `format:check` in this app** |
@@ -315,7 +315,7 @@ There is **no `seed:equipment` script.** The equipment catalogue is seeded by
 | `build` | `ng build` | in `verify`. Production config by default |
 | `lint:fix` | `ng lint --fix` | *not* in `verify` — the one that rewrites |
 | `format` | `prettier --write "src/**/*.{ts,html,scss}"` | *not* in `verify` — rewrites all three extensions |
-| `test` | `ng test --no-watch` | **2 spec files exist** — see §5 |
+| `test` | `ng test --no-watch` | **5 spec files exist** — see §5 |
 | `test:watch` | `ng test` | interactive watcher |
 | `e2e` | `playwright test` | *not* in `verify`. Builds and serves the app itself — **stop your local backend first**, the stub API binds `:3000` |
 | `e2e:ui` / `e2e:report` | `playwright test --ui` / `playwright show-report` | interactive runner / last HTML report |
@@ -377,8 +377,10 @@ npm run test:watch    # interactive watcher
 npm run test:ci       # identical command to `npm test`
 ```
 
-⚠ **There are exactly two spec files in the whole app** — `src/app/app.spec.ts`
-and `src/app/features/contact/inquiry-form.spec.ts`. There is no
+⚠ **There are only five spec files in the whole app** — `src/app/app.spec.ts`,
+`core/services/language.service.spec.ts`, `features/contact/inquiry-form.spec.ts`,
+`features/activity-map/services/activity-map.service.spec.ts` and
+`shared/components/audit-timeline/audit-timeline.spec.ts`. There is no
 `vitest.config.ts` and no options block on `angular.json`'s test target. A green
 `npm test` is close to meaningless today, so treat every new spec as a net gain
 rather than as satisfying an existing bar.
@@ -406,7 +408,7 @@ under test.
 
 ```bash
 cd backend
-npm test              # 17 unit suites under src/
+npm test              # 27 unit suites under src/
 npm run test:e2e      # 1 e2e suite under test/ — needs Docker
 npm run test:cov      # coverage report
 ```

@@ -313,7 +313,7 @@ npm run typeorm -- migration:show -d src/database/data-source.ts
 
 ## Project layout
 
-15 modules, 16 controllers, 118 route decorators, 29 entities, 14 migrations.
+16 modules, 17 controllers, 119 route decorators, 29 entities, 14 migrations.
 
 ```
 backend/
@@ -408,8 +408,8 @@ both always take their `serverless.yml` defaults.
 ## Testing
 
 ```bash
-npm run test          # Unit tests (Jest) — 17 spec files under src/
-npm run test:e2e      # End-to-end — 1 spec file under test/ — REQUIRES DOCKER
+npm run test          # Unit tests (Jest) — 27 spec files under src/
+npm run test:e2e      # End-to-end — 4 spec files under test/ — REQUIRES DOCKER
 npm run test:cov      # Coverage
 ```
 
