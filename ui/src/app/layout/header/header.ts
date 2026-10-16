@@ -1,4 +1,4 @@
-import { Component, inject, signal, HostListener } from '@angular/core';
+import { Component, ElementRef, inject, signal, HostListener, viewChild } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
@@ -25,7 +25,9 @@ import { Router } from '@angular/router';
 
         <!-- hamburger button (mobile only) -->
         <!-- translated aria-label (was hardcoded EN) + aria-expanded/aria-controls so screen readers know open/closed state -->
+        <!-- #burger so Escape can return focus to the trigger -->
         <button
+          #burger
           class="header__burger"
           [class.header__burger--open]="isMenuOpen()"
           (click)="toggleMenu()"
@@ -381,6 +383,14 @@ export class HeaderComponent {
     this.isMenuOpen.set(false);
   }
 
+  private readonly burger = viewChild<ElementRef<HTMLButtonElement>>('burger');
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    if (!this.isMenuOpen()) return;
+    this.closeMenu();
+    this.burger()?.nativeElement.focus();
+  }
   @HostListener('window:resize', ['$event'])
   onResize(event: Event): void {
     if ((event.target as Window).innerWidth > 768) {
@@ -389,7 +399,6 @@ export class HeaderComponent {
   }
 
   switchLang(): void {
-    // CHANGED: go through LanguageService so the choice is persisted
     this.language.setLang(this.isUa() ? 'en' : 'ua');
   }
 
