@@ -85,7 +85,7 @@ csd-fund/
 **What no workflow does — assume nothing:**
 
 - **Formatting of `.ts` and `.html` is checked nowhere.** The `ui` job's `format:check` covers SCSS only, and the backend has no formatting step at all.
-- **Unit coverage is thin where CI is green.** `ui` has two spec files; a passing `test:ci` proves very little.
+- **Unit coverage is thin where CI is green.** `ui` has five spec files; a passing `test:ci` proves very little.
 - **The `e2e` job runs against a stub API**, not the real backend. Uploads to `csd-media-private`, admin login, CRUD and the document registry are not exercised anywhere before merge.
 - `deploy.yml` runs no lint, typecheck or tests in either job — it is a delivery pipeline, not a quality gate.
 - ⚠ **Migrations run before build and deploy.** A failed build leaves production already migrated against the previous code.
@@ -94,7 +94,7 @@ csd-fund/
 
 ## 2. Backend modules (`backend/src/modules/`)
 
-**15 modules**, each a NestJS feature module wired in `app.module.ts`, across 16 controllers and 118 route decorators. All admin endpoints are protected by `JwtAuthGuard` + `RolesGuard`; `super_admin` bypasses role checks. Endpoints below are relative to the module's mount point — every route is also prefixed globally with `/api`. Where the folder name differs from the mount, the actual mount is shown in parentheses.
+**16 modules**, each a NestJS feature module wired in `app.module.ts`, across 17 controllers and 119 route decorators. All admin endpoints are protected by `JwtAuthGuard` + `RolesGuard`; `super_admin` bypasses role checks. Endpoints below are relative to the module's mount point — every route is also prefixed globally with `/api`. Where the folder name differs from the mount, the actual mount is shown in parentheses.
 
 > ⚠ `RolesGuard` returns `true` when `@Roles()` is absent or empty, so `@UseGuards(RolesGuard)` **without** the decorator is a silent no-op. Always pair them.
 
@@ -111,6 +111,7 @@ csd-fund/
 | **testimonial** (`/testimonials`) | `GET /testimonials` (approved only), `GET /testimonials/:id`, **`POST /testimonials` (anonymous)** | `GET /testimonials/admin/list`, update, `PATCH /testimonials/:id/approve`, `/reject`, `/status`, `/verify`, `DELETE /testimonials/:id` | Two-tier moderation: `status` (approval) + independent `isVerified` flag. ⚠ **Delete has no status precondition** — unlike procurement/vacancy/complaint, any testimonial can be hard-deleted |
 | **complaint** (`/complaints`) | `POST /complaints` (anonymous) | `GET /complaints` (legacy unfiltered), `GET /complaints/admin/list`, `GET /complaints/admin/export` (CSV + UTF-8 BOM), `GET /complaints/:id`, `PATCH /complaints/:id`, `PATCH /complaints/:id/status`, delete (closed only) | Anonymous submission with attachments, location, expected resolution. All admin routes are **manager+** (`MANAGER, ADMIN, SUPER_ADMIN`); it is the *frontend* route that is admin-only, via `adminGuard` |
 | **inquiry** (`/inquiries`) | `POST /inquiries` (anonymous — the public contact form) | `GET /inquiries/admin/list`, `GET /inquiries/admin/export` (CSV + UTF-8 BOM), `GET /inquiries/:id`, `PATCH /inquiries/:id/status`, `DELETE /inquiries/:id` — all `admin` + `super_admin` | General contact-form submissions with a status workflow. Admin UI at `/admin/inquiries` behind `adminGuard` |
+| **audit** (`/audit-log`) | — | `GET /audit-log/:entityType/:entityId` (manager, admin, super_admin) | Read-only status history of procurement, vacancy, testimonial, complaint and inquiry; written in the same transaction as each change, append-only, no personal text stored (`docs/ARCHITECTURE.md` §7.11) |
 | **needs** (`/needs-forms`) | `POST /needs-forms/wash` (anonymous), `POST /needs-forms/recovery` and `POST /needs-forms/winterization` (anonymous, **`TurnstileGuard`**) | For each of `wash` / `recovery` / `winterization`: `GET`, `GET /export-xlsx`, `GET /:id`, `GET /:id/audit-log`, `PATCH /:id`, `PATCH /:id/full`, `PATCH /bulk`, `DELETE /:id` — 27 routes total | **Three form families.** WASH: 5 child relations (boreholes, towers, purification, pumps, equipment) + 6-sheet XLSX. Recovery & Winterization: 3-sheet XLSX each, private-bucket attachments, shared `needs_form_audit_log` and tracking-number sequences. Details: [ARCHITECTURE §7.3](./docs/ARCHITECTURE.md#73-wash-needs-assessment), [§7.7](./docs/ARCHITECTURE.md#77-recovery-form), [§7.8](./docs/ARCHITECTURE.md#78-winterization-form), [§7.10](./docs/ARCHITECTURE.md#710-shared-needs-infrastructure) |
 | **equipment-catalog** | `GET /equipment-catalog` | — (seed-driven) | 21 categories / 232 items used by the WASH form dropdowns |
 | **upload** | `POST /upload/testimonial-presigned` (anonymous), `POST /upload/needs-presigned` (**`TurnstileGuard`**) | `POST /upload/presigned-url` (manager+), `POST /upload/about-doc-presigned` (admin+) | **Four endpoints, two buckets** — see §2.2 |

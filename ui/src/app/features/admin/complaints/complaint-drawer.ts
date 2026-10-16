@@ -2,6 +2,8 @@ import { Component, EventEmitter, HostListener, inject, Input, Output } from '@a
 import { CommonModule } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ComplaintItem } from '../../cooperation/complaint/complaint.interfaces';
+// CHANGED: status history section (spec 003)
+import { AuditTimelineComponent } from '../../../shared/components/audit-timeline/audit-timeline';
 
 /**
  * Right-side drawer showing full complaint details.
@@ -11,7 +13,7 @@ import { ComplaintItem } from '../../cooperation/complaint/complaint.interfaces'
 @Component({
   selector: 'app-complaint-drawer',
   standalone: true,
-  imports: [CommonModule, TranslateModule],
+  imports: [CommonModule, TranslateModule, AuditTimelineComponent],
   template: `
     <!-- button for keyboard a11y (was div with click only) -->
     <button
@@ -129,6 +131,9 @@ import { ComplaintItem } from '../../cooperation/complaint/complaint.interfaces'
             <p class="text-block">{{ item.managerNotes }}</p>
           </section>
         }
+
+        <!-- CHANGED: status history (spec 003) -->
+        <app-audit-timeline entityType="complaint" [entityId]="item.id" />
       </div>
     </aside>
   `,

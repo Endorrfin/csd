@@ -642,5 +642,23 @@
     "inquiries": "Inquiries",
     "complaints": "Complaints",
     "about": "About us"
+  },
+  "auditTimeline": {
+    "title": "History",
+    "empty": "History is recorded only from the release of this feature. There are no changes for older records.",
+    "error": "Could not load the history.",
+    "retry": "Try again",
+    "actor": "User",
+    "publicSubmission": "Public submission",
+    "notesChanged": "Manager notes changed",
+    "notesAlsoChanged": "Manager notes also changed",
+    "initialStatus": "Initial status",
+    "statusAtDeletion": "Status at deletion",
+    "action": {
+      "created": "Created",
+      "status_changed": "Status changed",
+      "updated": "Updated",
+      "deleted": "Deleted"
+    }
   }
 }

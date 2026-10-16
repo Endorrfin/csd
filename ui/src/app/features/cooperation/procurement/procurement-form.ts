@@ -15,11 +15,13 @@ import {
   Procurement,
 } from './procurement.interfaces';
 import { QUILL_MODULES } from '../../../shared/config/quill.config';
+// CHANGED: status history section (spec 003)
+import { AuditTimelineComponent } from '../../../shared/components/audit-timeline/audit-timeline';
 
 @Component({
   selector: 'app-procurement-form',
   standalone: true,
-  imports: [ReactiveFormsModule, QuillModule, TranslateModule],
+  imports: [ReactiveFormsModule, QuillModule, TranslateModule, AuditTimelineComponent],
   template: `
     <div class="pf">
       <h2 class="pf__title">
@@ -533,6 +535,11 @@ import { QUILL_MODULES } from '../../../shared/config/quill.config';
           }
         </div>
       </div>
+
+      <!-- CHANGED: status history, edit mode only (spec 003) -->
+      @if (editId(); as id) {
+        <app-audit-timeline entityType="procurement" [entityId]="id" />
+      }
     </div>
   `,
   styles: [

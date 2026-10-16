@@ -13,6 +13,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../../core/services/api.service';
 import { LocationSelectorComponent } from '../../../shared/components/location-selector/location-selector';
+// CHANGED: status history section (spec 003)
+import { AuditTimelineComponent } from '../../../shared/components/audit-timeline/audit-timeline';
 import { LocationValue } from '../../../shared/interfaces/location.interfaces';
 import {
   AssistanceType,
@@ -42,6 +44,7 @@ interface PresignedPostResponse {
     RouterLink,
     TranslateModule,
     LocationSelectorComponent,
+    AuditTimelineComponent,
   ],
   template: `
     <div class="edit">
@@ -205,6 +208,9 @@ interface PresignedPostResponse {
             </button>
           </div>
         </form>
+
+        <!-- CHANGED: status history (spec 003) -->
+        <app-audit-timeline entityType="testimonial" [entityId]="id" />
       }
     </div>
   `,
@@ -445,7 +451,8 @@ export class AdminTestimonialEditComponent implements OnInit {
   photoError = signal<string | null>(null);
   linkInput = '';
 
-  private id!: string;
+  // CHANGED: protected (was private) so the template can pass it to the history section
+  protected id!: string;
 
   // Built after data loads
   form!: FormGroup;

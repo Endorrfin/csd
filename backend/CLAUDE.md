@@ -16,7 +16,7 @@ This file holds the **rules an agent must not break**. Everything descriptive �
 - **AWS SDK:** `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner`. One presigned **PUT** endpoint, three presigned **POST** endpoints — matrix in `ARCHITECTURE.md` §8.1, procedure in `../docs/MEDIA-UPLOADS.md`.
 - **Exports:** `exceljs` for multi-sheet XLSX (WASH, Recovery and Winterization forms); hand-rolled CSV with a UTF-8 BOM in **two** places — `complaint.controller.ts` and `inquiry.controller.ts`. There is no shared CSV helper, so a fix to one does not reach the other.
 - **Lambda adapter:** `@codegenie/serverless-express`, cached across warm invocations.
-- **Tests / lint:** Jest 30 — 17 unit suites under `src/`, 1 e2e suite under `test/` (`test/jest-e2e.json`, **needs Docker**: Testcontainers starts `postgres:16-alpine` and runs every migration). ESLint 9 + `eslint-plugin-prettier`.
+- **Tests / lint:** Jest 30 — 27 unit suites under `src/`, 4 e2e suites under `test/` (`test/jest-e2e.json`, **needs Docker**: Testcontainers starts `postgres:16-alpine` and runs every migration). ESLint 9 + `eslint-plugin-prettier`.
 
 ## Layout
 
@@ -37,7 +37,7 @@ backend/
 └── src/
     ├── main.ts                     # Local bootstrap: assertRequiredEnv() → helmet → /api prefix
     │                               # → CORS from getFrontendOrigins() → ValidationPipe → listen → runSeeds()
-    ├── app.module.ts               # Wires TypeOrmModule.forRootAsync + all 15 feature modules
+    ├── app.module.ts               # Wires TypeOrmModule.forRootAsync + all 16 feature modules
     ├── app.controller.ts           # GET / and GET /health → { status, timestamp } (smoke-tested by CI)
     ├── common/
     │   ├── assert-required-env.ts  # boot-blocking env checks, called by BOTH entry points
@@ -54,12 +54,12 @@ backend/
     │   ├── seed-about-documents-standalone.ts   # `npm run seed:about-documents` — the ONLY way prod gets the registry
     │   ├── seed-super-admin.ts     # standalone, NOT auto-run — via `npm run seed:super-admin`
     │   └── run-seeds-standalone.ts # ⚠ DEAD CODE — no npm script, no import. Don't extend it; delete it or leave it.
-    └── modules/                    # 15 modules — see the mount table below
+    └── modules/                    # 16 modules — see the mount table below
 ```
 
 ## Actual REST surface (verified by `@Controller()` decorators)
 
-All routes are prefixed `/api` (`setGlobalPrefix('api')` in both entry points). **15 modules**, not 14.
+All routes are prefixed `/api` (`setGlobalPrefix('api')` in both entry points). **16 modules**.
 
 | Module            | Mount point              | Notes |
 | ----------------- | ------------------------ | ----- |
@@ -74,6 +74,7 @@ All routes are prefixed `/api` (`setGlobalPrefix('api')` in both entry points). 
 | testimonial       | `/api/testimonials`      | `POST` is anonymous; `remove()` hard-deletes **any** testimonial |
 | complaint         | `/api/complaints`        | `POST` anonymous; every admin route is `MANAGER, ADMIN, SUPER_ADMIN` |
 | **inquiry**       | `/api/inquiries`         | contact form. `POST` anonymous. Missing from every pre-2026-07 document |
+| audit             | `/api/audit-log`         | `GET` only: status history of procurement, vacancy, testimonial, complaint and inquiry (`ARCHITECTURE.md` §7.11). Manager and above; no write routes |
 | needs             | `/api/needs-forms`       | **three** form families — 27 routes in one controller |
 | equipment-catalog | `/api/equipment-catalog` | seed-driven, 21 categories / 232 items |
 | upload            | `/api/upload`            | four endpoints — `ARCHITECTURE.md` §8.1 |

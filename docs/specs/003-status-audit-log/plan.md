@@ -73,7 +73,7 @@ Rules applied everywhere:
 
 ## 3. UI design
 - `ui/src/app/shared/components/audit-timeline/audit-timeline.ts`: standalone, signals, `inject()`.
-  Inputs: `entityType`, `entityId`, `statusLabelPrefix` (i18n prefix such as `vacancy.status.`).
+  Inputs: `entityType`, `entityId`. (The first plan also had a `statusLabelPrefix` input; it was dropped because the prefix is always `<entityType>.status.`, which removes a way to pass a wrong prefix.)
 - Fetches through `ApiService` in the browser only (admin pages are client-guarded; no `localStorage` use added).
 - Language via `LanguageService`; never `translate.currentLang`. Dates via the existing `DatePipe` pattern.
 - Renders action, `old → new` using the entity's existing status labels, actor email or «Public submission», timestamp.

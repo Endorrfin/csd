@@ -116,11 +116,14 @@ Two things to notice in that table:
 
 ## Testing — read this before you trust a green PR
 
-The app has **2 spec files** for 107 TypeScript files under `src/app`:
+The app has **5 spec files** for 109 TypeScript files under `src/app`:
 
 ```
 src/app/app.spec.ts
+src/app/core/services/language.service.spec.ts
 src/app/features/contact/inquiry-form.spec.ts
+src/app/features/activity-map/services/activity-map.service.spec.ts
+src/app/shared/components/audit-timeline/audit-timeline.spec.ts
 ```
 
 There is **no `vitest.config.ts`**, and `angular.json`'s `test` target has no
@@ -133,7 +136,7 @@ this app's `verify` chain verbatim — and an `e2e` job running the Playwright
 suite. Both run on every pull request, with no `paths:` filter.
 
 What the `ui` job still does not prove: `format:check` covers **SCSS only**, and
-`ng test` is the two spec files above. A green PR means the app typechecks,
+`ng test` is the five spec files above. A green PR means the app typechecks,
 lints and builds — not that it is tested.
 
 ### Browser tests (Playwright)
@@ -353,7 +356,7 @@ Real, committed, and worth knowing before you copy the surrounding code.
   `"ngx-translate": "^0.0.1-security"`. That is not the real package (the real
   ones are `@ngx-translate/core` and `@ngx-translate/http-loader`, both present)
   and it is imported nowhere. Remove it when you next touch dependencies.
-- 2 spec files for 107 source files — see the Testing section above.
+- 5 spec files for 109 source files — see the Testing section above.
 - `format:check` covers SCSS only, so TS/HTML formatting drift is invisible to `verify`.
 - The partial `LanguageService` migration described above.
 

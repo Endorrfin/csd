@@ -8,6 +8,8 @@ import { ApiService } from '../../../core/services/api.service';
 import { isPlatformBrowser } from '@angular/common';
 import { QuillModule } from 'ngx-quill';
 import { QUILL_MODULES } from '../../../shared/config/quill.config';
+// CHANGED: status history section (spec 003)
+import { AuditTimelineComponent } from '../../../shared/components/audit-timeline/audit-timeline';
 
 type EmploymentType = 'full_time' | 'part_time' | 'volunteer';
 type VacancyStatus = 'draft' | 'published' | 'closed';
@@ -68,6 +70,7 @@ interface VacancyResponse {
     TranslateModule,
     LocationSelectorComponent,
     QuillModule,
+    AuditTimelineComponent,
   ],
   template: `
     <div class="vf">
@@ -214,6 +217,11 @@ interface VacancyResponse {
           </button>
         </div>
       </form>
+
+      <!-- CHANGED: status history, edit mode only (spec 003) -->
+      @if (isEdit && editId; as id) {
+        <app-audit-timeline entityType="vacancy" [entityId]="id" />
+      }
     </div>
   `,
   styles: [
@@ -327,7 +335,8 @@ export class VacancyFormComponent implements OnInit {
   protected saving = signal(false);
   protected error = signal<string | null>(null);
   protected isEdit = false;
-  private editId: string | null = null;
+  // CHANGED: protected (was private) so the template can pass it to the history section
+  protected editId: string | null = null;
 
   protected get lang(): string {
     return this.translate.currentLang ?? 'ua';
