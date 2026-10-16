@@ -114,6 +114,48 @@ export class EntityAuditService {
     });
   }
 
+  /**
+   * Single entry point for every update path (PATCH :id, :id/status, and the legacy
+   * publish / approve / reject wrappers that delegate to `update`). It decides what, if
+   * anything, to record, so no module repeats the comparison:
+   *   - status changed (with or without notes) -> one `status_changed` entry
+   *   - only notes changed                    -> one `updated` entry (flag, no text)
+   *   - nothing relevant changed              -> nothing is written
+   * An omitted field (`undefined`) means "not part of this request", not "cleared".
+   */
+  async recordUpdate(
+    manager: EntityManager,
+    type: AuditedEntityType,
+    id: string,
+    actor: AuditActor,
+    change: {
+      oldStatus: string;
+      newStatus?: string;
+      oldNotes?: string | null;
+      newNotes?: string | null;
+    },
+  ): Promise<void> {
+    const statusChanged =
+      change.newStatus !== undefined && change.newStatus !== change.oldStatus;
+    const notesChanged =
+      change.newNotes !== undefined &&
+      (change.newNotes ?? '') !== (change.oldNotes ?? '');
+
+    if (statusChanged) {
+      await this.recordStatusChange(
+        manager,
+        type,
+        id,
+        actor,
+        change.oldStatus,
+        change.newStatus as string,
+        notesChanged,
+      );
+    } else if (notesChanged) {
+      await this.recordNotesChanged(manager, type, id, actor);
+    }
+  }
+
   /** The row has no foreign key to the record, so this entry outlives the deletion. */
   async recordDeleted(
     manager: EntityManager,
@@ -169,6 +211,10 @@ export class EntityAuditService {
         oldValue: extra.oldValue ?? null,
         newValue: extra.newValue ?? null,
         metadata: { ...extra.metadata, requestId: resolveRequestId() },
+        // CHANGED: stamped here, after the caller took its row lock. The column default is
+        // now(), which in PostgreSQL is the transaction START time, so two near-simultaneous
+        // changes could otherwise be ordered differently from the order they were applied.
+        createdAt: new Date(),
       }),
     );
   }

@@ -5,7 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import {
   Inquiry,
   InquiryReason,
@@ -14,6 +19,10 @@ import {
 import { CreateInquiryDto } from './dto/create-inquiry.dto';
 import { AdminInquiryQueryDto } from './dto/admin-query.dto';
 import { ExportInquiriesQueryDto } from './dto/export-query.dto';
+// CHANGED: status audit log (spec 003)
+import { AuditActor } from '../audit/audit-actor';
+import { AuditedEntityType } from '../audit/audit-entity-type';
+import { EntityAuditService } from '../audit/entity-audit.service';
 
 export interface PaginatedInquiries {
   data: Inquiry[];
@@ -34,6 +43,9 @@ export class InquiryService {
   constructor(
     @InjectRepository(Inquiry)
     private readonly repo: Repository<Inquiry>,
+    // CHANGED: status changes and their audit entries share one transaction
+    private readonly dataSource: DataSource,
+    private readonly audit: EntityAuditService,
   ) {}
 
   // Public contact-form submission
@@ -130,33 +142,68 @@ export class InquiryService {
   async updateStatus(
     id: string,
     status: InquiryStatus,
-    managerNotes?: string,
+    managerNotes: string | undefined,
+    actor: AuditActor,
   ): Promise<Inquiry> {
-    await this.findById(id);
+    await this.dataSource.transaction(async (manager) => {
+      const existing = await this.lockById(manager, id);
 
-    const updates: Partial<Inquiry> = { status };
-    if (managerNotes !== undefined) {
-      updates.managerNotes = managerNotes;
-    }
+      const updates: Partial<Inquiry> = { status };
+      if (managerNotes !== undefined) {
+        updates.managerNotes = managerNotes;
+      }
 
-    await this.repo.update(id, updates);
+      await manager.update(Inquiry, id, updates);
+      await this.audit.recordUpdate(
+        manager,
+        AuditedEntityType.INQUIRY,
+        id,
+        actor,
+        {
+          oldStatus: existing.status,
+          newStatus: status,
+          oldNotes: existing.managerNotes,
+          newNotes: managerNotes,
+        },
+      );
+    });
     return this.findById(id);
   }
 
   // Only ARCHIVED inquiries can be hard-deleted (mirror complaint CLOSED-only rule)
-  async remove(id: string): Promise<void> {
-    const existing = await this.findById(id);
+  async remove(id: string, actor: AuditActor): Promise<void> {
+    await this.dataSource.transaction(async (manager) => {
+      const existing = await this.lockById(manager, id);
 
-    if (existing.status !== InquiryStatus.ARCHIVED) {
-      throw new BadRequestException(
-        'Only archived inquiries can be deleted. Archive it first to remove.',
+      if (existing.status !== InquiryStatus.ARCHIVED) {
+        throw new BadRequestException(
+          'Only archived inquiries can be deleted. Archive it first to remove.',
+        );
+      }
+
+      await manager.delete(Inquiry, id);
+      await this.audit.recordDeleted(
+        manager,
+        AuditedEntityType.INQUIRY,
+        id,
+        actor,
+        existing.status,
       );
-    }
-
-    await this.repo.delete(id);
+    });
   }
 
   // ── Private helpers ──
+
+  // CHANGED: FOR UPDATE keeps the recorded old status truthful under concurrent edits.
+  // Inquiry has no relations, so the lock cannot span a join.
+  private async lockById(manager: EntityManager, id: string): Promise<Inquiry> {
+    const record = await manager.findOne(Inquiry, {
+      where: { id },
+      lock: { mode: 'pessimistic_write' },
+    });
+    if (!record) throw new NotFoundException(`Inquiry ${id} not found`);
+    return record;
+  }
 
   private buildFilterQuery(query: InquiryFilter): SelectQueryBuilder<Inquiry> {
     const qb = this.repo.createQueryBuilder('i');

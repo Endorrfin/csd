@@ -144,6 +144,24 @@ describe('EntityAuditService', () => {
     }
   });
 
+  it('stamps createdAt itself rather than relying on the transaction-start default', async () => {
+    const { service, manager, saved } = makeService();
+    const before = Date.now();
+
+    await service.recordCreated(
+      manager,
+      AuditedEntityType.VACANCY,
+      ID,
+      ACTOR,
+      'draft',
+    );
+
+    expect(saved[0].createdAt).toBeInstanceOf(Date);
+    expect((saved[0].createdAt as Date).getTime()).toBeGreaterThanOrEqual(
+      before,
+    );
+  });
+
   it('records deletion with the status held at deletion time', async () => {
     const { service, manager, saved } = makeService();
 
@@ -199,6 +217,90 @@ describe('EntityAuditService', () => {
         expect.objectContaining({ take: MAX_HISTORY_LIMIT }),
       );
     });
+  });
+});
+
+describe('EntityAuditService.recordUpdate', () => {
+  const T = AuditedEntityType.COMPLAINT;
+
+  it('writes one status_changed entry when the status differs', async () => {
+    const { service, manager, saved } = makeService();
+
+    await service.recordUpdate(manager, T, ID, ACTOR, {
+      oldStatus: 'new',
+      newStatus: 'in_review',
+    });
+
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).toMatchObject({ action: 'status_changed' });
+  });
+
+  it('writes nothing when the status is set to its current value', async () => {
+    const { service, manager, saved } = makeService();
+
+    await service.recordUpdate(manager, T, ID, ACTOR, {
+      oldStatus: 'new',
+      newStatus: 'new',
+    });
+
+    expect(saved).toHaveLength(0);
+  });
+
+  it('writes nothing when status and notes are absent from the request', async () => {
+    const { service, manager, saved } = makeService();
+
+    await service.recordUpdate(manager, T, ID, ACTOR, { oldStatus: 'new' });
+
+    expect(saved).toHaveLength(0);
+  });
+
+  it('puts notesChanged on the status entry instead of writing a second one', async () => {
+    const { service, manager, saved } = makeService();
+
+    await service.recordUpdate(manager, T, ID, ACTOR, {
+      oldStatus: 'new',
+      newStatus: 'closed',
+      oldNotes: 'a',
+      newNotes: 'b',
+    });
+
+    expect(saved).toHaveLength(1);
+    expect(saved[0].metadata).toMatchObject({ notesChanged: true });
+  });
+
+  it('writes an updated entry for a notes-only change, without the text', async () => {
+    const { service, manager, saved } = makeService();
+
+    await service.recordUpdate(manager, T, ID, ACTOR, {
+      oldStatus: 'new',
+      newStatus: 'new',
+      oldNotes: 'secret before',
+      newNotes: 'secret after',
+    });
+
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).toMatchObject({
+      action: 'updated',
+      fieldName: 'managerNotes',
+    });
+    expect(JSON.stringify(saved[0])).not.toContain('secret');
+  });
+
+  it.each([
+    [null, ''],
+    ['', null],
+    [undefined, undefined],
+  ])('treats %j -> %j as no notes change', async (oldNotes, newNotes) => {
+    const { service, manager, saved } = makeService();
+
+    await service.recordUpdate(manager, T, ID, ACTOR, {
+      oldStatus: 'new',
+      newStatus: 'new',
+      oldNotes,
+      newNotes,
+    });
+
+    expect(saved).toHaveLength(0);
   });
 });
 

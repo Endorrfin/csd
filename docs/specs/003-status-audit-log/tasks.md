@@ -17,11 +17,11 @@ Three PRs (see plan §5). Task numbers keep their original T1–T4 prefixes; com
 - [x] T1.7 `npm run verify` + `npm run test:e2e` in `backend`; existing Recovery/Winterization specs unchanged and green; the app boots in e2e after the module extraction
 
 ## PR 1 · part 2 — Complaint + inquiry
-- [ ] T2.1 Complaint: actor param on `create/update/updateStatus/remove`; transaction + row lock; log created/status/deleted; notes flag (AC1–AC9, AC22)
-- [ ] T2.2 Complaint controller passes `resolveActor(req)` on staff routes only; public `POST` is left byte-for-byte as is (AC4, D13)
-- [ ] T2.3 Inquiry: same for `updateStatus/remove`; public `POST` untouched
-- [ ] T2.4 Unit tests per D2/D3 cases for both modules
-- [ ] T2.5 E2E on real PostgreSQL: seed record → status change → notes-only change → read → delete → read; concurrency; forced audit failure leaves status unchanged; public POST creates no audit row (AC4, AC6, AC9, AC12, AC22)
+- [x] T2.1 Complaint: actor param on `create/update/updateStatus/remove`; transaction + row lock; log created/status/deleted; notes flag (AC1–AC9, AC22)
+- [x] T2.2 Complaint controller passes `resolveActor(req)` on staff routes only; public `POST` is left byte-for-byte as is (AC4, D13)
+- [x] T2.3 Inquiry: same for `updateStatus/remove`; public `POST` untouched
+- [x] T2.4 Unit tests per D2/D3 cases for both modules
+- [x] T2.5 E2E on real PostgreSQL (mutation-checked: removing the row lock, or swallowing audit errors, makes the tests fail): seed record → status change → notes-only change → read → delete → read; concurrency; forced audit failure leaves status unchanged; public POST creates no audit row (AC4, AC6, AC9, AC12, AC22)
 - [ ] T2.6 `npm run verify` + `npm run test:e2e`; staging check (plan §8.2–8.3); production smoke after deploy
 
 ## PR 2 — Procurement, vacancy, testimonial
