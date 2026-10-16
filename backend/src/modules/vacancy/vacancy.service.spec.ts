@@ -183,4 +183,22 @@ describe('VacancyService — audited writes', () => {
       service.create({ titleUa: 'a', titleEn: 'b' } as never, 'user-1', ACTOR),
     ).rejects.toThrow('audit down');
   });
+
+  describe('findByIdForAdmin (spec 004)', () => {
+    it('loads the record with no relations, so no creator user is attached', async () => {
+      repo.findOne.mockResolvedValue({ id: ID });
+
+      await service.findByIdForAdmin(ID);
+
+      expect(repo.findOne).toHaveBeenCalledWith({ where: { id: ID } });
+    });
+
+    it('throws NotFound for an unknown id', async () => {
+      repo.findOne.mockResolvedValue(null);
+
+      await expect(service.findByIdForAdmin(ID)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+  });
 });

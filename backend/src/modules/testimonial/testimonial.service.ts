@@ -73,6 +73,14 @@ export class TestimonialService {
     return record;
   }
 
+  // === ADDED: spec 004 — full record for the guarded GET admin/:id route. Deliberately loads
+  // NO relations (no `createdBy` user), and is independent of the public findById. ===
+  async findByIdForAdmin(id: string): Promise<Testimonial> {
+    const record = await this.repo.findOne({ where: { id } });
+    if (!record) throw new NotFoundException(`Testimonial ${id} not found`);
+    return record;
+  }
+
   async create(dto: CreateTestimonialDto): Promise<Testimonial> {
     const entity = this.repo.create({
       ...dto,

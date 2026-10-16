@@ -16,7 +16,7 @@ This file holds the **rules an agent must not break**. Everything descriptive �
 - **AWS SDK:** `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner`. One presigned **PUT** endpoint, three presigned **POST** endpoints — matrix in `ARCHITECTURE.md` §8.1, procedure in `../docs/MEDIA-UPLOADS.md`.
 - **Exports:** `exceljs` for multi-sheet XLSX (WASH, Recovery and Winterization forms); hand-rolled CSV with a UTF-8 BOM in **two** places — `complaint.controller.ts` and `inquiry.controller.ts`. There is no shared CSV helper, so a fix to one does not reach the other.
 - **Lambda adapter:** `@codegenie/serverless-express`, cached across warm invocations.
-- **Tests / lint:** Jest 30 — 27 unit suites under `src/`, 4 e2e suites under `test/` (`test/jest-e2e.json`, **needs Docker**: Testcontainers starts `postgres:16-alpine` and runs every migration). ESLint 9 + `eslint-plugin-prettier`.
+- **Tests / lint:** Jest 30 — 27 unit suites under `src/`, 5 e2e suites under `test/` (`test/jest-e2e.json`, **needs Docker**: Testcontainers starts `postgres:16-alpine` and runs every migration). ESLint 9 + `eslint-plugin-prettier`.
 
 ## Layout
 

@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Implemented. PRs 1–3 merged; PR 4 (UI + docs) on staging, awaiting merge |
+| Status | Implemented and merged (PRs #207–#210, 2026-10-16) |
 | Origin | `docs/ARCHITECTURE.md` §17 (medium priority): «Add audit log for status changes on procurement, vacancy, testimonial, complaint, inquiry» |
 | Apps | `backend`, `ui` (admin) |
 | Size | Large: touches five backend modules, a shared log, five admin views, tests and docs |

@@ -13,10 +13,7 @@ import {
   Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import {
-  AssistanceType,
-  TestimonialStatus,
-} from '../entities/testimonial.entity';
+import { AssistanceType } from '../entities/testimonial.entity';
 
 // === one evidence photo (uploaded S3 url or external link) ===
 export class TestimonialPhotoDto {
@@ -116,12 +113,7 @@ export class CreateTestimonialDto {
   @IsDateString()
   publishedAt?: string;
 
-  // Manager-only fields (ignored on user create, set via PATCH)
-  @IsOptional()
-  @IsEnum(TestimonialStatus)
-  status?: TestimonialStatus;
-
-  @IsOptional()
-  @IsString()
-  managerNotes?: string;
+  // CHANGED: `status` and `managerNotes` were removed from this PUBLIC dto (spec 004, D4).
+  // They are staff-only and live on UpdateTestimonialDto; the global ValidationPipe now
+  // answers 400 if an anonymous visitor sends them.
 }

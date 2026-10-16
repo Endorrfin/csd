@@ -44,6 +44,15 @@ export class TestimonialController {
     return this.service.findAllForAdmin(query);
   }
 
+  // === ADDED: spec 004 — guarded full record for the admin edit forms. Declared after
+  // `admin/list` so `list` is never captured as an id. ===
+  @Get('admin/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN)
+  findByIdForAdmin(@Param('id', ParseUUIDPipe) id: string) {
+    return this.service.findByIdForAdmin(id);
+  }
+
   @Get(':id')
   findById(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.findById(id);
