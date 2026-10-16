@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Status | Draft — awaiting review |
+| Status | Implemented and deployed (2026-10-16) |
 | Origin | `docs/tasks/tasks.md` #34 (verified still open: `header.ts` only listens to `window:resize`) |
 | App | `ui` |
 | Scope | Public header, mobile layout (≤ 768 px) |
