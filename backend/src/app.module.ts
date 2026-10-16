@@ -23,6 +23,8 @@ import { TestimonialModule } from './modules/testimonial/testimonial.module';
 import { ComplaintModule } from './modules/complaint/complaint.module';
 import { InquiryModule } from './modules/inquiry/inquiry.module'; // CHANGED: register contact-form inquiries module
 import { AboutModule } from './modules/about/about.module';
+// CHANGED: status audit log module (spec 003)
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -70,6 +72,8 @@ import { AboutModule } from './modules/about/about.module';
     ComplaintModule,
     InquiryModule,
     AboutModule,
+    // CHANGED: registered so GET /api/audit-log/:entityType/:entityId is mounted
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [
